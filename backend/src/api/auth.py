@@ -1,15 +1,23 @@
 from fastapi import APIRouter, Response, HTTPException
+from sqlalchemy.exc import IntegrityError
 
+from src.api.dependencies import UserIdDep
+from src.database import async_session_maker
 from src.repositories.users import UsersRepository
+from src.schemas.users import UserAdd
 from src.schemas.users import UserRequestAdd
 from src.services.auth import AuthService
 
-from src.database import async_session_maker
-from src.schemas.users import UserAdd
-
 router = APIRouter(prefix="/auth", tags=["Авторизация и аутентификация"])
 
-@router.post("/register")
+
+@router.post(
+    "/register",
+    summary="Регистрация пользователя",
+    description="Создаёт нового пользователя. "
+                "Хэширует пароль перед соединением. "
+                "Возвращает 409, если email уже занят.",
+)
 async def register_user(
         data: UserRequestAdd,
 ):
@@ -19,23 +27,53 @@ async def register_user(
         hashed_password=hashed_password,
         is_active=True
     )
-    async with async_session_maker() as session:
-        await UsersRepository(session).add(new_user_data)
-        await session.commit()
+    try:
+        async with async_session_maker() as session:
+            await UsersRepository(session).add(new_user_data)
+            await session.commit()
+    except IntegrityError:
+        raise HTTPException(status_code=409, detail="Пользователь с таким email уже существует")
     return {"status": "OK"}
 
-@router.post("/login")
+
+@router.post(
+    "/login",
+    summary="Аутентифицирует пользователя по email и паролю.",
+    description="Аутентифицирует пользователя по email и паролю. "
+                "При успехе устанавливает cookie `access_token` и возвращает JWT-токен. "
+                "Возвращает 401, если пользователь не найден, заблокирован или пароль неверный.",
+
+)
 async def login_user(
-    data: UserRequestAdd,
-    response: Response
+        data: UserRequestAdd,
+        response: Response
 ):
     async with async_session_maker() as session:
         user = await UsersRepository(session).get_user_with_hashed_password(email=data.email)
-        if not user :
-            raise HTTPException(status_code=401, detail="Пользователь с таким email не зарегестрирован")
         if not AuthService().verify_password(data.password, user.hashed_password):
-            return HTTPException(status_code=401, detail="Пароль неверный")
+            raise HTTPException(status_code=401, detail="Пароль неверный")
         access_token = AuthService().create_access_token({"user_id": user.id})
         response.set_cookie("access_token", access_token)
         return {"access_token": access_token}
 
+
+@router.get(
+    "/me",
+    summary="Данные текущего пользователя",
+    description="Возвращает информацию об авторизованном пользователе на основе JWT-токена из cookie. "
+                "Требует аутентификации.",
+)
+async def get_me(user_id: UserIdDep):
+    async with async_session_maker() as session:
+        user = await UsersRepository(session).get_one_or_none(id=user_id)
+        return user
+
+
+@router.post(
+    "/logout",
+    summary="Выход из системы",
+    description="Удаляет cookie `access_token`, завершая сессию пользователя.",
+)
+async def logout(response: Response):
+    response.delete_cookie("access_token")
+    return {"status": "OK"}
