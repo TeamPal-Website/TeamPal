@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TeamPal · поиск сокомандников</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background-color: #ffffff;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* шапка светло-серая */
+    .header {
+      width: 100%;
+      background-color: #f2f2f0;
+      padding: 1.2rem 4rem;
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid #dbd9ce;
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+    }
+
+    .logo-img {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #FA9500, #EB6424, #F85A0B);
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .logo-img svg {
+      width: 36px;
+      height: 36px;
+      fill: #ffffff;
+    }
+
+    /* основной контейнер */
+    .main-content {
+      width: 100%;
+      padding: 3rem 4rem 2rem 4rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
+    }
+
+    /* два текстовых блока */
+    .text-blocks-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      width: 100%;
+    }
+
+    .desc-block {
+      flex: 2 1 400px;
+      background-color: #f6f6f4;
+      border-radius: 2.5rem 1rem 2.5rem 1rem;
+      padding: 2.8rem 3rem;
+      box-shadow: 0 8px 20px -12px rgba(0, 0, 0, 0.15);
+      border: 1px solid #e2dfd3;
+    }
+
+    .actual-block {
+      flex: 1 1 280px;
+      background-color: #f6f6f4;
+      border-radius: 1rem 2.5rem 1rem 2.5rem;
+      padding: 2.8rem 2.5rem;
+      box-shadow: 0 8px 20px -12px rgba(0, 0, 0, 0.15);
+      border: 1px solid #e2dfd3;
+    }
+
+    .section-title {
+      font-size: 2rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(145deg, #333, #5a5a5a);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .desc-text {
+      font-size: 1.3rem;
+      line-height: 1.6;
+      color: #2f3e2e;
+    }
+
+    .actual-text {
+      font-size: 1.2rem;
+      line-height: 1.6;
+      color: #3b463b;
+    }
+
+    .highlight {
+      font-weight: 600;
+      color: #C24F0A;
+      background: rgba(250, 149, 0, 0.1);
+      padding: 0.1rem 0.4rem;
+      border-radius: 12px;
+    }
+
+    /* ГРАДИЕНТНЫЙ БЛОК на всю ширину — УВЕЛИЧЕНА ВЫСОТА */
+    .gradient-fullwidth {
+      width: 100vw;
+      position: relative;
+      left: 50%;
+      right: 50%;
+      margin-left: -50vw;
+      margin-right: -50vw;
+      background: linear-gradient(145deg, #FA9500, #F85A0B, #EB6424, #C1121F, #FA9500, #FFB347);
+      background-size: 300% 300%;
+      animation: softGradientShift 12s ease infinite alternate;
+      box-shadow: 0 30px 40px -25px rgba(193, 18, 31, 0.5), inset 0 1px 4px rgba(255, 221, 157, 0.8);
+    }
+
+    .gradient-content {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 7rem 4rem;  /* увеличили вертикальный padding с 4rem до 7rem — блок стал выше */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    @keyframes softGradientShift {
+      0% { background-position: 0% 30%; }
+      100% { background-position: 100% 70%; }
+    }
+
+    .gradient-title {
+      font-size: 4.8rem;
+      font-weight: 800;
+      color: white;
+      text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 2px 8px 12px rgba(150, 40, 0, 0.6);
+      margin-bottom: 1.5rem;
+      line-height: 1.1;
+    }
+
+    .gradient-title span {
+      font-weight: 300;
+      color: #FFEBC1;
+      display: block;
+      font-size: 2.8rem;
+      text-shadow: 0 2px 5px #AF5400;
+    }
+
+    .gradient-buttons {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 1rem;
+    }
+
+    .btn {
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1.4rem;
+      padding: 0.9rem 2.8rem;
+      border-radius: 60px;
+      transition: all 0.25s ease;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(12px);
+      border: 2px solid rgba(255, 248, 220, 0.7);
+      color: white;
+      text-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      box-shadow: 0 10px 20px -8px rgba(0, 0, 0, 0.4);
+    }
+
+    .btn-primary {
+      background: rgba(255, 215, 140, 0.28);
+      border-color: #FFF8E7;
+    }
+
+    .btn-primary:hover {
+      background: rgba(250, 149, 0, 0.7);
+      border-color: #ffffff;
+      transform: scale(1.05);
+      box-shadow: 0 18px 30px -8px #AD2F00;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(193, 18, 31, 0.6);
+      border-color: #FFC27A;
+      transform: scale(1.02);
+    }
+
+    /* ПОДВАЛ */
+    .footer {
+      width: 100%;
+      background-color: #3a3f31;
+      padding: 1.2rem 4rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1.5rem;
+      color: #e9e9d5;
+      margin-top: 3rem;
+    }
+
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 2.5rem;
+    }
+
+    .footer-logo small {
+      font-size: 1.5rem;
+      font-weight: 600;
+      background: linear-gradient(145deg, #FFD966, #FA9500);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .footer-email a {
+      color: #FFCF9A;
+      text-decoration: none;
+      border-bottom: 2px dotted #FA9500;
+      transition: 0.2s;
+      font-size: 1.1rem;
+    }
+
+    .footer-email a:hover {
+      color: #ffffff;
+      border-bottom: 2px solid #F85A0B;
+    }
+
+    .footer-copyright {
+      color: #b8bba3;
+      font-size: 0.95rem;
+    }
+
+    @media (max-width: 900px) {
+      .header { padding: 1rem 2rem; }
+      .main-content { padding: 2rem 2rem; }
+      .gradient-content { padding: 5rem 2rem; } /* на планшетах тоже выше, но чуть меньше */
+      .gradient-title { font-size: 3.8rem; }
+      .gradient-title span { font-size: 2.2rem; }
+      .btn { font-size: 1.2rem; padding: 0.7rem 2rem; }
+      .footer { padding: 1rem 2rem; }
+    }
+
+    @media (max-width: 600px) {
+      .gradient-content { padding: 4rem 1.5rem; } /* на мобильных тоже увеличен */
+      .gradient-title { font-size: 2.8rem; }
+      .gradient-title span { font-size: 1.6rem; }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="logo-container">
+      <div class="logo-img" id="logoPlaceholder">
+        <svg viewBox="0 0 28 28">
+          <circle cx="14" cy="10" r="6" fill="#EB6424" />
+          <rect x="8" y="16" width="12" height="10" fill="#F85A0B" rx="2" />
+          <circle cx="14" cy="10" r="2" fill="#FFD966" />
+        </svg>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="text-blocks-row">
+      <div class="desc-block">
+        <h2 class="section-title">Краткое описание</h2>
+        <p class="desc-text">
+          <span class="highlight">TeamPal</span> — это пространство, где вы находите единомышленников для стартапов, учебных проектов, креативных коллаб и open source. 
+          Мы помогаем собрать команду мечты: от разработчиков до дизайнеров, от маркетологов до проджектов. 
+          Указывайте роль, стек, цели — и алгоритм подберёт тех, кто горит тем же.
+        </p>
+      </div>
+
+      <div class="actual-block">
+        <h2 class="section-title">Актуальность</h2>
+        <p class="actual-text">
+          В одиночку сложно выигрывать хакатоны, запускать стартапы или делать масштабные пет-проекты. 
+          Каждый четвёртый IT-специалист ищет команду, но существующие платформы перегружены. 
+          <strong style="color:#C24F0A;">TeamPal</strong> закрывает потребность в быстром поиске мотивированных коллег без лишнего шума.
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <!-- ГРАДИЕНТНЫЙ БЛОК с увеличенной высотой -->
+  <div class="gradient-fullwidth">
+    <div class="gradient-content">
+      <div class="gradient-title">
+        Team<span>Pal</span>
+        <span>найди сокомандников</span>
+      </div>
+      <div class="gradient-buttons">
+        <a href="#" class="btn btn-primary">Войти</a>
+        <a href="#" class="btn btn-secondary">Зарегистрироваться</a>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-left">
+      <div class="footer-logo">
+        <small>TeamPal 2026</small>
+      </div>
+      <div class="footer-email">
+        <a href="mailto:teampal@dimple.ru">teampal@dimple.ru</a>
+      </div>
+    </div>
+    <div class="footer-copyright">
+      © обратная связь
+    </div>
+  </footer>
+</body>
+</html>

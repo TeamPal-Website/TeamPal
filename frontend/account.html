@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Личный кабинет | TeamPal</title>
+
+    <link rel="icon" type="image/svg+xml" href="./assets/favicon-placeholder.svg" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Gabriela&display=swap" rel="stylesheet">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+
+<style>
+  :root {
+    --bg: #f7f5f2;
+    --header: #eae8e4;
+    --panel: #ffffff;
+    --panel-soft: #fffaf3;
+    --ink: #1a1a1a;
+    --ink2: #3a3a3a;
+    --line: rgba(0, 0, 0, 0.09);
+    --accent-1: #fa9500;
+    --accent-2: #f85a0b;
+    --accent-3: #eb6424;
+    --accent-4: #ffd066;
+    --footer: #d4d3cb;
+  }
+
+  *,
+  *::before,
+  *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: "Space Grotesk", system-ui, sans-serif;
+    background:
+      radial-gradient(900px 500px at -10% -25%, rgba(255, 208, 102, 0.28), transparent 70%),
+      radial-gradient(700px 420px at 110% 0%, rgba(248, 90, 11, 0.14), transparent 68%),
+      var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .different-font {
+    font-family: "Gabriela", sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 400;
+    font-style: normal;
+  }
+
+
+  .header {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 1000;
+    height: 72px;
+    background: var(--header);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .header__inner {
+    max-width: 1200px;
+    height: 100%;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+  }
+
+  .header__left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo {
+    width: 46px;
+    height: 46px;
+    border-radius: 10px;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+
+  .logo:hover {
+    transform: scale(1.06) rotate(-3deg);
+  }
+
+  .header__actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+  }
+
+  .role-select {
+    position: relative;
+  }
+
+  .role-btn {
+    min-width: 190px;
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--ink);
+    border-radius: 999px;
+    padding: 10px 14px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .role-btn::after {
+    content: "▾";
+    float: right;
+    color: #555;
+  }
+
+  .role-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.12);
+    overflow: hidden;
+    display: none;
+  }
+
+  .role-select.open .role-dropdown {
+    display: block;
+  }
+
+  .role-dropdown button {
+    width: 100%;
+    border: 0;
+    background: #fff;
+    text-align: left;
+    padding: 10px 12px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .role-dropdown button:hover {
+    background: #fff7ec;
+  }
+
+  .burger {
+    width: 42px;
+    height: 42px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #fff;
+    display: grid;
+    place-items: center;
+    gap: 4px;
+    cursor: pointer;
+  }
+
+  .burger span {
+    width: 18px;
+    height: 2px;
+    background: #2b2b2b;
+    display: block;
+  }
+
+  .header-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 10px);
+    width: 224px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.14);
+    padding: 10px;
+    display: none;
+  }
+
+  .header-menu.open {
+    display: block;
+  }
+
+  .header-menu__title {
+    font-size: 14px;
+    color: #6b6b6b;
+    margin-bottom: 8px;
+    padding-left: 2px;
+  }
+
+  .header-menu__item,
+  .header-menu__exit {        
+    width: 100%;
+    border: 0;
+    background: #fbfbfb;
+    border-radius: 10px;
+    text-align: left;
+    padding: 9px 10px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  .header-menu__item:hover,
+  .header-menu__exit:hover {
+    background: #fff1de;
+  }
+
+  .header-menu__exit {
+    margin-top: 8px;
+    margin-bottom: 0;
+    color: #b12a1c;
+    border: 1px solid #f0d0cb;
+  }
+
+  .page {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 102px 20px 26px;
+    flex: 1;
+  }
+
+  .dashboard {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 20px;
+  }
+
+  .card {
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: var(--panel);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
+  }
+
+  .sidebar {
+    padding: 20px 16px;
+    background:
+      linear-gradient(180deg, rgba(255, 208, 102, 0.16), transparent 38%),
+      #fff;
+  }
+
+  .role-pill {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: #fff;
+    font-weight: 500;
+    margin-bottom: 16px;
+  }
+
+  .avatar-wrap {
+    width: 128px;
+    height: 128px;
+    border-radius: 50%;
+    border: 4px solid var(--accent-2);
+    padding: 4px;
+    margin: 0 auto 14px;
+  }
+
+  .avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .user-name {
+    text-align: center;
+    font-family: "Space Grotesk", "Inter", sans-serif;
+    font-size: 26px;
+    margin-bottom: 2px;
+  }
+
+  .user-mail {
+    text-align: center;
+    color: var(--ink2);
+    font-size: 15px;
+    margin-bottom: 18px;
+  }
+
+  .side-btn {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #fff;
+    font-size: 15px;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .side-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(248, 90, 11, 0.18);
+  }
+
+  .workspace {
+    padding: 14px;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .tab-btn {
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: #fff;
+    padding: 8px 16px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .tab-btn.active {
+    background: linear-gradient(135deg, var(--accent-1), var(--accent-3));
+    border-color: transparent;
+    color: #1a1a1a;
+    box-shadow: 0 8px 18px rgba(250, 149, 0, 0.3);
+  }
+
+  .tab-panel {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--panel-soft);
+    padding: 18px;
+    min-height: 380px;
+  }
+
+  .hidden {
+    display: none;
+  }
+
+  .resume-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 14px;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .field--full {
+    grid-column: 1 / -1;
+  }
+
+  .field label {
+    font-size: 13px;
+    color: #4c4c4c;
+  }
+
+  .field input,
+  .field select,
+  .about-text {
+    width: 100%;
+    border: 1px solid #dfdfdf;
+    border-radius: 10px;
+    background: #fff;
+    font-size: 14px;
+    padding: 10px 11px;
+  }
+
+  .field input:focus,
+  .field select:focus,
+  .about-text:focus {
+    outline: 2px solid rgba(248, 90, 11, 0.24);
+    border-color: #f85a0b;
+  }
+
+  .about-text {
+    min-height: 258px;
+    resize: vertical;
+  }
+
+  .actions {
+    margin-top: 14px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .action-btn {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+    color: #2e2e2e;
+    padding: 9px 13px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .action-btn:hover {
+    transform: translateY(-1px);
+  }
+
+  .action-btn--accent {
+    background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+    border-color: transparent;
+  }
+
+  .action-btn--accent:hover {
+    box-shadow: 0 10px 20px rgba(248, 90, 11, 0.26);
+  }
+
+  .footer {
+    width: 100%;
+    background: var(--footer);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    font-size: 14px;
+    color: var(--ink2);
+    min-height: 52px;
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 860px) {
+    .footer {
+      flex-direction: column;
+      height: auto;
+      padding: 12px 20px;
+      gap: 4px;
+      text-align: center;
+    }
+  }
+
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 20, 20, 0.36);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100;
+  }
+
+  .modal.open {
+    display: flex;
+  }
+
+  .modal__card {
+    width: min(92vw, 440px);
+    border-radius: 16px;
+    background: #fff;
+    border: 1px solid var(--line);
+    padding: 18px;
+    box-shadow: 0 24px 44px rgba(0, 0, 0, 0.2);
+  }
+
+  .modal__title {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 24px;
+    margin-bottom: 12px;
+  }
+
+  .modal__group {
+    display: grid;
+    gap: 9px;
+  }
+
+  .modal__group input {
+    border: 1px solid #dddddd;
+    border-radius: 10px;
+    padding: 10px;
+  }
+
+  .modal__actions {
+    margin-top: 12px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  @media (max-width: 960px) {
+    .dashboard {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .header__inner {
+      padding: 0 14px;
+    }
+
+    .page {
+      padding: 92px 14px 24px;
+    }
+
+    .role-btn {
+      min-width: 158px;
+      font-size: 13px;
+    }
+
+    .resume-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .actions {
+      flex-wrap: wrap;
+    }
+
+    .action-btn {
+      flex: 1;
+      min-width: 120px;
+    }
+  }
+</style>
+</head>
+
+  <body>
+    <header class="header">
+      <div class="header__inner">
+        <div class="header__left">
+          <img class="logo" src="./assets/logo-placeholder.svg" alt="Логотип TeamPal" />
+
+          <div class="role-select" id="role-select">
+            <button class="role-btn different-font" id="role-btn" type="button">Ищу вакансию</button>
+            <div class="role-dropdown" id="role-dropdown">
+              <button type="button" data-role="Ищу вакансию">Ищу вакансию</button>
+              <button type="button" data-role="Ищу сотрудника">Ищу сотрудника</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="header__actions">
+          <button class="burger" id="burger-btn" type="button" aria-label="Открыть меню">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+
+          <nav class="header-menu" id="header-menu">
+            <div class="header-menu__title">Меню</div>
+            <button class="header-menu__item different-font" type="button">Личный кабинет</button>
+            <button class="header-menu__item different-font" type="button">Мои заявки</button>
+            <button class="header-menu__item different-font" type="button">Каталог</button>
+            <button class="header-menu__item different-font" type="button">Поддержать проект</button>
+            <button class="header-menu__exit" type="button">Выйти</button>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <main class="page">
+      <section class="dashboard">
+        <aside class="card sidebar">
+          <div class="avatar-wrap">
+            <img
+              class="avatar"
+              id="profile-avatar"
+              src="#"
+              alt="Аватар"
+            />
+          </div>
+
+          <div class="user-name">Ваше Имя</div>
+          <div class="user-mail different-font">teampal@dimple.ru</div>
+
+          <button class="side-btn" id="change-password-btn" type="button">Сменить пароль</button>
+        </aside>
+
+        <section class="card workspace">
+          <div class="tabs">
+            <button class="tab-btn active different-font" id="tab-resume" type="button">Резюме</button>
+            <button class="tab-btn different-font" id="tab-about" type="button">О себе</button>
+          </div>
+
+          <div class="tab-panel" id="panel-resume">
+            <form class="resume-grid" id="resume-form">
+              <div class="field different-font">
+                <label for="first-name">Имя</label>
+                <input id="first-name" type="text" placeholder="Ваше имя" />
+              </div>
+              <div class="field different-font">
+                <label for="last-name">Фамилия</label>
+                <input id="last-name" type="text" placeholder="Ваша фамилия" />
+              </div>
+              <div class="field different-font">
+                <label for="birth-date">Дата рождения</label>
+                <input id="birth-date" type="text" inputmode="numeric" placeholder="ДД.ММ.ГГГГ" />
+              </div>
+              <div class="field different-font">
+                <label for="it-years">Сколько в IT</label>
+                <input id="it-years" type="text" placeholder="3 года" />
+              </div>
+              <div class="field field--full different-font">
+                <label for="stack">Ваш стек</label>
+                <input id="stack" type="text" placeholder="React, TypeScript, Node.js" />
+              </div>
+              <div class="field field--full different-font">
+                <label for="position">Желаемая роль</label>
+                <input id="position" type="text" placeholder="Frontend разработчик" />
+              </div>
+            </form>
+
+            <div class="actions">
+              <button class="action-btn" id="resume-cancel" type="button">Отмена</button>
+              <button class="action-btn" id="resume-save" type="button">Сохранить</button>
+              <button class="action-btn action-btn--accent" id="resume-publish" type="button">Опубликовать</button>
+            </div>
+          </div>
+
+          <div class="tab-panel hidden" id="panel-about">
+            <textarea class="about-text" id="about-text" placeholder="Напишите информацию о себе..."></textarea>
+
+            <div class="actions">
+              <button class="action-btn" id="about-cancel" type="button">Отмена</button>
+              <button class="action-btn action-btn--accent" id="about-save" type="button">Сохранить</button>
+            </div>
+          </div>
+        </section>
+      </section>
+
+    </main>
+
+    <footer class="footer">
+      <span>TeamPal<span id="year"></span></span>
+      <span>обратная связь: teampal@dimple.ru</span>
+    </footer>
+
+    <div class="modal" id="password-modal" aria-hidden="true">
+      <div class="modal__card">
+        <h2 class="modal__title">Смена пароля</h2>
+        <div class="modal__group">
+          <input id="old-password" type="password" placeholder="Старый пароль" />
+          <input id="new-password" type="password" placeholder="Новый пароль" />
+          <input id="confirm-password" type="password" placeholder="Повторите пароль" />
+        </div>
+        <div class="modal__actions">
+          <button class="action-btn" id="password-cancel" type="button">Отмена</button>
+          <button class="action-btn action-btn--accent" id="password-save" type="button">Сохранить</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const yearSpan = document.getElementById("year");
+        if (yearSpan) {
+          yearSpan.textContent = " " + new Date().getFullYear();
+        }
+
+        const tabResume = document.getElementById("tab-resume");
+        const tabAbout = document.getElementById("tab-about");
+        const panelResume = document.getElementById("panel-resume");
+        const panelAbout = document.getElementById("panel-about");
+
+        const roleSelect = document.getElementById("role-select");
+        const roleBtn = document.getElementById("role-btn");
+        const roleDropdown = document.getElementById("role-dropdown");
+
+        const burgerBtn = document.getElementById("burger-btn");
+        const headerMenu = document.getElementById("header-menu");
+
+        const passwordModal = document.getElementById("password-modal");
+        const changePasswordBtn = document.getElementById("change-password-btn");
+        const passwordCancel = document.getElementById("password-cancel");
+        const passwordSave = document.getElementById("password-save");
+
+        const resumeForm = document.getElementById("resume-form");
+        const resumeCancel = document.getElementById("resume-cancel");
+        const resumeSave = document.getElementById("resume-save");
+        const resumePublish = document.getElementById("resume-publish");
+
+        const aboutText = document.getElementById("about-text");
+        const aboutCancel = document.getElementById("about-cancel");
+        const aboutSave = document.getElementById("about-save");
+
+        let aboutInitialValue = "";
+
+        const avatarImg = document.getElementById("profile-avatar");
+        const userNameSpan = document.querySelector(".user-name");
+        avatarImg.src = "#";
+        userNameSpan.textContent = "Ваше Имя";
+
+        function showResume() {
+          tabResume.classList.add("active");
+          tabAbout.classList.remove("active");
+          panelResume.classList.remove("hidden");
+          panelAbout.classList.add("hidden");
+        }
+
+        function showAbout() {
+          tabAbout.classList.add("active");
+          tabResume.classList.remove("active");
+          panelAbout.classList.remove("hidden");
+          panelResume.classList.add("hidden");
+        }
+
+        function closeMenus() {
+          roleSelect.classList.remove("open");
+          headerMenu.classList.remove("open");
+        }
+
+        tabResume.addEventListener("click", showResume);
+        tabAbout.addEventListener("click", showAbout);
+
+        roleBtn.addEventListener("click", function (event) {
+          event.stopPropagation();
+          roleSelect.classList.toggle("open");
+          headerMenu.classList.remove("open");
+        });
+
+        roleDropdown.addEventListener("click", function (event) {
+          const target = event.target;
+          if (target instanceof HTMLButtonElement) {
+            roleBtn.textContent = target.dataset.role || "Ищу вакансию";
+            roleSelect.classList.remove("open");
+          }
+        });
+
+        burgerBtn.addEventListener("click", function (event) {
+          event.stopPropagation();
+          headerMenu.classList.toggle("open");
+          roleSelect.classList.remove("open");
+        });
+
+        document.addEventListener("click", function (event) {
+          if (!event.target.closest(".header__actions")) {
+            closeMenus();
+          }
+        });
+
+        changePasswordBtn.addEventListener("click", function () {
+          passwordModal.classList.add("open");
+          passwordModal.setAttribute("aria-hidden", "false");
+        });
+
+        function closePasswordModal() {
+          passwordModal.classList.remove("open");
+          passwordModal.setAttribute("aria-hidden", "true");
+          document.getElementById("old-password").value = "";
+          document.getElementById("new-password").value = "";
+          document.getElementById("confirm-password").value = "";
+        }
+
+        passwordCancel.addEventListener("click", closePasswordModal);
+
+        passwordSave.addEventListener("click", function () {
+          const oldPass = document.getElementById("old-password").value;
+          const newPass = document.getElementById("new-password").value;
+          const confirmPass = document.getElementById("confirm-password").value;
+
+          if (!oldPass) {
+            alert("Введите старый пароль");
+            return;
+          }
+          if (newPass.length < 6) {
+            alert("Новый пароль должен быть не короче 6 символов");
+            return;
+          }
+          if (newPass !== confirmPass) {
+            alert("Пароли не совпадают");
+            return;
+          }
+          alert("Пароль обновлен");
+          closePasswordModal();
+        });
+
+        passwordModal.addEventListener("click", function (event) {
+          if (event.target === passwordModal) {
+            closePasswordModal();
+          }
+        });
+
+        resumeCancel.addEventListener("click", function () {
+          resumeForm.reset();
+        });
+
+        resumeSave.addEventListener("click", function () {
+          alert("Резюме сохранено");
+        });
+
+        resumePublish.addEventListener("click", function () {
+          alert("Резюме опубликовано");
+        });
+
+        aboutCancel.addEventListener("click", function () {
+          aboutText.value = aboutInitialValue;
+        });
+
+        aboutSave.addEventListener("click", function () {
+          aboutInitialValue = aboutText.value;
+          alert("Информация о себе сохранена");
+        });
+
+        aboutInitialValue = aboutText.value;
+      })();
+    </script>
+  </body>
+</html>
