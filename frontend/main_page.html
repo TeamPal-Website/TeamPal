@@ -488,8 +488,8 @@
             <h1 class="hero__title">Team<span>Pal</span></h1>
             <p class="hero__sub different-font">Найди команду &middot; Запусти проект &middot; Развивайтесь вместе</p>
             <div class="hero__btns">
-              <button class="btn btn--dark">Войти</button>
-              <button class="btn btn--glass">Зарегистрироваться</button>
+              <button class="btn btn--dark" id="go-login" type="button">Войти</button>
+              <button class="btn btn--glass" id="go-register" type="button">Зарегистрироваться</button>
             </div>
           </div>
         </section>
@@ -584,6 +584,23 @@
       </footer>
     </div>
 
+    <script>
+      (function () {
+        const loginBtn = document.getElementById("go-login");
+        const registerBtn = document.getElementById("go-register");
+
+        if (loginBtn) {
+          loginBtn.addEventListener("click", function () {
+            window.location.href = "./authorization_page.html";
+          });
+        }
+
+        if (registerBtn) {
+          registerBtn.addEventListener("click", function () {
+            window.location.href = "./registration_page.html";
+          });
+        }
+      })();
+    </script>
   </body>
 </html>
-

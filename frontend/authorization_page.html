@@ -189,7 +189,7 @@ button {
     </style>
 </head>
 <body class="page">
-    <form class="form" action="" method="post">
+    <form class="form" id="loginForm" action="" method="post">
         <div class="wrapper">
             <h1 class="title different-font">TeamPal</h1>
             
@@ -200,51 +200,104 @@ button {
             
             <p class="subtitle">Введите ваши данные для входа в систему</p>
             <div class="login_wrapper">
-                <label for="username">Логин</label>
+                <label for="email">Email</label>
                 <div class="login_input">
-                    <input type="text" id="username" name="username" placeholder="Введите ваш логин">
+                    <input type="email" id="email" name="email" placeholder="Введите ваш email" required>
                 </div>
             </div>
             <div class="password_wrapper">
                 <label for="password">Пароль</label>
                 <div class="password_input">
-                    <input type="password" id="password" name="password" placeholder="Введите ваш пароль">
+                    <input type="password" id="password" name="password" placeholder="Введите ваш пароль" required>
                 </div>
             </div>
-            <button class="login_button" type="submit">Войти</button>
+            <button class="login_button" id="submitBtn" type="submit">Войти</button>
         </div>
     </form>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const API_BASE_URL = 'http://127.0.0.1:8000';
             const loginTab = document.getElementById('loginTab');
             const registerTab = document.getElementById('registerTab');
-            const subtitle = document.querySelector('.subtitle');
-            const submitButton = document.querySelector('.login_button');
+            const loginForm = document.getElementById('loginForm');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const submitBtn = document.getElementById('submitBtn');
+
+            async function getErrorText(response) {
+                try {
+                    const payload = await response.json();
+                    if (typeof payload.detail === 'string') {
+                        return payload.detail;
+                    }
+                    if (Array.isArray(payload.detail)) {
+                        return payload.detail
+                            .map(function(item) {
+                                return item.msg || 'Ошибка валидации';
+                            })
+                            .join('; ');
+                    }
+                } catch (error) {
+                    console.error(error);
+                }
+                return 'Ошибка запроса';
+            }
+
+            async function checkSession() {
+                try {
+                    const response = await fetch(API_BASE_URL + '/auth/me', {
+                        method: 'GET',
+                        credentials: 'include',
+                    });
+                    if (response.ok) {
+                        window.location.href = './account.html';
+                    }
+                } catch (error) {
+                    console.error(error);
+                }
+            }
             
             loginTab.addEventListener('click', function(e) {
                 e.preventDefault();
-                
-                loginTab.classList.add('active');
-                registerTab.classList.remove('active');
-                
-                subtitle.textContent = 'Введите ваши данные для входа в систему';
-                submitButton.textContent = 'Войти';
-                
-                console.log('Переключение на форму входа');
             });
             
             registerTab.addEventListener('click', function(e) {
                 e.preventDefault();
-                
-                registerTab.classList.add('active');
-                loginTab.classList.remove('active');
-                
-                subtitle.textContent = 'Введите ваши данные для регистрации';
-                submitButton.textContent = 'Зарегистрироваться';
-                
-                console.log('Переключение на форму регистрации');
+                window.location.href = './registration_page.html';
             });
+
+            loginForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                submitBtn.disabled = true;
+
+                try {
+                    const response = await fetch(API_BASE_URL + '/auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify({
+                            email: emailInput.value.trim(),
+                            password: passwordInput.value,
+                        }),
+                    });
+
+                    if (!response.ok) {
+                        alert(await getErrorText(response));
+                        return;
+                    }
+                    window.location.href = './account.html';
+                } catch (error) {
+                    console.error(error);
+                    alert('Не удалось выполнить вход. Проверьте, что бэкенд запущен.');
+                } finally {
+                    submitBtn.disabled = false;
+                }
+            });
+
+            checkSession();
         });
     </script>
 </body>

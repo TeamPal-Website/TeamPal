@@ -227,7 +227,7 @@ button {
 </style>
 </head>
 <body class="page">
-    <form class="form" action="" method="post">
+    <form class="form" id="registerForm" action="" method="post">
         <div class="wrapper">
             <h1 class="title different-font">TeamPal</h1>
             
@@ -264,7 +264,11 @@ button {
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const API_BASE_URL = 'http://127.0.0.1:8000';
             const consentCheckbox = document.getElementById('consent');
+            const registerForm = document.getElementById('registerForm');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
             const submitBtn = document.getElementById('submitBtn');
             
             submitBtn.disabled = true;
@@ -275,36 +279,92 @@ button {
             
             const loginTab = document.getElementById('loginTab');
             const registerTab = document.getElementById('registerTab');
-            const subtitle = document.querySelector('.subtitle');
-            const consentWrapper = document.querySelector('.consent_wrapper');
-            const submitButton = document.getElementById('submitBtn');
+
+            function parseDetail(detail) {
+                if (typeof detail === 'string') {
+                    return detail;
+                }
+                if (Array.isArray(detail)) {
+                    return detail
+                        .map(function(item) {
+                            return item.msg || 'Ошибка валидации';
+                        })
+                        .join('; ');
+                }
+                return 'Ошибка запроса';
+            }
+
+            async function getErrorText(response) {
+                try {
+                    const payload = await response.json();
+                    return parseDetail(payload.detail);
+                } catch (error) {
+                    console.error(error);
+                    return 'Ошибка запроса';
+                }
+            }
             
             loginTab.addEventListener('click', function(e) {
                 e.preventDefault();
-                
-                loginTab.classList.remove('active');
-                registerTab.classList.remove('active');
-                this.classList.add('active');
-                
-                subtitle.textContent = 'Введите ваши данные для входа';
-                consentWrapper.style.display = 'none';
-                submitButton.textContent = 'Войти';
-                document.getElementById('consent').required = false;
-                submitBtn.disabled = false;
+                window.location.href = './authorization_page.html';
             });
             
             registerTab.addEventListener('click', function(e) {
                 e.preventDefault();
-                
-                loginTab.classList.remove('active');
-                registerTab.classList.remove('active');
-                this.classList.add('active');
-                
-                subtitle.textContent = 'Введите ваши данные для регистрации';
-                consentWrapper.style.display = 'block';
-                submitButton.textContent = 'Зарегистрироваться';
-                document.getElementById('consent').required = true;
-                submitBtn.disabled = !document.getElementById('consent').checked;
+            });
+
+            registerForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                if (!consentCheckbox.checked) {
+                    alert('Подтвердите согласие на обработку персональных данных');
+                    return;
+                }
+
+                submitBtn.disabled = true;
+
+                try {
+                    const registerResponse = await fetch(API_BASE_URL + '/auth/register', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify({
+                            email: emailInput.value.trim(),
+                            password: passwordInput.value,
+                        }),
+                    });
+
+                    if (!registerResponse.ok) {
+                        alert(await getErrorText(registerResponse));
+                        return;
+                    }
+
+                    const loginResponse = await fetch(API_BASE_URL + '/auth/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify({
+                            email: emailInput.value.trim(),
+                            password: passwordInput.value,
+                        }),
+                    });
+
+                    if (!loginResponse.ok) {
+                        alert('Регистрация успешна. Выполните вход.');
+                        window.location.href = './authorization_page.html';
+                        return;
+                    }
+
+                    window.location.href = './account.html';
+                } catch (error) {
+                    console.error(error);
+                    alert('Не удалось выполнить регистрацию. Проверьте, что бэкенд запущен.');
+                } finally {
+                    submitBtn.disabled = !consentCheckbox.checked;
+                }
             });
         });
     </script>
