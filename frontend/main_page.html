@@ -19,7 +19,6 @@
       flex-direction: column;
     }
 
-    /* шапка светло-серая */
     .header {
       width: 100%;
       background-color: #f2f2f0;
@@ -51,7 +50,6 @@
       fill: #ffffff;
     }
 
-    /* основной контейнер */
     .main-content {
       width: 100%;
       padding: 3rem 4rem 2rem 4rem;
@@ -60,7 +58,6 @@
       gap: 2.5rem;
     }
 
-    /* два текстовых блока */
     .text-blocks-row {
       display: flex;
       flex-wrap: wrap;
@@ -116,7 +113,6 @@
       border-radius: 12px;
     }
 
-    /* ГРАДИЕНТНЫЙ БЛОК на всю ширину — УВЕЛИЧЕНА ВЫСОТА */
     .gradient-fullwidth {
       width: 100vw;
       position: relative;
@@ -133,7 +129,7 @@
     .gradient-content {
       max-width: 1300px;
       margin: 0 auto;
-      padding: 7rem 4rem;  /* увеличили вертикальный padding с 4rem до 7rem — блок стал выше */
+      padding: 7rem 4rem;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -204,7 +200,6 @@
       transform: scale(1.02);
     }
 
-    /* ПОДВАЛ */
     .footer {
       width: 100%;
       background-color: #3a3f31;
@@ -254,7 +249,7 @@
     @media (max-width: 900px) {
       .header { padding: 1rem 2rem; }
       .main-content { padding: 2rem 2rem; }
-      .gradient-content { padding: 5rem 2rem; } /* на планшетах тоже выше, но чуть меньше */
+      .gradient-content { padding: 5rem 2rem; }
       .gradient-title { font-size: 3.8rem; }
       .gradient-title span { font-size: 2.2rem; }
       .btn { font-size: 1.2rem; padding: 0.7rem 2rem; }
@@ -262,7 +257,7 @@
     }
 
     @media (max-width: 600px) {
-      .gradient-content { padding: 4rem 1.5rem; } /* на мобильных тоже увеличен */
+      .gradient-content { padding: 4rem 1.5rem; }
       .gradient-title { font-size: 2.8rem; }
       .gradient-title span { font-size: 1.6rem; }
     }
@@ -303,7 +298,6 @@
     </div>
   </main>
 
-  <!-- ГРАДИЕНТНЫЙ БЛОК с увеличенной высотой -->
   <div class="gradient-fullwidth">
     <div class="gradient-content">
       <div class="gradient-title">

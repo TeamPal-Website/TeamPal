@@ -29,7 +29,6 @@ body {
   background-color: #fffffc;
 }
 
-/* Класс для другого шрифта - применяем его к заголовку */
 .different-font {
   font-family: "Space Grotesk", sans-serif;
   font-optical-sizing: auto;
@@ -53,7 +52,6 @@ body {
 }
 
 
-/* перепроверить ещё раз */
 .wrapper .subtitle, .wrapper button {
     text-align: center;
     color: #2d3e56;
@@ -68,7 +66,6 @@ body {
     margin-bottom: 5px;
 }
 
-/* Стили для табов - под заголовком */
 .auth-tabs {
     display: flex;
     justify-content: center;
@@ -234,7 +231,6 @@ button {
         <div class="wrapper">
             <h1 class="title different-font">TeamPal</h1>
             
-            <!-- Табы под заголовком, меньшего размера -->
             <div class="auth-tabs">
                 <a href="#" class="auth-tab" id="loginTab">Войти</a>
                 <a href="#" class="auth-tab active" id="registerTab">Зарегистрироваться</a>
@@ -271,15 +267,12 @@ button {
             const consentCheckbox = document.getElementById('consent');
             const submitBtn = document.getElementById('submitBtn');
             
-            // Изначально кнопка неактивна
             submitBtn.disabled = true;
-            
-            // Активация кнопки при согласии
+
             consentCheckbox.addEventListener('change', function() {
                 submitBtn.disabled = !this.checked;
             });
             
-            // Обработчики для табов
             const loginTab = document.getElementById('loginTab');
             const registerTab = document.getElementById('registerTab');
             const subtitle = document.querySelector('.subtitle');

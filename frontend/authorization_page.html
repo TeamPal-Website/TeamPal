@@ -23,7 +23,6 @@
     color: #2d3e56;
 }
 
-/* УБИРАЕМ звездочку - теперь шрифт Gabriela только для body */
 body {
   font-family: "Gabriela", serif;
   font-weight: 400;
@@ -32,7 +31,6 @@ body {
   background-color: #fffffc;
 }
 
-/* Класс для другого шрифта - применяем его к заголовку */
 .different-font {
   font-family: "Space Grotesk", sans-serif;
   font-optical-sizing: auto;
@@ -68,7 +66,6 @@ body {
     margin-bottom: 5px;
 }
 
-/* Стили для табов - под заголовком */
 .auth-tabs {
     display: flex;
     justify-content: center;
@@ -194,10 +191,8 @@ button {
 <body class="page">
     <form class="form" action="" method="post">
         <div class="wrapper">
-            <!-- ИСПРАВЛЕНО: теперь заголовок напрямую использует класс different-font -->
             <h1 class="title different-font">TeamPal</h1>
             
-            <!-- Табы под заголовком -->
             <div class="auth-tabs">
                 <a href="#" class="auth-tab active" id="loginTab">Войти</a>
                 <a href="#" class="auth-tab" id="registerTab">Зарегистрироваться</a>
@@ -236,8 +231,6 @@ button {
                 subtitle.textContent = 'Введите ваши данные для входа в систему';
                 submitButton.textContent = 'Войти';
                 
-                // Здесь можно добавить логику для перехода на страницу входа
-                // Например, изменение action формы или редирект
                 console.log('Переключение на форму входа');
             });
             
@@ -250,12 +243,7 @@ button {
                 subtitle.textContent = 'Введите ваши данные для регистрации';
                 submitButton.textContent = 'Зарегистрироваться';
                 
-                // Здесь можно добавить логику для перехода на страницу регистрации
-                // Например, редирект на register.html
                 console.log('Переключение на форму регистрации');
-                
-                // Вариант с редиректом (раскомментируйте при необходимости):
-                // window.location.href = 'register.html';
             });
         });
     </script>
