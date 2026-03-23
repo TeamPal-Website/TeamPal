@@ -1,328 +1,589 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TeamPal · поиск сокомандников</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TeamPal</title>
+    <link rel="icon" type="image/svg+xml" href="./assets/favicon-placeholder.svg" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Gabriela&display=swap" rel="stylesheet">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
+
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+
+
+<style>
+  :root {
+    --bg: #f7f5f2;
+    --header: #eae8e4;
+    --card: #edeae4;
+    --footer: #d4d3cb;
+    --ink: #1a1a1a;
+    --ink2: #3a3a3a;
+
+    --flame-1: #fa9500;
+    --flame-2: #f85a0b;
+    --flame-3: #eb6424;
+    --flame-4: #c1121f;
+    --flame-5: #ffd066;
+  }
+
+  *,
+  *::before,
+  *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: "Space Grotesk", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .different-font {
+          font-family: "Gabriela", sans-serif;
+          font-optical-sizing: auto;
+          font-weight: 400;
+          font-style: normal;
+        }
+
+  #root, .page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .header {
+    width: 100%;
+    height: 72px;
+    background: var(--header);
+    display: flex;
+    align-items: center;
+    padding: 0 28px;
+  }
+
+  .logo {
+    width: 46px;
+    height: 46px;
+    object-fit: cover;
+    border-radius: 10px;
+    transition: transform 0.3s ease;
+  }
+
+  .logo:hover {
+    transform: scale(1.08) rotate(-3deg);
+  }
+
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .about {
+    width: 100%;
+    padding: 56px 28px 48px;
+    text-align: center;
+    background: var(--bg);
+  }
+
+  .about__title {
+    font-family: "Space Grotesk", "Inter", sans-serif;
+    font-size: clamp(26px, 3vw, 40px);
+    font-weight: 700;
+    color: #1b2436;
+    margin-bottom: 18px;
+  }
+
+  .about__text {
+    font-size: clamp(15px, 1.4vw, 19px);
+    line-height: 1.75;
+    color: var(--ink2);
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  .why {
+    width: 100%;
+    padding: 48px 28px 64px;
+    text-align: center;
+    background: var(--bg);
+  }
+
+  .why__heading {
+    font-family: "Space Grotesk", "Inter", sans-serif;
+    font-size: clamp(28px, 3.2vw, 44px);
+    font-weight: 800;
+    color: #1b2436;
+    margin-bottom: 8px;
+  }
+
+  .why__sub {
+    font-size: clamp(15px, 1.4vw, 19px);
+    color: var(--ink2);
+    margin-bottom: 40px;
+  }
+
+  .why__grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .why-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 32px 24px 28px;
+    text-align: left;
+    border: 1px solid rgba(0,0,0,0.06);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .why-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 14px 40px rgba(0,0,0,0.07);
+  }
+
+  .why-card__icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    margin-bottom: 20px;
+  }
+
+  .why-card__icon svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .why-card__title {
+    font-family: "Space Grotesk", "Inter", sans-serif;
+    font-size: clamp(16px, 1.4vw, 20px);
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 10px;
+    line-height: 1.3;
+  }
+
+  .why-card__desc {
+    font-size: clamp(13px, 1.1vw, 15px);
+    line-height: 1.6;
+    color: var(--ink2);
+  }
+
+  .steps {
+    width: 100%;
+    padding: 56px 28px 64px;
+    text-align: center;
+    background: var(--bg);
+  }
+
+  .steps__heading {
+    font-family: "Space Grotesk", "Inter", sans-serif;
+    font-size: clamp(28px, 3.2vw, 44px);
+    font-weight: 800;
+    color: #1b2436;
+    margin-bottom: 8px;
+  }
+
+  .steps__sub {
+    font-size: clamp(15px, 1.4vw, 19px);
+    color: var(--ink2);
+    margin-bottom: 48px;
+  }
+
+  .steps__track {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 0;
+    position: relative;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .steps__line {
+    position: absolute;
+    top: 44px;
+    left: 12%;
+    right: 12%;
+    height: 3px;
+    background: linear-gradient(90deg, var(--flame-5), var(--flame-1), var(--flame-3), var(--flame-1));
+    border-radius: 2px;
+    z-index: 0;
+  }
+
+  .step {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .step__circle {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, var(--flame-1), var(--flame-3));
+    color: #fff;
+    font-family: "Space Grotesk", "Inter", sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    display: grid;
+    place-items: center;
+    box-shadow: 0 6px 24px rgba(250, 149, 0, 0.30);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .step:hover .step__circle {
+    transform: scale(1.1);
+    box-shadow: 0 10px 32px rgba(250, 149, 0, 0.40);
+  }
+
+  .step__title {
+    margin-top: 16px;
+    font-family: "Space Grotesk", "Inter", sans-serif;
+    font-size: clamp(15px, 1.3vw, 18px);
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .step__desc {
+    margin-top: 6px;
+    font-size: clamp(13px, 1.1vw, 15px);
+    color: var(--ink2);
+    line-height: 1.5;
+    max-width: 180px;
+  }
+
+  .hero {
+    --mx: 0px;
+    --my: 0px;
+
+    position: relative;
+    width: 100%;
+    min-height: 420px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+
+    background:
+      radial-gradient(ellipse 60% 55% at 14% 18%,
+        rgba(255, 208, 102, 0.55) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 50% at 82% 70%,
+        rgba(193, 18, 31, 0.30) 0%, transparent 70%),
+      radial-gradient(circle at 50% 55%,
+        rgba(248, 90, 11, 0.25) 0%, transparent 50%),
+      linear-gradient(
+        115deg,
+        var(--flame-1) 0%,
+        var(--flame-1) 28%,
+        var(--flame-2) 42%,
+        var(--flame-3) 58%,
+        var(--flame-2) 74%,
+        var(--flame-1) 100%
+      );
+
+    background-size: 200% 200%, 200% 200%, 100% 100%, 100% 100%;
+    animation: heroShift 12s ease-in-out infinite alternate;
+  }
+
+  @keyframes heroShift {
+    0%   { background-position: 0% 0%, 100% 100%, center, center; }
+    100% { background-position: 100% 100%, 0% 0%, center, center; }
+  }
+
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0.22;
+    filter: blur(46px);
+    will-change: transform;
+    animation: drift 8s ease-in-out infinite alternate;
+    transform: translate(var(--mx), var(--my));
+  }
+
+  .blob:nth-child(1) { background: var(--flame-5); }
+  .blob:nth-child(2) { background: var(--flame-4); }
+  .blob:nth-child(3) { background: var(--flame-1); opacity: 0.16; }
+
+  @keyframes drift {
+    0%   { transform: translate(var(--mx), var(--my)) scale(1)   rotate(0deg); }
+    50%  { transform: translate(var(--mx), var(--my)) scale(1.15) rotate(8deg); }
+    100% { transform: translate(var(--mx), var(--my)) scale(0.95) rotate(-5deg); }
+  }
+
+  .hero__inner {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding: 32px 20px;
+  }
+
+  .hero__title {
+    font-family: "Space Grotesk", "Inter", sans-serif;
+    font-size: clamp(52px, 8vw, 100px);
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    color: var(--ink);
+    text-shadow: 0 2px 30px rgba(250, 149, 0, 0.18);
+  }
+
+  .hero__title span {
+    background: linear-gradient(135deg, #fff 30%, rgba(255,255,255,0.6));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero__sub {
+    margin-top: 12px;
+    font-size: clamp(16px, 2vw, 24px);
+    font-weight: 500;
+    color: rgba(26, 26, 26, 0.75);
+    letter-spacing: 0.04em;
+  }
+
+  .hero__btns {
+    margin-top: 32px;
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    border: none;
+    border-radius: 999px;
+    padding: 14px 34px;
+    font-family: "Inter", sans-serif;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 0.3s ease;
+  }
+
+  .btn:active { transform: scale(0.97); }
+
+  .btn--dark {
+    background: var(--ink);
+    color: #fff;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.22);
+  }
+
+  .btn--dark:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.30);
+  }
+
+  .btn--glass {
+    background: rgba(255, 255, 255, 0.55);
+    color: var(--ink);
+    backdrop-filter: blur(10px);
+    box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.6),
+                0 4px 16px rgba(0, 0, 0, 0.08);
+  }
+
+  .btn--glass:hover {
+    background: rgba(255, 255, 255, 0.78);
+    transform: translateY(-2px);
+    box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.9),
+                0 10px 28px rgba(0, 0, 0, 0.10);
+  }
+
+  .footer {
+    width: 100%;
+    height: 52px;
+    background: var(--footer);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    font-size: 14px;
+    color: var(--ink2);
+  }
+
+  @media (max-width: 860px) {
+    .why__grid {
+      grid-template-columns: repeat(2, 1fr);
     }
 
-    body {
-      min-height: 100vh;
-      background-color: #ffffff;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .header {
+    .chess__cell--text {
       width: 100%;
-      background-color: #f2f2f0;
-      padding: 1.2rem 4rem;
-      display: flex;
-      align-items: center;
-      border-bottom: 1px solid #dbd9ce;
     }
 
-    .logo-container {
-      display: flex;
-      align-items: center;
-    }
-
-    .logo-img {
-      width: 60px;
-      height: 60px;
-      background: linear-gradient(135deg, #FA9500, #EB6424, #F85A0B);
-      border-radius: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-    }
-
-    .logo-img svg {
-      width: 36px;
-      height: 36px;
-      fill: #ffffff;
-    }
-
-    .main-content {
-      width: 100%;
-      padding: 3rem 4rem 2rem 4rem;
-      display: flex;
-      flex-direction: column;
-      gap: 2.5rem;
-    }
-
-    .text-blocks-row {
-      display: flex;
+    .steps__track {
       flex-wrap: wrap;
-      gap: 2rem;
-      width: 100%;
+      gap: 32px;
     }
 
-    .desc-block {
-      flex: 2 1 400px;
-      background-color: #f6f6f4;
-      border-radius: 2.5rem 1rem 2.5rem 1rem;
-      padding: 2.8rem 3rem;
-      box-shadow: 0 8px 20px -12px rgba(0, 0, 0, 0.15);
-      border: 1px solid #e2dfd3;
+    .steps__line {
+      display: none;
     }
 
-    .actual-block {
-      flex: 1 1 280px;
-      background-color: #f6f6f4;
-      border-radius: 1rem 2.5rem 1rem 2.5rem;
-      padding: 2.8rem 2.5rem;
-      box-shadow: 0 8px 20px -12px rgba(0, 0, 0, 0.15);
-      border: 1px solid #e2dfd3;
+    .step {
+      flex: 0 0 45%;
     }
 
-    .section-title {
-      font-size: 2rem;
-      font-weight: 600;
-      margin-bottom: 1.5rem;
-      background: linear-gradient(145deg, #333, #5a5a5a);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-    }
-
-    .desc-text {
-      font-size: 1.3rem;
-      line-height: 1.6;
-      color: #2f3e2e;
-    }
-
-    .actual-text {
-      font-size: 1.2rem;
-      line-height: 1.6;
-      color: #3b463b;
-    }
-
-    .highlight {
-      font-weight: 600;
-      color: #C24F0A;
-      background: rgba(250, 149, 0, 0.1);
-      padding: 0.1rem 0.4rem;
-      border-radius: 12px;
-    }
-
-    .gradient-fullwidth {
-      width: 100vw;
-      position: relative;
-      left: 50%;
-      right: 50%;
-      margin-left: -50vw;
-      margin-right: -50vw;
-      background: linear-gradient(145deg, #FA9500, #F85A0B, #EB6424, #C1121F, #FA9500, #FFB347);
-      background-size: 300% 300%;
-      animation: softGradientShift 12s ease infinite alternate;
-      box-shadow: 0 30px 40px -25px rgba(193, 18, 31, 0.5), inset 0 1px 4px rgba(255, 221, 157, 0.8);
-    }
-
-    .gradient-content {
-      max-width: 1300px;
-      margin: 0 auto;
-      padding: 7rem 4rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-    }
-
-    @keyframes softGradientShift {
-      0% { background-position: 0% 30%; }
-      100% { background-position: 100% 70%; }
-    }
-
-    .gradient-title {
-      font-size: 4.8rem;
-      font-weight: 800;
-      color: white;
-      text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 2px 8px 12px rgba(150, 40, 0, 0.6);
-      margin-bottom: 1.5rem;
-      line-height: 1.1;
-    }
-
-    .gradient-title span {
-      font-weight: 300;
-      color: #FFEBC1;
-      display: block;
-      font-size: 2.8rem;
-      text-shadow: 0 2px 5px #AF5400;
-    }
-
-    .gradient-buttons {
-      display: flex;
-      gap: 2rem;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin-top: 1rem;
-    }
-
-    .btn {
-      text-decoration: none;
-      font-weight: 600;
-      font-size: 1.4rem;
-      padding: 0.9rem 2.8rem;
-      border-radius: 60px;
-      transition: all 0.25s ease;
-      background: rgba(255, 255, 255, 0.2);
-      backdrop-filter: blur(12px);
-      border: 2px solid rgba(255, 248, 220, 0.7);
-      color: white;
-      text-shadow: 0 2px 5px rgba(0,0,0,0.2);
-      box-shadow: 0 10px 20px -8px rgba(0, 0, 0, 0.4);
-    }
-
-    .btn-primary {
-      background: rgba(255, 215, 140, 0.28);
-      border-color: #FFF8E7;
-    }
-
-    .btn-primary:hover {
-      background: rgba(250, 149, 0, 0.7);
-      border-color: #ffffff;
-      transform: scale(1.05);
-      box-shadow: 0 18px 30px -8px #AD2F00;
-    }
-
-    .btn-secondary:hover {
-      background: rgba(193, 18, 31, 0.6);
-      border-color: #FFC27A;
-      transform: scale(1.02);
+    .hero {
+      min-height: 340px;
     }
 
     .footer {
-      width: 100%;
-      background-color: #3a3f31;
-      padding: 1.2rem 4rem;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
-      gap: 1.5rem;
-      color: #e9e9d5;
-      margin-top: 3rem;
+      flex-direction: column;
+      height: auto;
+      padding: 12px 20px;
+      gap: 4px;
+      text-align: center;
     }
+  }
 
-    .footer-left {
-      display: flex;
-      align-items: center;
-      gap: 2.5rem;
-    }
-
-    .footer-logo small {
-      font-size: 1.5rem;
-      font-weight: 600;
-      background: linear-gradient(145deg, #FFD966, #FA9500);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-    }
-
-    .footer-email a {
-      color: #FFCF9A;
-      text-decoration: none;
-      border-bottom: 2px dotted #FA9500;
-      transition: 0.2s;
-      font-size: 1.1rem;
-    }
-
-    .footer-email a:hover {
-      color: #ffffff;
-      border-bottom: 2px solid #F85A0B;
-    }
-
-    .footer-copyright {
-      color: #b8bba3;
-      font-size: 0.95rem;
-    }
-
-    @media (max-width: 900px) {
-      .header { padding: 1rem 2rem; }
-      .main-content { padding: 2rem 2rem; }
-      .gradient-content { padding: 5rem 2rem; }
-      .gradient-title { font-size: 3.8rem; }
-      .gradient-title span { font-size: 2.2rem; }
-      .btn { font-size: 1.2rem; padding: 0.7rem 2rem; }
-      .footer { padding: 1rem 2rem; }
-    }
-
-    @media (max-width: 600px) {
-      .gradient-content { padding: 4rem 1.5rem; }
-      .gradient-title { font-size: 2.8rem; }
-      .gradient-title span { font-size: 1.6rem; }
-    }
+  @media (max-width: 480px) {
+    .header { padding: 0 16px; }
+    .cards-row { padding: 10px; gap: 10px; }
+    .card { padding: 22px 18px 18px; border-radius: 14px; }
+    .hero__btns { flex-direction: column; align-items: center; }
+    .btn { width: 100%; max-width: 280px; }
+  }
   </style>
 </head>
-<body>
-  <header class="header">
-    <div class="logo-container">
-      <div class="logo-img" id="logoPlaceholder">
-        <svg viewBox="0 0 28 28">
-          <circle cx="14" cy="10" r="6" fill="#EB6424" />
-          <rect x="8" y="16" width="12" height="10" fill="#F85A0B" rx="2" />
-          <circle cx="14" cy="10" r="2" fill="#FFD966" />
-        </svg>
-      </div>
-    </div>
-  </header>
 
-  <main class="main-content">
-    <div class="text-blocks-row">
-      <div class="desc-block">
-        <h2 class="section-title">Краткое описание</h2>
-        <p class="desc-text">
-          <span class="highlight">TeamPal</span> — это пространство, где вы находите единомышленников для стартапов, учебных проектов, креативных коллаб и open source. 
-          Мы помогаем собрать команду мечты: от разработчиков до дизайнеров, от маркетологов до проджектов. 
-          Указывайте роль, стек, цели — и алгоритм подберёт тех, кто горит тем же.
-        </p>
-      </div>
+  <body>
+    <div class="page">
+      <header class="header">
+        <img class="logo" src="./assets/logo-placeholder.svg" alt="Логотип TeamPal" />
+      </header>
 
-      <div class="actual-block">
-        <h2 class="section-title">Актуальность</h2>
-        <p class="actual-text">
-          В одиночку сложно выигрывать хакатоны, запускать стартапы или делать масштабные пет-проекты. 
-          Каждый четвёртый IT-специалист ищет команду, но существующие платформы перегружены. 
-          <strong style="color:#C24F0A;">TeamPal</strong> закрывает потребность в быстром поиске мотивированных коллег без лишнего шума.
-        </p>
-      </div>
-    </div>
-  </main>
+      <main class="main">
+        <section class="hero" id="hero">
+          <div class="blob" style="width:340px;height:340px;top:-6%;left:8%"></div>
+          <div class="blob" style="width:260px;height:260px;bottom:2%;right:6%;animation-delay:1.4s"></div>
+          <div class="blob" style="width:180px;height:180px;top:30%;left:52%;animation-delay:2.8s"></div>
 
-  <div class="gradient-fullwidth">
-    <div class="gradient-content">
-      <div class="gradient-title">
-        Team<span>Pal</span>
-        <span>найди сокомандников</span>
-      </div>
-      <div class="gradient-buttons">
-        <a href="#" class="btn btn-primary">Войти</a>
-        <a href="#" class="btn btn-secondary">Зарегистрироваться</a>
-      </div>
-    </div>
-  </div>
+          <div class="hero__inner">
+            <h1 class="hero__title">Team<span>Pal</span></h1>
+            <p class="hero__sub different-font">Найди команду &middot; Запусти проект &middot; Развивайтесь вместе</p>
+            <div class="hero__btns">
+              <button class="btn btn--dark">Войти</button>
+              <button class="btn btn--glass">Зарегистрироваться</button>
+            </div>
+          </div>
+        </section>
 
-  <footer class="footer">
-    <div class="footer-left">
-      <div class="footer-logo">
-        <small>TeamPal 2026</small>
-      </div>
-      <div class="footer-email">
-        <a href="mailto:teampal@dimple.ru">teampal@dimple.ru</a>
-      </div>
+        <section class="about">
+          <h2 class="about__title">Краткое описание</h2>
+          <p class="about__text different-font">
+            TeamPal - платформа, где идеи встречаются с людьми.
+            Мы помогаем IT-специалистам находить единомышленников
+            для коммерческих проектов, хакатонов и учебных проектов.
+            Создавайте команды, развивайтесь вместе
+            и воплощайте свои идеи в жизнь.
+          </p>
+        </section>
+
+
+        <section class="why">
+          <h2 class="why__heading">Почему TeamPal</h2>
+          <p class="why__sub">Платформа для поиска и объединения в команды</p>
+          <div class="why__grid">
+            <article class="why-card">
+              <div class="why-card__icon" style="background:#c1121f">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              </div>
+              <h3 class="why-card__title">Только IT</h3>
+              <p class="why-card__desc different-font">Все вакансии только от людей из IT-сферы</p>
+            </article>
+            <article class="why-card">
+              <div class="why-card__icon" style="background:#f83a0b">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+                </svg>
+              </div>
+              <h3 class="why-card__title">Три формата в одном</h3>
+              <p class="why-card__desc different-font">Коммерческие проекты, хакатоны и учебные проекты на одной платформе</p>
+            </article>
+            <article class="why-card">
+              <div class="why-card__icon" style="background:#EB6424">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+              </div>
+              <h3 class="why-card__title">Для всех ролей</h3>
+              <p class="why-card__desc different-font">Разработчики, дизайнеры, аналитики, DevOps и другие</p>
+            </article>
+            <article class="why-card">
+              <div class="why-card__icon" style="background:#FA9500">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                </svg>
+              </div>
+              <h3 class="why-card__title">Находи людей, а не резюме</h3>
+              <p class="why-card__desc different-font">Видишь стек, проекты, мотивацию каждого участника</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="steps">
+          <h2 class="steps__heading">Как это работает</h2>
+          <p class="steps__sub">Всего 4 простых шага</p>
+          <div class="steps__track">
+            <span class="steps__line" aria-hidden="true"></span>
+            <div class="step">
+              <div class="step__circle">1</div>
+              <h3 class="step__title">Создай профиль</h3>
+              <p class="step__desc different-font">Укажи свои навыки, интересы и цели</p>
+            </div>
+            <div class="step">
+              <div class="step__circle">2</div>
+              <h3 class="step__title">Найди проект</h3>
+              <p class="step__desc different-font">Ищи команду или выложи свой проект</p>
+            </div>
+            <div class="step">
+              <div class="step__circle">3</div>
+              <h3 class="step__title">Собери команду</h3>
+              <p class="step__desc different-font">Пригласи участников или откликнись на проект</p>
+            </div>
+            <div class="step">
+              <div class="step__circle">4</div>
+              <h3 class="step__title">Создавайте</h3>
+              <p class="step__desc different-font">Работайте вместе и достигайте поставленных целей</p>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <span>TeamPal 2026</span>
+        <span>обратная связь: teampal@dimple.ru</span>
+      </footer>
     </div>
-    <div class="footer-copyright">
-      © обратная связь
-    </div>
-  </footer>
-</body>
+
+  </body>
 </html>
+

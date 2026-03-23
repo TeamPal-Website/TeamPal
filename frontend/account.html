@@ -643,7 +643,7 @@
     </main>
 
     <footer class="footer">
-      <span>TeamPal<span id="year"></span></span>
+      <span>TeamPal 2026</span>
       <span>обратная связь: teampal@dimple.ru</span>
     </footer>
 
@@ -664,11 +664,6 @@
 
     <script>
       (function () {
-        const yearSpan = document.getElementById("year");
-        if (yearSpan) {
-          yearSpan.textContent = " " + new Date().getFullYear();
-        }
-
         const tabResume = document.getElementById("tab-resume");
         const tabAbout = document.getElementById("tab-about");
         const panelResume = document.getElementById("panel-resume");
@@ -772,10 +767,6 @@
 
           if (!oldPass) {
             alert("Введите старый пароль");
-            return;
-          }
-          if (newPass.length < 6) {
-            alert("Новый пароль должен быть не короче 6 символов");
             return;
           }
           if (newPass !== confirmPass) {
