@@ -533,6 +533,9 @@
       min-width: 120px;
     }
   }
+  body {
+    visibility: hidden;
+  }
 </style>
 </head>
 
@@ -662,9 +665,9 @@
       </div>
     </div>
 
+    <script src="./config.js"></script>
     <script>
       (function () {
-        const API_BASE_URL = "http://127.0.0.1:8000";
         const tabResume = document.getElementById("tab-resume");
         const tabAbout = document.getElementById("tab-about");
         const panelResume = document.getElementById("panel-resume");
@@ -723,6 +726,7 @@
             const user = await response.json();
             userMailSpan.textContent = user.email || "";
             userNameSpan.textContent = displayNameFromEmail(user.email);
+            document.body.style.visibility = 'visible';
           } catch (error) {
             console.error(error);
             window.location.href = "./authorization_page.html";
