@@ -80,5 +80,5 @@ async def get_me(user_id: UserIdDep):
     description="Удаляет cookie `access_token`, завершая сессию пользователя.",
 )
 async def logout(response: Response):
-    response.delete_cookie("access_token")
+    response.delete_cookie("access_token",)
     return {"status": "OK"}
