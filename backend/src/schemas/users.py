@@ -19,6 +19,11 @@ class UserRequestAdd(BaseModel):
         return value
 
 
+class UserLoginRequest(BaseModel):
+    email: EmailStr = Field(description="Email пользователя", examples=["user@example.com"])
+    password: str = Field(examples=["secret123"])
+    
+
 class User(BaseModel):
     id: int
     email: EmailStr
