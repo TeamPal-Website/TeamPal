@@ -2,14 +2,14 @@ from pydantic import BaseModel, EmailStr, ConfigDict, field_validator, Field
 
 
 class UserAdd(BaseModel):
-    email: EmailStr
-    hashed_password: str
+    email: EmailStr = Field(max_length=200)
+    hashed_password: str = Field (min_length=1, max_length=200)
     is_active: bool
 
 
 class UserRequestAdd(BaseModel):
-    email: EmailStr = Field(description="Email пользователя", examples=["user@example.com"])
-    password: str = Field(examples=["secret123"])
+    email: EmailStr = Field(description="Email пользователя", examples=["user@example.com"], min_length=6, max_length=200)
+    password: str = Field(examples=["secret123"], max_length=200)
 
     @field_validator("password")
     @classmethod
@@ -20,8 +20,8 @@ class UserRequestAdd(BaseModel):
 
 
 class UserLoginRequest(BaseModel):
-    email: EmailStr = Field(description="Email пользователя", examples=["user@example.com"])
-    password: str = Field(examples=["secret123"])
+    email: EmailStr = Field(description="Email пользователя", examples=["user@example.com"], max_length=200)
+    password: str = Field(examples=["secret123"], max_length=200)
     
 
 class User(BaseModel):

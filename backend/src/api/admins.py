@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Body
 
-from src.api.dependencies import UserIdDep
+from src.api.dependencies import UserIdDep, DBDep
 from src.database import async_session_maker
 from src.repositories.admins import AdminsRepository
 
@@ -14,10 +14,9 @@ router = APIRouter(prefix="/admins", tags=["Администрирование"]
                 "Заблокированный пользователь не сможет войти в систему. "
                 "Требует авторизации.",
 )
-async def blocked_user(_: UserIdDep, user_id: int = Body(embed=True)):
-    async with async_session_maker() as session:
-        await AdminsRepository(session).block_user(user_id=user_id)
-        await session.commit()
+async def blocked_user(db: DBDep, _: UserIdDep, user_id: int = Body(embed=True)):
+    await db.admins.block_user(user_id=user_id)
+    await db.commit()
     return {"status": "OK"}
 
 
@@ -28,8 +27,7 @@ async def blocked_user(_: UserIdDep, user_id: int = Body(embed=True)):
                 "После разблокировки пользователь может войти в систему. "
                 "Требует авторизации.",
 )
-async def unblocked_user(_: UserIdDep, user_id: int = Body(embed=True)):
-    async with async_session_maker() as session:
-        await AdminsRepository(session).unblock_user(user_id=user_id)
-        await session.commit()
+async def unblocked_user(db: DBDep, _: UserIdDep, user_id: int = Body(embed=True)):
+    await db.admins.unblock_user(user_id=user_id)
+    await db.commit()
     return {"status": "OK"}

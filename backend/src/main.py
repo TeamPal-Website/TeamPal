@@ -1,5 +1,6 @@
 import sys
 from pathlib import Path
+from fastapi.staticfiles import StaticFiles
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -22,6 +23,11 @@ app.add_middleware(
 
 app.include_router(router_auth)
 app.include_router(router_admins)
+
+app.mount("/", StaticFiles(
+    directory=str(Path(__file__)
+    .resolve().parent.parent.parent / "frontend"), html=True), name="frontend"
+)
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Response, HTTPException
 from sqlalchemy.exc import IntegrityError
 
-from src.api.dependencies import UserIdDep
+from src.api.dependencies import UserIdDep, DBDep
 from src.database import async_session_maker
 from src.repositories.users import UsersRepository
 from src.schemas.users import UserAdd, UserRequestAdd, UserLoginRequest
 from src.services.auth import AuthService
+
 
 router = APIRouter(prefix="/auth", tags=["Авторизация и аутентификация"])
 
@@ -18,7 +19,9 @@ router = APIRouter(prefix="/auth", tags=["Авторизация и аутент
                 "Возвращает 409, если email уже занят.",
 )
 async def register_user(
+        db: DBDep,
         data: UserRequestAdd,
+
 ):
     hashed_password = AuthService().get_password_hash(data.password)
     new_user_data = UserAdd(
@@ -27,9 +30,8 @@ async def register_user(
         is_active=True
     )
     try:
-        async with async_session_maker() as session:
-            await UsersRepository(session).add(new_user_data)
-            await session.commit()
+        await db.users.add(new_user_data)
+        await db.commit()
     except IntegrityError:
         raise HTTPException(status_code=409, detail="Пользователь с таким email уже существует")
     return {"status": "OK"}
@@ -44,21 +46,21 @@ async def register_user(
 
 )
 async def login_user(
+        db: DBDep,
         data: UserLoginRequest,
         response: Response
 ):
-    async with async_session_maker() as session:
-        user = await UsersRepository(session).get_user_with_hashed_password(email=data.email)
-        if not AuthService().verify_password(data.password, user.hashed_password):
-            raise HTTPException(status_code=401, detail="Пароль неверный")
-        access_token = AuthService().create_access_token({"user_id": user.id})
-        response.set_cookie(
-            "access_token",
-            access_token,
-            httponly=True,
-            samesite="lax",
-        )
-        return {"access_token": access_token}
+    user = await db.users.get_user_with_hashed_password(email=data.email)
+    if not AuthService().verify_password(data.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Пароль неверный")
+    access_token = AuthService().create_access_token({"user_id": user.id})
+    response.set_cookie(
+        "access_token",
+        access_token,
+        httponly=True,
+        samesite="lax",
+    )
+    return {"access_token": access_token}
 
 
 @router.get(
@@ -67,9 +69,8 @@ async def login_user(
     description="Возвращает информацию об авторизованном пользователе на основе JWT-токена из cookie. "
                 "Требует аутентификации.",
 )
-async def get_me(user_id: UserIdDep):
-    async with async_session_maker() as session:
-        user = await UsersRepository(session).get_one_or_none(id=user_id)
+async def get_me(db: DBDep, user_id: UserIdDep):
+        user = await db.users.get_one_or_none(id=user_id)
         if user is None:
             raise HTTPException(status_code=404, detail="Пользователь не найден")
         return user
