@@ -81,15 +81,15 @@ body {
 }
 
 .notification.error {
-    border-left: 3px solid #dc2626;
+    border-left: 3px solid #2d3e56;
 }
 
 .notification.success {
-    border-left: 3px solid #10b981;
+    border-left: 3px solid #2d3e56;
 }
 
 .notification.warning {
-    border-left: 3px solid #f59e0b;
+    border-left: 3px solid #2d3e56;
 }
 
 .notification-content {
@@ -97,7 +97,7 @@ body {
     font-size: 14px;
     line-height: 1.4;
     color: #2d3e56;
-    font-family: "Space Grotesk", serif;
+    font-family: "Space Grotesk", sans-serif;
     text-align: center;
 }
 
@@ -136,8 +136,7 @@ body {
 .wrapper .subtitle, .wrapper button {
     text-align: center;
     color: #2d3e56;
-    font-family: "Space Grotesk", serif
-
+    font-family: "Space Grotesk", sans-serif;
 }
 
 .wrapper h1 {
@@ -201,7 +200,7 @@ body {
 }
 
 .login_wrapper {
-    padding-bottom: 27px;
+    padding-bottom: 20px;
 }
 
 .password_wrapper label {
@@ -430,9 +429,6 @@ button {
             function validatePassword(password) {
                 if (!password) return 'Поле пароля обязательно для заполнения';
                 if (password.length < 6) return 'Пароль должен содержать минимум 6 символов';
-                if (!/[A-Z]/.test(password)) return 'Пароль должен содержать хотя бы одну заглавную букву';
-                if (!/[a-z]/.test(password)) return 'Пароль должен содержать хотя бы одну строчную букву';
-                if (!/[0-9]/.test(password)) return 'Пароль должен содержать хотя бы одну цифру';
                 return null;
             }
 
