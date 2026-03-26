@@ -100,10 +100,6 @@
     transition: transform 0.3s ease;
   }
 
-  .logo:hover {
-    transform: scale(1.06) rotate(-3deg);
-  }
-
   .header__actions {
     display: flex;
     align-items: center;
@@ -164,35 +160,90 @@
   }
 
   .burger {
-    width: 42px;
-    height: 42px;
+    width: 48px;
+    height: 48px;
     border: 1px solid var(--line);
-    border-radius: 12px;
+    border-radius: 16px;
     background: #fff;
-    display: grid;
-    place-items: center;
-    gap: 4px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
     cursor: pointer;
+    transition: all 0.25s ease;
+    position: relative;
+    backdrop-filter: blur(2px);
+  }
+
+  .burger:hover {
+    background: linear-gradient(135deg, #fff9f0, #ffffff);
+    border-color: var(--accent-2);
+    box-shadow: 0 4px 12px rgba(248, 90, 11, 0.15);
+    transform: scale(0.98);
+  }
+
+  .burger:active {
+    transform: scale(0.96);
   }
 
   .burger span {
-    width: 18px;
-    height: 2px;
-    background: #2b2b2b;
+    width: 22px;
+    height: 2.5px;
+    background: linear-gradient(90deg, #5a4a3a, #3a2a1a);
     display: block;
+    border-radius: 4px;
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    transform-origin: center;
+  }
+
+  .burger.open span:nth-child(1) {
+    transform: translateY(8.5px) rotate(45deg);
+    width: 24px;
+    background: linear-gradient(90deg, var(--accent-2), var(--accent-1));
+  }
+
+  .burger.open span:nth-child(2) {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+
+  .burger.open span:nth-child(3) {
+    transform: translateY(-8.5px) rotate(-45deg);
+    width: 24px;
+    background: linear-gradient(90deg, var(--accent-2), var(--accent-1));
+  }
+
+  .burger.open {
+    border-color: var(--accent-2);
+    background: linear-gradient(135deg, #fff5e8, #ffffff);
+    box-shadow: 0 6px 16px rgba(248, 90, 11, 0.2);
   }
 
   .header-menu {
     position: absolute;
     right: 0;
-    top: calc(100% + 10px);
-    width: 224px;
+    top: calc(100% + 12px);
+    width: 244px;
     background: #fff;
     border: 1px solid var(--line);
-    border-radius: 14px;
-    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.14);
-    padding: 10px;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.02);
+    padding: 12px 8px;
     display: none;
+    backdrop-filter: blur(0px);
+    animation: menuFadeIn 0.2s ease;
+  }
+
+  @keyframes menuFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .header-menu.open {
@@ -200,35 +251,49 @@
   }
 
   .header-menu__title {
-    font-size: 14px;
-    color: #6b6b6b;
-    margin-bottom: 8px;
-    padding-left: 2px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #8b8b8b;
+    margin-bottom: 12px;
+    padding: 0 10px;
   }
 
   .header-menu__item,
   .header-menu__exit {        
     width: 100%;
     border: 0;
-    background: #fbfbfb;
-    border-radius: 10px;
+    background: transparent;
+    border-radius: 14px;
     text-align: left;
-    padding: 9px 10px;
-    margin-bottom: 6px;
+    padding: 10px 14px;
+    margin-bottom: 4px;
     cursor: pointer;
     font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    color: var(--ink);
   }
 
-  .header-menu__item:hover,
-  .header-menu__exit:hover {
-    background: #fff1de;
+  .header-menu__item:hover {
+    background: linear-gradient(95deg, #fff5e8, #fffbf5);
+    color: var(--accent-2);
+    transform: translateX(4px);
   }
 
   .header-menu__exit {
     margin-top: 8px;
     margin-bottom: 0;
-    color: #b12a1c;
-    border: 1px solid #f0d0cb;
+    color: #d14b2a;
+    border-top: 1px solid var(--line);
+    border-radius: 0;
+    padding-top: 12px;
+  }
+
+  .header-menu__exit:hover {
+    background: #fff0ea;
+    color: #c0391c;
   }
 
   .page {
@@ -308,11 +373,6 @@
     padding: 10px 12px;
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-
-  .side-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 8px 20px rgba(248, 90, 11, 0.18);
   }
 
   .workspace {
@@ -417,17 +477,9 @@
     transition: all 0.2s ease;
   }
 
-  .action-btn:hover {
-    transform: translateY(-1px);
-  }
-
   .action-btn--accent {
     background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
     border-color: transparent;
-  }
-
-  .action-btn--accent:hover {
-    box-shadow: 0 10px 20px rgba(248, 90, 11, 0.26);
   }
 
   .footer {
@@ -532,9 +584,6 @@
       flex: 1;
       min-width: 120px;
     }
-  }
-  body {
-    visibility: hidden;
   }
 </style>
 </head>
@@ -646,7 +695,7 @@
     </main>
 
     <footer class="footer">
-      <span>TeamPal 2026</span>
+      <span>TeamPal<span id="year"></span></span>
       <span>обратная связь: teampal@dimple.ru</span>
     </footer>
 
@@ -665,9 +714,13 @@
       </div>
     </div>
 
-    <script src="./config.js"></script>
     <script>
       (function () {
+        const yearSpan = document.getElementById("year");
+        if (yearSpan) {
+          yearSpan.textContent = " " + new Date().getFullYear();
+        }
+
         const tabResume = document.getElementById("tab-resume");
         const tabAbout = document.getElementById("tab-about");
         const panelResume = document.getElementById("panel-resume");
@@ -693,58 +746,13 @@
         const aboutText = document.getElementById("about-text");
         const aboutCancel = document.getElementById("about-cancel");
         const aboutSave = document.getElementById("about-save");
-        const logoutBtn = document.querySelector(".header-menu__exit");
 
         let aboutInitialValue = "";
 
         const avatarImg = document.getElementById("profile-avatar");
         const userNameSpan = document.querySelector(".user-name");
-        const userMailSpan = document.querySelector(".user-mail");
         avatarImg.src = "#";
         userNameSpan.textContent = "Ваше Имя";
-
-        function displayNameFromEmail(email) {
-          const raw = (email || "").split("@")[0] || "";
-          if (!raw) {
-            return "Пользователь";
-          }
-          return raw.charAt(0).toUpperCase() + raw.slice(1);
-        }
-
-        async function loadCurrentUser() {
-          try {
-            const response = await fetch(API_BASE_URL + "/auth/me", {
-              method: "GET",
-              credentials: "include",
-            });
-
-            if (!response.ok) {
-              window.location.href = "./authorization_page.html";
-              return;
-            }
-
-            const user = await response.json();
-            userMailSpan.textContent = user.email || "";
-            userNameSpan.textContent = displayNameFromEmail(user.email);
-            document.body.style.visibility = 'visible';
-          } catch (error) {
-            console.error(error);
-            window.location.href = "./authorization_page.html";
-          }
-        }
-
-        async function logout() {
-          try {
-            await fetch(API_BASE_URL + "/auth/logout", {
-              method: "POST",
-              credentials: "include",
-            });
-          } catch (error) {
-            console.error(error);
-          } finally {
-            window.location.href = "./authorization_page.html";
-          }
-        }
 
         function showResume() {
           tabResume.classList.add("active");
@@ -763,6 +771,7 @@
         function closeMenus() {
           roleSelect.classList.remove("open");
           headerMenu.classList.remove("open");
+          if (burgerBtn) burgerBtn.classList.remove("open");
         }
 
         tabResume.addEventListener("click", showResume);
@@ -772,6 +781,7 @@
           event.stopPropagation();
           roleSelect.classList.toggle("open");
           headerMenu.classList.remove("open");
+          if (burgerBtn) burgerBtn.classList.remove("open");
         });
 
         roleDropdown.addEventListener("click", function (event) {
@@ -784,6 +794,7 @@
 
         burgerBtn.addEventListener("click", function (event) {
           event.stopPropagation();
+          this.classList.toggle("open");
           headerMenu.classList.toggle("open");
           roleSelect.classList.remove("open");
         });
@@ -818,6 +829,10 @@
             alert("Введите старый пароль");
             return;
           }
+          if (newPass.length < 6) {
+            alert("Новый пароль должен быть не короче 6 символов");
+            return;
+          }
           if (newPass !== confirmPass) {
             alert("Пароли не совпадают");
             return;
@@ -831,10 +846,6 @@
             closePasswordModal();
           }
         });
-
-        if (logoutBtn) {
-          logoutBtn.addEventListener("click", logout);
-        }
 
         resumeCancel.addEventListener("click", function () {
           resumeForm.reset();
@@ -858,7 +869,6 @@
         });
 
         aboutInitialValue = aboutText.value;
-        loadCurrentUser();
       })();
     </script>
   </body>
