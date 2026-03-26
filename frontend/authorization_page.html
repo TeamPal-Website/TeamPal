@@ -21,6 +21,7 @@
 .page {
     height: 100vh;
     color: #2d3e56;
+    position: relative;
 }
 
 body {
@@ -38,6 +39,95 @@ body {
   font-style: normal;
 }
 
+
+.notification-container {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: auto;
+    min-width: 280px;
+    max-width: 500px;
+    pointer-events: none;
+}
+
+.notification {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 12px 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    animation: fadeInDown 0.25s ease-out;
+    pointer-events: auto;
+    border: 1px solid #0000001a;
+    width: 100%;
+}
+
+@keyframes fadeInDown {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOutUp {
+    from {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+}
+
+.notification.error {
+    border-left: 3px solid #dc2626;
+}
+
+.notification.success {
+    border-left: 3px solid #10b981;
+}
+
+.notification.warning {
+    border-left: 3px solid #f59e0b;
+}
+
+.notification-content {
+    flex: 1;
+    font-size: 14px;
+    line-height: 1.4;
+    color: #2d3e56;
+    font-family: "Gabriela", serif;
+    text-align: center;
+}
+
+.notification-close {
+    cursor: pointer;
+    font-size: 18px;
+    color: #b5b5b5;
+    transition: color 0.2s;
+    line-height: 1;
+    flex-shrink: 0;
+    font-family: "Gabriela", serif;
+}
+
+.notification-close:hover {
+    color: #F85A0B;
+}
+
 .form {
     width: 100%;
     height: 100%;
@@ -51,6 +141,8 @@ body {
     border: 1px solid #0000001a;
     border-radius: 10px;
     padding-left: 20px;
+    background: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
 .wrapper .subtitle, .wrapper button {
@@ -110,12 +202,12 @@ body {
     color: #b5b5b5;
     padding-bottom: 15px;
     margin-top: 0;
+    text-align: center;
 }
 
 .login_wrapper label {
     font-size: 16px;
     font-weight: 500;
-
 }
 
 .login_wrapper {
@@ -131,12 +223,11 @@ body {
     padding-bottom: 20px;
 }
 
-
 input {
     font-size: 16px;
     font-weight: 400;
     background-color: #f5f5f5;
-    border: none;
+    border: 1px solid transparent;
     border-radius: 7px;
     padding-left: 10px;
     padding-top: 10px;
@@ -145,6 +236,7 @@ input {
     margin-top: 10px;
     text-align: left;
     box-sizing: border-box;
+    transition: all 0.2s;
 }
 
 input::placeholder {
@@ -154,8 +246,14 @@ input::placeholder {
 input:focus {
     color: #212529;
     outline: 0;
-    box-shadow: 0 0 0 3px #9c9c9c;
+    border-color: #F85A0B;
+    box-shadow: 0 0 0 3px rgba(248, 90, 11, 0.1);
     transition: 0.2s;
+}
+
+input.error {
+    border-color: #dc2626;
+    background-color: #fff5f5;
 }
 
 .login_button {
@@ -176,19 +274,48 @@ button {
     border-style: none;
     text-align: center;
     width: 94%;
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
 .login_button:hover {
-    cursor: pointer;
+    background-color: #e64e00;
 }
 
 .login_button:active {
-    background-color: #575757;
+    background-color: #e64e00;
+}
+
+.login_button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+    .wrapper {
+        width: 85%;
+    }
+    
+    .notification-container {
+        top: 70px;
+        width: 90%;
+        max-width: 90%;
+    }
+    
+    .notification {
+        padding: 10px 16px;
+    }
+    
+    .notification-content {
+        font-size: 13px;
+    }
 }
 
     </style>
 </head>
 <body class="page">
+    <div class="notification-container" id="notificationContainer"></div>
+    
     <form class="form" id="loginForm" action="" method="post">
         <div class="wrapper">
             <h1 class="title different-font">TeamPal</h1>
@@ -203,12 +330,6 @@ button {
                 <label for="email">Email</label>
                 <div class="login_input">
                     <input type="email" id="email" name="email" placeholder="Введите ваш email" required>
-                </div>
-            </div>
-            <div class="password_wrapper">
-                <label for="confirm_password">Повторите пароль</label>
-                <div class="password_input">
-                    <input type="password" id="confirm_password" name="confirm_password" placeholder="Повторите ваш пароль" required>
                 </div>
             </div>
             <div class="password_wrapper">
@@ -230,6 +351,80 @@ button {
             const emailInput = document.getElementById('email');
             const passwordInput = document.getElementById('password');
             const submitBtn = document.getElementById('submitBtn');
+            const notificationContainer = document.getElementById('notificationContainer');
+
+            function showNotification(message, type = 'error', duration = 5000) {
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                
+                notification.innerHTML = `
+                    <div class="notification-content">${message}</div>
+                    <div class="notification-close">×</div>
+                `;
+                
+                notificationContainer.appendChild(notification);
+                
+                const closeBtn = notification.querySelector('.notification-close');
+                closeBtn.addEventListener('click', () => {
+                    notification.style.animation = 'fadeOutUp 0.25s ease-out forwards';
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 250);
+                });
+                
+                setTimeout(() => {
+                    if (notification.parentElement) {
+                        notification.style.animation = 'fadeOutUp 0.25s ease-out forwards';
+                        setTimeout(() => {
+                            notification.remove();
+                        }, 250);
+                    }
+                }, duration);
+            }
+
+            function validateEmail(email) {
+                const emailRegex = /^[^\s@]+@([^\s@]+\.)+[^\s@]+$/;
+                if (!email) return 'Поле email обязательно для заполнения';
+                if (!emailRegex.test(email)) return 'Введите корректный email адрес';
+                return null;
+            }
+
+            function validatePassword(password) {
+                if (!password) return 'Поле пароля обязательно для заполнения';
+                return null;
+            }
+
+            function resetFieldErrors() {
+                const inputs = [emailInput, passwordInput];
+                inputs.forEach(input => {
+                    input.classList.remove('error');
+                });
+            }
+
+            function setFieldError(input) {
+                input.classList.add('error');
+            }
+
+            function validateForm() {
+                resetFieldErrors();
+                
+                const email = emailInput.value.trim();
+                const password = passwordInput.value;
+                
+                const emailError = validateEmail(email);
+                if (emailError) {
+                    setFieldError(emailInput);
+                    return { isValid: false, error: emailError };
+                }
+                
+                const passwordError = validatePassword(password);
+                if (passwordError) {
+                    setFieldError(passwordInput);
+                    return { isValid: false, error: passwordError };
+                }
+                
+                return { isValid: true, error: null };
+            }
 
             async function getErrorText(response) {
                 try {
@@ -243,6 +438,9 @@ button {
                                 return item.msg || 'Ошибка валидации';
                             })
                             .join('; ');
+                    }
+                    if (typeof payload.detail === 'object' && payload.detail !== null) {
+                        return payload.detail.message || 'Ошибка запроса';
                     }
                 } catch (error) {
                     console.error(error);
@@ -263,6 +461,24 @@ button {
                     console.error(error);
                 }
             }
+
+            emailInput.addEventListener('blur', function() {
+                const error = validateEmail(this.value.trim());
+                if (error) {
+                    setFieldError(this);
+                } else {
+                    this.classList.remove('error');
+                }
+            });
+            
+            passwordInput.addEventListener('blur', function() {
+                const error = validatePassword(this.value);
+                if (error) {
+                    setFieldError(this);
+                } else {
+                    this.classList.remove('error');
+                }
+            });
             
             loginTab.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -275,9 +491,22 @@ button {
 
             loginForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
+
+                const validation = validateForm();
+                if (!validation.isValid) {
+                    showNotification(validation.error, 'error');
+                    return;
+                }
+                
                 submitBtn.disabled = true;
 
                 try {
+                    if (typeof API_BASE_URL === 'undefined') {
+                        showNotification('Ошибка конфигурации: API_BASE_URL не определен', 'error');
+                        submitBtn.disabled = false;
+                        return;
+                    }
+
                     const response = await fetch(API_BASE_URL + '/auth/login', {
                         method: 'POST',
                         headers: {
@@ -291,14 +520,24 @@ button {
                     });
 
                     if (!response.ok) {
-                        alert(await getErrorText(response));
+                        const errorText = await getErrorText(response);
+                        showNotification(errorText, 'error');
+                        submitBtn.disabled = false;
                         return;
                     }
-                    window.location.href = './account.html';
+                    
+                    showNotification('Вход выполнен успешно! Перенаправление...', 'success', 1500);
+                    setTimeout(() => {
+                        window.location.href = './account.html';
+                    }, 1000);
+                    
                 } catch (error) {
                     console.error(error);
-                    alert('Не удалось выполнить вход. Проверьте, что бэкенд запущен.');
-                } finally {
+                    if (error.message === 'Failed to fetch') {
+                        showNotification('Не удалось подключиться к серверу. Проверьте, что бэкенд запущен.', 'error');
+                    } else {
+                        showNotification('Не удалось выполнить вход. Попробуйте позже.', 'error');
+                    }
                     submitBtn.disabled = false;
                 }
             });

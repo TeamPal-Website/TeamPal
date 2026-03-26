@@ -19,6 +19,7 @@
 .page {
     height: 100vh;
     color: #2d3e56;
+    position: relative;
 }
 
 body {
@@ -36,6 +37,94 @@ body {
   font-style: normal;
 }
 
+.notification-container {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: auto;
+    min-width: 280px;
+    max-width: 500px;
+    pointer-events: none;
+}
+
+.notification {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 12px 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    animation: fadeInDown 0.25s ease-out;
+    pointer-events: auto;
+    border: 1px solid #0000001a;
+    width: 100%;
+}
+
+@keyframes fadeInDown {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOutUp {
+    from {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+}
+
+.notification.error {
+    border-left: 3px solid #dc2626;
+}
+
+.notification.success {
+    border-left: 3px solid #10b981;
+}
+
+.notification.warning {
+    border-left: 3px solid #f59e0b;
+}
+
+.notification-content {
+    flex: 1;
+    font-size: 14px;
+    line-height: 1.4;
+    color: #2d3e56;
+    font-family: "Gabriela", serif;
+    text-align: center;
+}
+
+.notification-close {
+    cursor: pointer;
+    font-size: 18px;
+    color: #b5b5b5;
+    transition: color 0.2s;
+    line-height: 1;
+    flex-shrink: 0;
+    font-family: "Gabriela", serif;
+}
+
+.notification-close:hover {
+    color: #F85A0B;
+}
+
 .form {
     width: 100%;
     height: 100%;
@@ -49,6 +138,8 @@ body {
     border: 1px solid #0000001a;
     border-radius: 10px;
     padding-left: 20px;
+    background: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 
 
@@ -148,12 +239,14 @@ body {
     height: 18px;
     margin-top: 3px;
     flex-shrink: 0;
+    cursor: pointer;
 }
 
 .consent-text {
     font-size: 14px;
     line-height: 1.4;
     color: #555;
+    cursor: pointer;
 }
 
 .consent-text a {
@@ -169,7 +262,7 @@ input {
     font-size: 16px;
     font-weight: 400;
     background-color: #f5f5f5;
-    border: none;
+    border: 1px solid transparent;
     border-radius: 7px;
     padding-left: 10px;
     padding-top: 10px;
@@ -178,6 +271,7 @@ input {
     margin-top: 10px;
     text-align: left;
     box-sizing: border-box;
+    transition: all 0.2s;
 }
 
 input::placeholder {
@@ -187,8 +281,14 @@ input::placeholder {
 input:focus {
     color: #212529;
     outline: 0;
-    box-shadow: 0 0 0 3px #9c9c9c;
+    border-color: #F85A0B;
+    box-shadow: 0 0 0 3px rgba(248, 90, 11, 0.1);
     transition: 0.2s;
+}
+
+input.error {
+    border-color: #dc2626;
+    background-color: #fff5f5;
 }
 
 .login_button {
@@ -209,14 +309,12 @@ button {
     border-style: none;
     text-align: center;
     width: 94%;
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
 .login_button:hover {
-    cursor: pointer;
-}
-
-.login_button:active {
-    background-color: #575757;
+    background-color: #e64e00;
 }
 
 .login_button:disabled {
@@ -224,9 +322,31 @@ button {
     cursor: not-allowed;
 }
 
+@media (max-width: 768px) {
+    .wrapper {
+        width: 85%;
+    }
+    
+    .notification-container {
+        top: 70px;
+        width: 90%;
+        max-width: 90%;
+    }
+    
+    .notification {
+        padding: 10px 16px;
+    }
+    
+    .notification-content {
+        font-size: 13px;
+    }
+}
+
 </style>
 </head>
 <body class="page">
+    <div class="notification-container" id="notificationContainer"></div>
+    
     <form class="form" id="registerForm" action="" method="post">
         <div class="wrapper">
             <h1 class="title different-font">TeamPal</h1>
@@ -249,6 +369,12 @@ button {
                     <input type="password" id="password" name="password" placeholder="Введите ваш пароль" required>
                 </div>
             </div>
+            <div class="password_wrapper">
+                <label for="confirm_password">Повторите пароль</label>
+                <div class="password_input">
+                    <input type="password" id="confirm_password" name="confirm_password" placeholder="Повторите ваш пароль" required>
+                </div>
+            </div>
             <div class="consent_wrapper">
                 <div class="consent-checkbox">
                     <input type="checkbox" id="consent" name="consent" required>
@@ -269,16 +395,101 @@ button {
             const registerForm = document.getElementById('registerForm');
             const emailInput = document.getElementById('email');
             const passwordInput = document.getElementById('password');
+            const confirmPasswordInput = document.getElementById('confirm_password');
             const submitBtn = document.getElementById('submitBtn');
+            const notificationContainer = document.getElementById('notificationContainer');
             
             submitBtn.disabled = true;
 
-            consentCheckbox.addEventListener('change', function() {
-                submitBtn.disabled = !this.checked;
-            });
+            function showNotification(message, type = 'error', duration = 5000) {
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                
+                notification.innerHTML = `
+                    <div class="notification-content">${message}</div>
+                    <div class="notification-close">×</div>
+                `;
+                
+                notificationContainer.appendChild(notification);
+                
+                const closeBtn = notification.querySelector('.notification-close');
+                closeBtn.addEventListener('click', () => {
+                    notification.style.animation = 'fadeOutUp 0.25s ease-out forwards';
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 250);
+                });
+                
+                setTimeout(() => {
+                    if (notification.parentElement) {
+                        notification.style.animation = 'fadeOutUp 0.25s ease-out forwards';
+                        setTimeout(() => {
+                            notification.remove();
+                        }, 250);
+                    }
+                }, duration);
+            }
             
-            const loginTab = document.getElementById('loginTab');
-            const registerTab = document.getElementById('registerTab');
+            function validateEmail(email) {
+                const emailRegex = /^[^\s@]+@([^\s@]+\.)+[^\s@]+$/;
+                if (!email) return 'Поле почты обязательно для заполнения';
+                if (!emailRegex.test(email)) return 'Введите корректный email адрес';
+                return null;
+            }
+
+            function validatePassword(password) {
+                if (!password) return 'Поле пароля обязательно для заполнения';
+                if (password.length < 6) return 'Пароль должен содержать минимум 6 символов';
+                if (!/[A-Z]/.test(password)) return 'Пароль должен содержать хотя бы одну заглавную букву';
+                if (!/[a-z]/.test(password)) return 'Пароль должен содержать хотя бы одну строчную букву';
+                if (!/[0-9]/.test(password)) return 'Пароль должен содержать хотя бы одну цифру';
+                return null;
+            }
+
+            function validateConfirmPassword(password, confirmPassword) {
+                if (!confirmPassword) return 'Подтверждение пароля обязательно';
+                if (password !== confirmPassword) return 'Пароли не совпадают';
+                return null;
+            }
+
+            function resetFieldErrors() {
+                const inputs = [emailInput, passwordInput, confirmPasswordInput];
+                inputs.forEach(input => {
+                    input.classList.remove('error');
+                });
+            }
+
+            function setFieldError(input) {
+                input.classList.add('error');
+            }
+
+            function validateForm() {
+                resetFieldErrors();
+                
+                const email = emailInput.value.trim();
+                const password = passwordInput.value;
+                const confirmPassword = confirmPasswordInput.value;
+                
+                const emailError = validateEmail(email);
+                if (emailError) {
+                    setFieldError(emailInput);
+                    return { isValid: false, error: emailError };
+                }
+                
+                const passwordError = validatePassword(password);
+                if (passwordError) {
+                    setFieldError(passwordInput);
+                    return { isValid: false, error: passwordError };
+                }
+                
+                const confirmError = validateConfirmPassword(password, confirmPassword);
+                if (confirmError) {
+                    setFieldError(confirmPasswordInput);
+                    return { isValid: false, error: confirmError };
+                }
+                
+                return { isValid: true, error: null };
+            }
 
             function parseDetail(detail) {
                 if (typeof detail === 'string') {
@@ -290,6 +501,9 @@ button {
                             return item.msg || 'Ошибка валидации';
                         })
                         .join('; ');
+                }
+                if (typeof detail === 'object' && detail !== null) {
+                    return detail.message || 'Ошибка запроса';
                 }
                 return 'Ошибка запроса';
             }
@@ -303,6 +517,60 @@ button {
                     return 'Ошибка запроса';
                 }
             }
+
+            emailInput.addEventListener('blur', function() {
+                const error = validateEmail(this.value.trim());
+                if (error) {
+                    setFieldError(this);
+                } else {
+                    this.classList.remove('error');
+                }
+            });
+            
+            passwordInput.addEventListener('blur', function() {
+                const error = validatePassword(this.value);
+                if (error) {
+                    setFieldError(this);
+                } else {
+                    this.classList.remove('error');
+                }
+            });
+            
+            confirmPasswordInput.addEventListener('blur', function() {
+                const error = validateConfirmPassword(passwordInput.value, this.value);
+                if (error) {
+                    setFieldError(this);
+                } else {
+                    this.classList.remove('error');
+                }
+            });
+
+            passwordInput.addEventListener('input', function() {
+                if (confirmPasswordInput.value) {
+                    const error = validateConfirmPassword(this.value, confirmPasswordInput.value);
+                    if (error) {
+                        setFieldError(confirmPasswordInput);
+                    } else {
+                        confirmPasswordInput.classList.remove('error');
+                    }
+                }
+            });
+            
+            confirmPasswordInput.addEventListener('input', function() {
+                const error = validateConfirmPassword(passwordInput.value, this.value);
+                if (error) {
+                    setFieldError(this);
+                } else {
+                    this.classList.remove('error');
+                }
+            });
+            
+            consentCheckbox.addEventListener('change', function() {
+                submitBtn.disabled = !this.checked;
+            });
+            
+            const loginTab = document.getElementById('loginTab');
+            const registerTab = document.getElementById('registerTab');
             
             loginTab.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -312,17 +580,33 @@ button {
             registerTab.addEventListener('click', function(e) {
                 e.preventDefault();
             });
-
+            
             registerForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
-                if (!consentCheckbox.checked) {
-                    alert('Подтвердите согласие на обработку персональных данных');
+                
+                const validation = validateForm();
+                if (!validation.isValid) {
+                    showNotification(validation.error, 'error');
                     return;
                 }
-
+                
+                if (!consentCheckbox.checked) {
+                    showNotification('Подтвердите согласие на обработку персональных данных', 'warning');
+                    return;
+                }
+                
                 submitBtn.disabled = true;
-
+                
                 try {
+                    if (typeof API_BASE_URL === 'undefined') {
+                        showNotification('Ошибка конфигурации: API_BASE_URL не определен', 'error');
+                        submitBtn.disabled = !consentCheckbox.checked;
+                        return;
+                    }
+                    
+                    const email = emailInput.value.trim();
+                    const password = passwordInput.value;
+                    
                     const registerResponse = await fetch(API_BASE_URL + '/auth/register', {
                         method: 'POST',
                         headers: {
@@ -330,16 +614,20 @@ button {
                         },
                         credentials: 'include',
                         body: JSON.stringify({
-                            email: emailInput.value.trim(),
-                            password: passwordInput.value,
+                            email: email,
+                            password: password,
                         }),
                     });
-
+                    
                     if (!registerResponse.ok) {
-                        alert(await getErrorText(registerResponse));
+                        const errorText = await getErrorText(registerResponse);
+                        showNotification(errorText, 'error');
+                        submitBtn.disabled = !consentCheckbox.checked;
                         return;
                     }
-
+                    
+                    showNotification('Регистрация успешна. Выполняется вход...', 'success', 3000);
+                    
                     const loginResponse = await fetch(API_BASE_URL + '/auth/login', {
                         method: 'POST',
                         headers: {
@@ -347,23 +635,34 @@ button {
                         },
                         credentials: 'include',
                         body: JSON.stringify({
-                            email: emailInput.value.trim(),
-                            password: passwordInput.value,
+                            email: email,
+                            password: password,
                         }),
                     });
-
+                    
                     if (!loginResponse.ok) {
-                        alert('Регистрация успешна. Выполните вход.');
-                        window.location.href = './authorization_page.html';
+                        showNotification('Регистрация успешна. Пожалуйста, войдите в систему.', 'success', 4000);
+                        setTimeout(() => {
+                            window.location.href = './authorization_page.html';
+                        }, 1500);
                         return;
                     }
-
-                    window.location.href = './account.html';
+                    
+                    setTimeout(() => {
+                        window.location.href = './account.html';
+                    }, 1000);
+                    
                 } catch (error) {
-                    console.error(error);
-                    alert('Не удалось выполнить регистрацию. Проверьте, что бэкенд запущен.');
+                    console.error('Registration error:', error);
+                    if (error.message === 'Failed to fetch') {
+                        showNotification('Не удалось подключиться к серверу. Проверьте, что бэкенд запущен.', 'error');
+                    } else {
+                        showNotification('Не удалось выполнить регистрацию. Попробуйте позже.', 'error');
+                    }
                 } finally {
-                    submitBtn.disabled = !consentCheckbox.checked;
+                    setTimeout(() => {
+                        submitBtn.disabled = !consentCheckbox.checked;
+                    }, 500);
                 }
             });
         });
