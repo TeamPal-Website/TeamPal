@@ -9,10 +9,6 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Gabriela&display=swap" rel="stylesheet">
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -57,14 +53,6 @@
     display: flex;
     flex-direction: column;
   }
-
-  .different-font {
-    font-family: "Gabriela", sans-serif;
-    font-optical-sizing: auto;
-    font-weight: 400;
-    font-style: normal;
-  }
-
 
   .header {
     position: fixed;
@@ -595,7 +583,7 @@
           <img class="logo" src="./assets/logo-placeholder.svg" alt="Логотип TeamPal" />
 
           <div class="role-select" id="role-select">
-            <button class="role-btn different-font" id="role-btn" type="button">Ищу вакансию</button>
+            <button class="role-btn" id="role-btn" type="button">Ищу вакансию</button>
             <div class="role-dropdown" id="role-dropdown">
               <button type="button" data-role="Ищу вакансию">Ищу вакансию</button>
               <button type="button" data-role="Ищу сотрудника">Ищу сотрудника</button>
@@ -612,10 +600,10 @@
 
           <nav class="header-menu" id="header-menu">
             <div class="header-menu__title">Меню</div>
-            <button class="header-menu__item different-font" type="button">Личный кабинет</button>
-            <button class="header-menu__item different-font" type="button">Мои заявки</button>
-            <button class="header-menu__item different-font" type="button">Каталог</button>
-            <button class="header-menu__item different-font" type="button">Поддержать проект</button>
+            <button class="header-menu__item" type="button">Личный кабинет</button>
+            <button class="header-menu__item" type="button">Мои заявки</button>
+            <button class="header-menu__item" type="button">Каталог</button>
+            <button class="header-menu__item" type="button">Поддержать проект</button>
             <button class="header-menu__exit" type="button">Выйти</button>
           </nav>
         </div>
@@ -635,40 +623,40 @@
           </div>
 
           <div class="user-name">Ваше Имя</div>
-          <div class="user-mail different-font">teampal@dimple.ru</div>
+          <div class="user-mail">teampal@dimple.ru</div>
 
           <button class="side-btn" id="change-password-btn" type="button">Сменить пароль</button>
         </aside>
 
         <section class="card workspace">
           <div class="tabs">
-            <button class="tab-btn active different-font" id="tab-resume" type="button">Резюме</button>
-            <button class="tab-btn different-font" id="tab-about" type="button">О себе</button>
+            <button class="tab-btn active" id="tab-resume" type="button">Резюме</button>
+            <button class="tab-btn" id="tab-about" type="button">О себе</button>
           </div>
 
           <div class="tab-panel" id="panel-resume">
             <form class="resume-grid" id="resume-form">
-              <div class="field different-font">
+              <div class="field">
                 <label for="first-name">Имя</label>
                 <input id="first-name" type="text" placeholder="Ваше имя" />
               </div>
-              <div class="field different-font">
+              <div class="field">
                 <label for="last-name">Фамилия</label>
                 <input id="last-name" type="text" placeholder="Ваша фамилия" />
               </div>
-              <div class="field different-font">
+              <div class="field">
                 <label for="birth-date">Дата рождения</label>
                 <input id="birth-date" type="text" inputmode="numeric" placeholder="ДД.ММ.ГГГГ" />
               </div>
-              <div class="field different-font">
+              <div class="field">
                 <label for="it-years">Сколько в IT</label>
                 <input id="it-years" type="text" placeholder="3 года" />
               </div>
-              <div class="field field--full different-font">
+              <div class="field field--full">
                 <label for="stack">Ваш стек</label>
                 <input id="stack" type="text" placeholder="React, TypeScript, Node.js" />
               </div>
-              <div class="field field--full different-font">
+              <div class="field field--full">
                 <label for="position">Желаемая роль</label>
                 <input id="position" type="text" placeholder="Frontend разработчик" />
               </div>
