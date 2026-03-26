@@ -58,6 +58,7 @@
 - получение данных текущего пользователя по cookie-токену;
 - базовая блокировка и разблокировка пользователя;
 - статическая раздача frontend-страниц;
+- Docker-инфраструктура для запуска приложения и PostgreSQL через `docker compose`;
 - unit и integration тесты для auth-логики, схем и репозиториев.
 
 ## AuthService
@@ -137,11 +138,15 @@ Team_Pal/
 │       ├── database.py
 │       └── main.py
 ├── frontend/
+│   ├── assets/
 │   ├── authorization_page.html
 │   ├── registration_page.html
 │   ├── account.html
 │   ├── main_page.html
 │   └── config.js
+├── infra/
+│   ├── Dockerfile
+│   └── docker-compose.yml
 └── tests/
     ├── integration/
     └── unit/
@@ -173,15 +178,21 @@ Team_Pal/
 ```env
 DB_HOST=localhost
 DB_PORT=5432
-DB_USER=postgres
-DB_PASS=postgres
-DB_NAME=team_pal
+DB_USER=secret
+DB_PASS=secret
+DB_NAME=secret
 
 JWT_SECRET_KEY=super-secret-key
 JWT_ALGORITHM=HS256
 JWT_ACCESS_TOKEN_EXPIRE_MINUTES=30
 
 ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5500
+```
+
+Для запуска frontend через тот же backend-сервер обычно удобнее указывать:
+
+```env
+ALLOWED_ORIGINS=http://localhost:8000,http://127.0.0.1:8000
 ```
 
 ## Локальный Запуск
@@ -234,10 +245,34 @@ http://127.0.0.1:8000
 
 На текущем этапе frontend раздается самим backend через `StaticFiles`, поэтому после запуска сервера можно открывать:
 
-- `http://127.0.0.1:8000/`
+- `http://localhost:8000/main_page.html`
+- `http://127.0.0.1:8000/main_page.html`
 - `http://127.0.0.1:8000/authorization_page.html`
 - `http://127.0.0.1:8000/registration_page.html`
 - `http://127.0.0.1:8000/account.html`
+
+Примечание:
+
+- в репозитории нет `frontend/index.html`, поэтому корневой путь `/` не является основной точкой входа;
+- файл `frontend/config.js` сейчас указывает на `http://localhost:8000`, поэтому при ручном тестировании auth-flow лучше открывать страницы именно через `localhost`, либо синхронно менять `API_BASE_URL` и `ALLOWED_ORIGINS`.
+
+## Запуск Через Docker
+
+Для запуска backend и PostgreSQL в контейнерах:
+
+```bash
+docker compose -f infra/docker-compose.yml up --build
+```
+
+После старта сервисы будут доступны так:
+
+- приложение: `http://localhost:8000`
+- база данных PostgreSQL: `localhost:5433`
+
+Состав Docker-инфраструктуры:
+
+- `infra/Dockerfile` - сборка backend-образа и запуск миграций Alembic перед стартом приложения;
+- `infra/docker-compose.yml` - поднимает `team_pal_app` и `team_pal_db`.
 
 ## Тестирование
 
