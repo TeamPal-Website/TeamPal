@@ -9,7 +9,7 @@ class UserAdd(BaseModel):
 
 class UserRequestAdd(BaseModel):
     email: EmailStr = Field(description="Email пользователя", examples=["user@example.com"], min_length=6, max_length=200)
-    password: str = Field(examples=["secret123"], max_length=200)
+    password: str = Field(examples=["secret123"])
 
     @field_validator("password")
     @classmethod
@@ -21,7 +21,7 @@ class UserRequestAdd(BaseModel):
 
 class UserLoginRequest(BaseModel):
     email: EmailStr = Field(description="Email пользователя", examples=["user@example.com"], max_length=200)
-    password: str = Field(examples=["secret123"], max_length=200)
+    password: str = Field(examples=["secret123"])
     
 
 class User(BaseModel):

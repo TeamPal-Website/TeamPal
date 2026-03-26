@@ -1,4 +1,3 @@
-import os
 import sys
 from pathlib import Path
 
@@ -13,7 +12,6 @@ from sqlalchemy.pool import StaticPool
 
 from src.database import Base
 from src.main import app
-from src.services.auth import AuthService
 
 test_engine = create_async_engine(
     "sqlite+aiosqlite://",
@@ -40,8 +38,7 @@ async def db_session():
 
 @pytest.fixture
 async def client():
-    with patch("src.api.auth.async_session_maker", test_async_session_maker), \
-         patch("src.api.admins.async_session_maker", test_async_session_maker):
+    with patch("src.api.dependencies.async_session_maker", test_async_session_maker):
         async with AsyncClient(
             transport=ASGITransport(app=app),
             base_url="http://test",
