@@ -33,7 +33,7 @@ services:
       JWT_SECRET_KEY: team-pal-secret-key
       JWT_ALGORITHM: HS256
       JWT_ACCESS_TOKEN_EXPIRE_MINUTES: 30
-      ALLOWED_ORIGINS: http://localhost:8000
+      ALLOWED_ORIGINS: "http://localhost:8000,http://127.0.0.1:8000"
     ports:
       - "8000:8000"
 

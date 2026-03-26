@@ -116,13 +116,16 @@
 
 - `pytest`
 - `pytest-asyncio`
+- `pytest-cov`
 - `httpx`
 - `SQLite in-memory` для тестовых сценариев
 
 ## Структура Репозитория
 
 ```text
-Team_Pal/
+<корень-репозитория>/
+├── .github/
+│   └── workflows/
 ├── backend/
 │   ├── alembic.ini
 │   ├── requirements.txt
@@ -186,24 +189,22 @@ JWT_SECRET_KEY=super-secret-key
 JWT_ALGORITHM=HS256
 JWT_ACCESS_TOKEN_EXPIRE_MINUTES=30
 
-ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5500
-```
-
-Для запуска frontend через тот же backend-сервер обычно удобнее указывать:
-
-```env
 ALLOWED_ORIGINS=http://localhost:8000,http://127.0.0.1:8000
 ```
 
+Переменную `ALLOWED_ORIGINS` нужно согласовать с тем, по какому URL открывается frontend (порт и хост). В `infra/docker-compose.yml` для Docker уже заданы оба варианта для порта `8000`.
+
+Не кладите в `backend/.env` переменные вроде `COMPOSE_FILE`: они не входят в схему настроек приложения и могут привести к ошибке при старте backend.
+
 ## Локальный Запуск
 
-Все команды ниже предполагают запуск из корня репозитория `Team_Pal`, если не указано иное.
+Все команды ниже предполагают запуск из корня репозитория, если не указано иное.
 
 ### 1. Клонирование проекта
 
 ```bash
 git clone <repo_url>
-cd Team_Pal
+cd <папка-клона>
 ```
 
 ### 2. Создание виртуального окружения
@@ -254,7 +255,7 @@ http://127.0.0.1:8000
 Примечание:
 
 - в репозитории нет `frontend/index.html`, поэтому корневой путь `/` не является основной точкой входа;
-- файл `frontend/config.js` сейчас указывает на `http://localhost:8000`, поэтому при ручном тестировании auth-flow лучше открывать страницы именно через `localhost`, либо синхронно менять `API_BASE_URL` и `ALLOWED_ORIGINS`.
+- `frontend/config.js` берет `API_BASE_URL` из `window.location.origin`, поэтому запросы идут на тот же хост и порт, с которого открыта страница (и CORS должен включать этот origin в `ALLOWED_ORIGINS`).
 
 ## Запуск Через Docker
 
@@ -272,7 +273,16 @@ docker compose -f infra/docker-compose.yml up --build
 Состав Docker-инфраструктуры:
 
 - `infra/Dockerfile` - сборка backend-образа и запуск миграций Alembic перед стартом приложения;
-- `infra/docker-compose.yml` - поднимает `team_pal_app` и `team_pal_db`.
+- `infra/docker-compose.yml` - поднимает `team_pal_app` и `team_pal_db`; в переменной `ALLOWED_ORIGINS` для приложения заданы `http://localhost:8000` и `http://127.0.0.1:8000`.
+
+При необходимости можно задать `COMPOSE_FILE=infra/docker-compose.yml` в `.env` в **корне** репозитория и вызывать `docker compose` без `-f` (не смешивайте это с `backend/.env`).
+
+## CI
+
+На ветке `main` в GitHub Actions запускаются:
+
+- `CI` - установка зависимостей backend, PostgreSQL в job, `pytest` с покрытием;
+- проверка утечек секретов (`secret-scan`).
 
 ## Тестирование
 
