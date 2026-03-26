@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
     
-    <link rel="icon" type="image/svg+xml" href="./assets/favicon-placeholder.svg" />
+    <link rel="icon" type="image/png" href="./assets/logo.png" />
 
     <meta name="theme-color" content="#2e8b57">
     <style>
@@ -342,6 +342,16 @@ button {
             const submitBtn = document.getElementById('submitBtn');
             const notificationContainer = document.getElementById('notificationContainer');
 
+            function isNetworkError(error) {
+                const msg = error && error.message ? error.message : String(error);
+                return (
+                    (error && error.name === 'TypeError') ||
+                    msg === 'Failed to fetch' ||
+                    msg === 'Load failed' ||
+                    (typeof msg === 'string' && msg.indexOf('NetworkError') !== -1)
+                );
+            }
+
             function showNotification(message, type = 'error', duration = 5000) {
                 const notification = document.createElement('div');
                 notification.className = `notification ${type}`;
@@ -522,7 +532,7 @@ button {
                     
                 } catch (error) {
                     console.error(error);
-                    if (error.message === 'Failed to fetch') {
+                    if (isNetworkError(error)) {
                         showNotification('Не удалось подключиться к серверу. Проверьте, что бэкенд запущен.', 'error');
                     } else {
                         showNotification('Не удалось выполнить вход. Попробуйте позже.', 'error');

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Регистрация | TeamPal</title>
-    <link rel="icon" type="image/svg+xml" href="./assets/favicon-placeholder.svg" />
+    <link rel="icon" type="image/png" href="./assets/logo.png" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -390,6 +390,16 @@ button {
             
             submitBtn.disabled = true;
 
+            function isNetworkError(error) {
+                const msg = error && error.message ? error.message : String(error);
+                return (
+                    (error && error.name === 'TypeError') ||
+                    msg === 'Failed to fetch' ||
+                    msg === 'Load failed' ||
+                    (typeof msg === 'string' && msg.indexOf('NetworkError') !== -1)
+                );
+            }
+
             function showNotification(message, type = 'error', duration = 5000) {
                 const notification = document.createElement('div');
                 notification.className = `notification ${type}`;
@@ -640,7 +650,7 @@ button {
                     
                 } catch (error) {
                     console.error('Registration error:', error);
-                    if (error.message === 'Failed to fetch') {
+                    if (isNetworkError(error)) {
                         showNotification('Не удалось подключиться к серверу. Проверьте, что бэкенд запущен.', 'error');
                     } else {
                         showNotification('Не удалось выполнить регистрацию. Попробуйте позже.', 'error');
