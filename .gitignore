@@ -25,3 +25,9 @@ out/
 __pycache__/
 venv/
 .venv/
+
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+*.cover

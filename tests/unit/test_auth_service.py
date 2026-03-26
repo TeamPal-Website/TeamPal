@@ -121,7 +121,7 @@ class TestTokenDecoding:
     def test_decode_token_wrong_secret_key(self):
         token = pyjwt.encode(
             {"user_id": 1, "exp": datetime.now(timezone.utc) + timedelta(hours=1)},
-            "completely-wrong-secret-key",
+            "x" * 32,
             algorithm=settings.JWT_ALGORITHM,
         )
         with pytest.raises(HTTPException) as exc_info:
@@ -141,7 +141,7 @@ class TestTokenDecoding:
     def test_decode_token_wrong_algorithm(self):
         token = pyjwt.encode(
             {"user_id": 1, "exp": datetime.now(timezone.utc) + timedelta(hours=1)},
-            settings.JWT_SECRET_KEY,
+            "k" * 48,
             algorithm="HS384",
         )
         with pytest.raises(HTTPException) as exc_info:
