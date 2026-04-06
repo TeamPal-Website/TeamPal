@@ -9,6 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from src.api.auth import router as router_auth
 from src.api.admins import router as router_admins
+from src.api.profiles import router as router_profiles
+from src.api.cities import router as router_cities
 from src.config import settings
 
 app = FastAPI()
@@ -23,6 +25,8 @@ app.add_middleware(
 
 app.include_router(router_auth)
 app.include_router(router_admins)
+app.include_router(router_profiles)
+app.include_router(router_cities)
 
 app.mount("/", StaticFiles(
     directory=str(Path(__file__)

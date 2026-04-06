@@ -1,4 +1,6 @@
 from src.repositories.admins import AdminsRepository
+from src.repositories.cities import CitiesRepository
+from src.repositories.profiles import ProfilesRepository
 from src.repositories.users import UsersRepository
 
 
@@ -11,6 +13,8 @@ class DBManager:
 
         self.users = UsersRepository(self.session)
         self.admins = AdminsRepository(self.session)
+        self.profiles = ProfilesRepository(self.session)
+        self.cities = CitiesRepository(self.session)
 
         return self
 
