@@ -2,9 +2,8 @@ from fastapi import APIRouter, Response, HTTPException
 from sqlalchemy.exc import IntegrityError
 
 from src.api.dependencies import UserIdDep, DBDep
-from src.database import async_session_maker
-from src.repositories.users import UsersRepository
 from src.schemas.users import UserAdd, UserRequestAdd, UserLoginRequest
+from src.schemas.profiles import ProfileAdd
 from src.services.auth import AuthService
 
 
@@ -30,7 +29,8 @@ async def register_user(
         is_active=True
     )
     try:
-        await db.users.add(new_user_data)
+        created_user = await db.users.add(new_user_data)
+        await db.profiles.add(ProfileAdd(user_id=created_user.id))
         await db.commit()
     except IntegrityError:
         raise HTTPException(status_code=409, detail="Пользователь с таким email уже существует")

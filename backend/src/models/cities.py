@@ -8,4 +8,4 @@ class CitiesOrm(Base):
     __tablename__ = "cities"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    title: Mapped[str] = mapped_column(String(25))
+    title: Mapped[str] = mapped_column(String(50), unique=True)

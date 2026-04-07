@@ -1,29 +1,30 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
+from sqlalchemy.exc import IntegrityError
 
 from src.api.dependencies import DBDep, UserIdDep
-from src.schemas.profiles import ProfileRequestAdd, ProfileAdd
+from src.schemas.profiles import ProfileRequestPatch
 
 router = APIRouter(prefix="/profiles", tags=["Профили"])
 
-@router.post("")
-async def create_profile(
+@router.patch("")
+async def edit_profile(
         db: DBDep,
-        data: ProfileRequestAdd,
-        user_id = UserIdDep,
+        profile_data: ProfileRequestPatch,
+        user_id: UserIdDep,
 
 ):
-    new_profile_data = ProfileAdd(
-        user_id=user_id,
-        avatar=data.avatar,
-        first_name=data.first_name,
-        last_name=data.last_name,
-        age=data.age,
-        gender=data.gender,
-        city_id=data.city_id,
-        contacts=data.contacts,
-    )
-    await db.profiles.add(new_profile_data)
-    await db.commit()
+    if profile_data.city_id is not None:
+        city = await db.cities.get_one_or_none(id=profile_data.city_id)
+        if city is None:
+            raise HTTPException(status_code=404, detail="Город не найден")
+
+    try:
+        res = await db.profiles.edit(profile_data, exclude_unset=True,  user_id=user_id)
+        if res == 0:
+            raise HTTPException(status_code=404, detail="Профиль не найден")
+        await db.commit()
+    except IntegrityError:
+        raise HTTPException(status_code=409, detail="Профиль уже существует")
     return {"status": "OK"}
 
 
