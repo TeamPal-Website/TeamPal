@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Создание проекта | TeamPal</title>
   <link rel="icon" type="image/png" href="./assets/logo.png">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -22,7 +22,7 @@
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: "Space Grotesk", sans-serif;
+      font-family: "Space Grotesk", system-ui, sans-serif;
       background: radial-gradient(900px 500px at -10% -25%, rgba(255, 208, 102, 0.28), transparent 70%),
                   radial-gradient(700px 420px at 110% 0%, rgba(248, 90, 11, 0.14), transparent 68%),
                   var(--bg);
@@ -76,7 +76,7 @@
       font-size: 14px;
       line-height: 1.4;
       color: #2d3e56;
-      font-family: "Space Grotesk", sans-serif;
+      font-family: "Space Grotesk", system-ui, sans-serif;
       text-align: center;
     }
     .notification-close {
@@ -116,7 +116,7 @@
       padding: 10px 14px;
       font-size: 14px;
       cursor: pointer;
-      font-family: "Space Grotesk", sans-serif;
+      font-family: "Space Grotesk", system-ui, sans-serif;
     }
     .role-btn::after { content: "▾"; float: right; color: #555; }
     .role-dropdown {
@@ -138,7 +138,7 @@
       padding: 10px 12px;
       font-size: 14px;
       cursor: pointer;
-      font-family: "Space Grotesk", sans-serif;
+      font-family: "Space Grotesk", system-ui, sans-serif;
     }
     .role-dropdown button:hover { background: #fff7ec; }
     .burger {
@@ -180,11 +180,10 @@
     .header-menu__title {
       font-size: 12px;
       font-weight: 500;
-      text-transform: uppercase;
       color: #8b8b8b;
       margin-bottom: 12px;
       padding: 0 10px;
-      font-family: "Space Grotesk", sans-serif;
+      font-family: "Space Grotesk", system-ui, sans-serif;
     }
     .header-menu__item, .header-menu__exit {
       width: 100%;
@@ -198,7 +197,7 @@
       font-size: 14px;
       font-weight: 500;
       color: var(--ink);
-      font-family: "Space Grotesk", sans-serif;
+      font-family: "Space Grotesk", system-ui, sans-serif;
     }
     .header-menu__item:hover { background: #fff5e8; color: var(--accent-2); }
     .header-menu__exit { margin-top: 8px; color: #d14b2a; border-top: 1px solid var(--line); border-radius: 0; padding-top: 12px; }
@@ -236,7 +235,7 @@
       color: var(--accent-2);
       cursor: pointer;
       text-decoration: none;
-      font-family: "Space Grotesk", sans-serif;
+      font-family: "Space Grotesk", system-ui, sans-serif;
       transition: transform 0.2s;
     }
     .back-link:hover { transform: translateX(-4px); color: #c13f0a; }
@@ -247,7 +246,7 @@
       background-clip: text;
       -webkit-background-clip: text;
       color: transparent;
-      font-family: "Space Grotesk", sans-serif;
+      font-family: "Space Grotesk", system-ui, sans-serif;
     }
     .constructor-body { padding: 28px; }
     .project-form {
@@ -259,11 +258,9 @@
     .form-field--full { grid-column: span 2; }
     .form-field label {
       font-size: 13px;
-      font-weight: 600;
-      letter-spacing: 0.3px;
+      font-weight: 700;
       color: #4e3e2e;
-      text-transform: uppercase;
-      font-family: "Space Grotesk", sans-serif;
+      font-family: "Space Grotesk", system-ui, sans-serif;
     }
     .form-field input,
     .form-field select,
@@ -271,7 +268,7 @@
       border: 1px solid #e0dbd3;
       border-radius: 14px;
       padding: 12px 16px;
-      font-family: "Space Grotesk", sans-serif;
+      font-family: "Space Grotesk", system-ui, sans-serif;
       font-size: 15px;
       background: white;
       transition: 0.2s;
@@ -284,17 +281,25 @@
       background-position: right 14px center;
       padding-right: 40px;
     }
+    .form-field select {
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 40px;
+    }
     .form-field input:focus,
     .form-field select:focus,
     .form-field textarea:focus {
-      font-family: "Space Grotesk", sans-serif;
+      font-family: "Space Grotesk", system-ui, sans-serif;
       outline: none;
       border-color: var(--accent-2);
       box-shadow: 0 0 0 3px rgba(248, 90, 11, 0.15);
     }
     .form-field textarea { resize: vertical; min-height: 100px; }
     .roles-block {
-      font-family: "Space Grotesk", sans-serif;
+      font-family: "Space Grotesk", system-ui, sans-serif;
       background: #fefaf5;
       border-radius: 18px;
       padding: 16px;
@@ -308,7 +313,7 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      font-family: "Space Grotesk", sans-serif;
+      font-family: "Space Grotesk", system-ui, sans-serif;
     }
     .roles-list {
       display: flex;
@@ -333,7 +338,7 @@
       font-weight: 500;
       color: #2c2c2c;
       flex: 1;
-      font-family: "Space Grotesk", sans-serif;
+      font-family: "Space Grotesk", system-ui, sans-serif;
     }
     .remove-role {
       background: none;
@@ -343,7 +348,7 @@
       color: #b0a088;
       transition: 0.2s;
       padding: 0 6px;
-      font-family: "Space Grotesk", sans-serif;
+      font-family: "Space Grotesk", system-ui, sans-serif;
     }
     .remove-role:hover { color: var(--accent-2); transform: scale(1.1); }
     .add-role-panel {
@@ -356,7 +361,7 @@
       padding: 10px 14px;
       border: 1px solid #e0dbd3;
       border-radius: 40px;
-      font-family: "Space Grotesk", sans-serif;
+      font-family: "Space Grotesk", system-ui, sans-serif;
       font-size: 14px;
     }
     .add-role-panel button {
@@ -367,7 +372,7 @@
       font-weight: 600;
       cursor: pointer;
       transition: 0.2s;
-      font-family: "Space Grotesk", sans-serif;
+      font-family: "Space Grotesk", system-ui, sans-serif;
     }
     .add-role-panel button:hover { background: var(--accent-1); color: white; border-color: var(--accent-1); }
     .form-actions {
@@ -385,7 +390,7 @@
       font-size: 14px;
       cursor: pointer;
       transition: all 0.2s;
-      font-family: "Space Grotesk", sans-serif;
+      font-family: "Space Grotesk", system-ui, sans-serif;
       border: none;
     }
     .btn-secondary {
@@ -412,7 +417,7 @@
       min-height: 52px;
       flex-wrap: wrap;
       margin-top: 20px;
-      font-family: "Space Grotesk", sans-serif;
+      font-family: "Space Grotesk", system-ui, sans-serif;
     }
     @media (max-width: 760px) {
       .project-form { grid-template-columns: 1fr; }
