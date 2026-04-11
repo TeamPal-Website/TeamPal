@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Личный кабинет | TeamPal</title>
+  <link rel="icon" type="image/png" href="./assets/logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f7f5f2;
+      --header: #eae8e4;
+      --panel: #ffffff;
+      --panel-soft: #fffaf3;
+      --ink: #1a1a1a;
+      --ink2: #3a3a3a;
+      --line: rgba(0, 0, 0, 0.09);
+      --accent-1: #fa9500;
+      --accent-2: #f85a0b;
+      --accent-3: #eb6424;
+      --footer: #d4d3cb;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      background: radial-gradient(900px 500px at -10% -25%, rgba(255, 208, 102, 0.28), transparent 70%),
+                  radial-gradient(700px 420px at 110% 0%, rgba(248, 90, 11, 0.14), transparent 68%),
+                  var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .header {
+      position: fixed;
+      inset: 0 0 auto 0;
+      z-index: 1000;
+      height: 72px;
+      background: var(--header);
+      border-bottom: 1px solid var(--line);
+    }
+    .header__inner {
+      height: 100%;
+      padding: 0 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+    .header__left { display: flex; align-items: center; gap: 12px; }
+    .logo { width: 46px; height: 46px; border-radius: 50px; object-fit: cover; }
+    .header__actions { display: flex; align-items: center; gap: 12px; position: relative; }
+    .role-select { position: relative; }
+    .role-btn {
+      min-width: 190px;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .role-btn::after { content: "▾"; float: right; color: #555; }
+    .role-dropdown {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      display: none;
+    }
+    .role-select.open .role-dropdown { display: block; }
+    .role-dropdown button {
+      width: 100%;
+      border: 0;
+      background: #fff;
+      text-align: left;
+      padding: 10px 12px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .role-dropdown button:hover { background: #fff7ec; }
+    .burger {
+      width: 48px;
+      height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .burger:hover {
+      background: linear-gradient(135deg, #fff9f0, #ffffff);
+      border-color: var(--accent-2);
+      box-shadow: 0 4px 12px rgba(248, 90, 11, 0.15);
+      transform: scale(0.98);
+    }
+    .burger span {
+      width: 22px;
+      height: 2.5px;
+      background: linear-gradient(90deg, #5a4a3a, #3a2a1a);
+      display: block;
+      border-radius: 4px;
+      transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      transform-origin: center;
+    }
+    .burger.open span:nth-child(1) { transform: translateY(8.5px) rotate(45deg); width: 24px; background: linear-gradient(90deg, var(--accent-2), var(--accent-1)); }
+    .burger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+    .burger.open span:nth-child(3) { transform: translateY(-8.5px) rotate(-45deg); width: 24px; background: linear-gradient(90deg, var(--accent-2), var(--accent-1)); }
+    .burger.open {
+      border-color: var(--accent-2);
+      background: linear-gradient(135deg, #fff5e8, #ffffff);
+      box-shadow: 0 6px 16px rgba(248, 90, 11, 0.2);
+    }
+    .header-menu {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 12px);
+      width: 244px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 12px 8px;
+      display: none;
+      animation: menuFadeIn 0.2s ease;
+    }
+    @keyframes menuFadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+    .header-menu.open { display: block; }
+    .header-menu__title { font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: #8b8b8b; margin-bottom: 12px; padding: 0 10px; }
+    .header-menu__item, .header-menu__exit {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      border-radius: 14px;
+      text-align: left;
+      padding: 10px 14px;
+      margin-bottom: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      color: var(--ink);
+    }
+    .header-menu__item:hover { background: linear-gradient(95deg, #fff5e8, #fffbf5); color: var(--accent-2); transform: translateX(4px); }
+    .header-menu__exit { margin-top: 8px; margin-bottom: 0; color: #d14b2a; border-top: 1px solid var(--line); border-radius: 0; padding-top: 12px; }
+    .header-menu__exit:hover { background: #fff0ea; color: #c0391c; }
+    .page {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 102px 20px 26px;
+      flex: 1;
+    }
+    .dashboard {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 20px;
+    }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--panel);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
+    }
+    .sidebar {
+      padding: 20px 16px;
+      background: linear-gradient(180deg, rgba(255, 208, 102, 0.16), transparent 38%), #fff;
+    }
+    .avatar-wrap {
+      width: 128px;
+      height: 128px;
+      border-radius: 50%;
+      border: 4px solid var(--accent-2);
+      padding: 4px;
+      margin: 0 auto 14px;
+      cursor: pointer;
+      position: relative;
+    }
+    .avatar-wrap:hover::after {
+      content: " ";
+      position: absolute;
+      bottom: 4px;
+      right: 4px;
+      background: var(--accent-2);
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+    .avatar {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .user-name { text-align: center; font-size: 26px; margin-bottom: 2px; }
+    .user-mail { text-align: center; color: var(--ink2); font-size: 15px; margin-bottom: 18px; }
+    .side-btn {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      font-size: 15px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .workspace { padding: 14px; }
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      padding: 8px 16px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-3));
+      border-color: transparent;
+      color: #fff;
+      box-shadow: 0 8px 18px rgba(250, 149, 0, 0.3);
+    }
+    .tab-panel {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--panel-soft);
+      padding: 18px;
+      min-height: 380px;
+    }
+    .hidden { display: none; }
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px 14px;
+    }
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field--full { grid-column: 1 / -1; }
+    .field label { font-size: 13px; color: #4c4c4c; font-weight: 500; }
+    .field input, .field select, .field textarea {
+      width: 100%;
+      border: 2px solid #dfdfdf;
+      border-radius: 10px;
+      background: #fff;
+      font-size: 14px;
+      padding: 10px 11px;
+      font-family: inherit;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      outline: 2px solid rgba(248, 90, 11, 0.24);
+      border-color: #f85a0b;
+    }
+    .about-text {
+      width: 100%;
+      border: 1px solid #dfdfdf;
+      border-radius: 10px;
+      background: #fff;
+      font-size: 14px;
+      padding: 10px 11px;
+      min-height: 258px;
+      resize: vertical;
+      font-family: inherit;
+    }
+    .actions {
+      margin-top: 14px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .action-btn {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      color: #2e2e2e;
+      padding: 9px 13px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .action-btn--accent {
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      color: #fff;
+      border-color: transparent;
+    }
+    .footer {
+      width: 100%;
+      background: var(--footer);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      font-size: 14px;
+      color: var(--ink2);
+      min-height: 52px;
+      flex-wrap: wrap;
+    }
+    .project-card {
+      background: white;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 12px;
+      border: 1px solid var(--line);
+    }
+    .project-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--accent-2);
+      margin-bottom: 6px;
+    }
+    .project-info { font-size: 13px; color: #666; margin: 4px 0; }
+    .project-roles { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+    .role-badge { background: #fff0e0; padding: 3px 10px; border-radius: 12px; font-size: 11px; }
+    .empty-state { text-align: center; padding: 40px; color: #888; }
+    .projects-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .projects-header h3 { font-size: 18px; font-weight: 600; }
+    .create-link-btn {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      border: none;
+      color: white;
+      padding: 8px 18px;
+      border-radius: 40px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 14px;
+    }
+    .create-link-btn:hover { transform: scale(0.97); opacity: 0.9; }
+    @media (max-width: 860px) {
+      .footer { flex-direction: column; height: auto; padding: 12px 20px; gap: 4px; text-align: center; }
+    }
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 20, 20, 0.36);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1100;
+    }
+    .modal.open { display: flex; }
+    .modal__card {
+      width: min(92vw, 440px);
+      border-radius: 16px;
+      background: #fff;
+      border: 1px solid var(--line);
+      padding: 18px;
+      box-shadow: 0 24px 44px rgba(0, 0, 0, 0.2);
+    }
+    .modal__title { font-family: "Space Grotesk", sans-serif; font-size: 24px; margin-bottom: 12px; }
+    .modal__group { display: grid; gap: 9px; }
+    .modal__group input { border: 1px solid #dddddd; border-radius: 10px; padding: 10px; }
+    .modal__actions { margin-top: 12px; display: flex; justify-content: flex-end; gap: 8px; }
+    @media (max-width: 960px) { 
+      .dashboard { grid-template-columns: 1fr; }
+      .info-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 700px) {
+      .header__inner { padding: 0 16px; }
+      .page { padding: 92px 14px 24px; }
+      .role-btn { min-width: 158px; font-size: 13px; }
+      .actions { flex-wrap: wrap; }
+      .action-btn { flex: 1; min-width: 120px; }
+    }
+    .contacts-group {
+      border: none;
+      grid-column: 1 / -1;
+      border-top: 1px solid var(--line);
+      padding-top: 12px;
+      margin-top: 4px;
+    }
+    .contacts-group legend {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--accent-2);
+      padding: 0 6px;
+      width: auto;
+    }
+  </style>
+</head>
+<body>
+<header class="header">
+  <div class="header__inner">
+    <div class="header__left">
+      <img class="logo" src="./assets/logo.png" alt="Логотип TeamPal">
+      <div class="role-select" id="role-select">
+        <button class="role-btn" id="role-btn" type="button">Ищу вакансию</button>
+        <div class="role-dropdown" id="role-dropdown">
+          <button type="button" data-role="Ищу вакансию">Ищу вакансию</button>
+          <button type="button" data-role="Ищу сотрудника">Ищу сотрудника</button>
+        </div>
+      </div>
+    </div>
+    <div class="header__actions">
+      <button class="burger" id="burger-btn" type="button" aria-label="Открыть меню">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="header-menu" id="header-menu">
+        <div class="header-menu__title">Меню</div>
+        <button class="header-menu__item" type="button">Личный кабинет</button>
+        <button class="header-menu__item" type="button">Мои заявки</button>
+        <button class="header-menu__item" type="button">Каталог</button>
+        <button class="header-menu__item" type="button">Поддержать проект</button>
+        <button class="header-menu__exit" type="button">Выйти</button>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <section class="dashboard">
+    <aside class="card sidebar">
+      <div class="avatar-wrap" id="avatar-wrap">
+        <img class="avatar" id="profile-avatar" src="./assets/avatar-default.png" alt="Аватар">
+        <input type="file" id="avatar-input" accept="image/*" style="display: none;">
+      </div>
+      <div class="user-name" id="user-name-display">Имя Фамилия</div>
+      <div class="user-mail">teampal@dimple.ru</div>
+      <button class="side-btn" id="change-password-btn" type="button">Сменить пароль</button>
+    </aside>
+
+    <section class="card workspace">
+      <div class="tabs">
+        <button class="tab-btn active" id="tab-personal" type="button">Личная информация</button>
+        <button class="tab-btn" id="tab-myprojects" type="button">Мои резюме</button>
+        <button class="tab-btn" id="tab-about" type="button">О себе</button>
+      </div>
+
+      <div class="tab-panel" id="panel-personal">
+        <form class="info-grid" id="personal-form">
+          <div class="field">
+            <label for="first-name">Имя</label>
+            <input id="first-name" type="text" pattern="[A-Za-zА-Яа-яЁё]" placeholder="Ваше имя" maxlength="50" />
+          </div>
+          <div class="field">
+            <label for="last-name">Фамилия</label>
+            <input id="last-name" type="text" pattern="[A-Za-zА-Яа-яЁё]" placeholder="Ваша фамилия" maxlength="50" />
+          </div>
+          <div class="field">
+            <label for="age">Возраст</label>
+            <input id="age" type="number" placeholder="18" min="16" max="120" />
+          </div>
+          <div class="field">
+            <label for="gender">Пол</label>
+            <select id="gender">
+              <option value="">Не выбран</option>
+              <option value="male">Мужчина</option>
+              <option value="female">Женщина</option>
+            </select>
+          </div>
+          <div class="field field--full">
+            <label for="city">Город</label>
+            <select id="city">
+              <option value="">Выберите город</option>
+              <option value="Москва">Москва</option>
+              <option value="Санкт-Петербург">Санкт-Петербург</option>
+              <option value="Новосибирск">Пенза - столица мира</option>
+            </select>
+          </div>
+          
+          <fieldset class="contacts-group">
+            <legend>Контакты</legend>
+            <div class="field field--full">
+              <label for="phone">Номер телефона</label>
+              <input id="phone" type="tel" placeholder="+7 (XXX) XXX-XX-XX" />
+            </div>
+            <div class="field field--full">
+              <label for="telegram">Telegram</label>
+              <input id="telegram" type="text" placeholder="@username" />
+            </div>
+            <div class="field field--full">
+              <label for="github">GitHub</label>
+              <input id="github" type="text" placeholder="https://github.com/username" />
+            </div>
+          </fieldset>
+        </form>
+        <div class="actions">
+          <button class="action-btn" id="personal-cancel" type="button">Отмена</button>
+          <button class="action-btn action-btn--accent" id="personal-save" type="button">Сохранить</button>
+        </div>
+      </div>
+
+      <div class="tab-panel hidden" id="panel-myprojects">
+        <div class="projects-header">
+          <h3>Мои резюме <span id="project-count">0</span>/5</h3>
+          <a href="/create_resume.html" class="create-link-btn" id="create-project-link">Создать резюме</a>
+        </div>
+        <div id="projects-list"></div>
+      </div>
+
+      <div class="tab-panel hidden" id="panel-about">
+        <textarea class="about-text" id="about-text" placeholder="Напишите информацию о себе..." maxlength="1000"></textarea>
+        <div class="actions">
+          <button class="action-btn" id="about-cancel" type="button">Отмена</button>
+          <button class="action-btn action-btn--accent" id="about-save" type="button">Сохранить</button>
+        </div>
+      </div>
+    </section>
+  </section>
+</main>
+
+<footer class="footer">
+  <span>TeamPal<span id="year"></span></span>
+  <span>обратная связь: teampal@dimple.ru</span>
+</footer>
+
+<div class="modal" id="password-modal" aria-hidden="true">
+  <div class="modal__card">
+    <h2 class="modal__title">Смена пароля</h2>
+    <div class="modal__group">
+      <input id="old-password" type="password" placeholder="Старый пароль" />
+      <input id="new-password" type="password" placeholder="Новый пароль" />
+      <input id="confirm-password" type="password" placeholder="Повторите пароль" />
+    </div>
+    <div class="modal__actions">
+      <button class="action-btn" id="password-cancel" type="button">Отмена</button>
+      <button class="action-btn action-btn--accent" id="password-save" type="button">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+
+<script src="./config.js"></script>
+<script>
+  (function () {
+    const yearSpan = document.getElementById("year");
+    if (yearSpan) yearSpan.textContent = " " + new Date().getFullYear();
+
+    const tabPersonal = document.getElementById("tab-personal");
+    const tabMyProjects = document.getElementById("tab-myprojects");
+    const tabAbout = document.getElementById("tab-about");
+    const panelPersonal = document.getElementById("panel-personal");
+    const panelMyProjects = document.getElementById("panel-myprojects");
+    const panelAbout = document.getElementById("panel-about");
+
+    async function loadCurrentUser() {
+      try {
+        const response = await fetch(API_BASE_URL + "/auth/me", {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          window.location.href = "./authorization_page.html";
+          return;
+        }
+
+        const user = await response.json();
+        userMailSpan.textContent = user.email || "";
+        userNameSpan.textContent = displayNameFromEmail(user.email);
+      } catch (error) {
+        console.error(error);
+        window.location.href = "./authorization_page.html";
+      }
+    }
+
+    async function logout() {
+      try {
+        await fetch(API_BASE_URL + "/auth/logout", {
+          method: "POST",
+          credentials: "include",
+        });
+      } catch (error) {
+        console.error(error);
+      } finally {
+        window.location.href = "./authorization_page.html";
+      }
+    }
+
+    function showPersonal() {
+      tabPersonal.classList.add("active");
+      tabMyProjects.classList.remove("active");
+      tabAbout.classList.remove("active");
+      panelPersonal.classList.remove("hidden");
+      panelMyProjects.classList.add("hidden");
+      panelAbout.classList.add("hidden");
+      loadPersonalData();
+    }
+    function showMyProjects() {
+      tabMyProjects.classList.add("active");
+      tabPersonal.classList.remove("active");
+      tabAbout.classList.remove("active");
+      panelMyProjects.classList.remove("hidden");
+      panelPersonal.classList.add("hidden");
+      panelAbout.classList.add("hidden");
+    }
+    function showAbout() {
+      tabAbout.classList.add("active");
+      tabPersonal.classList.remove("active");
+      tabMyProjects.classList.remove("active");
+      panelAbout.classList.remove("hidden");
+      panelPersonal.classList.add("hidden");
+      panelMyProjects.classList.add("hidden");
+      loadAboutData();
+    }
+
+    if (tabPersonal) tabPersonal.addEventListener("click", showPersonal);
+    if (tabMyProjects) tabMyProjects.addEventListener("click", showMyProjects);
+    if (tabAbout) tabAbout.addEventListener("click", showAbout);
+
+    let personalData = {
+      firstName: "",
+      lastName: "",
+      age: "",
+      gender: "",
+      city: "",
+      phone: "",
+      telegram: "",
+      github: "",
+      avatar: ""
+    };
+    
+    let aboutData = "";
+
+    function strip(str) {
+      return str ? str.trim() : "";
+    }
+
+    function loadPersonalData() {
+      const saved = localStorage.getItem("user_profile");
+      if (saved) {
+        const data = JSON.parse(saved);
+        personalData = { ...data };
+        
+        document.getElementById("first-name").value = personalData.firstName || "";
+        document.getElementById("last-name").value = personalData.lastName || "";
+        document.getElementById("age").value = personalData.age || "";
+        document.getElementById("gender").value = personalData.gender || "";
+        document.getElementById("city").value = personalData.city || "";
+        document.getElementById("phone").value = personalData.phone || "";
+        document.getElementById("telegram").value = personalData.telegram || "";
+        document.getElementById("github").value = personalData.github || "";
+
+        updateUserNameDisplay();
+
+        if (personalData.avatar) {
+          document.getElementById("profile-avatar").src = personalData.avatar;
+        }
+      } else {
+        document.getElementById("first-name").value = "";
+        document.getElementById("last-name").value = "";
+        document.getElementById("age").value = "";
+        document.getElementById("gender").value = "";
+        document.getElementById("city").value = "";
+        document.getElementById("phone").value = "";
+        document.getElementById("telegram").value = "";
+        document.getElementById("github").value = "";
+      }
+    }
+
+    function updateUserNameDisplay() {
+      const firstName = personalData.firstName || "";
+      const lastName = personalData.lastName || "";
+      const displayName = `${firstName} ${lastName}`.trim() || "Пользователь";
+      document.getElementById("user-name-display").textContent = displayName;
+    }
+
+    function loadAboutData() {
+      const saved = localStorage.getItem("user_about");
+      aboutData = saved || "";
+      document.getElementById("about-text").value = aboutData;
+    }
+
+    function savePersonalData() {
+      const newData = {
+        firstName: strip(document.getElementById("first-name").value),
+        lastName: strip(document.getElementById("last-name").value),
+        age: document.getElementById("age").value ? parseInt(document.getElementById("age").value) : "",
+        gender: document.getElementById("gender").value,
+        city: document.getElementById("city").value,
+        phone: strip(document.getElementById("phone").value),
+        telegram: strip(document.getElementById("telegram").value),
+        github: strip(document.getElementById("github").value),
+        avatar: personalData.avatar || ""
+      };
+
+      const errors = [];
+      
+      if (!newData.firstName) errors.push("Имя не может быть пустым");
+      if (!newData.lastName) errors.push("Фамилия не может быть пустой");
+      
+      if (newData.city && !document.querySelector(`#city option[value="${newData.city}"]`)) {
+        errors.push("Выбранный город не найден в списке");
+      }
+      
+      if (errors.length > 0) {
+        alert(errors.join("\n"));
+        return;
+      }
+      
+      personalData = newData;
+      localStorage.setItem("user_profile", JSON.stringify(personalData));
+      updateUserNameDisplay();
+      alert("Личная информация сохранена");
+    }
+
+    function saveAboutData() {
+      const newAbout = document.getElementById("about-text").value;
+      aboutData = newAbout;
+      localStorage.setItem("user_about", aboutData);
+      alert("Информация о себе сохранена");
+    }
+
+    function cancelPersonalChanges() {
+      document.getElementById("first-name").value = personalData.firstName || "";
+      document.getElementById("last-name").value = personalData.lastName || "";
+      document.getElementById("age").value = personalData.age || "";
+      document.getElementById("gender").value = personalData.gender || "";
+      document.getElementById("city").value = personalData.city || "";
+      document.getElementById("phone").value = personalData.phone || "";
+      document.getElementById("telegram").value = personalData.telegram || "";
+      document.getElementById("github").value = personalData.github || "";
+    }
+
+    function cancelAboutChanges() {
+      document.getElementById("about-text").value = aboutData;
+    }
+
+    document.getElementById("personal-save")?.addEventListener("click", savePersonalData);
+    document.getElementById("personal-cancel")?.addEventListener("click", cancelPersonalChanges);
+    document.getElementById("about-save")?.addEventListener("click", saveAboutData);
+    document.getElementById("about-cancel")?.addEventListener("click", cancelAboutChanges);
+
+    const avatarWrap = document.getElementById("avatar-wrap");
+    const avatarInput = document.getElementById("avatar-input");
+    
+    if (avatarWrap && avatarInput) {
+      avatarWrap.addEventListener("click", () => {
+        avatarInput.click();
+      });
+      
+      avatarInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (file && file.type.startsWith("image/")) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const avatarUrl = event.target.result;
+            document.getElementById("profile-avatar").src = avatarUrl;
+            personalData.avatar = avatarUrl;
+            localStorage.setItem("user_profile", JSON.stringify(personalData));
+            alert("Аватар обновлён");
+          };
+          reader.readAsDataURL(file);
+        } else if (file) {
+          alert("Пожалуйста, выберите изображение");
+        }
+      });
+    }
+
+    const roleBtn = document.getElementById("role-btn");
+    const roleDropdown = document.getElementById("role-dropdown");
+    const burgerBtn = document.getElementById("burger-btn");
+    const headerMenu = document.getElementById("header-menu");
+
+    function closeMenus() { 
+      const roleSelect = document.querySelector(".role-select");
+      if (roleSelect) roleSelect.classList.remove("open"); 
+      if (headerMenu) headerMenu.classList.remove("open"); 
+      if (burgerBtn) burgerBtn.classList.remove("open"); 
+    }
+
+    if (roleBtn && roleDropdown) {
+      roleBtn.addEventListener("click", function (event) { 
+        event.stopPropagation(); 
+        const roleSelect = document.querySelector(".role-select");
+        if (roleSelect) roleSelect.classList.toggle("open"); 
+        if (headerMenu) headerMenu.classList.remove("open"); 
+        if (burgerBtn) burgerBtn.classList.remove("open"); 
+      });
+      roleDropdown.addEventListener("click", function (event) { 
+        if (event.target instanceof HTMLButtonElement && roleBtn) { 
+          roleBtn.textContent = event.target.dataset.role || "Ищу сотрудника"; 
+          const roleSelect = document.querySelector(".role-select");
+          if (roleSelect) roleSelect.classList.remove("open"); 
+        } 
+      });
+    }
+
+    if (burgerBtn && headerMenu) {
+      burgerBtn.addEventListener("click", function (event) { 
+        event.stopPropagation(); 
+        this.classList.toggle("open"); 
+        headerMenu.classList.toggle("open"); 
+        const roleSelect = document.querySelector(".role-select");
+        if (roleSelect) roleSelect.classList.remove("open"); 
+      });
+    }
+
+    document.addEventListener("click", function (event) { 
+      if (!event.target.closest(".header__actions")) closeMenus(); 
+    });
+
+    const changePasswordBtn = document.getElementById("change-password-btn");
+    const passwordModal = document.getElementById("password-modal");
+    const passwordCancel = document.getElementById("password-cancel");
+    const passwordSave = document.getElementById("password-save");
+
+    if (changePasswordBtn && passwordModal) {
+      changePasswordBtn.addEventListener("click", function () { 
+        passwordModal.classList.add("open"); 
+      });
+    }
+
+    function closePasswordModal() { 
+      if (passwordModal) passwordModal.classList.remove("open"); 
+      document.getElementById("old-password").value = "";
+      document.getElementById("new-password").value = "";
+      document.getElementById("confirm-password").value = "";
+    }
+
+    if (passwordCancel) passwordCancel.addEventListener("click", closePasswordModal);
+    
+    if (passwordSave) {
+      passwordSave.addEventListener("click", function() {
+        const oldPass = document.getElementById("old-password").value;
+        const newPass = document.getElementById("new-password").value;
+        const confirmPass = document.getElementById("confirm-password").value;
+        
+        if (!oldPass) {
+          alert("Введите старый пароль");
+          return;
+        }
+        if (newPass !== confirmPass) {
+          alert("Пароли не совпадают");
+          return;
+        }
+        if (newPass && newPass.length < 8) {
+          alert("Новый пароль должен содержать минимум 8 символов");
+          return;
+        }
+        
+        alert("Пароль обновлён (заглушка)");
+        closePasswordModal();
+      });
+    }
+    
+    if (passwordModal) {
+      passwordModal.addEventListener("click", function (event) { 
+        if (event.target === passwordModal) closePasswordModal(); 
+      });
+    }
+
+    const logoutBtn = document.querySelector(".header-menu__exit");
+    if (logoutBtn) logoutBtn.addEventListener("click", function() { 
+      alert("Вы вышли из системы"); 
+    });
+
+    loadPersonalData();
+    loadAboutData();
+
+    const projectsList = document.getElementById("projects-list");
+    if (projectsList) {
+      projectsList.innerHTML = '<div class="empty-state">У вас пока нет резюме. Нажмите «Создать резюме»</div>';
+    }
+  })();
+</script>
+</body>
+</html>
