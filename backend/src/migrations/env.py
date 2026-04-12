@@ -13,6 +13,8 @@ from src.database import Base
 from src.models.users import UsersOrm # noqa: F401
 from src.models.cities import CitiesOrm # noqa: F401
 from src.models.profiles import ProfilesOrm # noqa: F401
+from src.models.resumes import ResumesOrm # noqa: F401
+from src.models.resumes import ResumeExperienceOrm # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
