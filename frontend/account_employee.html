@@ -559,6 +559,13 @@
     const panelPersonal = document.getElementById("panel-personal");
     const panelMyProjects = document.getElementById("panel-myprojects");
     const panelAbout = document.getElementById("panel-about");
+    const userMailSpan = document.getElementById("user-mail");
+    const userNameSpan = document.getElementById("user-name");
+
+    function displayNameFromEmail(email) {
+      if (!email) return "Пользователь";
+      return email.split('@')[0];
+    }
 
     async function loadCurrentUser() {
       try {
@@ -573,8 +580,9 @@
         }
 
         const user = await response.json();
-        userMailSpan.textContent = user.email || "";
-        userNameSpan.textContent = displayNameFromEmail(user.email);
+        if (userMailSpan) userMailSpan.textContent = user.email || "";
+        if (userNameSpan) userNameSpan.textContent = displayNameFromEmail(user.email);
+        return user;
       } catch (error) {
         console.error(error);
         window.location.href = "./authorization_page.html";
@@ -603,6 +611,7 @@
       panelAbout.classList.add("hidden");
       loadPersonalData();
     }
+    
     function showMyProjects() {
       tabMyProjects.classList.add("active");
       tabPersonal.classList.remove("active");
@@ -610,7 +619,9 @@
       panelMyProjects.classList.remove("hidden");
       panelPersonal.classList.add("hidden");
       panelAbout.classList.add("hidden");
+      loadMyProjects();
     }
+    
     function showAbout() {
       tabAbout.classList.add("active");
       tabPersonal.classList.remove("active");
@@ -643,35 +654,47 @@
       return str ? str.trim() : "";
     }
 
-    function loadPersonalData() {
-      const saved = localStorage.getItem("user_profile");
-      if (saved) {
-        const data = JSON.parse(saved);
-        personalData = { ...data };
+    async function loadPersonalData() {
+      try {
+        const response = await fetch(API_BASE_URL + "/users/profile", {
+          method: "GET",
+          credentials: "include",
+        });
         
-        document.getElementById("first-name").value = personalData.firstName || "";
-        document.getElementById("last-name").value = personalData.lastName || "";
-        document.getElementById("age").value = personalData.age || "";
-        document.getElementById("gender").value = personalData.gender || "";
-        document.getElementById("city").value = personalData.city || "";
-        document.getElementById("phone").value = personalData.phone || "";
-        document.getElementById("telegram").value = personalData.telegram || "";
-        document.getElementById("github").value = personalData.github || "";
-
-        updateUserNameDisplay();
-
-        if (personalData.avatar) {
-          document.getElementById("profile-avatar").src = personalData.avatar;
+        if (response.ok) {
+          const data = await response.json();
+          personalData = {
+            firstName: data.first_name || "",
+            lastName: data.last_name || "",
+            age: data.age || "",
+            gender: data.gender || "",
+            city: data.city || "",
+            phone: data.phone || "",
+            telegram: data.telegram || "",
+            github: data.github || "",
+            avatar: data.avatar || ""
+          };
+          
+          document.getElementById("first-name").value = personalData.firstName;
+          document.getElementById("last-name").value = personalData.lastName;
+          document.getElementById("age").value = personalData.age;
+          document.getElementById("gender").value = personalData.gender;
+          document.getElementById("city").value = personalData.city;
+          document.getElementById("phone").value = personalData.phone;
+          document.getElementById("telegram").value = personalData.telegram;
+          document.getElementById("github").value = personalData.github;
+          
+          if (personalData.avatar) {
+            document.getElementById("profile-avatar").src = personalData.avatar;
+          }
+          updateUserNameDisplay();
+        } else if (response.status === 404) {
+          console.log("Профиль не найден, будут использованы значения по умолчанию");
+        } else {
+          console.error("Ошибка загрузки профиля:", response.status);
         }
-      } else {
-        document.getElementById("first-name").value = "";
-        document.getElementById("last-name").value = "";
-        document.getElementById("age").value = "";
-        document.getElementById("gender").value = "";
-        document.getElementById("city").value = "";
-        document.getElementById("phone").value = "";
-        document.getElementById("telegram").value = "";
-        document.getElementById("github").value = "";
+      } catch (error) {
+        console.error("Ошибка загрузки профиля:", error);
       }
     }
 
@@ -679,53 +702,136 @@
       const firstName = personalData.firstName || "";
       const lastName = personalData.lastName || "";
       const displayName = `${firstName} ${lastName}`.trim() || "Пользователь";
-      document.getElementById("user-name-display").textContent = displayName;
+      const userDisplay = document.getElementById("user-name-display");
+      if (userDisplay) userDisplay.textContent = displayName;
     }
 
-    function loadAboutData() {
-      const saved = localStorage.getItem("user_about");
-      aboutData = saved || "";
-      document.getElementById("about-text").value = aboutData;
+    async function loadAboutData() {
+      try {
+        const response = await fetch(API_BASE_URL + "/users/about", {
+          method: "GET",
+          credentials: "include",
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          aboutData = data.about || "";
+          document.getElementById("about-text").value = aboutData;
+        } else if (response.status === 404) {
+          aboutData = "";
+          document.getElementById("about-text").value = "";
+        }
+      } catch (error) {
+        console.error("Ошибка загрузки информации о себе:", error);
+      }
     }
 
-    function savePersonalData() {
+    async function loadMyProjects() {
+      const projectsList = document.getElementById("projects-list");
+      if (!projectsList) return;
+      
+      try {
+        const response = await fetch(API_BASE_URL + "/users/projects", {
+          method: "GET",
+          credentials: "include",
+        });
+        
+        if (response.ok) {
+          const projects = await response.json();
+          if (projects.length === 0) {
+            projectsList.innerHTML = '<div class="empty-state">У вас пока нет резюме. Нажмите «Создать резюме»</div>';
+          } else {
+            projectsList.innerHTML = projects.map(project => `
+              <div class="project-card">
+                <h3>${project.title || "Без названия"}</h3>
+                <p>${project.description || ""}</p>
+              </div>
+            `).join('');
+          }
+        } else {
+          projectsList.innerHTML = '<div class="empty-state">У вас пока нет резюме. Нажмите «Создать резюме»</div>';
+        }
+      } catch (error) {
+        console.error("Ошибка загрузки проектов:", error);
+        projectsList.innerHTML = '<div class="empty-state">Ошибка загрузки данных</div>';
+      }
+    }
+
+    async function savePersonalData() {
       const newData = {
-        firstName: strip(document.getElementById("first-name").value),
-        lastName: strip(document.getElementById("last-name").value),
-        age: document.getElementById("age").value ? parseInt(document.getElementById("age").value) : "",
+        first_name: strip(document.getElementById("first-name").value),
+        last_name: strip(document.getElementById("last-name").value),
+        age: document.getElementById("age").value ? parseInt(document.getElementById("age").value) : null,
         gender: document.getElementById("gender").value,
         city: document.getElementById("city").value,
         phone: strip(document.getElementById("phone").value),
         telegram: strip(document.getElementById("telegram").value),
         github: strip(document.getElementById("github").value),
-        avatar: personalData.avatar || ""
       };
-
+      
       const errors = [];
-      
-      if (!newData.firstName) errors.push("Имя не может быть пустым");
-      if (!newData.lastName) errors.push("Фамилия не может быть пустой");
-      
-      if (newData.city && !document.querySelector(`#city option[value="${newData.city}"]`)) {
-        errors.push("Выбранный город не найден в списке");
-      }
+      if (!newData.first_name) errors.push("Имя не может быть пустым");
+      if (!newData.last_name) errors.push("Фамилия не может быть пустой");
       
       if (errors.length > 0) {
         alert(errors.join("\n"));
         return;
       }
       
-      personalData = newData;
-      localStorage.setItem("user_profile", JSON.stringify(personalData));
-      updateUserNameDisplay();
-      alert("Личная информация сохранена");
+      try {
+        const response = await fetch(API_BASE_URL + "/users/profile", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(newData),
+        });
+        
+        if (response.ok) {
+          personalData = {
+            ...personalData,
+            firstName: newData.first_name,
+            lastName: newData.last_name,
+            age: newData.age,
+            gender: newData.gender,
+            city: newData.city,
+            phone: newData.phone,
+            telegram: newData.telegram,
+            github: newData.github,
+          };
+          updateUserNameDisplay();
+          alert("Личная информация сохранена");
+        } else {
+          const error = await response.json().catch(() => ({}));
+          alert("Ошибка: " + (error.detail || "Не удалось сохранить"));
+        }
+      } catch (error) {
+        console.error("Ошибка сохранения:", error);
+        alert("Ошибка соединения с сервером");
+      }
     }
 
-    function saveAboutData() {
+    async function saveAboutData() {
       const newAbout = document.getElementById("about-text").value;
-      aboutData = newAbout;
-      localStorage.setItem("user_about", aboutData);
-      alert("Информация о себе сохранена");
+      
+      try {
+        const response = await fetch(API_BASE_URL + "/users/about", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ about: newAbout }),
+        });
+        
+        if (response.ok) {
+          aboutData = newAbout;
+          alert("Информация о себе сохранена");
+        } else {
+          const error = await response.json().catch(() => ({}));
+          alert("Ошибка: " + (error.detail || "Не удалось сохранить"));
+        }
+      } catch (error) {
+        console.error("Ошибка сохранения:", error);
+        alert("Ошибка соединения с сервером");
+      }
     }
 
     function cancelPersonalChanges() {
@@ -756,18 +862,32 @@
         avatarInput.click();
       });
       
-      avatarInput.addEventListener("change", (e) => {
+      avatarInput.addEventListener("change", async (e) => {
         const file = e.target.files[0];
         if (file && file.type.startsWith("image/")) {
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            const avatarUrl = event.target.result;
-            document.getElementById("profile-avatar").src = avatarUrl;
-            personalData.avatar = avatarUrl;
-            localStorage.setItem("user_profile", JSON.stringify(personalData));
-            alert("Аватар обновлён");
-          };
-          reader.readAsDataURL(file);
+          const formData = new FormData();
+          formData.append("avatar", file);
+          
+          try {
+            const response = await fetch(API_BASE_URL + "/users/avatar", {
+              method: "POST",
+              credentials: "include",
+              body: formData,
+            });
+            
+            if (response.ok) {
+              const data = await response.json();
+              const avatarUrl = data.avatar_url || URL.createObjectURL(file);
+              document.getElementById("profile-avatar").src = avatarUrl;
+              personalData.avatar = avatarUrl;
+              alert("Аватар обновлён");
+            } else {
+              alert("Ошибка загрузки аватара");
+            }
+          } catch (error) {
+            console.error("Ошибка загрузки аватара:", error);
+            alert("Ошибка соединения с сервером");
+          }
         } else if (file) {
           alert("Пожалуйста, выберите изображение");
         }
@@ -838,7 +958,7 @@
     if (passwordCancel) passwordCancel.addEventListener("click", closePasswordModal);
     
     if (passwordSave) {
-      passwordSave.addEventListener("click", function() {
+      passwordSave.addEventListener("click", async function() {
         const oldPass = document.getElementById("old-password").value;
         const newPass = document.getElementById("new-password").value;
         const confirmPass = document.getElementById("confirm-password").value;
@@ -856,8 +976,28 @@
           return;
         }
         
-        alert("Пароль обновлён (заглушка)");
-        closePasswordModal();
+        try {
+          const response = await fetch(API_BASE_URL + "/auth/change-password", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+              old_password: oldPass,
+              new_password: newPass
+            }),
+          });
+          
+          if (response.ok) {
+            alert("Пароль успешно изменён");
+            closePasswordModal();
+          } else {
+            const error = await response.json().catch(() => ({}));
+            alert("Ошибка: " + (error.detail || "Не удалось сменить пароль"));
+          }
+        } catch (error) {
+          console.error("Ошибка смены пароля:", error);
+          alert("Ошибка соединения с сервером");
+        }
       });
     }
     
@@ -868,17 +1008,24 @@
     }
 
     const logoutBtn = document.querySelector(".header-menu__exit");
-    if (logoutBtn) logoutBtn.addEventListener("click", function() { 
-      alert("Вы вышли из системы"); 
-    });
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", async function() { 
+        try {
+          await fetch(API_BASE_URL + "/auth/logout", {
+            method: "POST",
+            credentials: "include",
+          });
+        } catch (error) {
+          console.error(error);
+        } finally {
+          window.location.href = "./authorization_page.html";
+        }
+      });
+    }
 
+    loadCurrentUser();
     loadPersonalData();
     loadAboutData();
-
-    const projectsList = document.getElementById("projects-list");
-    if (projectsList) {
-      projectsList.innerHTML = '<div class="empty-state">У вас пока нет резюме. Нажмите «Создать резюме»</div>';
-    }
   })();
 </script>
 </body>

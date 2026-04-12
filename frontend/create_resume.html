@@ -734,6 +734,27 @@
       renderExperiences();
     }
 
+    async function checkAuth() {
+      try {
+        const response = await fetch(API_BASE_URL + "/auth/me", {
+          method: "GET",
+          credentials: "include",
+        });
+        if (!response.ok) {
+          showNotification('Пожалуйста, авторизуйтесь для создания резюме', 'warning', 3000);
+          setTimeout(() => {
+            window.location.href = "./authorization_page.html";
+          }, 1500);
+          return false;
+        }
+        return true;
+      } catch (error) {
+        console.error('Auth check error:', error);
+        showNotification('Ошибка соединения с сервером', 'error', 3000);
+        return false;
+      }
+    }
+
     cancelBtn.addEventListener("click", () => {
       if (confirm("Отменить создание резюме? Все введённые данные будут сброшены.")) {
         resetForm();
@@ -741,7 +762,7 @@
       }
     });
 
-    publishBtn.addEventListener("click", () => {
+    publishBtn.addEventListener("click", async () => {
       const aboutText = aboutMeTextarea.value.trim();
       if (!aboutText) {
         showNotification('Пожалуйста, заполните поле "О себе"', 'error');
@@ -763,8 +784,46 @@
         showNotification('Пожалуйста, исправьте ошибки в формате дат (ДД.ММ.ГГГГ или ГГГГ-ММ-ДД)', 'error');
         return;
       }
-      showNotification('Резюме успешно создано!', 'success', 3000);
-      setTimeout(() => { window.location.href = document.referrer || '/'; }, 1500);
+      
+      const isAuth = await checkAuth();
+      if (!isAuth) return;
+      
+      const resumeData = {
+        about: aboutText,
+        skills: selectedSkills,
+        experience: experiences.map(exp => ({
+          company: exp.company,
+          position: exp.position,
+          date_start: exp.dateStart,
+          date_end: exp.dateEnd,
+          description: exp.description
+        }))
+      };
+      
+      try {
+        const response = await fetch(API_BASE_URL + "/resumes/create", {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: "include",
+          body: JSON.stringify(resumeData),
+        });
+        
+        if (response.ok) {
+          showNotification('Резюме успешно создано!', 'success', 3000);
+          resetForm();
+          setTimeout(() => {
+            window.location.href = "./account.html";
+          }, 1500);
+        } else {
+          const error = await response.json().catch(() => ({}));
+          showNotification(error.detail || 'Ошибка при создании резюме', 'error', 3000);
+        }
+      } catch (error) {
+        console.error('Create resume error:', error);
+        showNotification('Не удалось подключиться к серверу', 'error', 3000);
+      }
     });
 
     const roleSelect = document.getElementById("role-select");
@@ -804,7 +863,23 @@
     }
     document.addEventListener("click", (e) => { if (!e.target.closest(".header__actions")) closeMenus(); });
     const logoutMenuItem = document.querySelector(".header-menu__exit");
-    if (logoutMenuItem) logoutMenuItem.addEventListener("click", () => showNotification('Вы вышли из системы', 'warning', 2000));
+    if (logoutMenuItem) {
+      logoutMenuItem.addEventListener("click", async () => {
+        try {
+          await fetch(API_BASE_URL + "/auth/logout", {
+            method: "POST",
+            credentials: "include",
+          });
+        } catch (error) {
+          console.error(error);
+        } finally {
+          showNotification('Вы вышли из системы', 'warning', 2000);
+          setTimeout(() => {
+            window.location.href = "./authorization_page.html";
+          }, 1500);
+        }
+      });
+    }
 
     function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
 
