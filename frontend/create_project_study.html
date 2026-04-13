@@ -298,6 +298,23 @@
       box-shadow: 0 0 0 3px rgba(248, 90, 11, 0.15);
     }
     .form-field textarea { resize: vertical; min-height: 100px; }
+    .name-with-kind {
+      display: flex;
+      align-items: stretch;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .name-with-kind input { flex: 1; min-width: 200px; }
+    .project-kind-hint {
+      flex-shrink: 0;
+      align-self: center;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--accent-2);
+      white-space: nowrap;
+      padding: 8px 0;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+    }
     .roles-block {
       font-family: "Space Grotesk", system-ui, sans-serif;
       background: #fefaf5;
@@ -318,28 +335,47 @@
     .roles-list {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
       margin-bottom: 14px;
-      max-height: 220px;
+      max-height: 480px;
       overflow-y: auto;
     }
-    .role-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+    .role-item-card {
       background: white;
-      padding: 8px 12px;
-      border-radius: 40px;
       border: 1px solid #e8e0d5;
+      border-radius: 18px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .role-item-card__head {
+      display: flex;
+      align-items: flex-start;
       justify-content: space-between;
+      gap: 10px;
     }
     .role-name {
-      font-size: 14px;
-      font-weight: 500;
+      font-size: 15px;
+      font-weight: 600;
       color: #2c2c2c;
-      flex: 1;
       font-family: "Space Grotesk", system-ui, sans-serif;
     }
+    .role-item-card__body {
+      display: grid;
+      gap: 6px;
+      font-size: 13px;
+      color: #4a4a4a;
+      line-height: 1.45;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+    }
+    .role-item-card__body dt {
+      font-weight: 600;
+      color: #6b5a48;
+      margin-top: 4px;
+    }
+    .role-item-card__body dt:first-child { margin-top: 0; }
+    .role-item-card__body dd { margin: 0; }
     .remove-role {
       background: none;
       border: none;
@@ -351,30 +387,43 @@
       font-family: "Space Grotesk", system-ui, sans-serif;
     }
     .remove-role:hover { color: var(--accent-2); transform: scale(1.1); }
-    .add-role-panel {
-      display: flex;
-      gap: 10px;
+    .add-role-fields {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px 12px;
       margin-top: 8px;
     }
-    .add-role-panel input {
-      flex: 1;
+    .add-role-fields input,
+    .add-role-fields textarea {
       padding: 10px 14px;
       border: 1px solid #e0dbd3;
-      border-radius: 40px;
+      border-radius: 14px;
       font-family: "Space Grotesk", system-ui, sans-serif;
       font-size: 14px;
+      background: #fff;
     }
-    .add-role-panel button {
+    .add-role-fields textarea {
+      grid-column: span 2;
+      min-height: 72px;
+      resize: vertical;
+    }
+    .add-role-fields .add-role-field--full { grid-column: span 2; }
+    .add-role-actions {
+      margin-top: 12px;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .add-role-actions button {
       background: linear-gradient(135deg, #f0e5d8, #fff);
       border: 1px solid #e0dbd3;
       border-radius: 40px;
-      padding: 0 20px;
+      padding: 10px 22px;
       font-weight: 600;
       cursor: pointer;
       transition: 0.2s;
       font-family: "Space Grotesk", system-ui, sans-serif;
     }
-    .add-role-panel button:hover { background: var(--accent-1); color: white; border-color: var(--accent-1); }
+    .add-role-actions button:hover { background: var(--accent-1); color: white; border-color: var(--accent-1); }
     .form-actions {
       margin-top: 32px;
       display: flex;
@@ -425,6 +474,9 @@
       .constructor-header { flex-direction: column; align-items: flex-start; }
       .page { padding: 92px 16px 24px; }
       .header__inner { padding: 0 16px; }
+      .add-role-fields { grid-template-columns: 1fr; }
+      .add-role-fields textarea,
+      .add-role-fields .add-role-field--full { grid-column: span 1; }
     }
   </style>
 </head>
@@ -467,22 +519,12 @@
     </div>
     <div class="constructor-body">
       <form class="project-form" id="create-project-form">
-        <div class="form-field">
+        <div class="form-field form-field--full">
           <label for="proj-name">Название проекта</label>
-          <input type="text" id="proj-name" placeholder="Например: AI-ассистент для бизнеса" autocomplete="off">
-        </div>
-        <div class="form-field">
-          <label for="proj-city">Формат работы</label>
-          <input type="text" id="proj-city" placeholder="Москва / Онлайн / Гибрид">
-        </div>
-        <div class="form-field">
-          <label for="proj-type">Тип проекта</label>
-          <select id="proj-type">
-            <option value="Коммерческий">Коммерческий</option>
-            <option value="Учебный">Учебный</option>
-            <option value="Open Source">Open Source</option>
-            <option value="Стартап">Стартап</option>
-          </select>
+          <div class="name-with-kind">
+            <input type="text" id="proj-name" placeholder="Например: AI-ассистент для бизнеса" autocomplete="off">
+            <span class="project-kind-hint">Учебный проект</span>
+          </div>
         </div>
         <div class="form-field">
           <label for="proj-deadline">Сроки реализации</label>
@@ -498,11 +540,16 @@
             <span>Требуемые роли (можно добавить несколько)</span>
           </div>
           <div class="roles-list" id="roles-list-container"></div>
-          <div class="add-role-panel">
-            <input type="text" id="new-role-input" placeholder="Например: Backend-разработчик (Python)" autocomplete="off">
-            <button type="button" id="add-role-btn">Добавить</button>
+          <div class="add-role-fields">
+            <input type="text" id="new-role-name" class="add-role-field--full" placeholder="Название роли (например: Backend-разработчик)" autocomplete="off">
+            <textarea id="new-role-desc" placeholder="Описание: какие задачи, зона ответственности"></textarea>
+            <input type="text" id="new-role-stack" placeholder="Требуемый стек технологий">
+            <input type="text" id="new-role-format" placeholder="Формат работы для этой роли (офис / удалённо / гибрид)">
           </div>
-          <small style="font-size: 11px; color: #8b7a66; margin-top: 8px; display: block; font-family: 'Space Grotesk', sans-serif;">Добавьте ключевые роли, которые требуются в проекте</small>
+          <div class="add-role-actions">
+            <button type="button" id="add-role-btn">Добавить роль</button>
+          </div>
+          <small style="font-size: 11px; color: #8b7a66; margin-top: 8px; display: block; font-family: 'Space Grotesk', sans-serif;">Для каждой роли укажите задачи, стек и формат работы отдельно</small>
         </div>
 
         <div class="form-field">
@@ -568,7 +615,10 @@
 
     let rolesArray = [];
     const rolesContainer = document.getElementById("roles-list-container");
-    const newRoleInput = document.getElementById("new-role-input");
+    const newRoleName = document.getElementById("new-role-name");
+    const newRoleDesc = document.getElementById("new-role-desc");
+    const newRoleStack = document.getElementById("new-role-stack");
+    const newRoleFormat = document.getElementById("new-role-format");
     const addRoleBtn = document.getElementById("add-role-btn");
 
     function renderRolesList() {
@@ -578,9 +628,19 @@
         return;
       }
       rolesContainer.innerHTML = rolesArray.map((role, idx) => `
-        <div class="role-item" data-role-idx="${idx}">
-          <span class="role-name">${escapeHtml(role)}</span>
-          <button type="button" class="remove-role" data-remove-idx="${idx}" title="Удалить роль">✕</button>
+        <div class="role-item-card" data-role-idx="${idx}">
+          <div class="role-item-card__head">
+            <span class="role-name">${escapeHtml(role.name)}</span>
+            <button type="button" class="remove-role" data-remove-idx="${idx}" title="Удалить роль">✕</button>
+          </div>
+          <dl class="role-item-card__body">
+            <dt>Описание и задачи</dt>
+            <dd>${escapeHtml(role.description) || '—'}</dd>
+            <dt>Стек</dt>
+            <dd>${escapeHtml(role.stack) || '—'}</dd>
+            <dt>Формат работы</dt>
+            <dd>${escapeHtml(role.work_format) || '—'}</dd>
+          </dl>
         </div>
       `).join('');
 
@@ -607,34 +667,32 @@
     }
 
     function addRole() {
-      const roleText = newRoleInput.value.trim();
+      const roleText = newRoleName ? newRoleName.value.trim() : "";
       if (roleText === "") {
         showNotification('Введите название роли', 'warning', 3000);
         return;
       }
-      if (rolesArray.includes(roleText)) {
-        showNotification('Такая роль уже добавлена', 'warning', 3000);
+      if (rolesArray.some(r => r.name === roleText)) {
+        showNotification('Роль с таким названием уже добавлена', 'warning', 3000);
         return;
       }
-      rolesArray.push(roleText);
+      rolesArray.push({
+        name: roleText,
+        description: newRoleDesc ? newRoleDesc.value.trim() : "",
+        stack: newRoleStack ? newRoleStack.value.trim() : "",
+        work_format: newRoleFormat ? newRoleFormat.value.trim() : ""
+      });
       renderRolesList();
-      newRoleInput.value = "";
+      if (newRoleName) newRoleName.value = "";
+      if (newRoleDesc) newRoleDesc.value = "";
+      if (newRoleStack) newRoleStack.value = "";
+      if (newRoleFormat) newRoleFormat.value = "";
       showNotification(`Роль "${roleText}" добавлена`, 'success', 2000);
     }
 
     if (addRoleBtn) addRoleBtn.addEventListener("click", addRole);
-    if (newRoleInput) {
-      newRoleInput.addEventListener("keypress", function(e) {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          addRole();
-        }
-      });
-    }
 
     const nameInput = document.getElementById("proj-name");
-    const cityInput = document.getElementById("proj-city");
-    const typeSelect = document.getElementById("proj-type");
     const deadlineInput = document.getElementById("proj-deadline");
     const descTextarea = document.getElementById("proj-desc");
     const expSelect = document.getElementById("proj-exp");
@@ -645,13 +703,15 @@
 
     function resetForm() {
       if (nameInput) nameInput.value = "";
-      if (cityInput) cityInput.value = "";
-      if (typeSelect) typeSelect.value = "Коммерческий";
       if (deadlineInput) deadlineInput.value = "";
       if (descTextarea) descTextarea.value = "";
       if (expSelect) expSelect.value = "без опыта";
       if (membersInput) membersInput.value = "";
       if (contactInput) contactInput.value = "";
+      if (newRoleName) newRoleName.value = "";
+      if (newRoleDesc) newRoleDesc.value = "";
+      if (newRoleStack) newRoleStack.value = "";
+      if (newRoleFormat) newRoleFormat.value = "";
       rolesArray = [];
       renderRolesList();
     }
@@ -701,8 +761,8 @@
 
         const projectData = {
           name: projectName,
-          city: cityInput ? cityInput.value : "",
-          type: typeSelect ? typeSelect.value : "Коммерческий",
+          city: "",
+          type: "Учебный",
           deadline: deadlineInput ? deadlineInput.value : null,
           description: descTextarea ? descTextarea.value : "",
           experience: expSelect ? expSelect.value : "без опыта",
