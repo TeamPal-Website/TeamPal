@@ -13,7 +13,7 @@ class ResumesOrm(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     profile_id: Mapped[int] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"))
-    about_me: Mapped[str] = mapped_column(Text, nullable=True)
+    about_me: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[ResumeStatus] = mapped_column(
         SQLEnum(ResumeStatus, name="resume_status_enum"),
         default=ResumeStatus.LOOKING_FOR_JOB

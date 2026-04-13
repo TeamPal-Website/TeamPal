@@ -11,6 +11,7 @@ from src.api.auth import router as router_auth
 from src.api.admins import router as router_admins
 from src.api.profiles import router as router_profiles
 from src.api.cities import router as router_cities
+from src.api.resumes import router as router_resumes
 from src.config import settings
 
 app = FastAPI()
@@ -27,6 +28,7 @@ app.include_router(router_auth)
 app.include_router(router_admins)
 app.include_router(router_profiles)
 app.include_router(router_cities)
+app.include_router(router_resumes)
 
 app.mount("/", StaticFiles(
     directory=str(Path(__file__)
