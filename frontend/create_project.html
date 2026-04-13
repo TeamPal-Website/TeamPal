@@ -725,7 +725,7 @@
             showNotification('Проект успешно создан!', 'success', 3000);
             resetForm();
             setTimeout(() => {
-              window.location.href = "./account.html";
+              window.location.href = "./account_manager.html";
             }, 1500);
           } else {
             const error = await response.json().catch(() => ({}));

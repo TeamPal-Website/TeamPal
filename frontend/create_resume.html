@@ -814,7 +814,7 @@
           showNotification('Резюме успешно создано!', 'success', 3000);
           resetForm();
           setTimeout(() => {
-            window.location.href = "./account.html";
+            window.location.href = "./account_employee.html";
           }, 1500);
         } else {
           const error = await response.json().catch(() => ({}));
