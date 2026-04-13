@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from sqlalchemy import insert, select, update
+from sqlalchemy import insert, select, update, delete, func
 
 
 class BaseRepository:
@@ -46,3 +46,13 @@ class BaseRepository:
         )
         result = await self.session.execute(update_stmt)
         return result.rowcount
+
+    async def delete(self, **filter_by):
+        delete_stmt = delete(self.model).filter_by(**filter_by)
+        await self.session.execute(delete_stmt)
+
+    async def count(self, **filter_by) -> int:
+        query = select(func.count(self.model.id)).filter_by(**filter_by)
+        result = await self.session.execute(query)
+        return result.scalar_one()
+
