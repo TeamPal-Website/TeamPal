@@ -3,6 +3,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
 
+import sqlalchemy.dialects.postgresql as _pg
+from sqlalchemy import JSON as _JSON
+_pg.JSONB = _JSON
+
 import pytest
 from unittest.mock import patch
 
@@ -63,3 +67,15 @@ async def auth_token(client: AsyncClient, registered_user: dict):
 async def authenticated_client(client: AsyncClient, auth_token: str):
     client.cookies.set("access_token", auth_token)
     return client
+
+
+@pytest.fixture
+async def city(client: AsyncClient):
+    response = await client.post("/cities", json={"title": "Москва"})
+    return response.json()["data"]
+
+
+@pytest.fixture
+async def user_id(authenticated_client: AsyncClient):
+    response = await authenticated_client.get("/auth/me")
+    return response.json()["id"]
