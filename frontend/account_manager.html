@@ -510,7 +510,7 @@
       <div class="tab-panel hidden" id="panel-myprojects">
         <div class="projects-header">
           <h3>Мои проекты <span id="project-count">0</span>/5</h3>
-          <a href="./create_project.html" class="create-link-btn" id="create-project-link">Создать проект</a>
+          <a href="./create_project_com.html" class="create-link-btn" id="create-project-link">Создать проект</a>
         </div>
         <div id="projects-list"></div>
       </div>
@@ -542,6 +542,29 @@
     <div class="modal__actions">
       <button class="action-btn" id="password-cancel" type="button">Отмена</button>
       <button class="action-btn action-btn--accent" id="password-save" type="button">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="project-type-modal" aria-hidden="true">
+  <div class="modal__card">
+    <h2 class="modal__title">Создать проект</h2>
+    <div style="color:#555; font-size:14px; margin: -4px 0 12px;">
+      Хотите создать коммерческий проект или учебный?
+    </div>
+    <div class="modal__group" style="gap: 10px;">
+      <label style="display:flex; gap:10px; align-items:center; cursor:pointer;">
+        <input type="radio" name="project-type" value="com" checked />
+        <span>Коммерческий проект</span>
+      </label>
+      <label style="display:flex; gap:10px; align-items:center; cursor:pointer;">
+        <input type="radio" name="project-type" value="study" />
+        <span>Учебный проект</span>
+      </label>
+    </div>
+    <div class="modal__actions">
+      <button class="action-btn" id="project-type-cancel" type="button">Отмена</button>
+      <button class="action-btn action-btn--accent" id="project-type-continue" type="button">Продолжить</button>
     </div>
   </div>
 </div>
@@ -732,33 +755,101 @@
     async function loadMyProjects() {
       const projectsList = document.getElementById("projects-list");
       if (!projectsList) return;
-      
+
+      // Try to load from backend if projects API exists.
+      let projects = null;
       try {
-        const response = await fetch(API_BASE_URL + "/users/projects", {
+        const response = await fetch(API_BASE_URL + "/projects", {
           method: "GET",
           credentials: "include",
         });
-        
         if (response.ok) {
-          const projects = await response.json();
-          if (projects.length === 0) {
-            projectsList.innerHTML = '<div class="empty-state">У вас пока нет проектов. Нажмите «Создать проект»</div>';
-          } else {
-            projectsList.innerHTML = projects.map(project => `
-              <div class="project-card">
-                <h3>${escapeHtml(project.name || "Без названия")}</h3>
-                <p>${escapeHtml(project.description || "")}</p>
-                <div class="project-roles">${project.roles ? project.roles.map(r => `<span class="role-tag">${escapeHtml(r)}</span>`).join('') : ''}</div>
-              </div>
-            `).join('');
-          }
-        } else {
-          projectsList.innerHTML = '<div class="empty-state">У вас пока нет проектов. Нажмите «Создать проект»</div>';
+          const data = await response.json();
+          if (Array.isArray(data)) projects = data;
+          else if (data && Array.isArray(data.items)) projects = data.items;
         }
-      } catch (error) {
-        console.error("Ошибка загрузки проектов:", error);
-        projectsList.innerHTML = '<div class="empty-state">Ошибка загрузки данных</div>';
+      } catch (_) {}
+
+      // Fallback: local storage (so UI works even without backend support).
+      if (!projects) {
+        try {
+          const raw = localStorage.getItem("tp_projects");
+          const arr = raw ? JSON.parse(raw) : [];
+          if (Array.isArray(arr)) projects = arr;
+        } catch (_) {
+          projects = [];
+        }
       }
+
+      const countSpan = document.getElementById("project-count");
+      if (countSpan) countSpan.textContent = Array.isArray(projects) ? String(projects.length) : "0";
+
+      if (!Array.isArray(projects) || projects.length === 0) {
+        projectsList.innerHTML = '<div class="empty-state">У вас пока нет проектов. Нажмите «Создать проект»</div>';
+        return;
+      }
+
+      let activeSet = new Set();
+      try {
+        const raw = localStorage.getItem("tp_active_projects");
+        const arr = raw ? JSON.parse(raw) : [];
+        if (Array.isArray(arr)) activeSet = new Set(arr.map(String));
+      } catch (_) {}
+
+      const safe = (v) => (v === null || v === undefined) ? "" : String(v);
+      const escape = (s) => safe(s).replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+
+      const getNumber = (...vals) => {
+        for (const v of vals) {
+          const n = typeof v === "number" ? v : (typeof v === "string" && v.trim() ? Number(v) : NaN);
+          if (!Number.isNaN(n)) return n;
+        }
+        return null;
+      };
+
+      projectsList.innerHTML = projects.map((p) => {
+        const id = p && p.id !== undefined ? String(p.id) : "";
+        const title = p?.title || p?.name || (id ? `Проект #${id}` : "Проект");
+
+        const peopleTotal = getNumber(p?.people_total, p?.peopleCount, p?.people_needed, p?.required_people, p?.team_size);
+        const peopleFound = getNumber(p?.people_found, p?.foundCount, p?.filled, p?.participants_count);
+
+        const roles = Array.isArray(p?.roles)
+          ? p.roles
+          : (Array.isArray(p?.positions) ? p.positions : (Array.isArray(p?.vacancies) ? p.vacancies : []));
+
+        const rolesHtml = roles.length
+          ? roles.map((r) => `<span class="role-badge">${escape(r?.name || r?.title || r)}</span>`).join("")
+          : '<span style="color:#888; font-size:12px;">Роли не указаны</span>';
+
+        const isActive = id && activeSet.has(id);
+
+        return `
+          <div class="project-card" style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start;">
+            <div style="flex:1; min-width:0;">
+              <div class="project-title">${escape(title)}</div>
+              <div class="project-info"><b>Количество человек:</b> ${peopleTotal === null ? "—" : escape(peopleTotal)}</div>
+              <div class="project-info"><b>Сколько найдено:</b> ${peopleFound === null ? "—" : escape(peopleFound)}</div>
+              <div class="project-roles" style="margin-top:8px;">${rolesHtml}</div>
+            </div>
+            <label style="display:flex; flex-direction:column; align-items:flex-end; gap:6px; user-select:none;">
+              <span style="font-size:12px; color:#666;">Активно</span>
+              <input type="checkbox" class="project-active-switch" data-project-id="${escape(id)}" ${isActive ? "checked" : ""} />
+            </label>
+          </div>
+        `;
+      }).join("");
+
+      projectsList.querySelectorAll(".project-active-switch").forEach((el) => {
+        el.addEventListener("change", () => {
+          const id = el.getAttribute("data-project-id");
+          if (!id) return;
+          const next = new Set(activeSet);
+          if (el.checked) next.add(String(id));
+          else next.delete(String(id));
+          try { localStorage.setItem("tp_active_projects", JSON.stringify(Array.from(next))); } catch (_) {}
+        });
+      });
     }
 
     async function savePersonalData() {
@@ -921,7 +1012,13 @@
       });
       roleDropdown.addEventListener("click", function (event) { 
         if (event.target instanceof HTMLButtonElement && roleBtn) { 
-          roleBtn.textContent = event.target.dataset.role || "Ищу сотрудника"; 
+          const role = event.target.dataset.role || "Ищу сотрудника";
+          roleBtn.textContent = role;
+          try { localStorage.setItem("tp_role", role); } catch (_) {}
+          if (role === "Ищу вакансию") {
+            window.location.href = "./account_employee.html";
+            return;
+          }
           const roleSelect = document.querySelector(".role-select");
           if (roleSelect) roleSelect.classList.remove("open"); 
         } 
@@ -947,9 +1044,43 @@
     const passwordCancel = document.getElementById("password-cancel");
     const passwordSave = document.getElementById("password-save");
 
+    const createProjectLink = document.getElementById("create-project-link");
+    const projectTypeModal = document.getElementById("project-type-modal");
+    const projectTypeCancel = document.getElementById("project-type-cancel");
+    const projectTypeContinue = document.getElementById("project-type-continue");
+
     if (changePasswordBtn && passwordModal) {
       changePasswordBtn.addEventListener("click", function () { 
         passwordModal.classList.add("open"); 
+      });
+    }
+
+    function openProjectTypeModal() {
+      if (projectTypeModal) projectTypeModal.classList.add("open");
+    }
+    function closeProjectTypeModal() {
+      if (projectTypeModal) projectTypeModal.classList.remove("open");
+    }
+
+    if (createProjectLink) {
+      createProjectLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        openProjectTypeModal();
+      });
+    }
+    if (projectTypeCancel) projectTypeCancel.addEventListener("click", closeProjectTypeModal);
+    if (projectTypeContinue) {
+      projectTypeContinue.addEventListener("click", () => {
+        const selected = document.querySelector('input[name="project-type"]:checked');
+        const value = selected ? selected.value : "com";
+        try { localStorage.setItem("tp_project_target", value); } catch (_) {}
+        if (value === "study") window.location.href = "./create_project_study.html";
+        else window.location.href = "./create_project_com.html";
+      });
+    }
+    if (projectTypeModal) {
+      projectTypeModal.addEventListener("click", (event) => {
+        if (event.target === projectTypeModal) closeProjectTypeModal();
       });
     }
 
@@ -1037,6 +1168,16 @@
         return m;
       });
     }
+
+    try {
+      const savedRole = localStorage.getItem("tp_role");
+      if (savedRole && roleBtn) roleBtn.textContent = savedRole;
+      // If user previously selected seeker mode, redirect to seeker account
+      if (savedRole === "Ищу вакансию") {
+        window.location.replace("./account_employee.html");
+        return;
+      }
+    } catch (_) {}
 
     loadCurrentUser();
     loadPersonalData();

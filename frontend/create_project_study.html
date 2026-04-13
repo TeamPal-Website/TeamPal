@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Создание проекта | TeamPal</title>
+  <link rel="icon" type="image/png" href="./assets/logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f7f5f2;
+      --header: #eae8e4;
+      --panel: #ffffff;
+      --panel-soft: #fffaf3;
+      --ink: #1a1a1a;
+      --ink2: #3a3a3a;
+      --line: rgba(0, 0, 0, 0.09);
+      --accent-1: #fa9500;
+      --accent-2: #f85a0b;
+      --footer: #d4d3cb;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      background: radial-gradient(900px 500px at -10% -25%, rgba(255, 208, 102, 0.28), transparent 70%),
+                  radial-gradient(700px 420px at 110% 0%, rgba(248, 90, 11, 0.14), transparent 68%),
+                  var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .notification-container {
+      position: fixed;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      width: auto;
+      min-width: 280px;
+      max-width: 500px;
+      pointer-events: none;
+    }
+    .notification {
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 12px 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      animation: fadeInDown 0.25s ease-out;
+      pointer-events: auto;
+      border: 1px solid #0000001a;
+      width: 100%;
+    }
+    @keyframes fadeInDown {
+      from { transform: translateY(-20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes fadeOutUp {
+      from { transform: translateY(0); opacity: 1; }
+      to { transform: translateY(-20px); opacity: 0; }
+    }
+    .notification.error { border-left: 3px solid #2d3e56; }
+    .notification.success { border-left: 3px solid #2d3e56; }
+    .notification.warning { border-left: 3px solid #2d3e56; }
+    .notification-content {
+      flex: 1;
+      font-size: 14px;
+      line-height: 1.4;
+      color: #2d3e56;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      text-align: center;
+    }
+    .notification-close {
+      cursor: pointer;
+      font-size: 18px;
+      color: #b5b5b5;
+      transition: color 0.2s;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .notification-close:hover { color: #F85A0B; }
+    .header {
+      position: fixed;
+      inset: 0 0 auto 0;
+      z-index: 1000;
+      height: 72px;
+      background: var(--header);
+      border-bottom: 1px solid var(--line);
+    }
+    .header__inner {
+      height: 100%;
+      padding: 0 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+    .header__left { display: flex; align-items: center; gap: 12px; }
+    .logo { width: 46px; height: 46px; border-radius: 50px; object-fit: cover; }
+    .header__actions { display: flex; align-items: center; gap: 12px; position: relative; }
+    .role-select { position: relative; }
+    .role-btn {
+      min-width: 190px;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+    }
+    .role-btn::after { content: "▾"; float: right; color: #555; }
+    .role-dropdown {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      display: none;
+    }
+    .role-select.open .role-dropdown { display: block; }
+    .role-dropdown button {
+      width: 100%;
+      border: 0;
+      background: #fff;
+      text-align: left;
+      padding: 10px 12px;
+      font-size: 14px;
+      cursor: pointer;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+    }
+    .role-dropdown button:hover { background: #fff7ec; }
+    .burger {
+      width: 48px;
+      height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+    .burger span {
+      width: 22px;
+      height: 2.5px;
+      background: linear-gradient(90deg, #5a4a3a, #3a2a1a);
+      display: block;
+      border-radius: 4px;
+      transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+    .burger.open span:nth-child(1) { transform: translateY(8.5px) rotate(45deg); width: 24px; background: linear-gradient(90deg, var(--accent-2), var(--accent-1)); }
+    .burger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+    .burger.open span:nth-child(3) { transform: translateY(-8.5px) rotate(-45deg); width: 24px; background: linear-gradient(90deg, var(--accent-2), var(--accent-1)); }
+    .header-menu {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 12px);
+      width: 244px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 12px 8px;
+      display: none;
+    }
+    .header-menu.open { display: block; }
+    .header-menu__title {
+      font-size: 12px;
+      font-weight: 500;
+      color: #8b8b8b;
+      margin-bottom: 12px;
+      padding: 0 10px;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+    }
+    .header-menu__item, .header-menu__exit {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      border-radius: 14px;
+      text-align: left;
+      padding: 10px 14px;
+      margin-bottom: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink);
+      font-family: "Space Grotesk", system-ui, sans-serif;
+    }
+    .header-menu__item:hover { background: #fff5e8; color: var(--accent-2); }
+    .header-menu__exit { margin-top: 8px; color: #d14b2a; border-top: 1px solid var(--line); border-radius: 0; padding-top: 12px; }
+    .page {
+      width: 100%;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 102px 20px 26px;
+      flex: 1;
+    }
+    .constructor-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+    }
+    .constructor-header {
+      padding: 24px 28px 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: space-between;
+    }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: none;
+      border: none;
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--accent-2);
+      cursor: pointer;
+      text-decoration: none;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      transition: transform 0.2s;
+    }
+    .back-link:hover { transform: translateX(-4px); color: #c13f0a; }
+    .constructor-title {
+      font-size: 28px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-2), var(--accent-1));
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+    }
+    .constructor-body { padding: 28px; }
+    .project-form {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px 24px;
+    }
+    .form-field { display: flex; flex-direction: column; gap: 8px; }
+    .form-field--full { grid-column: span 2; }
+    .form-field label {
+      font-size: 13px;
+      font-weight: 700;
+      color: #4e3e2e;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+    }
+    .form-field input,
+    .form-field select,
+    .form-field textarea {
+      border: 1px solid #e0dbd3;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      font-size: 15px;
+      background: white;
+      transition: 0.2s;
+    }
+    .form-field select {
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 40px;
+    }
+    .form-field select {
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 40px;
+    }
+    .form-field input:focus,
+    .form-field select:focus,
+    .form-field textarea:focus {
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      outline: none;
+      border-color: var(--accent-2);
+      box-shadow: 0 0 0 3px rgba(248, 90, 11, 0.15);
+    }
+    .form-field textarea { resize: vertical; min-height: 100px; }
+    .roles-block {
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      background: #fefaf5;
+      border-radius: 18px;
+      padding: 16px;
+      border: 1px solid var(--line);
+    }
+    .roles-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--accent-2);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+    }
+    .roles-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 14px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    .role-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: white;
+      padding: 8px 12px;
+      border-radius: 40px;
+      border: 1px solid #e8e0d5;
+      justify-content: space-between;
+    }
+    .role-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: #2c2c2c;
+      flex: 1;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+    }
+    .remove-role {
+      background: none;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      color: #b0a088;
+      transition: 0.2s;
+      padding: 0 6px;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+    }
+    .remove-role:hover { color: var(--accent-2); transform: scale(1.1); }
+    .add-role-panel {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .add-role-panel input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid #e0dbd3;
+      border-radius: 40px;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      font-size: 14px;
+    }
+    .add-role-panel button {
+      background: linear-gradient(135deg, #f0e5d8, #fff);
+      border: 1px solid #e0dbd3;
+      border-radius: 40px;
+      padding: 0 20px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+    }
+    .add-role-panel button:hover { background: var(--accent-1); color: white; border-color: var(--accent-1); }
+    .form-actions {
+      margin-top: 32px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 14px;
+      border-top: 1px solid var(--line);
+      padding-top: 24px;
+    }
+    .btn {
+      padding: 10px 28px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      border: none;
+    }
+    .btn-secondary {
+      background: #fff;
+      border: 1px solid #dbd2c7;
+      color: #4a3a2a;
+    }
+    .btn-secondary:hover { background: #f5f0ea; }
+    .btn-primary {
+      background: linear-gradient(105deg, var(--accent-1), var(--accent-2));
+      color: white;
+      box-shadow: 0 4px 10px rgba(248, 90, 11, 0.25);
+    }
+    .btn-primary:hover { transform: translateY(-2px); opacity: 0.95; }
+    .footer {
+      width: 100%;
+      background: var(--footer);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      font-size: 14px;
+      color: var(--ink2);
+      min-height: 52px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+    }
+    @media (max-width: 760px) {
+      .project-form { grid-template-columns: 1fr; }
+      .form-field--full { grid-column: span 1; }
+      .constructor-header { flex-direction: column; align-items: flex-start; }
+      .page { padding: 92px 16px 24px; }
+      .header__inner { padding: 0 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="notification-container" id="notificationContainer"></div>
+
+<header class="header">
+  <div class="header__inner">
+    <div class="header__left">
+      <img class="logo" src="./assets/logo.png" alt="TeamPal">
+      <div class="role-select" id="role-select">
+        <button class="role-btn" id="role-btn" type="button">Ищу сотрудника</button>
+        <div class="role-dropdown" id="role-dropdown">
+          <button type="button" data-role="Ищу вакансию">Ищу вакансию</button>
+          <button type="button" data-role="Ищу сотрудника">Ищу сотрудника</button>
+        </div>
+      </div>
+    </div>
+    <div class="header__actions">
+      <button class="burger" id="burger-btn" type="button">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="header-menu" id="header-menu">
+        <div class="header-menu__title">Меню</div>
+        <button class="header-menu__item" type="button">Личный кабинет</button>
+        <button class="header-menu__item" type="button">Мои заявки</button>
+        <button class="header-menu__item" type="button">Каталог</button>
+        <button class="header-menu__item" type="button">Поддержать проект</button>
+        <button class="header-menu__exit" type="button">Выйти</button>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="constructor-card">
+    <div class="constructor-header">
+      <a href="javascript:history.back()" class="back-link">← Назад к проектам</a>
+      <span class="constructor-title">Конструктор нового проекта</span>
+    </div>
+    <div class="constructor-body">
+      <form class="project-form" id="create-project-form">
+        <div class="form-field">
+          <label for="proj-name">Название проекта</label>
+          <input type="text" id="proj-name" placeholder="Например: AI-ассистент для бизнеса" autocomplete="off">
+        </div>
+        <div class="form-field">
+          <label for="proj-city">Формат работы</label>
+          <input type="text" id="proj-city" placeholder="Москва / Онлайн / Гибрид">
+        </div>
+        <div class="form-field">
+          <label for="proj-type">Тип проекта</label>
+          <select id="proj-type">
+            <option value="Коммерческий">Коммерческий</option>
+            <option value="Учебный">Учебный</option>
+            <option value="Open Source">Open Source</option>
+            <option value="Стартап">Стартап</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label for="proj-deadline">Сроки реализации</label>
+          <input type="text" id="proj-deadline" placeholder="3 месяца / до декабря 2025">
+        </div>
+        <div class="form-field form-field--full">
+          <label for="proj-desc">Описание проекта</label>
+          <textarea id="proj-desc" placeholder="Расскажите о целях, задачах и стеке технологий..."></textarea>
+        </div>
+
+        <div class="form-field form-field--full roles-block">
+          <div class="roles-title">
+            <span>Требуемые роли (можно добавить несколько)</span>
+          </div>
+          <div class="roles-list" id="roles-list-container"></div>
+          <div class="add-role-panel">
+            <input type="text" id="new-role-input" placeholder="Например: Backend-разработчик (Python)" autocomplete="off">
+            <button type="button" id="add-role-btn">Добавить</button>
+          </div>
+          <small style="font-size: 11px; color: #8b7a66; margin-top: 8px; display: block; font-family: 'Space Grotesk', sans-serif;">Добавьте ключевые роли, которые требуются в проекте</small>
+        </div>
+
+        <div class="form-field">
+          <label for="proj-exp">Опыт участников</label>
+          <select id="proj-exp">
+            <option value="без опыта">без опыта</option>
+            <option value="1-3">1-3 года</option>
+            <option value="3-6">3-6 лет</option>
+            <option value="6+">6+ лет</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label for="proj-members">План по участникам</label>
+          <input type="text" id="proj-members" placeholder="5/7">
+        </div>
+        <div class="form-field">
+          <label for="proj-contact">Контакт для связи</label>
+          <input type="text" id="proj-contact" placeholder="Telegram / email">
+        </div>
+      </form>
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" id="cancel-btn">Отменить</button>
+        <button type="button" class="btn btn-primary" id="publish-btn">Опубликовать проект</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <span>TeamPal<span id="year"></span></span>
+  <span>обратная связь: teampal@dimple.ru</span>
+</footer>
+
+
+<script src="./config.js"></script>
+<script>
+  (function() {
+    const notificationContainer = document.getElementById('notificationContainer');
+
+    function showNotification(message, type = 'error', duration = 5000) {
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+      notification.innerHTML = `
+        <div class="notification-content">${message}</div>
+        <div class="notification-close">×</div>
+      `;
+      notificationContainer.appendChild(notification);
+      const closeBtn = notification.querySelector('.notification-close');
+      closeBtn.addEventListener('click', () => {
+        notification.style.animation = 'fadeOutUp 0.25s ease-out forwards';
+        setTimeout(() => { notification.remove(); }, 250);
+      });
+      setTimeout(() => {
+        if (notification.parentElement) {
+          notification.style.animation = 'fadeOutUp 0.25s ease-out forwards';
+          setTimeout(() => { notification.remove(); }, 250);
+        }
+      }, duration);
+    }
+
+    const yearSpan = document.getElementById("year");
+    if (yearSpan) yearSpan.textContent = " " + new Date().getFullYear();
+
+    let rolesArray = [];
+    const rolesContainer = document.getElementById("roles-list-container");
+    const newRoleInput = document.getElementById("new-role-input");
+    const addRoleBtn = document.getElementById("add-role-btn");
+
+    function renderRolesList() {
+      if (!rolesContainer) return;
+      if (rolesArray.length === 0) {
+        rolesContainer.innerHTML = '<div class="empty-roles-msg" style="color:#aaa; text-align:center; padding:8px; font-family:\'Space Grotesk\', sans-serif;"> Добавьте роли, которые нужны в проекте</div>';
+        return;
+      }
+      rolesContainer.innerHTML = rolesArray.map((role, idx) => `
+        <div class="role-item" data-role-idx="${idx}">
+          <span class="role-name">${escapeHtml(role)}</span>
+          <button type="button" class="remove-role" data-remove-idx="${idx}" title="Удалить роль">✕</button>
+        </div>
+      `).join('');
+
+      document.querySelectorAll('.remove-role').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const idx = btn.getAttribute('data-remove-idx');
+          if (idx !== null) {
+            rolesArray.splice(parseInt(idx), 1);
+            renderRolesList();
+          }
+        });
+      });
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+      });
+    }
+
+    function addRole() {
+      const roleText = newRoleInput.value.trim();
+      if (roleText === "") {
+        showNotification('Введите название роли', 'warning', 3000);
+        return;
+      }
+      if (rolesArray.includes(roleText)) {
+        showNotification('Такая роль уже добавлена', 'warning', 3000);
+        return;
+      }
+      rolesArray.push(roleText);
+      renderRolesList();
+      newRoleInput.value = "";
+      showNotification(`Роль "${roleText}" добавлена`, 'success', 2000);
+    }
+
+    if (addRoleBtn) addRoleBtn.addEventListener("click", addRole);
+    if (newRoleInput) {
+      newRoleInput.addEventListener("keypress", function(e) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          addRole();
+        }
+      });
+    }
+
+    const nameInput = document.getElementById("proj-name");
+    const cityInput = document.getElementById("proj-city");
+    const typeSelect = document.getElementById("proj-type");
+    const deadlineInput = document.getElementById("proj-deadline");
+    const descTextarea = document.getElementById("proj-desc");
+    const expSelect = document.getElementById("proj-exp");
+    const membersInput = document.getElementById("proj-members");
+    const contactInput = document.getElementById("proj-contact");
+    const cancelBtn = document.getElementById("cancel-btn");
+    const publishBtn = document.getElementById("publish-btn");
+
+    function resetForm() {
+      if (nameInput) nameInput.value = "";
+      if (cityInput) cityInput.value = "";
+      if (typeSelect) typeSelect.value = "Коммерческий";
+      if (deadlineInput) deadlineInput.value = "";
+      if (descTextarea) descTextarea.value = "";
+      if (expSelect) expSelect.value = "без опыта";
+      if (membersInput) membersInput.value = "";
+      if (contactInput) contactInput.value = "";
+      rolesArray = [];
+      renderRolesList();
+    }
+
+    if (cancelBtn) {
+      cancelBtn.addEventListener("click", function() {
+        resetForm();
+        showNotification('Форма создания проекта очищена', 'success', 2000);
+      });
+    }
+
+    async function checkAuth() {
+      try {
+        const response = await fetch(API_BASE_URL + "/auth/me", {
+          method: "GET",
+          credentials: "include",
+        });
+        if (!response.ok) {
+          showNotification('Пожалуйста, авторизуйтесь для создания проекта', 'warning', 3000);
+          setTimeout(() => {
+            window.location.href = "./authorization_page.html";
+          }, 1500);
+          return false;
+        }
+        return true;
+      } catch (error) {
+        console.error('Auth check error:', error);
+        showNotification('Ошибка соединения с сервером', 'error', 3000);
+        return false;
+      }
+    }
+
+    if (publishBtn) {
+      publishBtn.addEventListener("click", async function() {
+        const projectName = nameInput ? nameInput.value.trim() : "";
+        if (!projectName) {
+          showNotification('Введите название проекта', 'error', 3000);
+          return;
+        }
+        if (rolesArray.length === 0) {
+          showNotification('Добавьте хотя бы одну требуемую роль', 'warning', 3000);
+          return;
+        }
+
+        const isAuth = await checkAuth();
+        if (!isAuth) return;
+
+        const projectData = {
+          name: projectName,
+          city: cityInput ? cityInput.value : "",
+          type: typeSelect ? typeSelect.value : "Коммерческий",
+          deadline: deadlineInput ? deadlineInput.value : null,
+          description: descTextarea ? descTextarea.value : "",
+          experience: expSelect ? expSelect.value : "без опыта",
+          members_count: membersInput ? parseInt(membersInput.value) : null,
+          contact_info: contactInput ? contactInput.value : "",
+          roles: rolesArray
+        };
+
+        try {
+          const response = await fetch(API_BASE_URL + "/projects/create", {
+            method: "POST",
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: "include",
+            body: JSON.stringify(projectData),
+          });
+
+          if (response.ok) {
+            showNotification('Проект успешно создан!', 'success', 3000);
+            resetForm();
+            setTimeout(() => {
+              window.location.href = "./account_manager.html";
+            }, 1500);
+          } else {
+            const error = await response.json().catch(() => ({}));
+            showNotification(error.detail || 'Ошибка при создании проекта', 'error', 3000);
+          }
+        } catch (error) {
+          console.error('Create project error:', error);
+          showNotification('Не удалось подключиться к серверу', 'error', 3000);
+        }
+      });
+    }
+
+    const roleSelect = document.getElementById("role-select");
+    const roleBtn = document.getElementById("role-btn");
+    const roleDropdown = document.getElementById("role-dropdown");
+    const burgerBtn = document.getElementById("burger-btn");
+    const headerMenu = document.getElementById("header-menu");
+
+    function closeMenus() {
+      if (roleSelect) roleSelect.classList.remove("open");
+      if (headerMenu) headerMenu.classList.remove("open");
+      if (burgerBtn) burgerBtn.classList.remove("open");
+    }
+
+    if (roleBtn) {
+      roleBtn.addEventListener("click", function(e) {
+        e.stopPropagation();
+        if (roleSelect) roleSelect.classList.toggle("open");
+        if (headerMenu) headerMenu.classList.remove("open");
+        if (burgerBtn) burgerBtn.classList.remove("open");
+      });
+    }
+
+    if (roleDropdown) {
+      roleDropdown.addEventListener("click", function(e) {
+        if (e.target.tagName === 'BUTTON' && roleBtn) {
+          roleBtn.textContent = e.target.dataset.role || "Ищу сотрудника";
+          if (roleSelect) roleSelect.classList.remove("open");
+        }
+      });
+    }
+
+    if (burgerBtn) {
+      burgerBtn.addEventListener("click", function(e) {
+        e.stopPropagation();
+        this.classList.toggle("open");
+        if (headerMenu) headerMenu.classList.toggle("open");
+        if (roleSelect) roleSelect.classList.remove("open");
+      });
+    }
+
+    document.addEventListener("click", function(e) {
+      if (!e.target.closest(".header__actions")) closeMenus();
+    });
+
+    const logoutMenuItem = document.querySelector(".header-menu__exit");
+    if (logoutMenuItem) {
+      logoutMenuItem.addEventListener("click", async function() {
+        try {
+          await fetch(API_BASE_URL + "/auth/logout", {
+            method: "POST",
+            credentials: "include",
+          });
+        } catch (error) {
+          console.error(error);
+        } finally {
+          showNotification('Вы вышли из системы', 'warning', 2000);
+          setTimeout(() => {
+            window.location.href = "./authorization_page.html";
+          }, 1500);
+        }
+      });
+    }
+
+    renderRolesList();
+  })();
+</script>
+</body>
+</html>

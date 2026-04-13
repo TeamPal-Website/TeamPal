@@ -510,7 +510,7 @@
       <div class="tab-panel hidden" id="panel-myprojects">
         <div class="projects-header">
           <h3>Мои резюме <span id="project-count">0</span>/5</h3>
-          <a href="./create_resume.html" class="create-link-btn" id="create-project-link">Создать резюме</a>
+          <a href="./create_resume_com.html" class="create-link-btn" id="create-project-link">Создать резюме</a>
         </div>
         <div id="projects-list"></div>
       </div>
@@ -542,6 +542,29 @@
     <div class="modal__actions">
       <button class="action-btn" id="password-cancel" type="button">Отмена</button>
       <button class="action-btn action-btn--accent" id="password-save" type="button">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="resume-type-modal" aria-hidden="true">
+  <div class="modal__card">
+    <h2 class="modal__title">Создать резюме</h2>
+    <div style="color:#555; font-size:14px; margin: -4px 0 12px;">
+      Хотите подать резюме на коммерческий или учебный проект?
+    </div>
+    <div class="modal__group" style="gap: 10px;">
+      <label style="display:flex; gap:10px; align-items:center; cursor:pointer;">
+        <input type="radio" name="resume-type" value="com" checked />
+        <span>Коммерческий проект</span>
+      </label>
+      <label style="display:flex; gap:10px; align-items:center; cursor:pointer;">
+        <input type="radio" name="resume-type" value="study" />
+        <span>Учебный проект</span>
+      </label>
+    </div>
+    <div class="modal__actions">
+      <button class="action-btn" id="resume-type-cancel" type="button">Отмена</button>
+      <button class="action-btn action-btn--accent" id="resume-type-continue" type="button">Продолжить</button>
     </div>
   </div>
 </div>
@@ -656,11 +679,11 @@
 
     async function loadPersonalData() {
       try {
-        const response = await fetch(API_BASE_URL + "/users/profile", {
+        const response = await fetch(API_BASE_URL + "/profiles/me", {
           method: "GET",
           credentials: "include",
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           personalData = {
@@ -668,22 +691,22 @@
             lastName: data.last_name || "",
             age: data.age || "",
             gender: data.gender || "",
-            city: data.city || "",
-            phone: data.phone || "",
-            telegram: data.telegram || "",
-            github: data.github || "",
+            cityId: data.city_id || "",
+            phone: (data.contacts && data.contacts.phone) || "",
+            telegram: (data.contacts && data.contacts.telegram) || "",
+            github: (data.contacts && data.contacts.github) || "",
             avatar: data.avatar || ""
           };
-          
+
           document.getElementById("first-name").value = personalData.firstName;
           document.getElementById("last-name").value = personalData.lastName;
           document.getElementById("age").value = personalData.age;
           document.getElementById("gender").value = personalData.gender;
-          document.getElementById("city").value = personalData.city;
+          document.getElementById("city").value = personalData.cityId ? String(personalData.cityId) : "";
           document.getElementById("phone").value = personalData.phone;
           document.getElementById("telegram").value = personalData.telegram;
           document.getElementById("github").value = personalData.github;
-          
+
           if (personalData.avatar) {
             document.getElementById("profile-avatar").src = personalData.avatar;
           }
@@ -708,51 +731,85 @@
 
     async function loadAboutData() {
       try {
-        const response = await fetch(API_BASE_URL + "/users/about", {
-          method: "GET",
-          credentials: "include",
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          aboutData = data.about || "";
-          document.getElementById("about-text").value = aboutData;
-        } else if (response.status === 404) {
-          aboutData = "";
-          document.getElementById("about-text").value = "";
-        }
-      } catch (error) {
-        console.error("Ошибка загрузки информации о себе:", error);
+        aboutData = localStorage.getItem("tp_about_employee") || "";
+      } catch (_) {
+        aboutData = "";
       }
+      const el = document.getElementById("about-text");
+      if (el) el.value = aboutData;
     }
 
     async function loadMyProjects() {
       const projectsList = document.getElementById("projects-list");
       if (!projectsList) return;
-      
+
       try {
-        const response = await fetch(API_BASE_URL + "/users/projects", {
+        const response = await fetch(API_BASE_URL + "/my_resumes", {
           method: "GET",
           credentials: "include",
         });
-        
+
         if (response.ok) {
-          const projects = await response.json();
-          if (projects.length === 0) {
+          const resumes = await response.json();
+          const countSpan = document.getElementById("project-count");
+          if (countSpan) countSpan.textContent = Array.isArray(resumes) ? String(resumes.length) : "0";
+
+          if (!Array.isArray(resumes) || resumes.length === 0) {
             projectsList.innerHTML = '<div class="empty-state">У вас пока нет резюме. Нажмите «Создать резюме»</div>';
-          } else {
-            projectsList.innerHTML = projects.map(project => `
-              <div class="project-card">
-                <h3>${project.title || "Без названия"}</h3>
-                <p>${project.description || ""}</p>
-              </div>
-            `).join('');
+            return;
           }
+
+          let activeSet = new Set();
+          try {
+            const raw = localStorage.getItem("tp_active_resumes");
+            const arr = raw ? JSON.parse(raw) : [];
+            if (Array.isArray(arr)) activeSet = new Set(arr.map(String));
+          } catch (_) {}
+
+          const safe = (v) => (v === null || v === undefined) ? "" : String(v);
+          const escapeHtml = (str) => safe(str).replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+
+          projectsList.innerHTML = resumes.map((resume) => {
+            const id = resume && resume.id !== undefined ? String(resume.id) : "";
+            const title = resume?.title || resume?.name || (id ? `Резюме #${id}` : "Резюме");
+            const position = resume?.position || resume?.desired_position || resume?.role || "—";
+            const salary = resume?.salary || resume?.expected_salary || resume?.zp || "—";
+            const schedule = resume?.schedule || resume?.work_schedule || resume?.grafik || "—";
+            const isActive = id && activeSet.has(id);
+
+            return `
+              <div class="project-card" style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start;">
+                <div style="flex:1; min-width:0;">
+                  <div class="project-title" style="margin-bottom:8px;">${escapeHtml(title)}</div>
+                  <div class="project-info"><b>Должность:</b> ${escapeHtml(position)}</div>
+                  <div class="project-info"><b>ЗП:</b> ${escapeHtml(salary)}</div>
+                  <div class="project-info"><b>График:</b> ${escapeHtml(schedule)}</div>
+                </div>
+                <label style="display:flex; flex-direction:column; align-items:flex-end; gap:6px; user-select:none;">
+                  <span style="font-size:12px; color:#666;">Активно</span>
+                  <input type="checkbox" class="resume-active-switch" data-resume-id="${escapeHtml(id)}" ${isActive ? "checked" : ""} />
+                </label>
+              </div>
+            `;
+          }).join("");
+
+          projectsList.querySelectorAll(".resume-active-switch").forEach((el) => {
+            el.addEventListener("change", () => {
+              const id = el.getAttribute("data-resume-id");
+              if (!id) return;
+              const next = new Set(activeSet);
+              if (el.checked) next.add(String(id));
+              else next.delete(String(id));
+              try {
+                localStorage.setItem("tp_active_resumes", JSON.stringify(Array.from(next)));
+              } catch (_) {}
+            });
+          });
         } else {
           projectsList.innerHTML = '<div class="empty-state">У вас пока нет резюме. Нажмите «Создать резюме»</div>';
         }
       } catch (error) {
-        console.error("Ошибка загрузки проектов:", error);
+        console.error("Ошибка загрузки резюме:", error);
         projectsList.innerHTML = '<div class="empty-state">Ошибка загрузки данных</div>';
       }
     }
@@ -763,10 +820,12 @@
         last_name: strip(document.getElementById("last-name").value),
         age: document.getElementById("age").value ? parseInt(document.getElementById("age").value) : null,
         gender: document.getElementById("gender").value,
-        city: document.getElementById("city").value,
-        phone: strip(document.getElementById("phone").value),
-        telegram: strip(document.getElementById("telegram").value),
-        github: strip(document.getElementById("github").value),
+        city_id: document.getElementById("city").value ? parseInt(document.getElementById("city").value) : null,
+        contacts: {
+          phone: strip(document.getElementById("phone").value) || null,
+          telegram: strip(document.getElementById("telegram").value) || null,
+          github: strip(document.getElementById("github").value) || null,
+        },
       };
       
       const errors = [];
@@ -779,8 +838,8 @@
       }
       
       try {
-        const response = await fetch(API_BASE_URL + "/users/profile", {
-          method: "PUT",
+        const response = await fetch(API_BASE_URL + "/profiles", {
+          method: "PATCH",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify(newData),
@@ -793,10 +852,10 @@
             lastName: newData.last_name,
             age: newData.age,
             gender: newData.gender,
-            city: newData.city,
-            phone: newData.phone,
-            telegram: newData.telegram,
-            github: newData.github,
+            cityId: newData.city_id,
+            phone: (newData.contacts && newData.contacts.phone) || "",
+            telegram: (newData.contacts && newData.contacts.telegram) || "",
+            github: (newData.contacts && newData.contacts.github) || "",
           };
           updateUserNameDisplay();
           alert("Личная информация сохранена");
@@ -812,25 +871,13 @@
 
     async function saveAboutData() {
       const newAbout = document.getElementById("about-text").value;
-      
       try {
-        const response = await fetch(API_BASE_URL + "/users/about", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ about: newAbout }),
-        });
-        
-        if (response.ok) {
-          aboutData = newAbout;
-          alert("Информация о себе сохранена");
-        } else {
-          const error = await response.json().catch(() => ({}));
-          alert("Ошибка: " + (error.detail || "Не удалось сохранить"));
-        }
+        localStorage.setItem("tp_about_employee", newAbout || "");
+        aboutData = newAbout || "";
+        alert("Информация о себе сохранена");
       } catch (error) {
-        console.error("Ошибка сохранения:", error);
-        alert("Ошибка соединения с сервером");
+        console.error("Ошибка сохранения информации о себе:", error);
+        alert("Не удалось сохранить");
       }
     }
 
@@ -839,7 +886,7 @@
       document.getElementById("last-name").value = personalData.lastName || "";
       document.getElementById("age").value = personalData.age || "";
       document.getElementById("gender").value = personalData.gender || "";
-      document.getElementById("city").value = personalData.city || "";
+      document.getElementById("city").value = personalData.cityId ? String(personalData.cityId) : "";
       document.getElementById("phone").value = personalData.phone || "";
       document.getElementById("telegram").value = personalData.telegram || "";
       document.getElementById("github").value = personalData.github || "";
@@ -916,7 +963,13 @@
       });
       roleDropdown.addEventListener("click", function (event) { 
         if (event.target instanceof HTMLButtonElement && roleBtn) { 
-          roleBtn.textContent = event.target.dataset.role || "Ищу сотрудника"; 
+          const role = event.target.dataset.role || "Ищу вакансию";
+          roleBtn.textContent = role;
+          try { localStorage.setItem("tp_role", role); } catch (_) {}
+          if (role === "Ищу сотрудника") {
+            window.location.href = "./account_manager.html";
+            return;
+          }
           const roleSelect = document.querySelector(".role-select");
           if (roleSelect) roleSelect.classList.remove("open"); 
         } 
@@ -942,9 +995,43 @@
     const passwordCancel = document.getElementById("password-cancel");
     const passwordSave = document.getElementById("password-save");
 
+    const createResumeLink = document.getElementById("create-project-link");
+    const resumeTypeModal = document.getElementById("resume-type-modal");
+    const resumeTypeCancel = document.getElementById("resume-type-cancel");
+    const resumeTypeContinue = document.getElementById("resume-type-continue");
+
     if (changePasswordBtn && passwordModal) {
       changePasswordBtn.addEventListener("click", function () { 
         passwordModal.classList.add("open"); 
+      });
+    }
+
+    function openResumeTypeModal() {
+      if (resumeTypeModal) resumeTypeModal.classList.add("open");
+    }
+    function closeResumeTypeModal() {
+      if (resumeTypeModal) resumeTypeModal.classList.remove("open");
+    }
+
+    if (createResumeLink) {
+      createResumeLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        openResumeTypeModal();
+      });
+    }
+    if (resumeTypeCancel) resumeTypeCancel.addEventListener("click", closeResumeTypeModal);
+    if (resumeTypeContinue) {
+      resumeTypeContinue.addEventListener("click", () => {
+        const selected = document.querySelector('input[name="resume-type"]:checked');
+        const value = selected ? selected.value : "com";
+        try { localStorage.setItem("tp_resume_target", value); } catch (_) {}
+        if (value === "study") window.location.href = "./create_resume_study.html";
+        else window.location.href = "./create_resume_com.html";
+      });
+    }
+    if (resumeTypeModal) {
+      resumeTypeModal.addEventListener("click", (event) => {
+        if (event.target === resumeTypeModal) closeResumeTypeModal();
       });
     }
 
@@ -1023,7 +1110,18 @@
       });
     }
 
+    try {
+      const savedRole = localStorage.getItem("tp_role");
+      if (savedRole && roleBtn) roleBtn.textContent = savedRole;
+      // If user previously selected employer mode, redirect to employer account
+      if (savedRole === "Ищу сотрудника") {
+        window.location.replace("./account_manager.html");
+        return;
+      }
+    } catch (_) {}
+
     loadCurrentUser();
+    loadCities();
     loadPersonalData();
     loadAboutData();
   })();
