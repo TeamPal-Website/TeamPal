@@ -441,8 +441,8 @@
         <img class="avatar" id="profile-avatar" src="./assets/avatar-default.png" alt="Аватар">
         <input type="file" id="avatar-input" accept="image/*" style="display: none;">
       </div>
-      <div class="user-name" id="user-name-display">Имя Фамилия</div>
-      <div class="user-mail">teampal@dimple.ru</div>
+      <div class="user-name" id="user-name-display">Пользователь</div>
+      <div class="user-mail" id="user-mail">Почта загружается</div>
       <button class="side-btn" id="change-password-btn" type="button">Сменить пароль</button>
     </aside>
 
@@ -583,7 +583,7 @@
     const panelMyProjects = document.getElementById("panel-myprojects");
     const panelAbout = document.getElementById("panel-about");
     const userMailSpan = document.getElementById("user-mail");
-    const userNameSpan = document.getElementById("user-name");
+    const userNameSpan = document.getElementById("user-name-display");
 
     function displayNameFromEmail(email) {
       if (!email) return "Пользователь";
