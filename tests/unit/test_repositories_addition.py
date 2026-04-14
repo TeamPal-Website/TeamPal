@@ -1,9 +1,12 @@
-# ── вставить в конец test_repositories.py ─────────────────────────────────────
+import pytest
+from sqlalchemy.exc import IntegrityError
 
 from src.repositories.cities import CitiesRepository
 from src.repositories.profiles import ProfilesRepository
 from src.schemas.cities import CityAdd
 from src.schemas.profiles import ProfileAdd, ProfileRequestPatch
+
+from tests.integration.test_repositories import create_test_user
 
 
 async def create_test_city(session, title="Москва"):
@@ -56,7 +59,6 @@ class TestCitiesRepository:
         assert found.title == "Екатеринбург"
 
     async def test_add_duplicate_city_raises(self, db_session):
-        from sqlalchemy.exc import IntegrityError
         await create_test_city(db_session, "Москва")
         with pytest.raises(IntegrityError):
             await create_test_city(db_session, "Москва")

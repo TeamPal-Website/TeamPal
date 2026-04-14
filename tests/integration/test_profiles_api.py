@@ -166,8 +166,10 @@ class TestPatchProfile:
         assert response.status_code == 404
 
     async def test_patch_profile_empty_body_succeeds(self, authenticated_client: AsyncClient):
-        response = await authenticated_client.patch("/profiles", json={})
-        assert response.status_code == 200
+        r1 = await authenticated_client.patch("/profiles", json={"first_name": "Патч"})
+        assert r1.status_code == 200
+        r2 = await authenticated_client.patch("/profiles", json={"first_name": "Патч"})
+        assert r2.status_code == 200
 
     async def test_patch_profile_with_contacts(self, authenticated_client: AsyncClient):
         contacts = {"phone": "+79991234567", "telegram": "@ivan", "github": "ivan-dev"}

@@ -5,6 +5,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
 
 import sqlalchemy.dialects.postgresql as _pg
 from sqlalchemy import JSON as _JSON
+
 _pg.JSONB = _JSON
 
 import pytest
@@ -15,6 +16,9 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from src.database import Base
+
+import src.models.skills  # noqa: F401
+
 from src.main import app
 
 test_engine = create_async_engine(
@@ -44,8 +48,8 @@ async def db_session():
 async def client():
     with patch("src.api.dependencies.async_session_maker", test_async_session_maker):
         async with AsyncClient(
-            transport=ASGITransport(app=app),
-            base_url="http://test",
+                transport=ASGITransport(app=app),
+                base_url="http://test",
         ) as ac:
             yield ac
 

@@ -661,7 +661,7 @@
       lastName: "",
       age: "",
       gender: "",
-      city: "",
+      cityId: "",
       phone: "",
       telegram: "",
       github: "",
@@ -674,13 +674,36 @@
       return str ? str.trim() : "";
     }
 
-    async function loadPersonalData() {
+    async function loadCitiesSelect() {
+      const sel = document.getElementById("city");
+      if (!sel) return;
       try {
-        const response = await fetch(API_BASE_URL + "/users/profile", {
+        const response = await fetch(API_BASE_URL + "/cities", {
           method: "GET",
           credentials: "include",
         });
-        
+        if (!response.ok) return;
+        const list = await response.json();
+        if (!Array.isArray(list)) return;
+        sel.innerHTML = '<option value="">Выберите город</option>';
+        for (const c of list) {
+          if (c && c.id != null && c.title != null) {
+            const opt = document.createElement("option");
+            opt.value = String(c.id);
+            opt.textContent = c.title;
+            sel.appendChild(opt);
+          }
+        }
+      } catch (_) {}
+    }
+
+    async function loadPersonalData() {
+      try {
+        const response = await fetch(API_BASE_URL + "/profiles/me", {
+          method: "GET",
+          credentials: "include",
+        });
+
         if (response.ok) {
           const data = await response.json();
           personalData = {
@@ -688,27 +711,26 @@
             lastName: data.last_name || "",
             age: data.age || "",
             gender: data.gender || "",
-            city: data.city || "",
-            phone: data.phone || "",
-            telegram: data.telegram || "",
-            github: data.github || "",
+            cityId: data.city_id || "",
+            phone: (data.contacts && data.contacts.phone) || "",
+            telegram: (data.contacts && data.contacts.telegram) || "",
+            github: (data.contacts && data.contacts.github) || "",
             avatar: data.avatar || ""
           };
-          
+
           document.getElementById("first-name").value = personalData.firstName;
           document.getElementById("last-name").value = personalData.lastName;
           document.getElementById("age").value = personalData.age;
           document.getElementById("gender").value = personalData.gender;
-          document.getElementById("city").value = personalData.city;
+          document.getElementById("city").value = personalData.cityId ? String(personalData.cityId) : "";
           document.getElementById("phone").value = personalData.phone;
           document.getElementById("telegram").value = personalData.telegram;
           document.getElementById("github").value = personalData.github;
-          
-          updateUserNameDisplay();
-          
+
           if (personalData.avatar) {
             document.getElementById("profile-avatar").src = personalData.avatar;
           }
+          updateUserNameDisplay();
         } else if (response.status === 404) {
           document.getElementById("first-name").value = "";
           document.getElementById("last-name").value = "";
@@ -718,6 +740,8 @@
           document.getElementById("phone").value = "";
           document.getElementById("telegram").value = "";
           document.getElementById("github").value = "";
+        } else {
+          console.error("Ошибка загрузки профиля:", response.status);
         }
       } catch (error) {
         console.error("Ошибка загрузки профиля:", error);
@@ -734,22 +758,12 @@
 
     async function loadAboutData() {
       try {
-        const response = await fetch(API_BASE_URL + "/users/about", {
-          method: "GET",
-          credentials: "include",
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          aboutData = data.about || "";
-          document.getElementById("about-text").value = aboutData;
-        } else if (response.status === 404) {
-          aboutData = "";
-          document.getElementById("about-text").value = "";
-        }
-      } catch (error) {
-        console.error("Ошибка загрузки информации о себе:", error);
+        aboutData = localStorage.getItem("tp_about_manager") || "";
+      } catch (_) {
+        aboutData = "";
       }
+      const el = document.getElementById("about-text");
+      if (el) el.value = aboutData;
     }
 
     async function loadMyProjects() {
@@ -853,52 +867,59 @@
     }
 
     async function savePersonalData() {
+      const genderRaw = document.getElementById("gender").value;
       const newData = {
         first_name: strip(document.getElementById("first-name").value),
         last_name: strip(document.getElementById("last-name").value),
-        age: document.getElementById("age").value ? parseInt(document.getElementById("age").value) : null,
-        gender: document.getElementById("gender").value,
-        city: document.getElementById("city").value,
-        phone: strip(document.getElementById("phone").value),
-        telegram: strip(document.getElementById("telegram").value),
-        github: strip(document.getElementById("github").value),
+        age: document.getElementById("age").value ? parseInt(document.getElementById("age").value, 10) : null,
+        gender: genderRaw || null,
+        city_id: document.getElementById("city").value ? parseInt(document.getElementById("city").value, 10) : null,
+        contacts: {
+          phone: strip(document.getElementById("phone").value) || null,
+          telegram: strip(document.getElementById("telegram").value) || null,
+          github: strip(document.getElementById("github").value) || null,
+        },
       };
-      
+
       const errors = [];
-      
+
       if (!newData.first_name) errors.push("Имя не может быть пустым");
       if (!newData.last_name) errors.push("Фамилия не может быть пустой");
-      
+
       if (errors.length > 0) {
         alert(errors.join("\n"));
         return;
       }
-      
+
       try {
-        const response = await fetch(API_BASE_URL + "/users/profile", {
-          method: "PUT",
+        const response = await fetch(API_BASE_URL + "/profiles", {
+          method: "PATCH",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify(newData),
         });
-        
+
         if (response.ok) {
           personalData = {
             ...personalData,
             firstName: newData.first_name,
             lastName: newData.last_name,
             age: newData.age,
-            gender: newData.gender,
-            city: newData.city,
-            phone: newData.phone,
-            telegram: newData.telegram,
-            github: newData.github,
+            gender: newData.gender || "",
+            cityId: newData.city_id,
+            phone: (newData.contacts && newData.contacts.phone) || "",
+            telegram: (newData.contacts && newData.contacts.telegram) || "",
+            github: (newData.contacts && newData.contacts.github) || "",
           };
           updateUserNameDisplay();
           alert("Личная информация сохранена");
         } else {
           const error = await response.json().catch(() => ({}));
-          alert("Ошибка: " + (error.detail || "Не удалось сохранить"));
+          const detail = error.detail;
+          const msg = Array.isArray(detail)
+            ? detail.map((d) => d.msg || JSON.stringify(d)).join("; ")
+            : (detail || "Не удалось сохранить");
+          alert("Ошибка: " + msg);
         }
       } catch (error) {
         console.error("Ошибка сохранения:", error);
@@ -908,25 +929,13 @@
 
     async function saveAboutData() {
       const newAbout = document.getElementById("about-text").value;
-      
       try {
-        const response = await fetch(API_BASE_URL + "/users/about", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ about: newAbout }),
-        });
-        
-        if (response.ok) {
-          aboutData = newAbout;
-          alert("Информация о себе сохранена");
-        } else {
-          const error = await response.json().catch(() => ({}));
-          alert("Ошибка: " + (error.detail || "Не удалось сохранить"));
-        }
+        localStorage.setItem("tp_about_manager", newAbout || "");
+        aboutData = newAbout || "";
+        alert("Информация о себе сохранена");
       } catch (error) {
-        console.error("Ошибка сохранения:", error);
-        alert("Ошибка соединения с сервером");
+        console.error("Ошибка сохранения информации о себе:", error);
+        alert("Не удалось сохранить");
       }
     }
 
@@ -935,7 +944,7 @@
       document.getElementById("last-name").value = personalData.lastName || "";
       document.getElementById("age").value = personalData.age || "";
       document.getElementById("gender").value = personalData.gender || "";
-      document.getElementById("city").value = personalData.city || "";
+      document.getElementById("city").value = personalData.cityId ? String(personalData.cityId) : "";
       document.getElementById("phone").value = personalData.phone || "";
       document.getElementById("telegram").value = personalData.telegram || "";
       document.getElementById("github").value = personalData.github || "";
@@ -958,32 +967,13 @@
         avatarInput.click();
       });
       
-      avatarInput.addEventListener("change", async (e) => {
+      avatarInput.addEventListener("change", (e) => {
         const file = e.target.files[0];
         if (file && file.type.startsWith("image/")) {
-          const formData = new FormData();
-          formData.append("avatar", file);
-          
-          try {
-            const response = await fetch(API_BASE_URL + "/users/avatar", {
-              method: "POST",
-              credentials: "include",
-              body: formData,
-            });
-            
-            if (response.ok) {
-              const data = await response.json();
-              const avatarUrl = data.avatar_url || URL.createObjectURL(file);
-              document.getElementById("profile-avatar").src = avatarUrl;
-              personalData.avatar = avatarUrl;
-              alert("Аватар обновлён");
-            } else {
-              alert("Ошибка загрузки аватара");
-            }
-          } catch (error) {
-            console.error("Ошибка загрузки аватара:", error);
-            alert("Ошибка соединения с сервером");
-          }
+          const previewUrl = URL.createObjectURL(file);
+          document.getElementById("profile-avatar").src = previewUrl;
+          personalData.avatar = previewUrl;
+          alert("Превью в браузере. Сохранение файла аватара на сервере пока не реализовано.");
         } else if (file) {
           alert("Пожалуйста, выберите изображение");
         }
@@ -1179,9 +1169,12 @@
       }
     } catch (_) {}
 
-    loadCurrentUser();
-    loadPersonalData();
-    loadAboutData();
+    void (async function initAccount() {
+      await loadCitiesSelect();
+      await loadCurrentUser();
+      await loadPersonalData();
+      await loadAboutData();
+    })();
   })();
 </script>
 </body>

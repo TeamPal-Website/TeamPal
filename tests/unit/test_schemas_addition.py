@@ -1,6 +1,7 @@
-# ── вставить в конец test_schemas.py ──────────────────────────────────────────
-
 from types import SimpleNamespace
+
+import pytest
+from pydantic import ValidationError
 
 from src.schemas.cities import CityAdd, City
 from src.schemas.profiles import (
