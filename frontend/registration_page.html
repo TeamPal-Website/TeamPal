@@ -388,6 +388,16 @@ button {
             const confirmPasswordInput = document.getElementById('confirm_password');
             const submitBtn = document.getElementById('submitBtn');
             const notificationContainer = document.getElementById('notificationContainer');
+
+            function accountPageUrl() {
+                try {
+                    const role = localStorage.getItem('tp_role');
+                    if (role === 'Ищу вакансию') {
+                        return './account_employee.html';
+                    }
+                } catch (e) {}
+                return './account_manager.html';
+            }
             
             submitBtn.disabled = true;
 
@@ -646,7 +656,7 @@ button {
                     }
                     
                     setTimeout(() => {
-                        window.location.href = './account.html';
+                        window.location.href = accountPageUrl();
                     }, 1000);
                     
                 } catch (error) {
