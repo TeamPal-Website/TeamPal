@@ -12,6 +12,7 @@ import pytest
 from unittest.mock import patch
 
 from httpx import AsyncClient, ASGITransport
+from sqlalchemy import event
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -27,6 +28,14 @@ test_engine = create_async_engine(
     poolclass=StaticPool,
 )
 test_async_session_maker = async_sessionmaker(bind=test_engine, expire_on_commit=False)
+
+
+@event.listens_for(test_engine.sync_engine, "connect")
+def _sqlite_enable_foreign_keys(dbapi_connection, _connection_record):
+    if test_engine.sync_engine.dialect.name == "sqlite":
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
 
 
 @pytest.fixture(autouse=True)

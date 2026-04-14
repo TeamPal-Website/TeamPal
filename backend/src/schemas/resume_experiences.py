@@ -24,3 +24,11 @@ class ResumeExperienceRequestAdd(BaseModel):
 
 class ResumeExperienceAdd(ResumeExperienceRequestAdd):
     resume_id: int
+
+
+class ResumeExperiencePatch(BaseModel):
+    company_name: str | None = Field(default=None, min_length=1, max_length=255)
+    position: str | None = Field(default=None, min_length=1, max_length=255)
+    description: str | None = None
+    start_date: date | None = None
+    end_date: date | None = None

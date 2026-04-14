@@ -23,6 +23,10 @@ class TestCityAdd:
         with pytest.raises(ValidationError):
             CityAdd(title="")
 
+    def test_whitespace_only_title_fails(self):
+        with pytest.raises(ValidationError):
+            CityAdd(title="   ")
+
     def test_title_too_long_fails(self):
         with pytest.raises(ValidationError):
             CityAdd(title="А" * 51)

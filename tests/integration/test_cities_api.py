@@ -29,6 +29,20 @@ class TestGetCities:
         assert response.status_code == 200
 
 
+class TestGetCity:
+
+    async def test_get_city_by_id(self, client: AsyncClient):
+        created = await client.post("/cities", json={"title": "Томск"})
+        city_id = created.json()["data"]["id"]
+        response = await client.get(f"/cities/{city_id}")
+        assert response.status_code == 200
+        assert response.json() == {"id": city_id, "title": "Томск"}
+
+    async def test_get_city_not_found(self, client: AsyncClient):
+        response = await client.get("/cities/99999")
+        assert response.status_code == 404
+
+
 class TestCreateCity:
 
     async def test_create_city_success(self, client: AsyncClient):
@@ -74,3 +88,26 @@ class TestCreateCity:
         r1 = await client.post("/cities", json={"title": "Омск"})
         r2 = await client.post("/cities", json={"title": "Уфа"})
         assert r1.json()["data"]["id"] != r2.json()["data"]["id"]
+
+
+class TestDeleteCity:
+
+    async def test_delete_city_success(self, client: AsyncClient):
+        created = await client.post("/cities", json={"title": "Воронеж"})
+        city_id = created.json()["data"]["id"]
+        response = await client.delete(f"/cities/{city_id}")
+        assert response.status_code == 200
+        assert response.json() == {"status": "OK"}
+        get_after = await client.get(f"/cities/{city_id}")
+        assert get_after.status_code == 404
+
+    async def test_delete_city_not_found(self, client: AsyncClient):
+        response = await client.delete("/cities/99999")
+        assert response.status_code == 404
+
+    async def test_delete_city_in_use_returns_409(
+        self, client: AsyncClient, authenticated_client: AsyncClient, city: dict
+    ):
+        await authenticated_client.patch("/profiles", json={"city_id": city["id"]})
+        response = await client.delete(f"/cities/{city['id']}")
+        assert response.status_code == 409
