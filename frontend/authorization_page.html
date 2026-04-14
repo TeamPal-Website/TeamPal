@@ -455,7 +455,7 @@ button {
                         credentials: 'include',
                     });
                     if (response.ok) {
-                        window.location.href = './account_employee.html';
+                        window.location.href = './account.html';
                     }
                 } catch (error) {
                     console.error(error);
@@ -528,7 +528,7 @@ button {
                     
                     showNotification('Вход выполнен успешно! Перенаправление...', 'success', 1500);
                     setTimeout(() => {
-                        window.location.href = './account_employee.html';
+                        window.location.href = './account.html';
                     }, 1000);
                     
                 } catch (error) {

@@ -1,11 +1,17 @@
-from datetime import datetime, date
+from datetime import date, datetime
 
-from sqlalchemy import ForeignKey, String, Text, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import (
+    ForeignKey,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy import Enum as SQLEnum
+from sqlalchemy.orm import Mapped, mapped_column
 
 from src.database import Base
-from src.enums import ResumeStatus
+from src.enums import CommitmentLevel, EmploymentIntent, ResumeStatus
 
 
 class ResumesOrm(Base):
@@ -13,12 +19,37 @@ class ResumesOrm(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     profile_id: Mapped[int] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"))
+    desired_position: Mapped[str] = mapped_column(String(255), nullable=False)
+    employment_intent: Mapped[EmploymentIntent] = mapped_column(
+        SQLEnum(EmploymentIntent, name="employment_intent"),
+        default=EmploymentIntent.COMMERCIAL,
+    )
+    commitment_level: Mapped[CommitmentLevel | None] = mapped_column(
+        SQLEnum(CommitmentLevel, name="commitment_level"),
+        nullable=True,
+    )
+    salary_amount: Mapped[int | None] = mapped_column(nullable=True)
     about_me: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[ResumeStatus] = mapped_column(
         SQLEnum(ResumeStatus, name="resume_status_enum"),
-        default=ResumeStatus.LOOKING_FOR_JOB
+        default=ResumeStatus.LOOKING_FOR_JOB,
     )
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+
+
+class ResumeSkillOrm(Base):
+    __tablename__ = "resume_skills"
+    __table_args__ = (
+        UniqueConstraint(
+            "resume_id",
+            "skill_id",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    resume_id: Mapped[int] = mapped_column(ForeignKey("resumes.id", ondelete="CASCADE"))
+    skill_id: Mapped[int] = mapped_column(ForeignKey("skills.id", ondelete="RESTRICT"))
+
 
 class ResumeExperienceOrm(Base):
     __tablename__ = "resume_experiences"
