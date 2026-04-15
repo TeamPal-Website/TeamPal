@@ -72,7 +72,7 @@ async def update_project_vacancy(
     if profile is None:
         raise HTTPException(status_code=404, detail="Профиль не найден")
 
-    project = await db.projects.get_one_or_none(id=project_id, vacancy_id=vacancy_id)
+    project = await db.projects.get_one_or_none(id=project_id, profile_id=profile.id)
     if project is None:
         raise HTTPException(status_code=404, detail="Проект не найден")
 
@@ -104,7 +104,7 @@ async def update_project_vacancy(
     return {"status": "OK"}
 
 
-@router.delete("/vacancies/{vacancy_id}")
+@router.delete("/{project_id}/vacancies/{vacancy_id}")
 async def delete_project_vacancy(
         project_id: int,
         vacancy_id: int,

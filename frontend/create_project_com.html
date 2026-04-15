@@ -2,6 +2,9 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Создание проекта | TeamPal</title>
   <link rel="icon" type="image/png" href="./assets/logo.png">
@@ -556,37 +559,53 @@
           <div class="roles-list" id="roles-list-container"></div>
           <div class="add-role-fields">
             <input type="text" id="new-role-name" class="add-role-field--full" placeholder="Название роли (например: Backend-разработчик)" autocomplete="off">
-            <textarea id="new-role-desc" placeholder="Описание роли, зона ответственности, задачи"></textarea>
-            <input type="text" id="new-role-schedule" placeholder="График (например: пн–пт или 5/2)">
-            <input type="text" id="new-role-hours" placeholder="Занятость, часы в день">
-            <input type="text" id="new-role-salary" placeholder="Зарплата (валюта и за какой период: мес. или проект)">
-            <input type="text" id="new-role-format" placeholder="Формат работы (офис - город / удалённо / гибрид)">
-            <select id="new-role-employment" class="add-role-field--full" aria-label="Оформление по ТК РФ">
-              <option value="">Оформление (по ТК РФ и иным основаниям)</option>
-              <option value="Трудовой договор без срока (ТК РФ)">Трудовой договор без срока (ТК РФ)</option>
-              <option value="Срочный трудовой договор (ТК РФ)">Срочный трудовой договор (ТК РФ)</option>
-              <option value="Договор ГПХ — подряд (ТК РФ, гл. 37)">Договор ГПХ — подряд (ТК РФ, гл. 37)</option>
-              <option value="Договор ГПХ — оказание услуг (ТК РФ, гл. 39)">Договор ГПХ — оказание услуг (ТК РФ, гл. 39)</option>
-              <option value="Самозанятость (НПД)">Самозанятость (НПД)</option>
-              <option value="Индивидуальный предприниматель (договор с ИП)">Индивидуальный предприниматель (договор с ИП)</option>
-              <option value="Иное / уточняется при найме">Иное / уточняется при найме</option>
+            <textarea id="new-role-responsibilities" class="add-role-field--full" placeholder="Обязанности / зона ответственности"></textarea>
+            <textarea id="new-role-requirements" class="add-role-field--full" placeholder="Требования (навыки, опыт)"></textarea>
+            <select id="new-role-experience">
+              <option value="">— Опыт работы —</option>
+              <option value="none">Без опыта</option>
+              <option value="<1">До 1 года</option>
+              <option value="1-3">1–3 года</option>
+              <option value="3-6">3–6 лет</option>
+              <option value="6+">6+ лет</option>
+            </select>
+            <select id="new-role-format">
+              <option value="">— Формат работы —</option>
+              <option value="remote">Удалённо</option>
+              <option value="office">В офисе</option>
+              <option value="hybrid">Гибрид</option>
+            </select>
+            <select id="new-role-employment">
+              <option value="">— Занятость —</option>
+              <option value="full_time">Полная занятость</option>
+              <option value="part_time">Частичная занятость</option>
+              <option value="side_project">Подработка</option>
+            </select>
+            <select id="new-role-schedule">
+              <option value="">— График —</option>
+              <option value="5/2">5/2</option>
+              <option value="2/2">2/2</option>
+              <option value="4/2">4/2</option>
+              <option value="3/3">3/3</option>
+            </select>
+            <input type="number" id="new-role-salary" min="0" step="1000" placeholder="Зарплата (сумма, необязательно)">
+            <select id="new-role-salary-type">
+              <option value="">— Тип зарплаты —</option>
+              <option value="monthly">В месяц</option>
+              <option value="per_project">За проект</option>
+            </select>
+            <select id="new-role-contract" class="add-role-field--full">
+              <option value="">— Тип договора —</option>
+              <option value="gph">ГПХ</option>
+              <option value="tk">ТК</option>
+              <option value="internship">Стажировка</option>
             </select>
           </div>
           <div class="add-role-actions">
             <button type="button" id="add-role-btn">Добавить роль</button>
           </div>
-          <small style="font-size: 11px; color: #8b7a66; margin-top: 8px; display: block; font-family: 'Space Grotesk', sans-serif;">Для каждой роли укажите условия отдельно: график, занятость, оплату, формат и способ оформления</small>
         </div>
 
-        <div class="form-field">
-          <label for="proj-exp">Опыт участников</label>
-          <select id="proj-exp">
-            <option value="без опыта">без опыта</option>
-            <option value="1-3">1-3 года</option>
-            <option value="3-6">3-6 лет</option>
-            <option value="6+">6+ лет</option>
-          </select>
-        </div>
         <div class="form-field">
           <label for="proj-members">План по участникам</label>
           <input type="text" id="proj-members" placeholder="5/7">
@@ -639,16 +658,51 @@
     const yearSpan = document.getElementById("year");
     if (yearSpan) yearSpan.textContent = " " + new Date().getFullYear();
 
+    // All available roles from API: [{id, name, is_active, created_at}, ...]
+    let allRolesFromApi = [];
+    // Vacancies added by user
     let rolesArray = [];
     const rolesContainer = document.getElementById("roles-list-container");
     const newRoleName = document.getElementById("new-role-name");
-    const newRoleDesc = document.getElementById("new-role-desc");
-    const newRoleSchedule = document.getElementById("new-role-schedule");
-    const newRoleHours = document.getElementById("new-role-hours");
-    const newRoleSalary = document.getElementById("new-role-salary");
+    const newRoleResponsibilities = document.getElementById("new-role-responsibilities");
+    const newRoleRequirements = document.getElementById("new-role-requirements");
+    const newRoleExperience = document.getElementById("new-role-experience");
     const newRoleFormat = document.getElementById("new-role-format");
     const newRoleEmployment = document.getElementById("new-role-employment");
+    const newRoleSchedule = document.getElementById("new-role-schedule");
+    const newRoleSalary = document.getElementById("new-role-salary");
+    const newRoleSalaryType = document.getElementById("new-role-salary-type");
+    const newRoleContract = document.getElementById("new-role-contract");
     const addRoleBtn = document.getElementById("add-role-btn");
+
+    async function loadRolesFromApi() {
+      try {
+        const resp = await fetch(API_BASE_URL + "/roles_dictionary", { credentials: "include" });
+        if (resp.ok) {
+          const data = await resp.json();
+          allRolesFromApi = Array.isArray(data) ? data.filter(r => r.is_active !== false) : [];
+        }
+      } catch (_) {}
+      if (newRoleName) {
+        if (allRolesFromApi.length === 0) {
+          newRoleName.placeholder = "Роли ещё не добавлены (обратитесь к администратору)";
+          newRoleName.disabled = true;
+          if (addRoleBtn) addRoleBtn.disabled = true;
+        } else {
+          newRoleName.placeholder = "Название роли из справочника (" + allRolesFromApi.map(r => r.name).slice(0, 2).join(', ') + "...)";
+          newRoleName.disabled = false;
+          if (addRoleBtn) addRoleBtn.disabled = false;
+          let dl = document.getElementById("roles-datalist");
+          if (!dl) {
+            dl = document.createElement("datalist");
+            dl.id = "roles-datalist";
+            document.body.appendChild(dl);
+            newRoleName.setAttribute("list", "roles-datalist");
+          }
+          dl.innerHTML = allRolesFromApi.map(r => `<option value="${escapeHtml(r.name)}"></option>`).join('');
+        }
+      }
+    }
 
     function renderRolesList() {
       if (!rolesContainer) return;
@@ -657,9 +711,15 @@
         return;
       }
       rolesContainer.innerHTML = rolesArray.map((role, idx) => `
-        <div class="role-item" data-role-idx="${idx}">
-          <span class="role-name">${escapeHtml(role)}</span>
-          <button type="button" class="remove-role" data-remove-idx="${idx}" title="Удалить роль">✕</button>
+        <div class="role-item-card" data-role-idx="${idx}">
+          <div class="role-item-card__head">
+            <span class="role-name">${escapeHtml(role.name_label)}</span>
+            <button type="button" class="remove-role" data-remove-idx="${idx}" title="Удалить роль">✕</button>
+          </div>
+          <dl class="role-item-card__body">
+            ${role.responsibilities ? `<dt>Обязанности</dt><dd>${escapeHtml(role.responsibilities)}</dd>` : ''}
+            ${role.requirements ? `<dt>Требования</dt><dd>${escapeHtml(role.requirements)}</dd>` : ''}
+          </dl>
         </div>
       `).join('');
 
@@ -687,32 +747,46 @@
 
     function addRole() {
       const roleText = newRoleName ? newRoleName.value.trim() : "";
-      if (roleText === "") {
+      if (!roleText) {
         showNotification('Введите название роли', 'warning', 3000);
         return;
       }
-      if (rolesArray.some(r => r.name === roleText)) {
+      const found = allRolesFromApi.find(r => r.name.toLowerCase() === roleText.toLowerCase());
+      if (!found) {
+        showNotification(`Роль "${roleText}" не найдена в справочнике. Выберите из предложенных вариантов.`, 'warning', 4000);
+        return;
+      }
+      if (rolesArray.some(r => r.role_type_id === found.id)) {
         showNotification('Роль с таким названием уже добавлена', 'warning', 3000);
         return;
       }
+
+      const salaryRaw = newRoleSalary ? newRoleSalary.value.trim() : "";
       rolesArray.push({
-        name: roleText,
-        description: newRoleDesc ? newRoleDesc.value.trim() : "",
-        schedule: newRoleSchedule ? newRoleSchedule.value.trim() : "",
-        hours_per_day: newRoleHours ? newRoleHours.value.trim() : "",
-        salary: newRoleSalary ? newRoleSalary.value.trim() : "",
-        work_format: newRoleFormat ? newRoleFormat.value.trim() : "",
-        employment_arrangement: newRoleEmployment ? newRoleEmployment.value.trim() : ""
+        role_type_id:     found.id,
+        name_label:       found.name,
+        responsibilities: newRoleResponsibilities ? newRoleResponsibilities.value.trim() || null : null,
+        requirements:     newRoleRequirements ? newRoleRequirements.value.trim() || null : null,
+        experience:       newRoleExperience  ? newRoleExperience.value  || null : null,
+        work_format:      newRoleFormat      ? newRoleFormat.value      || null : null,
+        employment:       newRoleEmployment  ? newRoleEmployment.value  || null : null,
+        schedule:         newRoleSchedule    ? newRoleSchedule.value    || null : null,
+        salary_amount:    salaryRaw ? parseInt(salaryRaw, 10) : null,
+        salary_type:      newRoleSalaryType  ? newRoleSalaryType.value  || null : null,
+        contract_type:    newRoleContract    ? newRoleContract.value    || null : null,
       });
       renderRolesList();
-      if (newRoleName) newRoleName.value = "";
-      if (newRoleDesc) newRoleDesc.value = "";
-      if (newRoleSchedule) newRoleSchedule.value = "";
-      if (newRoleHours) newRoleHours.value = "";
-      if (newRoleSalary) newRoleSalary.value = "";
-      if (newRoleFormat) newRoleFormat.value = "";
-      if (newRoleEmployment) newRoleEmployment.value = "";
-      showNotification(`Роль "${roleText}" добавлена`, 'success', 2000);
+      if (newRoleName)            newRoleName.value = "";
+      if (newRoleResponsibilities) newRoleResponsibilities.value = "";
+      if (newRoleRequirements)    newRoleRequirements.value = "";
+      if (newRoleExperience)      newRoleExperience.value = "";
+      if (newRoleFormat)          newRoleFormat.value = "";
+      if (newRoleEmployment)      newRoleEmployment.value = "";
+      if (newRoleSchedule)        newRoleSchedule.value = "";
+      if (newRoleSalary)          newRoleSalary.value = "";
+      if (newRoleSalaryType)      newRoleSalaryType.value = "";
+      if (newRoleContract)        newRoleContract.value = "";
+      showNotification(`Роль "${found.name}" добавлена`, 'success', 2000);
     }
 
     if (addRoleBtn) addRoleBtn.addEventListener("click", addRole);
@@ -721,7 +795,6 @@
     const companyInput = document.getElementById("proj-company");
     const deadlineInput = document.getElementById("proj-deadline");
     const descTextarea = document.getElementById("proj-desc");
-    const expSelect = document.getElementById("proj-exp");
     const membersInput = document.getElementById("proj-members");
     const contactInput = document.getElementById("proj-contact");
     const cancelBtn = document.getElementById("cancel-btn");
@@ -732,16 +805,18 @@
       if (companyInput) companyInput.value = "";
       if (deadlineInput) deadlineInput.value = "";
       if (descTextarea) descTextarea.value = "";
-      if (expSelect) expSelect.value = "без опыта";
       if (membersInput) membersInput.value = "";
       if (contactInput) contactInput.value = "";
-      if (newRoleName) newRoleName.value = "";
-      if (newRoleDesc) newRoleDesc.value = "";
-      if (newRoleSchedule) newRoleSchedule.value = "";
-      if (newRoleHours) newRoleHours.value = "";
-      if (newRoleSalary) newRoleSalary.value = "";
-      if (newRoleFormat) newRoleFormat.value = "";
-      if (newRoleEmployment) newRoleEmployment.value = "";
+      if (newRoleName)             newRoleName.value = "";
+      if (newRoleResponsibilities) newRoleResponsibilities.value = "";
+      if (newRoleRequirements)     newRoleRequirements.value = "";
+      if (newRoleExperience)       newRoleExperience.value = "";
+      if (newRoleFormat)           newRoleFormat.value = "";
+      if (newRoleEmployment)       newRoleEmployment.value = "";
+      if (newRoleSchedule)         newRoleSchedule.value = "";
+      if (newRoleSalary)           newRoleSalary.value = "";
+      if (newRoleSalaryType)       newRoleSalaryType.value = "";
+      if (newRoleContract)         newRoleContract.value = "";
       rolesArray = [];
       renderRolesList();
     }
@@ -789,21 +864,28 @@
         const isAuth = await checkAuth();
         if (!isAuth) return;
 
+        const companyNameVal = companyInput ? companyInput.value.trim() : "";
         const projectData = {
-          name: projectName,
-          city: "",
-          type: "Коммерческий",
-          company_name: companyInput ? companyInput.value.trim() : "",
-          deadline: deadlineInput ? deadlineInput.value : null,
-          description: descTextarea ? descTextarea.value : "",
-          experience: expSelect ? expSelect.value : "без опыта",
-          members_count: membersInput ? parseInt(membersInput.value) : null,
-          contact_info: contactInput ? contactInput.value : "",
-          roles: rolesArray
+          title: projectName,
+          company_name: companyNameVal || null,
+          employment_intent: "commercial",
+          description: (descTextarea ? descTextarea.value.trim() : "") || null,
+          vacancies: rolesArray.map(r => ({
+            role_type_id:     r.role_type_id,
+            responsibilities: r.responsibilities  || null,
+            requirements:     r.requirements      || null,
+            experience:       r.experience        || null,
+            work_format:      r.work_format       || null,
+            employment:       r.employment        || null,
+            schedule:         r.schedule          || null,
+            salary_amount:    r.salary_amount     != null ? r.salary_amount : null,
+            salary_type:      r.salary_type       || null,
+            contract_type:    r.contract_type     || null,
+          })),
         };
 
         try {
-          const response = await fetch(API_BASE_URL + "/projects/create", {
+          const response = await fetch(API_BASE_URL + "/projects", {
             method: "POST",
             headers: {
               'Content-Type': 'application/json',
@@ -891,6 +973,7 @@
       });
     }
 
+    loadRolesFromApi();
     renderRolesList();
   })();
 </script>

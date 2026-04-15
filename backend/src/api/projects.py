@@ -155,8 +155,8 @@ async def update_project(
     if await db.projects.get_one_or_none(id=project_id, profile_id=profile.id) is None:
         raise HTTPException(status_code=404, detail="Проект не найден")
 
-    if data.cite_id is not None:
-        city = await db.cities.get_one_or_none(id=data.cite_id)
+    if data.city_id is not None:
+        city = await db.cities.get_one_or_none(id=data.city_id)
         if city is None:
             raise HTTPException(status_code=404, detail="Город не найден")
 

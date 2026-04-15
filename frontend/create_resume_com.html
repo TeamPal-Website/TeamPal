@@ -2,6 +2,9 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Создание резюме | TeamPal</title>
   <link rel="icon" type="image/png" href="./assets/logo.png">
@@ -597,34 +600,45 @@
     const yearSpan = document.getElementById("year");
     if (yearSpan) yearSpan.textContent = " " + new Date().getFullYear();
 
-    const allSkillsList = [
-      "JavaScript", "TypeScript", "React", "Vue.js", "Angular", "Node.js", "Python", "Django", "Flask",
-      "Java", "Spring Boot", "C#", ".NET", "Go", "PHP", "Laravel", "Ruby on Rails", "Swift", "Kotlin",
-      "HTML5", "CSS3", "Sass/SCSS", "Tailwind CSS", "Figma", "Adobe XD", "UI/UX дизайн",
-      "PostgreSQL", "MySQL", "MongoDB", "Redis", "GraphQL", "REST API", "Docker", "Kubernetes",
-      "AWS", "Git", "CI/CD", "Jest", "Pytest", "Webpack", "Vite", "Аналитика данных"
-    ].sort();
-
-    let selectedSkills = [];
+    // Skills loaded from API: [{id, name}, ...]
+    let allSkillsList = [];
+    let selectedSkillIds = [];
     const skillsGrid = document.getElementById("skillsGrid");
     const selectedTagsContainer = document.getElementById("selectedSkillsTags");
+
+    async function loadSkillsFromApi() {
+      if (!skillsGrid) return;
+      skillsGrid.innerHTML = '<div style="color:#aaa; font-size:13px; padding:8px;">Загрузка навыков...</div>';
+      try {
+        const resp = await fetch(API_BASE_URL + "/skills", { credentials: "include" });
+        if (resp.ok) {
+          const data = await resp.json();
+          allSkillsList = Array.isArray(data) ? data : [];
+        }
+      } catch (_) {}
+      if (allSkillsList.length === 0) {
+        skillsGrid.innerHTML = '<div style="color:#aaa; font-size:13px; padding:8px;">Навыки ещё не добавлены. Обратитесь к администратору.</div>';
+        return;
+      }
+      renderSkillsGrid();
+    }
 
     function renderSkillsGrid() {
       if (!skillsGrid) return;
       skillsGrid.innerHTML = allSkillsList.map(skill => `
         <label class="skill-checkbox">
-          <input type="checkbox" class="skill-check" value="${escapeHtml(skill)}" ${selectedSkills.includes(skill) ? 'checked' : ''}>
-          <span>${escapeHtml(skill)}</span>
+          <input type="checkbox" class="skill-check" value="${skill.id}" ${selectedSkillIds.includes(skill.id) ? 'checked' : ''}>
+          <span>${escapeHtml(skill.name)}</span>
         </label>
       `).join('');
       document.querySelectorAll('.skill-check').forEach(checkbox => {
-        checkbox.addEventListener('change', (e) => {
-          const skillValue = checkbox.value;
+        checkbox.addEventListener('change', () => {
+          const skillId = parseInt(checkbox.value);
           if (checkbox.checked) {
-            if (!selectedSkills.includes(skillValue)) selectedSkills.push(skillValue);
+            if (!selectedSkillIds.includes(skillId)) selectedSkillIds.push(skillId);
           } else {
-            const idx = selectedSkills.indexOf(skillValue);
-            if (idx !== -1) selectedSkills.splice(idx, 1);
+            const idx = selectedSkillIds.indexOf(skillId);
+            if (idx !== -1) selectedSkillIds.splice(idx, 1);
           }
           renderSelectedTags();
         });
@@ -633,26 +647,25 @@
 
     function renderSelectedTags() {
       if (!selectedTagsContainer) return;
-      if (selectedSkills.length === 0) {
+      if (selectedSkillIds.length === 0) {
         selectedTagsContainer.innerHTML = '<div style="color:#aaa; font-size:13px; font-family:\'Space Grotesk\', sans-serif;">Выберите навыки из списка выше</div>';
         return;
       }
-      selectedTagsContainer.innerHTML = selectedSkills.map((skill, idx) => `
+      const selectedSkillObjects = allSkillsList.filter(s => selectedSkillIds.includes(s.id));
+      selectedTagsContainer.innerHTML = selectedSkillObjects.map((skill) => `
         <div class="selected-skill-tag">
-          ${escapeHtml(skill)}
-          <button type="button" data-skill-remove="${idx}">✕</button>
+          ${escapeHtml(skill.name)}
+          <button type="button" data-skill-remove="${skill.id}">✕</button>
         </div>
       `).join('');
       document.querySelectorAll('[data-skill-remove]').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const idx = parseInt(btn.getAttribute('data-skill-remove'));
-          if (!isNaN(idx) && selectedSkills[idx]) {
-            const removed = selectedSkills[idx];
-            selectedSkills.splice(idx, 1);
-            const checkboxToUncheck = Array.from(document.querySelectorAll('.skill-check')).find(cb => cb.value === removed);
-            if (checkboxToUncheck) checkboxToUncheck.checked = false;
-            renderSelectedTags();
-          }
+        btn.addEventListener('click', () => {
+          const skillId = parseInt(btn.getAttribute('data-skill-remove'));
+          const idx = selectedSkillIds.indexOf(skillId);
+          if (idx !== -1) selectedSkillIds.splice(idx, 1);
+          const checkboxToUncheck = Array.from(document.querySelectorAll('.skill-check')).find(cb => parseInt(cb.value) === skillId);
+          if (checkboxToUncheck) checkboxToUncheck.checked = false;
+          renderSelectedTags();
         });
       });
     }
@@ -771,7 +784,7 @@
       if (workScheduleSelect) workScheduleSelect.value = "";
       if (salaryInput) salaryInput.value = "";
       aboutMeTextarea.value = "";
-      selectedSkills = [];
+      selectedSkillIds = [];
       renderSkillsGrid();
       renderSelectedTags();
       experiences = [];
@@ -833,7 +846,7 @@
       }
 
       const aboutText = aboutMeTextarea.value.trim();
-      if (selectedSkills.length === 0) {
+      if (selectedSkillIds.length === 0) {
         showNotification('Пожалуйста, выберите хотя бы один навык из списка', 'warning');
         return;
       }
@@ -861,33 +874,36 @@
           showNotification('Укажите корректную "Дату прихода" (ДД.ММ.ГГГГ или ГГГГ-ММ-ДД)', 'error');
           return;
         }
-        if (exp.dateEnd && !isValidEndDateString(exp.dateEnd)) {
-          showNotification('Поле "Дата ухода" должно быть датой или текстом (например, "до сих пор")', 'error');
-          return;
-        }
       }
 
       const isAuth = await checkAuth();
       if (!isAuth) return;
 
+      function toISODate(dateStr) {
+        if (!dateStr || !dateStr.trim()) return null;
+        if (dateStr.includes('.')) {
+          const parts = dateStr.split('.');
+          if (parts.length === 3) return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+        }
+        return dateStr;
+      }
+
+      // desired_position = "Название резюме" (title), т.к. это то, что видит пользователь в списке
       const resumeData = {
-        title,
-        position,
-        schedule,
-        salary,
-        about: aboutText || null,
-        skills: selectedSkills,
-        experience: cleanedExperiences.map(exp => ({
-          company: exp.company,
+        desired_position: title,
+        about_me: aboutText || null,
+        skill_ids: selectedSkillIds,
+        experiences: cleanedExperiences.map(exp => ({
+          company_name: exp.company,
           position: exp.position,
-          date_start: exp.dateStart,
-          date_end: (exp.dateEnd && isValidDateString(exp.dateEnd)) ? exp.dateEnd : null,
-          description: exp.description || (exp.dateEnd && !isValidDateString(exp.dateEnd) ? `Дата ухода: ${exp.dateEnd}` : "")
+          start_date: toISODate(exp.dateStart),
+          end_date: isValidDateString(exp.dateEnd) ? toISODate(exp.dateEnd) : null,
+          description: exp.description || null,
         })),
       };
 
       try {
-        const response = await fetch(API_BASE_URL + "/resumes/create", {
+        const response = await fetch(API_BASE_URL + "/resumes", {
           method: "POST",
           headers: {
             'Content-Type': 'application/json',
@@ -897,6 +913,15 @@
         });
 
         if (response.ok) {
+          // Сохраняем «Название резюме» в кэш для отображения в списке
+          try {
+            const created = await response.json().catch(() => null);
+            if (created && created.id && title) {
+              const posCache = JSON.parse(localStorage.getItem("tp_resume_positions") || "{}");
+              posCache[String(created.id)] = title;
+              localStorage.setItem("tp_resume_positions", JSON.stringify(posCache));
+            }
+          } catch {}
           showNotification('Резюме успешно создано!', 'success', 3000);
           resetForm();
           setTimeout(() => {
@@ -969,7 +994,7 @@
 
     function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
 
-    renderSkillsGrid();
+    loadSkillsFromApi();
     renderSelectedTags();
     renderExperiences();
   })();

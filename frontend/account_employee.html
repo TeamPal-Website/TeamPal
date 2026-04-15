@@ -2,6 +2,9 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Личный кабинет | TeamPal</title>
   <link rel="icon" type="image/png" href="./assets/logo.png">
@@ -403,6 +406,33 @@
       padding: 0 6px;
       width: auto;
     }
+    /* ── Danger button ── */
+    .action-btn--danger { background:#fff0ee; color:#d14b2a; border-color:#f5c0b0; }
+    .action-btn--danger:hover { background:#ffe0da; color:#c0391c; }
+    /* ── Toast system ── */
+    .toast-container { position:fixed; top:84px; left:50%; transform:translateX(-50%); z-index:9999; display:flex; flex-direction:column; gap:10px; width:min(440px,92vw); pointer-events:none; }
+    .tp-toast { display:flex; align-items:flex-start; gap:10px; padding:12px 16px; border-radius:12px; box-shadow:0 4px 14px rgba(0,0,0,.13); pointer-events:auto; animation:tpToastIn .3s ease; }
+    .tp-toast.success { background:#f0fff4; border:1.5px solid #52c41a; }
+    .tp-toast.error   { background:#fff2f0; border:1.5px solid #ff4d4f; }
+    .tp-toast.warning { background:#fffbe6; border:1.5px solid #faad14; }
+    .tp-toast.info    { background:#e6f7ff; border:1.5px solid #1890ff; }
+    .tp-toast__icon { font-size:18px; line-height:1.2; flex-shrink:0; }
+    .tp-toast.success .tp-toast__icon,.tp-toast.success .tp-toast__text,.tp-toast.success .tp-toast__close { color:#2d7a2d; }
+    .tp-toast.error   .tp-toast__icon,.tp-toast.error   .tp-toast__text,.tp-toast.error   .tp-toast__close { color:#c0392b; }
+    .tp-toast.warning .tp-toast__icon,.tp-toast.warning .tp-toast__text,.tp-toast.warning .tp-toast__close { color:#8b6914; }
+    .tp-toast.info    .tp-toast__icon,.tp-toast.info    .tp-toast__text,.tp-toast.info    .tp-toast__close { color:#0958d9; }
+    .tp-toast__text { flex:1; font-size:14px; line-height:1.45; }
+    .tp-toast__close { background:none; border:none; cursor:pointer; font-size:20px; line-height:1; padding:0; margin-left:2px; opacity:.75; }
+    @keyframes tpToastIn  { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes tpToastOut { to{opacity:0;transform:translateY(-10px)} }
+    /* ── Modal field styles ── */
+    .modal__field { display:flex; flex-direction:column; gap:5px; margin-bottom:10px; }
+    .modal__field:last-child { margin-bottom:0; }
+    .modal__field label { font-size:13px; color:#4c4c4c; font-weight:600; }
+    .modal__field input,.modal__field select,.modal__field textarea { width:100%; border:1.5px solid #ddd; border-radius:10px; padding:10px 11px; font-family:inherit; font-size:14px; background:#fff; }
+    .modal__field input:focus,.modal__field select:focus,.modal__field textarea:focus { outline:2px solid rgba(248,90,11,.2); border-color:#f85a0b; }
+    .modal__field textarea { resize:vertical; min-height:90px; }
+    .modal__split { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:14px; }
   </style>
 </head>
 <body>
@@ -479,9 +509,6 @@
             <label for="city">Город</label>
             <select id="city">
               <option value="">Выберите город</option>
-              <option value="Москва">Москва</option>
-              <option value="Санкт-Петербург">Санкт-Петербург</option>
-              <option value="Новосибирск">Пенза - столица мира</option>
             </select>
           </div>
           
@@ -570,11 +597,224 @@
 </div>
 
 
+<!-- ── Toast container ── -->
+<div id="toast-container" class="toast-container"></div>
+
+<!-- ── Confirm modal ── -->
+<div class="modal" id="confirm-modal" aria-hidden="true">
+  <div class="modal__card">
+    <h2 class="modal__title" id="confirm-modal-title">Подтверждение</h2>
+    <p id="confirm-modal-text" style="color:#555;font-size:14px;margin:-4px 0 14px;line-height:1.5;"></p>
+    <div class="modal__actions">
+      <button class="action-btn" id="confirm-modal-cancel" type="button">Отмена</button>
+      <button class="action-btn action-btn--danger" id="confirm-modal-ok" type="button">Подтвердить</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Resume edit modal ── -->
+<div class="modal" id="resume-edit-modal" aria-hidden="true">
+  <div class="modal__card" style="width:min(92vw,540px);">
+    <h2 class="modal__title">Редактирование резюме</h2>
+    <div class="modal__field">
+      <label for="edit-resume-position">Желаемая должность</label>
+      <input id="edit-resume-position" type="text" placeholder="Backend Developer" maxlength="255" />
+    </div>
+    <div class="modal__field">
+      <label for="edit-resume-about">О себе</label>
+      <textarea id="edit-resume-about" placeholder="Расскажите о вашем опыте и навыках..."></textarea>
+    </div>
+    <div class="modal__field">
+      <label for="edit-resume-status">Статус поиска</label>
+      <select id="edit-resume-status">
+        <option value="looking_for_job">Ищу работу</option>
+        <option value="not_looking_for_job">Не ищу работу</option>
+      </select>
+    </div>
+    <div class="modal__split">
+      <button class="action-btn action-btn--danger" id="resume-edit-delete" type="button">Удалить резюме</button>
+      <div style="display:flex;gap:8px;">
+        <button class="action-btn" id="resume-edit-cancel" type="button">Отмена</button>
+        <button class="action-btn action-btn--accent" id="resume-edit-save" type="button">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="./config.js"></script>
 <script>
   (function () {
     const yearSpan = document.getElementById("year");
     if (yearSpan) yearSpan.textContent = " " + new Date().getFullYear();
+
+    // ══════════════════════════════════════════
+    //  TOAST SYSTEM
+    // ══════════════════════════════════════════
+    function showToast(message, type = "success", duration = 5000) {
+      const icons = { success: "✓", error: "✕", warning: "⚠", info: "ℹ" };
+      const container = document.getElementById("toast-container");
+      if (!container) return;
+      const el = document.createElement("div");
+      el.className = "tp-toast " + (type || "info");
+      const msg = String(message || "").replace(/[&<>]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[m]));
+      el.innerHTML = `<span class="tp-toast__icon">${icons[type] || "ℹ"}</span><span class="tp-toast__text">${msg}</span><button class="tp-toast__close" aria-label="Закрыть">×</button>`;
+      el.querySelector(".tp-toast__close").addEventListener("click", () => el.remove());
+      container.appendChild(el);
+      setTimeout(() => {
+        if (el.parentElement) {
+          el.style.animation = "tpToastOut .25s ease forwards";
+          setTimeout(() => el.remove(), 260);
+        }
+      }, duration);
+    }
+
+    // ══════════════════════════════════════════
+    //  CONFIRM MODAL
+    // ══════════════════════════════════════════
+    let _confirmCb = null;
+    function showConfirm(title, text, onConfirm, { danger = true, okLabel = "Подтвердить" } = {}) {
+      const modal = document.getElementById("confirm-modal");
+      if (!modal) return;
+      document.getElementById("confirm-modal-title").textContent = title;
+      document.getElementById("confirm-modal-text").textContent = text;
+      const okBtn = document.getElementById("confirm-modal-ok");
+      okBtn.textContent = okLabel;
+      okBtn.className = "action-btn " + (danger ? "action-btn--danger" : "action-btn--accent");
+      _confirmCb = onConfirm;
+      modal.classList.add("open");
+    }
+    function _closeConfirmModal() {
+      const modal = document.getElementById("confirm-modal");
+      if (modal) modal.classList.remove("open");
+      _confirmCb = null;
+    }
+    document.getElementById("confirm-modal-cancel")?.addEventListener("click", _closeConfirmModal);
+    document.getElementById("confirm-modal-ok")?.addEventListener("click", () => {
+      const cb = _confirmCb;
+      _closeConfirmModal();
+      if (cb) cb();
+    });
+    document.getElementById("confirm-modal")?.addEventListener("click", (e) => {
+      if (e.target === document.getElementById("confirm-modal")) _closeConfirmModal();
+    });
+
+    // ══════════════════════════════════════════
+    //  RESUME POSITION CACHE (localStorage)
+    //  Хранит {resumeId: desiredPosition} для отображения в списке,
+    //  т.к. GET /my_resumes не возвращает desired_position
+    // ══════════════════════════════════════════
+    function _getPosCache() {
+      try { return JSON.parse(localStorage.getItem("tp_resume_positions") || "{}"); } catch { return {}; }
+    }
+    function _setPosCache(id, pos) {
+      try {
+        const c = _getPosCache();
+        if (pos) c[String(id)] = pos; else delete c[String(id)];
+        localStorage.setItem("tp_resume_positions", JSON.stringify(c));
+      } catch {}
+    }
+
+    // ══════════════════════════════════════════
+    //  RESUME EDIT MODAL
+    // ══════════════════════════════════════════
+    let _editingResumeId = null;
+
+    async function openResumeEdit(resumeId) {
+      _editingResumeId = String(resumeId);
+      const modal = document.getElementById("resume-edit-modal");
+      if (!modal) return;
+
+      const posCache = _getPosCache();
+      document.getElementById("edit-resume-position").value = posCache[_editingResumeId] || "";
+      document.getElementById("edit-resume-about").value = "";
+      document.getElementById("edit-resume-status").value = "looking_for_job";
+
+      try {
+        const resp = await fetch(API_BASE_URL + "/my_resume/" + resumeId, { credentials: "include" });
+        if (resp.ok) {
+          const data = await resp.json();
+          const r = data.resume || data;
+          document.getElementById("edit-resume-about").value = r.about_me || "";
+          document.getElementById("edit-resume-status").value = r.status || "looking_for_job";
+        }
+      } catch {}
+
+      modal.classList.add("open");
+    }
+
+    function _closeResumeEditModal() {
+      const modal = document.getElementById("resume-edit-modal");
+      if (modal) modal.classList.remove("open");
+      _editingResumeId = null;
+    }
+
+    async function _saveResumeEdit() {
+      const id = _editingResumeId;
+      if (!id) return;
+      const position = document.getElementById("edit-resume-position").value.trim();
+      const aboutMe = document.getElementById("edit-resume-about").value.trim();
+      const status = document.getElementById("edit-resume-status").value;
+
+      const payload = {};
+      if (position) payload.desired_position = position;
+      payload.about_me = aboutMe || null;
+      if (status) payload.status = status;
+
+      try {
+        const resp = await fetch(API_BASE_URL + "/resumes/" + id, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(payload),
+        });
+        if (resp.ok) {
+          if (position) _setPosCache(id, position);
+          _closeResumeEditModal();
+          showToast("Резюме успешно обновлено", "success");
+          loadMyProjects();
+        } else {
+          const err = await resp.json().catch(() => ({}));
+          showToast("Ошибка: " + (err.detail || "Не удалось сохранить"), "error");
+        }
+      } catch {
+        showToast("Ошибка соединения с сервером", "error");
+      }
+    }
+
+    async function _deleteResume(resumeId) {
+      try {
+        const resp = await fetch(API_BASE_URL + "/resumes/" + resumeId, {
+          method: "DELETE",
+          credentials: "include",
+        });
+        if (resp.ok || resp.status === 204) {
+          _setPosCache(resumeId, null);
+          _closeResumeEditModal();
+          showToast("Резюме удалено", "success");
+          loadMyProjects();
+        } else {
+          const err = await resp.json().catch(() => ({}));
+          showToast("Ошибка: " + (err.detail || "Не удалось удалить"), "error");
+        }
+      } catch {
+        showToast("Ошибка соединения с сервером", "error");
+      }
+    }
+
+    document.getElementById("resume-edit-cancel")?.addEventListener("click", _closeResumeEditModal);
+    document.getElementById("resume-edit-save")?.addEventListener("click", _saveResumeEdit);
+    document.getElementById("resume-edit-delete")?.addEventListener("click", () => {
+      const id = _editingResumeId;
+      if (!id) return;
+      showConfirm(
+        "Удалить резюме?",
+        "Это действие необратимо. Резюме будет удалено навсегда.",
+        () => _deleteResume(id)
+      );
+    });
+    document.getElementById("resume-edit-modal")?.addEventListener("click", (e) => {
+      if (e.target === document.getElementById("resume-edit-modal")) _closeResumeEditModal();
+    });
 
     const tabPersonal = document.getElementById("tab-personal");
     const tabMyProjects = document.getElementById("tab-myprojects");
@@ -677,6 +917,28 @@
       return str ? str.trim() : "";
     }
 
+    async function loadCities() {
+      const sel = document.getElementById("city");
+      if (!sel) return;
+      try {
+        const resp = await fetch(API_BASE_URL + "/cities", { credentials: "include" });
+        if (!resp.ok) return;
+        const list = await resp.json();
+        if (!Array.isArray(list)) return;
+        const currentVal = sel.value;
+        sel.innerHTML = '<option value="">Выберите город</option>';
+        for (const c of list) {
+          if (c && c.id != null && c.title != null) {
+            const opt = document.createElement("option");
+            opt.value = String(c.id);
+            opt.textContent = c.title;
+            sel.appendChild(opt);
+          }
+        }
+        if (currentVal) sel.value = currentVal;
+      } catch (_) {}
+    }
+
     async function loadPersonalData() {
       try {
         const response = await fetch(API_BASE_URL + "/profiles/me", {
@@ -743,71 +1005,127 @@
       const projectsList = document.getElementById("projects-list");
       if (!projectsList) return;
 
+      projectsList.innerHTML = '<div class="empty-state" style="color:#aaa;">Загрузка…</div>';
+
       try {
-        const response = await fetch(API_BASE_URL + "/my_resumes", {
-          method: "GET",
-          credentials: "include",
+        const response = await fetch(API_BASE_URL + "/my_resumes", { credentials: "include" });
+
+        if (!response.ok) {
+          projectsList.innerHTML = '<div class="empty-state">У вас пока нет резюме. Нажмите «Создать резюме»</div>';
+          return;
+        }
+
+        const resumes = await response.json();
+        const countSpan = document.getElementById("project-count");
+        if (countSpan) countSpan.textContent = Array.isArray(resumes) ? String(resumes.length) : "0";
+
+        if (!Array.isArray(resumes) || resumes.length === 0) {
+          projectsList.innerHTML = '<div class="empty-state">У вас пока нет резюме. Нажмите «Создать резюме»</div>';
+          return;
+        }
+
+        const posCache = _getPosCache();
+        const safe = (v) => (v === null || v === undefined) ? "" : String(v);
+        const esc = (s) => safe(s).replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+        const statusLabel = { looking_for_job: "Ищу работу", not_looking_for_job: "Не ищу работу" };
+
+        // Подгружаем desired_position через GET /my_resume/{id} для резюме, которых нет в кеше
+        const resumeDetails = await Promise.all(
+          resumes.map(async (resume) => {
+            const id = resume && resume.id !== undefined ? String(resume.id) : "";
+            if (!id) return { ...resume, _displayTitle: "Резюме" };
+
+            // Если позиция уже в кеше — не делаем лишний запрос
+            const cached = posCache[id];
+            if (cached) return { ...resume, _displayTitle: cached };
+
+            // Запрашиваем детали (desired_position бэкенд не возвращает в деталях тоже,
+            // но мы обновляем fallback из about_me и сохраняем)
+            try {
+              const detResp = await fetch(API_BASE_URL + "/my_resume/" + id, { credentials: "include" });
+              if (detResp.ok) {
+                const det = await detResp.json();
+                const r = det.resume || det;
+                // Используем about_me как превью-название, если нет кеша
+                const aboutPreview = r.about_me
+                  ? (r.about_me.length > 50 ? r.about_me.slice(0, 50) + "…" : r.about_me)
+                  : null;
+                return { ...resume, _displayTitle: aboutPreview || `Резюме #${id}` };
+              }
+            } catch {}
+            return { ...resume, _displayTitle: `Резюме #${id}` };
+          })
+        );
+
+        projectsList.innerHTML = resumeDetails.map((resume) => {
+          const id = resume && resume.id !== undefined ? String(resume.id) : "";
+          const displayTitle = resume._displayTitle || (id ? `Резюме #${id}` : "Резюме");
+          const currentStatus = resume?.status || "looking_for_job";
+          const isLooking = currentStatus === "looking_for_job";
+          const statusText = statusLabel[currentStatus] || currentStatus;
+          const createdAt = resume?.created_at ? new Date(resume.created_at).toLocaleDateString("ru-RU") : "—";
+
+          return `
+            <div class="project-card" style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;">
+              <div style="flex:1;min-width:0;">
+                <div class="project-title" style="margin-bottom:8px;">${esc(displayTitle)}</div>
+                <div class="project-info"><b>Статус:</b> ${esc(statusText)}</div>
+                <div class="project-info"><b>Создано:</b> ${esc(createdAt)}</div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0;">
+                <label style="display:flex;flex-direction:column;align-items:center;gap:3px;user-select:none;cursor:pointer;">
+                  <span style="font-size:11px;color:#666;">Ищу работу</span>
+                  <input type="checkbox" class="proj-status-check" data-resume-id="${esc(id)}"
+                    data-resume-title="${esc(displayTitle)}" data-current-status="${esc(currentStatus)}"
+                    ${isLooking ? "checked" : ""} />
+                </label>
+                <a href="./edit_resume.html?id=${esc(id)}"
+                   class="action-btn"
+                   style="font-size:13px;padding:5px 12px;white-space:nowrap;text-decoration:none;display:inline-block;">
+                  Редактировать
+                </a>
+              </div>
+            </div>
+          `;
+        }).join("");
+
+        // ── Тогл статуса резюме ──
+        projectsList.querySelectorAll(".proj-status-check").forEach((checkbox) => {
+          checkbox.addEventListener("click", (e) => {
+            e.preventDefault();
+            const id = checkbox.getAttribute("data-resume-id");
+            const currentStatus = checkbox.getAttribute("data-current-status");
+            const resumeTitle = checkbox.getAttribute("data-resume-title");
+            const newStatus = currentStatus === "looking_for_job" ? "not_looking_for_job" : "looking_for_job";
+            const newLabel = statusLabel[newStatus] || newStatus;
+
+            showConfirm(
+              "Изменить статус резюме",
+              `Установить статус резюме «${resumeTitle}» как «${newLabel}»?`,
+              async () => {
+                try {
+                  const resp = await fetch(API_BASE_URL + "/resumes/" + id, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "include",
+                    body: JSON.stringify({ status: newStatus }),
+                  });
+                  if (resp.ok) {
+                    showToast(`Статус изменён: «${newLabel}»`, "success");
+                    loadMyProjects();
+                  } else {
+                    const err = await resp.json().catch(() => ({}));
+                    showToast("Ошибка: " + (err.detail || "Не удалось изменить статус"), "error");
+                  }
+                } catch {
+                  showToast("Ошибка соединения с сервером", "error");
+                }
+              },
+              { danger: false, okLabel: `Установить «${newLabel}»` }
+            );
+          });
         });
 
-        if (response.ok) {
-          const resumes = await response.json();
-          const countSpan = document.getElementById("project-count");
-          if (countSpan) countSpan.textContent = Array.isArray(resumes) ? String(resumes.length) : "0";
-
-          if (!Array.isArray(resumes) || resumes.length === 0) {
-            projectsList.innerHTML = '<div class="empty-state">У вас пока нет резюме. Нажмите «Создать резюме»</div>';
-            return;
-          }
-
-          let activeSet = new Set();
-          try {
-            const raw = localStorage.getItem("tp_active_resumes");
-            const arr = raw ? JSON.parse(raw) : [];
-            if (Array.isArray(arr)) activeSet = new Set(arr.map(String));
-          } catch (_) {}
-
-          const safe = (v) => (v === null || v === undefined) ? "" : String(v);
-          const escapeHtml = (str) => safe(str).replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
-
-          projectsList.innerHTML = resumes.map((resume) => {
-            const id = resume && resume.id !== undefined ? String(resume.id) : "";
-            const title = resume?.title || resume?.name || (id ? `Резюме #${id}` : "Резюме");
-            const position = resume?.position || resume?.desired_position || resume?.role || "—";
-            const salary = resume?.salary || resume?.expected_salary || resume?.zp || "—";
-            const schedule = resume?.schedule || resume?.work_schedule || resume?.grafik || "—";
-            const isActive = id && activeSet.has(id);
-
-            return `
-              <div class="project-card" style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start;">
-                <div style="flex:1; min-width:0;">
-                  <div class="project-title" style="margin-bottom:8px;">${escapeHtml(title)}</div>
-                  <div class="project-info"><b>Должность:</b> ${escapeHtml(position)}</div>
-                  <div class="project-info"><b>ЗП:</b> ${escapeHtml(salary)}</div>
-                  <div class="project-info"><b>График:</b> ${escapeHtml(schedule)}</div>
-                </div>
-                <label style="display:flex; flex-direction:column; align-items:flex-end; gap:6px; user-select:none;">
-                  <span style="font-size:12px; color:#666;">Активно</span>
-                  <input type="checkbox" class="resume-active-switch" data-resume-id="${escapeHtml(id)}" ${isActive ? "checked" : ""} />
-                </label>
-              </div>
-            `;
-          }).join("");
-
-          projectsList.querySelectorAll(".resume-active-switch").forEach((el) => {
-            el.addEventListener("change", () => {
-              const id = el.getAttribute("data-resume-id");
-              if (!id) return;
-              const next = new Set(activeSet);
-              if (el.checked) next.add(String(id));
-              else next.delete(String(id));
-              try {
-                localStorage.setItem("tp_active_resumes", JSON.stringify(Array.from(next)));
-              } catch (_) {}
-            });
-          });
-        } else {
-          projectsList.innerHTML = '<div class="empty-state">У вас пока нет резюме. Нажмите «Создать резюме»</div>';
-        }
       } catch (error) {
         console.error("Ошибка загрузки резюме:", error);
         projectsList.innerHTML = '<div class="empty-state">Ошибка загрузки данных</div>';
@@ -833,7 +1151,7 @@
       if (!newData.last_name) errors.push("Фамилия не может быть пустой");
       
       if (errors.length > 0) {
-        alert(errors.join("\n"));
+        showToast(errors.join("; "), "error");
         return;
       }
       
@@ -858,14 +1176,14 @@
             github: (newData.contacts && newData.contacts.github) || "",
           };
           updateUserNameDisplay();
-          alert("Личная информация сохранена");
+          showToast("Личная информация сохранена", "success");
         } else {
           const error = await response.json().catch(() => ({}));
-          alert("Ошибка: " + (error.detail || "Не удалось сохранить"));
+          showToast("Ошибка: " + (error.detail || "Не удалось сохранить"), "error");
         }
       } catch (error) {
         console.error("Ошибка сохранения:", error);
-        alert("Ошибка соединения с сервером");
+        showToast("Ошибка соединения с сервером", "error");
       }
     }
 
@@ -874,10 +1192,10 @@
       try {
         localStorage.setItem("tp_about_employee", newAbout || "");
         aboutData = newAbout || "";
-        alert("Информация о себе сохранена");
+        showToast("Информация о себе сохранена", "success");
       } catch (error) {
         console.error("Ошибка сохранения информации о себе:", error);
-        alert("Не удалось сохранить");
+        showToast("Не удалось сохранить", "error");
       }
     }
 
@@ -909,34 +1227,15 @@
         avatarInput.click();
       });
       
-      avatarInput.addEventListener("change", async (e) => {
+      avatarInput.addEventListener("change", (e) => {
         const file = e.target.files[0];
         if (file && file.type.startsWith("image/")) {
-          const formData = new FormData();
-          formData.append("avatar", file);
-          
-          try {
-            const response = await fetch(API_BASE_URL + "/users/avatar", {
-              method: "POST",
-              credentials: "include",
-              body: formData,
-            });
-            
-            if (response.ok) {
-              const data = await response.json();
-              const avatarUrl = data.avatar_url || URL.createObjectURL(file);
-              document.getElementById("profile-avatar").src = avatarUrl;
-              personalData.avatar = avatarUrl;
-              alert("Аватар обновлён");
-            } else {
-              alert("Ошибка загрузки аватара");
-            }
-          } catch (error) {
-            console.error("Ошибка загрузки аватара:", error);
-            alert("Ошибка соединения с сервером");
-          }
+          const previewUrl = URL.createObjectURL(file);
+          document.getElementById("profile-avatar").src = previewUrl;
+          personalData.avatar = previewUrl;
+          showToast("Превью обновлено (сохранение аватара на сервере пока не поддерживается)", "info");
         } else if (file) {
-          alert("Пожалуйста, выберите изображение");
+          showToast("Пожалуйста, выберите изображение", "warning");
         }
       });
     }
@@ -1051,43 +1350,23 @@
         const confirmPass = document.getElementById("confirm-password").value;
         
         if (!oldPass) {
-          alert("Введите старый пароль");
+          showToast("Введите старый пароль", "warning");
           return;
         }
         if (newPass !== confirmPass) {
-          alert("Пароли не совпадают");
+          showToast("Пароли не совпадают", "error");
           return;
         }
         if (newPass && newPass.length < 8) {
-          alert("Новый пароль должен содержать минимум 8 символов");
+          showToast("Новый пароль должен содержать минимум 8 символов", "warning");
           return;
         }
         
-        try {
-          const response = await fetch(API_BASE_URL + "/auth/change-password", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({
-              old_password: oldPass,
-              new_password: newPass
-            }),
-          });
-          
-          if (response.ok) {
-            alert("Пароль успешно изменён");
-            closePasswordModal();
-          } else {
-            const error = await response.json().catch(() => ({}));
-            alert("Ошибка: " + (error.detail || "Не удалось сменить пароль"));
-          }
-        } catch (error) {
-          console.error("Ошибка смены пароля:", error);
-          alert("Ошибка соединения с сервером");
-        }
+        showToast("Смена пароля пока не поддерживается сервером", "info");
+        closePasswordModal();
       });
     }
-    
+
     if (passwordModal) {
       passwordModal.addEventListener("click", function (event) { 
         if (event.target === passwordModal) closePasswordModal(); 
@@ -1121,8 +1400,7 @@
     } catch (_) {}
 
     loadCurrentUser();
-    loadCities();
-    loadPersonalData();
+    loadCities().then(() => loadPersonalData());
     loadAboutData();
   })();
 </script>

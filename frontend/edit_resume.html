@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Редактирование резюме | TeamPal</title>
+  <link rel="icon" type="image/png" href="./assets/logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f7f5f2;
+      --header: #eae8e4;
+      --panel: #fff;
+      --ink: #1a1a1a;
+      --ink2: #3a3a3a;
+      --line: rgba(0,0,0,0.09);
+      --accent-1: #fa9500;
+      --accent-2: #f85a0b;
+      --footer: #d4d3cb;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family:"Space Grotesk",system-ui,sans-serif;
+      background: radial-gradient(900px 500px at -10% -25%,rgba(255,208,102,.28),transparent 70%),
+                  radial-gradient(700px 420px at 110% 0%,rgba(248,90,11,.14),transparent 68%),
+                  var(--bg);
+      color:var(--ink); min-height:100vh; display:flex; flex-direction:column;
+    }
+    /* ── Header ── */
+    .header { position:fixed; inset:0 0 auto 0; z-index:1000; height:72px; background:var(--header); border-bottom:1px solid var(--line); }
+    .header__inner { height:100%; padding:0 28px; display:flex; align-items:center; gap:14px; }
+    .logo { width:46px; height:46px; border-radius:50px; object-fit:cover; }
+    .back-link { display:inline-flex; align-items:center; gap:6px; color:var(--ink2); font-size:14px; font-weight:500; text-decoration:none; padding:8px 14px; border-radius:999px; border:1px solid var(--line); background:#fff; transition:all .2s; }
+    .back-link:hover { background:var(--bg); color:var(--accent-2); border-color:var(--accent-2); }
+    /* ── Footer ── */
+    .footer { width:100%; background:var(--footer); display:flex; align-items:center; justify-content:space-between; padding:0 24px; font-size:14px; color:var(--ink2); min-height:52px; }
+    /* ── Page ── */
+    .page { width:100%; max-width:760px; margin:0 auto; padding:102px 20px 48px; flex:1; }
+    /* ── Card ── */
+    .edit-card { background:var(--panel); border:1px solid var(--line); border-radius:20px; box-shadow:0 12px 30px rgba(0,0,0,.06); padding:32px 28px; margin-bottom:16px; }
+    .section-title { font-size:18px; font-weight:700; color:var(--ink); margin-bottom:18px; padding-bottom:10px; border-bottom:1px solid var(--line); }
+    .section-title span { color:var(--accent-2); }
+    /* ── Fields ── */
+    .field { display:flex; flex-direction:column; gap:6px; margin-bottom:16px; }
+    .field:last-of-type { margin-bottom:0; }
+    .field label { font-size:13px; font-weight:600; color:#4c4c4c; }
+    .field input,.field select,.field textarea { width:100%; border:1.5px solid #ddd; border-radius:12px; padding:11px 14px; font-family:inherit; font-size:14px; background:#fff; transition:border-color .2s; }
+    .field input:focus,.field select:focus,.field textarea:focus { outline:2px solid rgba(248,90,11,.2); border-color:var(--accent-2); }
+    .field textarea { resize:vertical; min-height:110px; }
+    .field-hint { font-size:12px; color:#aaa; margin-top:3px; }
+    .field-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:16px; }
+    /* ── Skills grid ── */
+    .skills-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(160px,1fr)); gap:8px; margin-bottom:10px; }
+    .skill-label { display:flex; align-items:center; gap:8px; padding:8px 12px; border:1.5px solid #e4ddd5; border-radius:10px; cursor:pointer; background:#fff; transition:all .15s; font-size:13px; }
+    .skill-label:hover { border-color:var(--accent-1); background:#fffbf5; }
+    .skill-label input[type=checkbox] { accent-color:var(--accent-2); width:15px; height:15px; flex-shrink:0; cursor:pointer; }
+    .skill-label.checked { border-color:var(--accent-2); background:#fff6f0; font-weight:600; }
+    .skills-empty { color:#aaa; font-size:13px; padding:8px 0; }
+    /* ── Experience entries ── */
+    .exp-entry { border:1.5px solid #e4ddd5; border-radius:14px; padding:16px; margin-bottom:12px; background:#fafaf8; position:relative; }
+    .exp-entry.is-new { border-color:rgba(250,149,0,.5); background:#fffbf5; }
+    .exp-entry-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+    .exp-entry-num { font-size:13px; font-weight:700; color:var(--accent-3); }
+    .btn-remove-exp { background:none; border:none; font-size:18px; cursor:pointer; color:#bc9a7a; line-height:1; padding:2px 6px; border-radius:6px; }
+    .btn-remove-exp:hover { background:#fff0ee; color:#d14b2a; }
+    .exp-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .exp-field-full { grid-column: 1 / -1; }
+    .exp-field { display:flex; flex-direction:column; gap:5px; }
+    .exp-field label { font-size:12px; font-weight:600; color:#5a4a3a; }
+    .exp-field input,.exp-field textarea { width:100%; border:1.5px solid #e0d8cf; border-radius:10px; padding:9px 12px; font-family:inherit; font-size:13px; background:#fff; transition:border-color .15s; }
+    .exp-field input:focus,.exp-field textarea:focus { outline:2px solid rgba(248,90,11,.18); border-color:var(--accent-2); }
+    .exp-field textarea { min-height:70px; resize:vertical; }
+    .inp-invalid { border-color:#e05a2a !important; background:#fff8f7 !important; }
+    .exp-err-msg { font-size:12px; color:#c0391c; background:#fff0ee; border:1px solid #f5c0b0; border-radius:8px; padding:6px 10px; margin-bottom:10px; display:none; }
+    .exp-err-msg.show { display:flex; align-items:center; gap:6px; }
+    .exp-err-msg::before { content:"⚠"; flex-shrink:0; }
+    .field-error { font-size:12px; color:#c0391c; margin-top:2px; display:none; }
+    .field-error.show { display:block; }
+    .btn-add-exp { width:100%; padding:12px; border:1.5px dashed var(--accent-2); border-radius:12px; background:none; color:var(--accent-2); font-size:14px; font-weight:600; cursor:pointer; transition:.2s; font-family:inherit; }
+    .btn-add-exp:hover { background:#fff4ea; }
+    /* ── Form actions ── */
+    .form-actions { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-top:8px; }
+    .form-actions__right { display:flex; gap:10px; }
+    .btn { padding:11px 26px; border-radius:40px; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit; border:none; transition:all .2s; text-decoration:none; display:inline-flex; align-items:center; }
+    .btn-secondary { background:#fff; border:1px solid #dbd2c7; color:#4a3a2a; }
+    .btn-secondary:hover { background:#f5f0ea; }
+    .btn-primary { background:linear-gradient(105deg,var(--accent-1),var(--accent-2)); color:#fff; box-shadow:0 4px 10px rgba(248,90,11,.25); }
+    .btn-primary:hover { transform:translateY(-2px); opacity:.95; }
+    .btn-primary:disabled { opacity:.6; cursor:default; transform:none; }
+    .btn-danger { background:#fff0ee; color:#d14b2a; border:1px solid #f5c0b0; }
+    .btn-danger:hover { background:#ffe0da; color:#c0391c; }
+    /* ── Loading ── */
+    .loading-state { text-align:center; padding:60px 20px; color:#aaa; font-size:16px; }
+    /* ── Toast ── */
+    .toast-container { position:fixed; top:84px; left:50%; transform:translateX(-50%); z-index:9999; display:flex; flex-direction:column; gap:10px; width:min(440px,92vw); pointer-events:none; }
+    .tp-toast { display:flex; align-items:flex-start; gap:10px; padding:12px 16px; border-radius:12px; box-shadow:0 4px 14px rgba(0,0,0,.13); pointer-events:auto; animation:tpToastIn .3s ease; }
+    .tp-toast.success { background:#f0fff4; border:1.5px solid #52c41a; }
+    .tp-toast.error   { background:#fff2f0; border:1.5px solid #ff4d4f; }
+    .tp-toast.warning { background:#fffbe6; border:1.5px solid #faad14; }
+    .tp-toast.info    { background:#e6f7ff; border:1.5px solid #1890ff; }
+    .tp-toast__icon { font-size:18px; line-height:1.2; flex-shrink:0; }
+    .tp-toast.success .tp-toast__icon,.tp-toast.success .tp-toast__text,.tp-toast.success .tp-toast__close { color:#2d7a2d; }
+    .tp-toast.error   .tp-toast__icon,.tp-toast.error   .tp-toast__text,.tp-toast.error   .tp-toast__close { color:#c0392b; }
+    .tp-toast.warning .tp-toast__icon,.tp-toast.warning .tp-toast__text,.tp-toast.warning .tp-toast__close { color:#8b6914; }
+    .tp-toast.info    .tp-toast__icon,.tp-toast.info    .tp-toast__text,.tp-toast.info    .tp-toast__close { color:#0958d9; }
+    .tp-toast__text { flex:1; font-size:14px; line-height:1.45; }
+    .tp-toast__close { background:none; border:none; cursor:pointer; font-size:20px; line-height:1; padding:0; margin-left:2px; opacity:.75; }
+    @keyframes tpToastIn  { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes tpToastOut { to{opacity:0;transform:translateY(-10px)} }
+    /* ── Confirm modal ── */
+    .modal { position:fixed; inset:0; background:rgba(20,20,20,.36); display:none; align-items:center; justify-content:center; z-index:1100; }
+    .modal.open { display:flex; }
+    .modal__card { width:min(92vw,440px); border-radius:16px; background:#fff; border:1px solid var(--line); padding:24px; box-shadow:0 24px 44px rgba(0,0,0,.2); }
+    .modal__title { font-size:22px; font-weight:700; margin-bottom:10px; }
+    .modal__text { color:#555; font-size:14px; line-height:1.5; margin-bottom:18px; }
+    .modal__actions { display:flex; justify-content:flex-end; gap:10px; }
+    @media (max-width:700px) {
+      .page { padding:92px 14px 40px; }
+      .edit-card { padding:20px 16px; }
+      .exp-grid { grid-template-columns:1fr; }
+      .exp-field-full { grid-column:1; }
+      .field-grid-2 { grid-template-columns:1fr; }
+      .form-actions { flex-direction:column; align-items:stretch; }
+      .form-actions__right { justify-content:flex-end; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="toast-container" class="toast-container"></div>
+
+<div class="modal" id="confirm-modal">
+  <div class="modal__card">
+    <div class="modal__title">Удалить резюме?</div>
+    <div class="modal__text">Это действие необратимо. Резюме, все навыки и весь опыт будут удалены навсегда.</div>
+    <div class="modal__actions">
+      <button class="btn btn-secondary" id="confirm-cancel">Отмена</button>
+      <button class="btn btn-danger" id="confirm-ok">Да, удалить</button>
+    </div>
+  </div>
+</div>
+
+<header class="header">
+  <div class="header__inner">
+    <img class="logo" src="./assets/logo.png" alt="TeamPal">
+    <a href="./account_employee.html" class="back-link">← Назад к резюме</a>
+  </div>
+</header>
+
+<main class="page" id="main-page">
+  <div class="loading-state">Загрузка резюме…</div>
+</main>
+
+<footer class="footer">
+  <span>TeamPal <span id="year"></span></span>
+  <span>обратная связь: teampal@dimple.ru</span>
+</footer>
+
+<script src="./config.js"></script>
+<script>
+(function () {
+  'use strict';
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  // ══════ Toast ══════
+  function showToast(msg, type, dur) {
+    type = type || 'success'; dur = dur || 5000;
+    const icons = { success:'✓', error:'✕', warning:'⚠', info:'ℹ' };
+    const c = document.getElementById('toast-container');
+    if (!c) return;
+    const el = document.createElement('div');
+    el.className = 'tp-toast ' + type;
+    const safe = String(msg || '').replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+    el.innerHTML = `<span class="tp-toast__icon">${icons[type]||'ℹ'}</span><span class="tp-toast__text">${safe}</span><button class="tp-toast__close">×</button>`;
+    el.querySelector('.tp-toast__close').onclick = () => el.remove();
+    c.appendChild(el);
+    setTimeout(() => {
+      if (el.parentElement) { el.style.animation = 'tpToastOut .25s ease forwards'; setTimeout(() => el.remove(), 260); }
+    }, dur);
+  }
+
+  // ══════ Helpers ══════
+  function esc(s) { return String(s||'').replace(/[&<>"]/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
+  function api(path, opts) {
+    return fetch(API_BASE_URL + path, Object.assign({ credentials:'include', headers:{'Content-Type':'application/json'} }, opts));
+  }
+  function toISO(dateStr) {
+    if (!dateStr) return null;
+    const s = dateStr.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+    if (/^\d{2}\.\d{2}\.\d{4}$/.test(s)) {
+      const [d,m,y] = s.split('.'); return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+    }
+    return s;
+  }
+  function fromISO(dateStr) {
+    if (!dateStr) return '';
+    const m = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m ? `${m[3]}.${m[2]}.${m[1]}` : dateStr;
+  }
+
+  // ══════ LocalStorage position cache ══════
+  function getPosCache() { try { return JSON.parse(localStorage.getItem('tp_resume_positions')||'{}'); } catch { return {}; } }
+  function setPosCache(id, pos) {
+    try {
+      const c = getPosCache();
+      if (pos) c[String(id)] = pos; else delete c[String(id)];
+      localStorage.setItem('tp_resume_positions', JSON.stringify(c));
+    } catch {}
+  }
+
+  // ══════ State ══════
+  const params = new URLSearchParams(window.location.search);
+  const resumeId = params.get('id');
+  if (!resumeId) {
+    document.getElementById('main-page').innerHTML = '<div class="loading-state">Резюме не найдено. <a href="./account_employee.html">← Назад</a></div>';
+    return;
+  }
+
+  let allSkills = [];          // [{id, name}]
+  let initialSkillMap = {};    // {skill_id → resume_skill_id}
+  let currentSkillIds = new Set(); // skill_id значения, выбранные в UI
+  let initialExpIds = new Set();  // id записей experience, пришедших с сервера
+  // Опыт: [{_key, id?, company_name, position, start_date, end_date, description, _isNew, _deleted}]
+  let experiences = [];
+  let expKeyCounter = 0;
+
+  // ══════ Confirm delete modal ══════
+  document.getElementById('confirm-cancel').onclick = () => document.getElementById('confirm-modal').classList.remove('open');
+  document.getElementById('confirm-modal').onclick = e => { if (e.target === document.getElementById('confirm-modal')) document.getElementById('confirm-modal').classList.remove('open'); };
+  document.getElementById('confirm-ok').onclick = deleteResume;
+
+  // ══════ Load data ══════
+  async function init() {
+    // Auth check
+    const authResp = await api('/auth/me');
+    if (!authResp.ok) { window.location.href = './authorization_page.html'; return; }
+
+    // Parallel load: resume data + all skills
+    const [resumeResp, skillsResp] = await Promise.all([
+      api('/my_resume/' + resumeId),
+      api('/skills'),
+    ]);
+
+    if (!resumeResp.ok) {
+      document.getElementById('main-page').innerHTML = `<div class="loading-state">${resumeResp.status === 404 ? 'Резюме не найдено.' : 'Ошибка загрузки.'} <a href="./account_employee.html">← Назад</a></div>`;
+      return;
+    }
+
+    const resumeData = await resumeResp.json();
+    const resume = resumeData.resume || resumeData;
+    const apiSkills = resumeData.skills || [];
+    const apiExperiences = resumeData.experiences || [];
+
+    if (skillsResp.ok) {
+      allSkills = await skillsResp.json();
+      if (!Array.isArray(allSkills)) allSkills = [];
+    }
+
+    // Build skill state
+    initialSkillMap = {};
+    apiSkills.forEach(s => { initialSkillMap[s.skill_id] = s.id; });
+    currentSkillIds = new Set(Object.keys(initialSkillMap).map(Number));
+
+    // Build experience state
+    experiences = apiExperiences.map(e => ({
+      _key: ++expKeyCounter,
+      id: e.id,
+      company_name: e.company_name || '',
+      position: e.position || '',
+      start_date: e.start_date || '',
+      end_date: e.end_date || '',
+      description: e.description || '',
+      _isNew: false,
+      _deleted: false,
+    }));
+    initialExpIds = new Set(experiences.map(e => e.id));
+
+    renderPage(resume);
+  }
+
+  // ══════ Render ══════
+  function renderPage(resume) {
+    const posCache = getPosCache();
+    const cachedPos = posCache[String(resumeId)] || '';
+
+    document.getElementById('main-page').innerHTML = `
+      <!-- Basic info -->
+      <div class="edit-card" id="card-basic">
+        <div class="section-title">Основная информация</div>
+
+        <div class="field">
+          <label for="f-position">Название резюме</label>
+          <input id="f-position" type="text" placeholder="Например: Junior Frontend Developer" maxlength="255" value="${esc(cachedPos)}" />
+          <div class="field-hint">Это название отображается в вашем списке резюме</div>
+          <span class="field-error" id="err-position"></span>
+        </div>
+
+        <div class="field">
+          <label for="f-about">О себе</label>
+          <textarea id="f-about" placeholder="Расскажите о вашем опыте, навыках и карьерных целях…">${esc(resume.about_me || '')}</textarea>
+        </div>
+
+        <div class="field">
+          <label for="f-status">Статус поиска работы</label>
+          <select id="f-status">
+            <option value="looking_for_job"${resume.status === 'looking_for_job' ? ' selected' : ''}>Ищу работу</option>
+            <option value="not_looking_for_job"${resume.status === 'not_looking_for_job' ? ' selected' : ''}>Не ищу работу</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Skills -->
+      <div class="edit-card" id="card-skills">
+        <div class="section-title">Навыки / Стек технологий</div>
+        ${allSkills.length === 0
+          ? '<div class="skills-empty">Навыки не добавлены администратором.</div>'
+          : `<div class="skills-grid" id="skills-grid">${renderSkillsGrid()}</div>
+             <div class="field-hint" style="margin-top:6px;">Отмечайте галочками навыки, которыми владеете</div>`
+        }
+      </div>
+
+      <!-- Experience -->
+      <div class="edit-card" id="card-exp">
+        <div class="section-title">Опыт работы</div>
+        <div id="exp-list">${renderExpList()}</div>
+        <button class="btn-add-exp" id="btn-add-exp" type="button">+ Добавить место работы</button>
+      </div>
+
+      <!-- Actions -->
+      <div class="form-actions">
+        <button class="btn btn-danger" id="btn-delete" type="button">Удалить резюме</button>
+        <div class="form-actions__right">
+          <a href="./account_employee.html" class="btn btn-secondary">Отмена</a>
+          <button class="btn btn-primary" id="btn-save" type="button">Сохранить изменения</button>
+        </div>
+      </div>
+    `;
+
+    bindEvents();
+  }
+
+  function renderSkillsGrid() {
+    return allSkills.map(skill => {
+      const checked = currentSkillIds.has(skill.id);
+      return `<label class="skill-label${checked ? ' checked' : ''}" data-skill-id="${skill.id}">
+        <input type="checkbox" ${checked ? 'checked' : ''} data-skill-id="${skill.id}" />
+        ${esc(skill.name)}
+      </label>`;
+    }).join('');
+  }
+
+  function renderExpList() {
+    const visible = experiences.filter(e => !e._deleted);
+    if (visible.length === 0) {
+      return '<div class="skills-empty" style="margin-bottom:12px;">Нет добавленного опыта.</div>';
+    }
+    return visible.map((exp, idx) => `
+      <div class="exp-entry${exp._isNew ? ' is-new' : ''}" data-exp-key="${exp._key}">
+        <div class="exp-entry-header">
+          <span class="exp-entry-num">Место работы ${idx + 1}${exp._isNew ? ' (новое)' : ''}</span>
+          <button class="btn-remove-exp" type="button" data-remove-exp="${exp._key}" title="Удалить">✕</button>
+        </div>
+        <div class="exp-err-msg" id="exp-err-${exp._key}"></div>
+        <div class="exp-grid">
+          <div class="exp-field">
+            <label>Компания <span style="color:#e05a2a">*</span></label>
+            <input type="text" maxlength="255" placeholder="ООО Рога и Копыта"
+              value="${esc(exp.company_name)}" data-exp-key="${exp._key}" data-field="company_name" />
+          </div>
+          <div class="exp-field">
+            <label>Должность <span style="color:#e05a2a">*</span></label>
+            <input type="text" maxlength="255" placeholder="Backend Developer"
+              value="${esc(exp.position)}" data-exp-key="${exp._key}" data-field="position" />
+          </div>
+          <div class="exp-field">
+            <label>Дата начала <span style="color:#e05a2a">*</span></label>
+            <input type="text" placeholder="ДД.ММ.ГГГГ или ГГГГ-ММ-ДД"
+              value="${esc(fromISO(exp.start_date))}" data-exp-key="${exp._key}" data-field="start_date" />
+          </div>
+          <div class="exp-field">
+            <label>Дата окончания <span style="color:#888; font-weight:400">(если ещё работаете — оставьте пустым)</span></label>
+            <input type="text" placeholder="ДД.ММ.ГГГГ или ГГГГ-ММ-ДД"
+              value="${esc(fromISO(exp.end_date))}" data-exp-key="${exp._key}" data-field="end_date" />
+          </div>
+          <div class="exp-field exp-field-full">
+            <label>Описание обязанностей</label>
+            <textarea placeholder="Чем вы занимались…" data-exp-key="${exp._key}" data-field="description">${esc(exp.description)}</textarea>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function bindEvents() {
+    // Skills checkboxes
+    document.querySelectorAll('[data-skill-id] input[type=checkbox]').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const skillId = parseInt(cb.getAttribute('data-skill-id'));
+        const label = cb.closest('.skill-label');
+        if (cb.checked) {
+          currentSkillIds.add(skillId);
+          label.classList.add('checked');
+        } else {
+          currentSkillIds.delete(skillId);
+          label.classList.remove('checked');
+        }
+      });
+    });
+
+    // Experience field changes
+    document.querySelectorAll('[data-exp-key][data-field]').forEach(input => {
+      input.addEventListener('input', () => {
+        const key = parseInt(input.getAttribute('data-exp-key'));
+        const field = input.getAttribute('data-field');
+        const exp = experiences.find(e => e._key === key);
+        if (exp) exp[field] = input.value;
+        // Clear inline error for this field
+        input.classList.remove('inp-invalid');
+        const errEl = document.getElementById('exp-err-' + key);
+        if (errEl && !input.closest('.exp-entry').querySelector('.inp-invalid')) {
+          errEl.textContent = ''; errEl.classList.remove('show');
+        }
+      });
+    });
+
+    // Remove experience
+    document.querySelectorAll('[data-remove-exp]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = parseInt(btn.getAttribute('data-remove-exp'));
+        const exp = experiences.find(e => e._key === key);
+        if (exp) {
+          exp._deleted = true;
+          document.getElementById('exp-list').innerHTML = renderExpList();
+          bindExpEvents();
+        }
+      });
+    });
+
+    // Add experience
+    document.getElementById('btn-add-exp').addEventListener('click', () => {
+      experiences.push({
+        _key: ++expKeyCounter,
+        id: null,
+        company_name: '', position: '',
+        start_date: '', end_date: '', description: '',
+        _isNew: true, _deleted: false,
+      });
+      document.getElementById('exp-list').innerHTML = renderExpList();
+      bindExpEvents();
+      // Scroll to new entry
+      const entries = document.querySelectorAll('.exp-entry');
+      if (entries.length) entries[entries.length - 1].scrollIntoView({ behavior:'smooth', block:'start' });
+    });
+
+    // Delete resume
+    document.getElementById('btn-delete').addEventListener('click', () => {
+      document.getElementById('confirm-modal').classList.add('open');
+    });
+
+    // Save
+    document.getElementById('btn-save').addEventListener('click', saveAll);
+  }
+
+  function bindExpEvents() {
+    document.querySelectorAll('[data-exp-key][data-field]').forEach(input => {
+      input.addEventListener('input', () => {
+        const key = parseInt(input.getAttribute('data-exp-key'));
+        const field = input.getAttribute('data-field');
+        const exp = experiences.find(e => e._key === key);
+        if (exp) exp[field] = input.value;
+      });
+    });
+    document.querySelectorAll('[data-remove-exp]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = parseInt(btn.getAttribute('data-remove-exp'));
+        const exp = experiences.find(e => e._key === key);
+        if (exp) {
+          exp._deleted = true;
+          document.getElementById('exp-list').innerHTML = renderExpList();
+          bindExpEvents();
+        }
+      });
+    });
+  }
+
+  // ══════ Save ══════
+  async function saveAll() {
+    const saveBtn = document.getElementById('btn-save');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Сохранение…';
+
+    const errors = [];
+    let ok = true;
+
+    // ── 1. Validate experience ──
+    const toCreate = experiences.filter(e => e._isNew && !e._deleted);
+    const toDelete = experiences.filter(e => !e._isNew && e._deleted && e.id);
+    const toUpdate = experiences.filter(e => !e._isNew && !e._deleted && e.id);
+
+    // Clear previous inline errors
+    document.querySelectorAll('.inp-invalid').forEach(el => el.classList.remove('inp-invalid'));
+    document.querySelectorAll('.exp-err-msg').forEach(el => { el.textContent = ''; el.classList.remove('show'); });
+    document.querySelectorAll('.field-error').forEach(el => { el.textContent = ''; el.classList.remove('show'); });
+
+    for (const exp of toCreate) {
+      const missing = [];
+      const entry = document.querySelector(`.exp-entry[data-exp-key="${exp._key}"]`);
+      if (!exp.company_name.trim()) {
+        missing.push('Название компании');
+        entry?.querySelector('[data-field="company_name"]')?.classList.add('inp-invalid');
+        ok = false;
+      }
+      if (!exp.position.trim()) {
+        missing.push('Должность');
+        entry?.querySelector('[data-field="position"]')?.classList.add('inp-invalid');
+        ok = false;
+      }
+      if (!exp.start_date.trim()) {
+        missing.push('Дата начала');
+        entry?.querySelector('[data-field="start_date"]')?.classList.add('inp-invalid');
+        ok = false;
+      }
+      if (missing.length) {
+        const errEl = document.getElementById('exp-err-' + exp._key);
+        if (errEl) { errEl.textContent = 'Заполните: ' + missing.join(', '); errEl.classList.add('show'); }
+      }
+    }
+
+    if (!ok) {
+      const firstErr = document.querySelector('.exp-err-msg.show');
+      if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Сохранить изменения';
+      return;
+    }
+
+    const results = [];
+
+    // ── 2. PATCH basic fields ──
+    const position = document.getElementById('f-position').value.trim();
+    const aboutMe = document.getElementById('f-about').value.trim();
+    const status = document.getElementById('f-status').value;
+
+    const basicPayload = { about_me: aboutMe || null, status };
+    if (position) basicPayload.desired_position = position;
+
+    try {
+      const r = await api('/resumes/' + resumeId, { method:'PATCH', body:JSON.stringify(basicPayload) });
+      if (r.ok) {
+        if (position) setPosCache(resumeId, position);
+        results.push('✓ Основные поля обновлены');
+      } else {
+        const err = await r.json().catch(() => ({}));
+        results.push('✗ Ошибка обновления основных полей: ' + (err.detail || r.status));
+      }
+    } catch { results.push('✗ Ошибка соединения (основные поля)'); }
+
+    // ── 3. Sync skills ──
+    const toAddSkills = [...currentSkillIds].filter(id => !(id in initialSkillMap));
+    const toRemoveSkills = Object.entries(initialSkillMap).filter(([skill_id]) => !currentSkillIds.has(Number(skill_id)));
+
+    for (const skillId of toAddSkills) {
+      try {
+        const r = await api('/resumes/' + resumeId + '/skills', { method:'POST', body:JSON.stringify({ skill_id: skillId }) });
+        if (r.ok) {
+          const d = await r.json().catch(() => ({}));
+          if (d.data) initialSkillMap[skillId] = d.data.id;
+          results.push('✓ Навык добавлен');
+        } else {
+          const err = await r.json().catch(() => ({}));
+          results.push('✗ Ошибка добавления навыка: ' + (err.detail || r.status));
+        }
+      } catch { results.push('✗ Ошибка соединения (добавление навыка)'); }
+    }
+
+    for (const [skill_id, resume_skill_id] of toRemoveSkills) {
+      try {
+        const r = await api('/resumes/skills/' + resume_skill_id, { method:'DELETE' });
+        if (r.ok) {
+          delete initialSkillMap[skill_id];
+          results.push('✓ Навык удалён');
+        } else {
+          const err = await r.json().catch(() => ({}));
+          results.push('✗ Ошибка удаления навыка: ' + (err.detail || r.status));
+        }
+      } catch { results.push('✗ Ошибка соединения (удаление навыка)'); }
+    }
+
+    // ── 4. Delete removed experiences ──
+    for (const exp of toDelete) {
+      try {
+        const r = await api('/resumes/' + resumeId + '/experiences/' + exp.id, { method:'DELETE' });
+        if (r.ok) {
+          results.push('✓ Опыт удалён');
+        } else {
+          const err = await r.json().catch(() => ({}));
+          results.push('✗ Ошибка удаления опыта: ' + (err.detail || r.status));
+        }
+      } catch { results.push('✗ Ошибка соединения (удаление опыта)'); }
+    }
+
+    // ── 5. PATCH existing experiences ──
+    for (const exp of toUpdate) {
+      const payload = {
+        company_name: exp.company_name.trim() || null,
+        position: exp.position.trim() || null,
+        start_date: toISO(exp.start_date) || null,
+        end_date: toISO(exp.end_date) || null,
+        description: exp.description.trim() || null,
+      };
+      try {
+        const r = await api('/resumes/' + resumeId + '/experiences/' + exp.id, { method:'PATCH', body:JSON.stringify(payload) });
+        if (r.ok) {
+          results.push('✓ Опыт обновлён');
+        } else {
+          const err = await r.json().catch(() => ({}));
+          results.push('✗ Ошибка обновления опыта: ' + (err.detail || r.status));
+        }
+      } catch { results.push('✗ Ошибка соединения (обновление опыта)'); }
+    }
+
+    // ── 6. POST new experiences ──
+    for (const exp of toCreate) {
+      const payload = {
+        company_name: exp.company_name.trim(),
+        position: exp.position.trim(),
+        start_date: toISO(exp.start_date),
+        end_date: toISO(exp.end_date) || null,
+        description: exp.description.trim() || null,
+      };
+      try {
+        const r = await api('/resumes/' + resumeId + '/experiences', { method:'POST', body:JSON.stringify(payload) });
+        if (r.ok) {
+          const d = await r.json().catch(() => ({}));
+          if (d.data) { exp.id = d.data.id; exp._isNew = false; }
+          results.push('✓ Новый опыт добавлен');
+        } else {
+          const err = await r.json().catch(() => ({}));
+          results.push('✗ Ошибка добавления опыта: ' + (err.detail || r.status));
+        }
+      } catch { results.push('✗ Ошибка соединения (добавление опыта)'); }
+    }
+
+    // ── Result ──
+    const hasErrors = results.some(r => r.startsWith('✗'));
+    if (!hasErrors) {
+      showToast('Резюме успешно сохранено', 'success');
+      setTimeout(() => { window.location.href = './account_employee.html'; }, 1300);
+    } else {
+      showToast('Некоторые изменения не удалось сохранить. Проверьте ниже.', 'warning');
+      console.warn('Save results:', results);
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Сохранить изменения';
+    }
+  }
+
+  // ══════ Delete resume ══════
+  async function deleteResume() {
+    document.getElementById('confirm-modal').classList.remove('open');
+    try {
+      const r = await api('/resumes/' + resumeId, { method:'DELETE' });
+      if (r.ok || r.status === 204) {
+        setPosCache(resumeId, null);
+        showToast('Резюме удалено', 'success');
+        setTimeout(() => { window.location.href = './account_employee.html'; }, 1200);
+      } else {
+        const err = await r.json().catch(() => ({}));
+        showToast('Ошибка: ' + (err.detail || 'Не удалось удалить'), 'error');
+      }
+    } catch { showToast('Ошибка соединения', 'error'); }
+  }
+
+  init().catch(e => {
+    console.error(e);
+    document.getElementById('main-page').innerHTML = '<div class="loading-state">Ошибка загрузки. <a href="./account_employee.html">← Назад</a></div>';
+  });
+})();
+</script>
+</body>
+</html>

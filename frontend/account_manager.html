@@ -2,6 +2,9 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Личный кабинет | TeamPal</title>
   <link rel="icon" type="image/png" href="./assets/logo.png">
@@ -403,6 +406,35 @@
       padding: 0 6px;
       width: auto;
     }
+    /* ── Danger button ── */
+    .action-btn--danger { background:#fff0ee; color:#d14b2a; border-color:#f5c0b0; }
+    .action-btn--danger:hover { background:#ffe0da; color:#c0391c; }
+    /* ── Toast system ── */
+    .toast-container { position:fixed; top:84px; left:50%; transform:translateX(-50%); z-index:9999; display:flex; flex-direction:column; gap:10px; width:min(440px,92vw); pointer-events:none; }
+    .tp-toast { display:flex; align-items:flex-start; gap:10px; padding:12px 16px; border-radius:12px; box-shadow:0 4px 14px rgba(0,0,0,.13); pointer-events:auto; animation:tpToastIn .3s ease; }
+    .tp-toast.success { background:#f0fff4; border:1.5px solid #52c41a; }
+    .tp-toast.error   { background:#fff2f0; border:1.5px solid #ff4d4f; }
+    .tp-toast.warning { background:#fffbe6; border:1.5px solid #faad14; }
+    .tp-toast.info    { background:#e6f7ff; border:1.5px solid #1890ff; }
+    .tp-toast__icon { font-size:18px; line-height:1.2; flex-shrink:0; }
+    .tp-toast.success .tp-toast__icon,.tp-toast.success .tp-toast__text,.tp-toast.success .tp-toast__close { color:#2d7a2d; }
+    .tp-toast.error   .tp-toast__icon,.tp-toast.error   .tp-toast__text,.tp-toast.error   .tp-toast__close { color:#c0392b; }
+    .tp-toast.warning .tp-toast__icon,.tp-toast.warning .tp-toast__text,.tp-toast.warning .tp-toast__close { color:#8b6914; }
+    .tp-toast.info    .tp-toast__icon,.tp-toast.info    .tp-toast__text,.tp-toast.info    .tp-toast__close { color:#0958d9; }
+    .tp-toast__text { flex:1; font-size:14px; line-height:1.45; }
+    .tp-toast__close { background:none; border:none; cursor:pointer; font-size:20px; line-height:1; padding:0; margin-left:2px; opacity:.75; }
+    @keyframes tpToastIn  { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes tpToastOut { to{opacity:0;transform:translateY(-10px)} }
+    /* ── Modal field styles ── */
+    .modal__field { display:flex; flex-direction:column; gap:5px; margin-bottom:10px; }
+    .modal__field:last-child { margin-bottom:0; }
+    .modal__field label { font-size:13px; color:#4c4c4c; font-weight:600; }
+    .modal__field input,.modal__field select,.modal__field textarea { width:100%; border:1.5px solid #ddd; border-radius:10px; padding:10px 11px; font-family:inherit; font-size:14px; background:#fff; }
+    .modal__field input:focus,.modal__field select:focus,.modal__field textarea:focus { outline:2px solid rgba(248,90,11,.2); border-color:#f85a0b; }
+    .modal__field textarea { resize:vertical; min-height:90px; }
+    .modal__split { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:14px; }
+    /* ── Status toggle checkbox ── */
+    .proj-status-check { cursor:pointer; width:16px; height:16px; }
   </style>
 </head>
 <body>
@@ -570,11 +602,223 @@
 </div>
 
 
+<!-- ── Toast container ── -->
+<div id="toast-container" class="toast-container"></div>
+
+<!-- ── Confirm modal ── -->
+<div class="modal" id="confirm-modal" aria-hidden="true">
+  <div class="modal__card">
+    <h2 class="modal__title" id="confirm-modal-title">Подтверждение</h2>
+    <p id="confirm-modal-text" style="color:#555;font-size:14px;margin:-4px 0 14px;line-height:1.5;"></p>
+    <div class="modal__actions">
+      <button class="action-btn" id="confirm-modal-cancel" type="button">Отмена</button>
+      <button class="action-btn action-btn--danger" id="confirm-modal-ok" type="button">Подтвердить</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Project edit modal ── -->
+<div class="modal" id="project-edit-modal" aria-hidden="true">
+  <div class="modal__card" style="width:min(92vw,560px);">
+    <h2 class="modal__title">Редактирование проекта</h2>
+    <div class="modal__field">
+      <label for="edit-proj-title">Название проекта</label>
+      <input id="edit-proj-title" type="text" placeholder="Название вашего проекта" maxlength="255" />
+    </div>
+    <div class="modal__field">
+      <label for="edit-proj-description">Описание</label>
+      <textarea id="edit-proj-description" placeholder="Краткое описание проекта..."></textarea>
+    </div>
+    <div class="modal__field">
+      <label for="edit-proj-tasks">Задачи / что предстоит делать</label>
+      <textarea id="edit-proj-tasks" style="min-height:70px;" placeholder="Что предстоит делать участникам..."></textarea>
+    </div>
+    <div class="modal__field">
+      <label for="edit-proj-intent">Тип проекта</label>
+      <select id="edit-proj-intent">
+        <option value="commercial">Коммерческий</option>
+        <option value="noncommercial">Некоммерческий</option>
+      </select>
+    </div>
+    <div class="modal__field">
+      <label for="edit-proj-status">Статус</label>
+      <select id="edit-proj-status">
+        <option value="active">Активен</option>
+        <option value="paused">Приостановлен</option>
+      </select>
+    </div>
+    <div class="modal__split">
+      <button class="action-btn action-btn--danger" id="proj-edit-delete" type="button">Удалить проект</button>
+      <div style="display:flex;gap:8px;">
+        <button class="action-btn" id="proj-edit-cancel" type="button">Отмена</button>
+        <button class="action-btn action-btn--accent" id="proj-edit-save" type="button">Сохранить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="./config.js"></script>
 <script>
   (function () {
     const yearSpan = document.getElementById("year");
     if (yearSpan) yearSpan.textContent = " " + new Date().getFullYear();
+
+    // ══════════════════════════════════════════
+    //  TOAST SYSTEM
+    // ══════════════════════════════════════════
+    function showToast(message, type = "success", duration = 5000) {
+      const icons = { success: "✓", error: "✕", warning: "⚠", info: "ℹ" };
+      const container = document.getElementById("toast-container");
+      if (!container) return;
+      const el = document.createElement("div");
+      el.className = "tp-toast " + (type || "info");
+      const msg = String(message || "").replace(/[&<>]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[m]));
+      el.innerHTML = `<span class="tp-toast__icon">${icons[type] || "ℹ"}</span><span class="tp-toast__text">${msg}</span><button class="tp-toast__close" aria-label="Закрыть">×</button>`;
+      el.querySelector(".tp-toast__close").addEventListener("click", () => el.remove());
+      container.appendChild(el);
+      setTimeout(() => {
+        if (el.parentElement) {
+          el.style.animation = "tpToastOut .25s ease forwards";
+          setTimeout(() => el.remove(), 260);
+        }
+      }, duration);
+    }
+
+    // ══════════════════════════════════════════
+    //  CONFIRM MODAL
+    // ══════════════════════════════════════════
+    let _confirmCb = null;
+    function showConfirm(title, text, onConfirm, { danger = true, okLabel = "Подтвердить" } = {}) {
+      const modal = document.getElementById("confirm-modal");
+      if (!modal) return;
+      document.getElementById("confirm-modal-title").textContent = title;
+      document.getElementById("confirm-modal-text").textContent = text;
+      const okBtn = document.getElementById("confirm-modal-ok");
+      okBtn.textContent = okLabel;
+      okBtn.className = "action-btn " + (danger ? "action-btn--danger" : "action-btn--accent");
+      _confirmCb = onConfirm;
+      modal.classList.add("open");
+    }
+    function _closeConfirmModal() {
+      const modal = document.getElementById("confirm-modal");
+      if (modal) modal.classList.remove("open");
+      _confirmCb = null;
+    }
+    document.getElementById("confirm-modal-cancel")?.addEventListener("click", _closeConfirmModal);
+    document.getElementById("confirm-modal-ok")?.addEventListener("click", () => {
+      const cb = _confirmCb;
+      _closeConfirmModal();
+      if (cb) cb();
+    });
+    document.getElementById("confirm-modal")?.addEventListener("click", (e) => {
+      if (e.target === document.getElementById("confirm-modal")) _closeConfirmModal();
+    });
+
+    // ══════════════════════════════════════════
+    //  PROJECT EDIT MODAL
+    // ══════════════════════════════════════════
+    let _editingProjectId = null;
+
+    async function openProjectEdit(projectId) {
+      _editingProjectId = String(projectId);
+      const modal = document.getElementById("project-edit-modal");
+      if (!modal) return;
+
+      document.getElementById("edit-proj-title").value = "";
+      document.getElementById("edit-proj-description").value = "";
+      document.getElementById("edit-proj-tasks").value = "";
+      document.getElementById("edit-proj-intent").value = "commercial";
+      document.getElementById("edit-proj-status").value = "active";
+
+      try {
+        const resp = await fetch(API_BASE_URL + "/my_project/" + projectId, { credentials: "include" });
+        if (resp.ok) {
+          const data = await resp.json();
+          const p = data.project || data;
+          document.getElementById("edit-proj-title").value = p.title || "";
+          document.getElementById("edit-proj-description").value = p.description || "";
+          document.getElementById("edit-proj-tasks").value = p.tasks || "";
+          document.getElementById("edit-proj-intent").value = p.employment_intent || "commercial";
+          document.getElementById("edit-proj-status").value = p.status || "active";
+        }
+      } catch {}
+
+      modal.classList.add("open");
+    }
+
+    function _closeProjectEditModal() {
+      const modal = document.getElementById("project-edit-modal");
+      if (modal) modal.classList.remove("open");
+      _editingProjectId = null;
+    }
+
+    async function _saveProjectEdit() {
+      const id = _editingProjectId;
+      if (!id) return;
+      const title = document.getElementById("edit-proj-title").value.trim();
+      if (!title) { showToast("Название проекта не может быть пустым", "warning"); return; }
+
+      const payload = {
+        title,
+        description: document.getElementById("edit-proj-description").value.trim() || null,
+        tasks: document.getElementById("edit-proj-tasks").value.trim() || null,
+        employment_intent: document.getElementById("edit-proj-intent").value,
+        status: document.getElementById("edit-proj-status").value,
+      };
+
+      try {
+        const resp = await fetch(API_BASE_URL + "/projects/" + id, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(payload),
+        });
+        if (resp.ok) {
+          _closeProjectEditModal();
+          showToast("Проект успешно обновлён", "success");
+          loadMyProjects();
+        } else {
+          const err = await resp.json().catch(() => ({}));
+          showToast("Ошибка: " + (err.detail || "Не удалось сохранить"), "error");
+        }
+      } catch {
+        showToast("Ошибка соединения с сервером", "error");
+      }
+    }
+
+    async function _deleteProject(projectId) {
+      try {
+        const resp = await fetch(API_BASE_URL + "/projects/" + projectId, {
+          method: "DELETE",
+          credentials: "include",
+        });
+        if (resp.ok || resp.status === 204) {
+          _closeProjectEditModal();
+          showToast("Проект удалён", "success");
+          loadMyProjects();
+        } else {
+          const err = await resp.json().catch(() => ({}));
+          showToast("Ошибка: " + (err.detail || "Не удалось удалить"), "error");
+        }
+      } catch {
+        showToast("Ошибка соединения с сервером", "error");
+      }
+    }
+
+    document.getElementById("proj-edit-cancel")?.addEventListener("click", _closeProjectEditModal);
+    document.getElementById("proj-edit-save")?.addEventListener("click", _saveProjectEdit);
+    document.getElementById("proj-edit-delete")?.addEventListener("click", () => {
+      const id = _editingProjectId;
+      if (!id) return;
+      showConfirm(
+        "Удалить проект?",
+        "Это действие необратимо. Проект будет удалён навсегда.",
+        () => _deleteProject(id)
+      );
+    });
+    document.getElementById("project-edit-modal")?.addEventListener("click", (e) => {
+      if (e.target === document.getElementById("project-edit-modal")) _closeProjectEditModal();
+    });
 
     const tabPersonal = document.getElementById("tab-personal");
     const tabMyProjects = document.getElementById("tab-myprojects");
@@ -770,98 +1014,113 @@
       const projectsList = document.getElementById("projects-list");
       if (!projectsList) return;
 
-      // Try to load from backend if projects API exists.
+      projectsList.innerHTML = '<div class="empty-state" style="color:#aaa;">Загрузка…</div>';
+
       let projects = null;
       try {
-        const response = await fetch(API_BASE_URL + "/projects", {
-          method: "GET",
-          credentials: "include",
-        });
+        const response = await fetch(API_BASE_URL + "/my_projects", { credentials: "include" });
         if (response.ok) {
           const data = await response.json();
           if (Array.isArray(data)) projects = data;
-          else if (data && Array.isArray(data.items)) projects = data.items;
         }
-      } catch (_) {}
+      } catch {}
 
-      // Fallback: local storage (so UI works even without backend support).
-      if (!projects) {
-        try {
-          const raw = localStorage.getItem("tp_projects");
-          const arr = raw ? JSON.parse(raw) : [];
-          if (Array.isArray(arr)) projects = arr;
-        } catch (_) {
-          projects = [];
-        }
-      }
+      if (!projects) projects = [];
 
       const countSpan = document.getElementById("project-count");
-      if (countSpan) countSpan.textContent = Array.isArray(projects) ? String(projects.length) : "0";
+      if (countSpan) countSpan.textContent = String(projects.length);
 
-      if (!Array.isArray(projects) || projects.length === 0) {
+      if (projects.length === 0) {
         projectsList.innerHTML = '<div class="empty-state">У вас пока нет проектов. Нажмите «Создать проект»</div>';
         return;
       }
 
-      let activeSet = new Set();
-      try {
-        const raw = localStorage.getItem("tp_active_projects");
-        const arr = raw ? JSON.parse(raw) : [];
-        if (Array.isArray(arr)) activeSet = new Set(arr.map(String));
-      } catch (_) {}
-
       const safe = (v) => (v === null || v === undefined) ? "" : String(v);
-      const escape = (s) => safe(s).replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+      const esc = (s) => safe(s).replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
 
-      const getNumber = (...vals) => {
-        for (const v of vals) {
-          const n = typeof v === "number" ? v : (typeof v === "string" && v.trim() ? Number(v) : NaN);
-          if (!Number.isNaN(n)) return n;
-        }
-        return null;
-      };
+      const intentLabel = { commercial: "Коммерческий", noncommercial: "Некоммерческий" };
+      const statusLabel = { active: "Активен", paused: "Приостановлен" };
 
       projectsList.innerHTML = projects.map((p) => {
         const id = p && p.id !== undefined ? String(p.id) : "";
-        const title = p?.title || p?.name || (id ? `Проект #${id}` : "Проект");
-
-        const peopleTotal = getNumber(p?.people_total, p?.peopleCount, p?.people_needed, p?.required_people, p?.team_size);
-        const peopleFound = getNumber(p?.people_found, p?.foundCount, p?.filled, p?.participants_count);
-
-        const roles = Array.isArray(p?.roles)
-          ? p.roles
-          : (Array.isArray(p?.positions) ? p.positions : (Array.isArray(p?.vacancies) ? p.vacancies : []));
-
-        const rolesHtml = roles.length
-          ? roles.map((r) => `<span class="role-badge">${escape(r?.name || r?.title || r)}</span>`).join("")
-          : '<span style="color:#888; font-size:12px;">Роли не указаны</span>';
-
-        const isActive = id && activeSet.has(id);
+        const title = p?.title || (id ? `Проект #${id}` : "Проект");
+        const intent = intentLabel[p?.employment_intent] || p?.employment_intent || "—";
+        const status = statusLabel[p?.status] || p?.status || "—";
+        const createdAt = p?.created_at ? new Date(p.created_at).toLocaleDateString("ru-RU") : "—";
+        const description = p?.description
+          ? (p.description.length > 80 ? p.description.slice(0, 80) + "…" : p.description)
+          : null;
+        // Checkbox checked = active, unchecked = paused
+        const isActive = p?.status === "active";
 
         return `
-          <div class="project-card" style="display:flex; justify-content:space-between; gap:12px; align-items:flex-start;">
-            <div style="flex:1; min-width:0;">
-              <div class="project-title">${escape(title)}</div>
-              <div class="project-info"><b>Количество человек:</b> ${peopleTotal === null ? "—" : escape(peopleTotal)}</div>
-              <div class="project-info"><b>Сколько найдено:</b> ${peopleFound === null ? "—" : escape(peopleFound)}</div>
-              <div class="project-roles" style="margin-top:8px;">${rolesHtml}</div>
+          <div class="project-card" style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;">
+            <div style="flex:1;min-width:0;">
+              <div class="project-title">${esc(title)}</div>
+              <div class="project-info"><b>Тип:</b> ${esc(intent)}</div>
+              <div class="project-info"><b>Статус:</b> ${esc(status)}</div>
+              <div class="project-info"><b>Создан:</b> ${esc(createdAt)}</div>
+              ${description ? `<div class="project-info" style="margin-top:6px;color:#555;">${esc(description)}</div>` : ""}
             </div>
-            <label style="display:flex; flex-direction:column; align-items:flex-end; gap:6px; user-select:none;">
-              <span style="font-size:12px; color:#666;">Активно</span>
-              <input type="checkbox" class="project-active-switch" data-project-id="${escape(id)}" ${isActive ? "checked" : ""} />
-            </label>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0;">
+              <label style="display:flex;flex-direction:column;align-items:center;gap:3px;user-select:none;cursor:pointer;">
+                <span style="font-size:11px;color:#666;">Активно</span>
+                <input type="checkbox" class="proj-status-check" data-project-id="${esc(id)}"
+                  data-project-title="${esc(title)}" data-current-status="${esc(p?.status || "")}"
+                  ${isActive ? "checked" : ""} />
+              </label>
+              <a href="./edit_project.html?id=${esc(id)}"
+                 class="action-btn"
+                 style="font-size:13px;padding:5px 12px;white-space:nowrap;text-decoration:none;display:inline-block;">
+                Редактировать
+              </a>
+            </div>
           </div>
         `;
       }).join("");
 
-      projectsList.querySelectorAll(".project-active-switch").forEach((el) => {
-        el.addEventListener("change", () => {
-          const id = el.getAttribute("data-project-id");
-          if (!id) return;
-          const next = new Set(activeSet);
-          if (el.checked) next.add(String(id));
-          else next.delete(String(id));
-          try { localStorage.setItem("tp_active_projects", JSON.stringify(Array.from(next))); } catch (_) {}
+      // ── Кнопки редактирования ──
+      projectsList.querySelectorAll("[data-edit-project]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const id = btn.getAttribute("data-edit-project");
+          if (id) openProjectEdit(id);
+        });
+      });
+
+      // ── Галочка смены статуса ──
+      projectsList.querySelectorAll(".proj-status-check").forEach((checkbox) => {
+        checkbox.addEventListener("click", (e) => {
+          e.preventDefault(); // Не меняем визуально до подтверждения
+          const id = checkbox.getAttribute("data-project-id");
+          const currentStatus = checkbox.getAttribute("data-current-status");
+          const projectTitle = checkbox.getAttribute("data-project-title");
+          const newStatus = currentStatus === "active" ? "paused" : "active";
+          const newLabel = statusLabel[newStatus] || newStatus;
+
+          showConfirm(
+            "Изменить статус проекта",
+            `Установить статус проекта «${projectTitle}» как «${newLabel}»?`,
+            async () => {
+              try {
+                const resp = await fetch(API_BASE_URL + "/projects/" + id, {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  credentials: "include",
+                  body: JSON.stringify({ status: newStatus }),
+                });
+                if (resp.ok) {
+                  showToast(`Статус изменён: «${newLabel}»`, "success");
+                  loadMyProjects();
+                } else {
+                  const err = await resp.json().catch(() => ({}));
+                  showToast("Ошибка: " + (err.detail || "Не удалось изменить статус"), "error");
+                }
+              } catch {
+                showToast("Ошибка соединения с сервером", "error");
+              }
+            },
+            { danger: false, okLabel: `Установить «${newLabel}»` }
+          );
         });
       });
     }
@@ -887,7 +1146,7 @@
       if (!newData.last_name) errors.push("Фамилия не может быть пустой");
 
       if (errors.length > 0) {
-        alert(errors.join("\n"));
+        showToast(errors.join("; "), "error");
         return;
       }
 
@@ -912,18 +1171,18 @@
             github: (newData.contacts && newData.contacts.github) || "",
           };
           updateUserNameDisplay();
-          alert("Личная информация сохранена");
+          showToast("Личная информация сохранена", "success");
         } else {
           const error = await response.json().catch(() => ({}));
           const detail = error.detail;
           const msg = Array.isArray(detail)
             ? detail.map((d) => d.msg || JSON.stringify(d)).join("; ")
             : (detail || "Не удалось сохранить");
-          alert("Ошибка: " + msg);
+          showToast("Ошибка: " + msg, "error");
         }
       } catch (error) {
         console.error("Ошибка сохранения:", error);
-        alert("Ошибка соединения с сервером");
+        showToast("Ошибка соединения с сервером", "error");
       }
     }
 
@@ -932,10 +1191,10 @@
       try {
         localStorage.setItem("tp_about_manager", newAbout || "");
         aboutData = newAbout || "";
-        alert("Информация о себе сохранена");
+        showToast("Информация о себе сохранена", "success");
       } catch (error) {
         console.error("Ошибка сохранения информации о себе:", error);
-        alert("Не удалось сохранить");
+        showToast("Не удалось сохранить", "error");
       }
     }
 
@@ -973,9 +1232,9 @@
           const previewUrl = URL.createObjectURL(file);
           document.getElementById("profile-avatar").src = previewUrl;
           personalData.avatar = previewUrl;
-          alert("Превью в браузере. Сохранение файла аватара на сервере пока не реализовано.");
+          showToast("Превью обновлено (сохранение аватара на сервере пока не поддерживается)", "info");
         } else if (file) {
-          alert("Пожалуйста, выберите изображение");
+          showToast("Пожалуйста, выберите изображение", "warning");
         }
       });
     }
@@ -1090,43 +1349,23 @@
         const confirmPass = document.getElementById("confirm-password").value;
         
         if (!oldPass) {
-          alert("Введите старый пароль");
+          showToast("Введите старый пароль", "warning");
           return;
         }
         if (newPass !== confirmPass) {
-          alert("Пароли не совпадают");
+          showToast("Пароли не совпадают", "error");
           return;
         }
         if (newPass && newPass.length < 8) {
-          alert("Новый пароль должен содержать минимум 8 символов");
+          showToast("Новый пароль должен содержать минимум 8 символов", "warning");
           return;
         }
         
-        try {
-          const response = await fetch(API_BASE_URL + "/auth/change-password", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({
-              old_password: oldPass,
-              new_password: newPass
-            }),
-          });
-          
-          if (response.ok) {
-            alert("Пароль успешно изменён");
-            closePasswordModal();
-          } else {
-            const error = await response.json().catch(() => ({}));
-            alert("Ошибка: " + (error.detail || "Не удалось сменить пароль"));
-          }
-        } catch (error) {
-          console.error("Ошибка смены пароля:", error);
-          alert("Ошибка соединения с сервером");
-        }
+        showToast("Смена пароля пока не поддерживается сервером", "info");
+        closePasswordModal();
       });
     }
-    
+
     if (passwordModal) {
       passwordModal.addEventListener("click", function (event) { 
         if (event.target === passwordModal) closePasswordModal(); 
