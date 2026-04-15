@@ -1,5 +1,19 @@
+from enum import Enum
 from pydantic import BaseModel
 from sqlalchemy import insert, select, update, delete, func
+
+
+def _dump_for_orm(data: BaseModel, exclude_unset: bool = False) -> dict:
+    raw = data.model_dump(exclude_unset=exclude_unset)
+    def _coerce(v):
+        if isinstance(v, Enum):
+            return v.value
+        if isinstance(v, list):
+            return [_coerce(x) for x in v]
+        if isinstance(v, dict):
+            return {k: _coerce(x) for k, x in v.items()}
+        return v
+    return {k: _coerce(v) for k, v in raw.items()}
 
 
 class BaseRepository:
@@ -13,7 +27,7 @@ class BaseRepository:
             self,
             data: BaseModel
     ):
-        add_data_statement = insert(self.model).values(**data.model_dump()).returning(self.model)
+        add_data_statement = insert(self.model).values(**_dump_for_orm(data)).returning(self.model)
         result = await self.session.execute(add_data_statement)
         model = result.scalars().one()
         return self.schema.model_validate(model, from_attributes=True)
@@ -42,7 +56,7 @@ class BaseRepository:
         update_stmt = (
             update(self.model)
             .filter_by(**filter_by)
-            .values(**data.model_dump(exclude_unset=exclude_unset))
+            .values(**_dump_for_orm(data, exclude_unset=exclude_unset))
         )
         result = await self.session.execute(update_stmt)
         return result.rowcount

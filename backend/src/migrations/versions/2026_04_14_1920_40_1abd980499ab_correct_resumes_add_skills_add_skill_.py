@@ -24,7 +24,7 @@ def upgrade() -> None:
     postgresql.ENUM(
         "commercial",
         "noncommercial",
-        name="employment_intent",
+        name="employment_intent_enum",
         create_type=True,
     ).create(bind, checkfirst=True)
 
@@ -32,7 +32,7 @@ def upgrade() -> None:
         "full_time",
         "part_time",
         "side_project",
-        name="commitment_level",
+        name="commitment_level_enum",
         create_type=True,
     ).create(bind, checkfirst=True)
 
@@ -74,7 +74,7 @@ def upgrade() -> None:
             postgresql.ENUM(
                 "commercial",
                 "noncommercial",
-                name="employment_intent",
+                name="employment_intent_enum",
                 create_type=False,
             ),
             nullable=True,
@@ -88,7 +88,7 @@ def upgrade() -> None:
                 "full_time",
                 "part_time",
                 "side_project",
-                name="commitment_level",
+                name="commitment_level_enum",
                 create_type=False,
             ),
             nullable=True,
@@ -128,7 +128,7 @@ def upgrade() -> None:
         existing_type=postgresql.ENUM(
             "commercial",
             "noncommercial",
-            name="employment_intent",
+            name="employment_intent_enum",
             create_type=False,
         ),
         nullable=False,
@@ -141,8 +141,8 @@ def downgrade() -> None:
     op.drop_column("resumes", "employment_intent")
     op.drop_column("resumes", "desired_position")
 
-    op.execute(sa.text("DROP TYPE IF EXISTS commitment_level"))
-    op.execute(sa.text("DROP TYPE IF EXISTS employment_intent"))
+    op.execute(sa.text("DROP TYPE IF EXISTS commitment_level_enum"))
+    op.execute(sa.text("DROP TYPE IF EXISTS employment_intent_enum"))
 
     op.drop_table("resume_skills")
     op.drop_table("skill_aliases")

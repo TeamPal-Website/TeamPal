@@ -121,12 +121,12 @@ class TestPatchProfile:
         response = await authenticated_client.patch("/profiles", json={"age": 100})
         assert response.status_code == 200
 
-    async def test_patch_profile_gender_male(self, authenticated_client: AsyncClient):
-        response = await authenticated_client.patch("/profiles", json={"gender": "male"})
+    async def test_patch_profile_gender_man(self, authenticated_client: AsyncClient):
+        response = await authenticated_client.patch("/profiles", json={"gender": "man"})
         assert response.status_code == 200
 
-    async def test_patch_profile_gender_female(self, authenticated_client: AsyncClient):
-        response = await authenticated_client.patch("/profiles", json={"gender": "female"})
+    async def test_patch_profile_gender_woman(self, authenticated_client: AsyncClient):
+        response = await authenticated_client.patch("/profiles", json={"gender": "woman"})
         assert response.status_code == 200
 
     async def test_patch_profile_invalid_gender_fails(self, authenticated_client: AsyncClient):

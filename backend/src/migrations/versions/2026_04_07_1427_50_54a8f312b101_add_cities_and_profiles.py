@@ -26,7 +26,7 @@ def upgrade() -> None:
         sa.Column("last_name", sa.String(length=35), nullable=True),
         sa.Column("age", sa.Integer(), nullable=True),
         sa.Column(
-            "gender", sa.Enum("MALE", "FEMALE", name="gender_enum"), nullable=True
+            "gender", sa.Enum("man", "woman", name="gender_enum"), nullable=True
         ),
         sa.Column("city_id", sa.Integer(), nullable=True),
         sa.Column("contacts", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
@@ -45,3 +45,4 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.drop_table("profiles")
     op.drop_table("cities")
+    op.execute(sa.text("DROP TYPE IF EXISTS gender_enum"))

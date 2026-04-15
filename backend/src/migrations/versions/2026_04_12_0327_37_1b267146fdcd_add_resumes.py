@@ -27,7 +27,7 @@ def upgrade() -> None:
         sa.Column(
             "status",
             sa.Enum(
-                "LOOKING_FOR_JOB", "NOT_LOOKING_FOR_JOB", name="resume_status_enum"
+                "looking_for_job", "not_looking_for_job", name="resume_status_enum"
             ),
             nullable=False,
         ),
@@ -55,3 +55,4 @@ def downgrade() -> None:
     """Downgrade schema."""
     op.drop_table("resume_experiences")
     op.drop_table("resumes")
+    op.execute(sa.text("DROP TYPE IF EXISTS resume_status_enum"))

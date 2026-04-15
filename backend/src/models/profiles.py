@@ -5,6 +5,7 @@ from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import JSONB
 
 from src.database import Base
+from src.models.enum_helpers import enum_values
 
 
 class ProfilesOrm(Base):
@@ -16,6 +17,9 @@ class ProfilesOrm(Base):
     first_name: Mapped[str | None] = mapped_column(String(35), nullable=True)
     last_name: Mapped[str | None] = mapped_column(String(35), nullable=True)
     age: Mapped[int | None] = mapped_column(nullable=True)
-    gender: Mapped[Gender | None] = mapped_column(SQLEnum(Gender, name="gender_enum"), nullable=True)
+    gender: Mapped[Gender | None] = mapped_column(
+        SQLEnum(Gender, name="gender_enum", values_callable=enum_values),
+        nullable=True,
+    )
     city_id: Mapped[int | None] = mapped_column(ForeignKey("cities.id"), nullable=True)
     contacts: Mapped[dict | None] = mapped_column(JSONB, nullable=True, default=dict)

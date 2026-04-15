@@ -12,6 +12,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from src.database import Base
 from src.enums import CommitmentLevel, EmploymentIntent, ResumeStatus
+from src.models.enum_helpers import enum_values
 
 
 class ResumesOrm(Base):
@@ -21,17 +22,17 @@ class ResumesOrm(Base):
     profile_id: Mapped[int] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"))
     desired_position: Mapped[str] = mapped_column(String(255), nullable=False)
     employment_intent: Mapped[EmploymentIntent] = mapped_column(
-        SQLEnum(EmploymentIntent, name="employment_intent"),
+        SQLEnum(EmploymentIntent, name="employment_intent_enum", values_callable=enum_values),
         default=EmploymentIntent.COMMERCIAL,
     )
     commitment_level: Mapped[CommitmentLevel | None] = mapped_column(
-        SQLEnum(CommitmentLevel, name="commitment_level"),
+        SQLEnum(CommitmentLevel, name="commitment_level_enum", values_callable=enum_values),
         nullable=True,
     )
     salary_amount: Mapped[int | None] = mapped_column(nullable=True)
     about_me: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[ResumeStatus] = mapped_column(
-        SQLEnum(ResumeStatus, name="resume_status_enum"),
+        SQLEnum(ResumeStatus, name="resume_status_enum", values_callable=enum_values),
         default=ResumeStatus.LOOKING_FOR_JOB,
     )
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())

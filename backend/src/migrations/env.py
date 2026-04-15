@@ -18,6 +18,9 @@ from src.models.resumes import ResumeExperienceOrm # noqa: F401
 from src.models.resumes import ResumeSkillOrm # noqa: F401
 from src.models.skills import SkillsOrm # noqa: F401
 from src.models.skills import SkillAliasOrm # noqa: F401
+from src.models.projects import ProjectsOrm # noqa: F401
+from src.models.projects import ProjectVacancyOrm # noqa: F401
+from src.models.roles_dictionary import RolesDictionaryOrm # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
