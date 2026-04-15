@@ -22,11 +22,21 @@ class ResumesOrm(Base):
     profile_id: Mapped[int] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"))
     desired_position: Mapped[str] = mapped_column(String(255), nullable=False)
     employment_intent: Mapped[EmploymentIntent] = mapped_column(
-        SQLEnum(EmploymentIntent, name="employment_intent_enum", values_callable=enum_values),
+        SQLEnum(
+            EmploymentIntent,
+            name="employment_intent_enum",
+            values_callable=enum_values,
+            create_type=True,
+        ),
         default=EmploymentIntent.COMMERCIAL,
     )
     commitment_level: Mapped[CommitmentLevel | None] = mapped_column(
-        SQLEnum(CommitmentLevel, name="commitment_level_enum", values_callable=enum_values),
+        SQLEnum(
+            CommitmentLevel,
+            name="commitment_level_enum",
+            values_callable=enum_values,
+            create_type=True,
+        ),
         nullable=True,
     )
     salary_amount: Mapped[int | None] = mapped_column(nullable=True)

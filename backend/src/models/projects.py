@@ -38,6 +38,7 @@ class ProjectsOrm(Base):
             EmploymentIntent,
             name="employment_intent_enum",
             values_callable=enum_values,
+            create_type=False,
         ),
         nullable=False,
         default=EmploymentIntent.COMMERCIAL,
@@ -100,6 +101,7 @@ class ProjectVacancyOrm(Base):
             CommitmentLevel,
             name="commitment_level_enum",
             values_callable=enum_values,
+            create_type=False,
         ),
         nullable=True,
     )
