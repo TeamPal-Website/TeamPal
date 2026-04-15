@@ -8,6 +8,8 @@ from src.schemas.resumes import ResumeRequestAdd, ResumeAdd, ResumePatch
 
 router = APIRouter(prefix="", tags=["Резюме"])
 
+RESUMES_MAX_PER_PROFILE = 5
+
 
 @router.get("/profiles/{user_id}/resumes/{resume_id}")
 async def get_resume(
@@ -103,7 +105,7 @@ async def create_resume(
         raise HTTPException(status_code=404, detail="Профиль не найден")
 
     resumes_count = await db.resumes.count(profile_id=profile.id)
-    if resumes_count >= 5:
+    if resumes_count >= RESUMES_MAX_PER_PROFILE:
         raise HTTPException(status_code=409, detail="Превышен лимит резюме")
 
     unique_skill_ids = list(dict.fromkeys(resume_data.skill_ids))

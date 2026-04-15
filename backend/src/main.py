@@ -15,6 +15,9 @@ from src.api.resumes import router as router_resumes
 from src.api.resume_experiences import router as router_resume_experiences
 from src.api.resume_skills import router as router_skills
 from src.api.skills import router as router_catalog_skills
+from src.api.projects import router as router_projects
+from src.api.project_vacancies import router as router_project_vacancies
+from src.api.roles_dictionary import router as router_roles_dictionary
 from src.config import settings
 
 app = FastAPI()
@@ -35,6 +38,9 @@ app.include_router(router_resumes)
 app.include_router(router_resume_experiences)
 app.include_router(router_skills)
 app.include_router(router_catalog_skills)
+app.include_router(router_projects)
+app.include_router(router_project_vacancies)
+app.include_router(router_roles_dictionary)
 
 app.mount("/", StaticFiles(
     directory=str(Path(__file__)

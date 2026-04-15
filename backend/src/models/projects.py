@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import ForeignKey, String, Text, func
+from sqlalchemy import ForeignKey, String, Text, UniqueConstraint, func
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -33,7 +33,8 @@ class ProjectsOrm(Base):
         ForeignKey("cities.id"),
         nullable=True,
     )
-    type: Mapped[EmploymentIntent] = mapped_column(
+    employment_intent: Mapped[EmploymentIntent] = mapped_column(
+        "type",
         SQLEnum(
             EmploymentIntent,
             name="employment_intent_enum",
@@ -62,6 +63,13 @@ class ProjectsOrm(Base):
 
 class ProjectVacancyOrm(Base):
     __tablename__ = "project_vacancies"
+    __table_args__ = (
+        UniqueConstraint(
+            "project_id",
+            "role_type_id",
+            name="uq_project_vacancy_project_role",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     project_id: Mapped[int] = mapped_column(

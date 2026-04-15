@@ -109,11 +109,11 @@ class TestProfileBase:
         with pytest.raises(ValidationError):
             ProfileBase(age=101)
 
-    def test_gender_man_accepted(self):
-        assert ProfileBase(gender=Gender.MAN).gender == Gender.MAN
+    def test_gender_male_accepted(self):
+        assert ProfileBase(gender=Gender.MALE).gender == Gender.MALE
 
-    def test_gender_woman_accepted(self):
-        assert ProfileBase(gender=Gender.WOMAN).gender == Gender.WOMAN
+    def test_gender_female_accepted(self):
+        assert ProfileBase(gender=Gender.FEMALE).gender == Gender.FEMALE
 
     def test_invalid_gender_fails(self):
         with pytest.raises(ValidationError):
