@@ -406,10 +406,9 @@
       padding: 0 6px;
       width: auto;
     }
-    /* ── Danger button ── */
     .action-btn--danger { background:#fff0ee; color:#d14b2a; border-color:#f5c0b0; }
     .action-btn--danger:hover { background:#ffe0da; color:#c0391c; }
-    /* ── Toast system ── */
+
     .toast-container { position:fixed; top:84px; left:50%; transform:translateX(-50%); z-index:9999; display:flex; flex-direction:column; gap:10px; width:min(440px,92vw); pointer-events:none; }
     .tp-toast { display:flex; align-items:flex-start; gap:10px; padding:12px 16px; border-radius:12px; box-shadow:0 4px 14px rgba(0,0,0,.13); pointer-events:auto; animation:tpToastIn .3s ease; }
     .tp-toast.success { background:#f0fff4; border:1.5px solid #52c41a; }
@@ -596,11 +595,8 @@
   </div>
 </div>
 
-
-<!-- ── Toast container ── -->
 <div id="toast-container" class="toast-container"></div>
 
-<!-- ── Confirm modal ── -->
 <div class="modal" id="confirm-modal" aria-hidden="true">
   <div class="modal__card">
     <h2 class="modal__title" id="confirm-modal-title">Подтверждение</h2>
@@ -612,7 +608,6 @@
   </div>
 </div>
 
-<!-- ── Resume edit modal ── -->
 <div class="modal" id="resume-edit-modal" aria-hidden="true">
   <div class="modal__card" style="width:min(92vw,540px);">
     <h2 class="modal__title">Редактирование резюме</h2>
@@ -647,9 +642,6 @@
     const yearSpan = document.getElementById("year");
     if (yearSpan) yearSpan.textContent = " " + new Date().getFullYear();
 
-    // ══════════════════════════════════════════
-    //  TOAST SYSTEM
-    // ══════════════════════════════════════════
     function showToast(message, type = "success", duration = 5000) {
       const icons = { success: "✓", error: "✕", warning: "⚠", info: "ℹ" };
       const container = document.getElementById("toast-container");
@@ -668,9 +660,6 @@
       }, duration);
     }
 
-    // ══════════════════════════════════════════
-    //  CONFIRM MODAL
-    // ══════════════════════════════════════════
     let _confirmCb = null;
     function showConfirm(title, text, onConfirm, { danger = true, okLabel = "Подтвердить" } = {}) {
       const modal = document.getElementById("confirm-modal");
@@ -698,11 +687,6 @@
       if (e.target === document.getElementById("confirm-modal")) _closeConfirmModal();
     });
 
-    // ══════════════════════════════════════════
-    //  RESUME POSITION CACHE (localStorage)
-    //  Хранит {resumeId: desiredPosition} для отображения в списке,
-    //  т.к. GET /my_resumes не возвращает desired_position
-    // ══════════════════════════════════════════
     function _getPosCache() {
       try { return JSON.parse(localStorage.getItem("tp_resume_positions") || "{}"); } catch { return {}; }
     }
@@ -714,9 +698,6 @@
       } catch {}
     }
 
-    // ══════════════════════════════════════════
-    //  RESUME EDIT MODAL
-    // ══════════════════════════════════════════
     let _editingResumeId = null;
 
     async function openResumeEdit(resumeId) {
@@ -1029,24 +1010,19 @@
         const esc = (s) => safe(s).replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
         const statusLabel = { looking_for_job: "Ищу работу", not_looking_for_job: "Не ищу работу" };
 
-        // Подгружаем desired_position через GET /my_resume/{id} для резюме, которых нет в кеше
         const resumeDetails = await Promise.all(
           resumes.map(async (resume) => {
             const id = resume && resume.id !== undefined ? String(resume.id) : "";
             if (!id) return { ...resume, _displayTitle: "Резюме" };
 
-            // Если позиция уже в кеше — не делаем лишний запрос
             const cached = posCache[id];
             if (cached) return { ...resume, _displayTitle: cached };
 
-            // Запрашиваем детали (desired_position бэкенд не возвращает в деталях тоже,
-            // но мы обновляем fallback из about_me и сохраняем)
             try {
               const detResp = await fetch(API_BASE_URL + "/my_resume/" + id, { credentials: "include" });
               if (detResp.ok) {
                 const det = await detResp.json();
                 const r = det.resume || det;
-                // Используем about_me как превью-название, если нет кеша
                 const aboutPreview = r.about_me
                   ? (r.about_me.length > 50 ? r.about_me.slice(0, 50) + "…" : r.about_me)
                   : null;
@@ -1089,7 +1065,6 @@
           `;
         }).join("");
 
-        // ── Тогл статуса резюме ──
         projectsList.querySelectorAll(".proj-status-check").forEach((checkbox) => {
           checkbox.addEventListener("click", (e) => {
             e.preventDefault();

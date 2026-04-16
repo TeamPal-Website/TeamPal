@@ -658,9 +658,7 @@
     const yearSpan = document.getElementById("year");
     if (yearSpan) yearSpan.textContent = " " + new Date().getFullYear();
 
-    // All available roles from API: [{id, name, is_active, created_at}, ...]
     let allRolesFromApi = [];
-    // Vacancies added by user
     let rolesArray = [];
     const rolesContainer = document.getElementById("roles-list-container");
     const newRoleName = document.getElementById("new-role-name");

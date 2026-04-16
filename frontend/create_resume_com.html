@@ -600,7 +600,6 @@
     const yearSpan = document.getElementById("year");
     if (yearSpan) yearSpan.textContent = " " + new Date().getFullYear();
 
-    // Skills loaded from API: [{id, name}, ...]
     let allSkillsList = [];
     let selectedSkillIds = [];
     const skillsGrid = document.getElementById("skillsGrid");
@@ -888,7 +887,6 @@
         return dateStr;
       }
 
-      // desired_position = "Название резюме" (title), т.к. это то, что видит пользователь в списке
       const resumeData = {
         desired_position: title,
         about_me: aboutText || null,
@@ -913,7 +911,6 @@
         });
 
         if (response.ok) {
-          // Сохраняем «Название резюме» в кэш для отображения в списке
           try {
             const created = await response.json().catch(() => null);
             if (created && created.id && title) {

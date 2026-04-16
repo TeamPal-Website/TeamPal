@@ -60,7 +60,6 @@
     .field textarea { resize:vertical; min-height:100px; }
     .field-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
     .sep { border:none; border-top:1px solid var(--line); margin:20px 0; }
-    /* Vacancy cards */
     .vacancy-card {
       border:1.5px solid var(--line); border-radius:14px; padding:18px 18px 16px;
       margin-bottom:14px; background:#fafaf8; position:relative;
@@ -92,7 +91,7 @@
     }
     .btn-add-vac:hover:not(:disabled) { border-color:var(--accent-1); color:var(--accent-1); background:rgba(250,149,0,0.04); }
     .btn-add-vac:disabled { opacity:.45; cursor:not-allowed; }
-    /* Actions */
+
     .form-actions { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
     .form-actions__right { display:flex; gap:10px; }
     .btn { padding:11px 24px; border-radius:40px; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit; border:none; transition:all .2s; }
@@ -110,7 +109,7 @@
     .vac-err-msg { font-size:12px; color:#c0391c; background:#fff0ee; border:1px solid #f5c0b0; border-radius:8px; padding:6px 10px; margin-bottom:12px; display:none; }
     .vac-err-msg.show { display:flex; align-items:center; gap:6px; }
     .vac-err-msg::before { content:"⚠"; flex-shrink:0; }
-    /* Toast */
+
     .toast-container { position:fixed; top:84px; left:50%; transform:translateX(-50%); z-index:9999; display:flex; flex-direction:column; gap:10px; width:min(440px,92vw); pointer-events:none; }
     .tp-toast { display:flex; align-items:flex-start; gap:10px; padding:12px 16px; border-radius:12px; box-shadow:0 4px 14px rgba(0,0,0,.13); pointer-events:auto; animation:tpToastIn .3s ease; }
     .tp-toast.success { background:#f0fff4; border:1.5px solid #52c41a; }
@@ -126,7 +125,7 @@
     .tp-toast__close { background:none; border:none; cursor:pointer; font-size:20px; line-height:1; padding:0; margin-left:2px; opacity:.75; }
     @keyframes tpToastIn  { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
     @keyframes tpToastOut { to{opacity:0;transform:translateY(-10px)} }
-    /* Modal */
+
     .modal { position:fixed; inset:0; background:rgba(20,20,20,0.36); display:none; align-items:center; justify-content:center; z-index:1100; }
     .modal.open { display:flex; }
     .modal__card { width:min(92vw,440px); border-radius:16px; background:#fff; border:1px solid var(--line); padding:24px; box-shadow:0 24px 44px rgba(0,0,0,0.2); }
@@ -189,7 +188,6 @@
 
   document.getElementById('year').textContent = ' ' + new Date().getFullYear();
 
-  // ── Toast ──
   function showToast(message, type, duration) {
     duration = duration || 5000;
     type = type || 'success';
@@ -219,7 +217,6 @@
     return;
   }
 
-  // ── Enum options ──
   var INTENT_OPTS = [
     {value:'commercial',    label:'Коммерческий'},
     {value:'noncommercial', label:'Некоммерческий'},
@@ -267,12 +264,10 @@
     {value:'internship',label:'Стажировка'},
   ];
 
-  // ── State ──
   var allRoles = [];
   var vacancyList = [];
   var vKeyCounter = 0;
 
-  // ── Helpers ──
   function buildSelect(cls, key, options, currentVal) {
     var attr = key != null ? ' data-key="'+key+'"' : '';
     var cur = String(currentVal == null ? '' : currentVal);
@@ -319,7 +314,6 @@
     });
   }
 
-  // ── Render a single vacancy card ──
   function renderVacancyCard(v, num, totalActive) {
     var isLast = totalActive <= 1;
     return '<div class="vacancy-card" data-vkey="'+v._key+'">'
@@ -386,7 +380,6 @@
   }
 
   function bindVacancyEvents() {
-    // Очищаем ошибки при выборе роли
     document.querySelectorAll('.vac-role').forEach(function(sel) {
       sel.addEventListener('change', function() {
         sel.classList.remove('inp-invalid');
@@ -431,7 +424,6 @@
     }
   }
 
-  // ── Render full page ──
   function renderPage(project, vacancies) {
     function selOpts(opts, cur) {
       return opts.map(function(o){
@@ -475,7 +467,6 @@
 
     document.getElementById('btn-save').addEventListener('click', saveAll);
 
-    // Очищаем ошибку title при вводе
     var titleInput = document.getElementById('f-title');
     if (titleInput) {
       titleInput.addEventListener('input', function() {
@@ -494,7 +485,6 @@
     bindVacancyEvents();
   }
 
-  // ── Load ──
   async function loadProject() {
     try {
       var authResp = await fetch(API_BASE_URL + '/auth/me', { credentials:'include' });
@@ -518,8 +508,6 @@
         if (projResp.status === 404) {
           var errBody = await projResp.json().catch(function(){ return {}; });
           if (errBody.detail === 'У проекта нет вакансий') {
-            // Проект существует, но без вакансий — нужны отдельные данные
-            // Показываем форму с пустым списком вакансий (добавляем 1 пустую)
             showToast('У проекта нет вакансий — добавьте хотя бы одну', 'warning', 7000);
             project = { id: parseInt(projectId, 10), title:'', employment_intent:'commercial', status:'active', description:'', tasks:'' };
           } else {
@@ -536,7 +524,6 @@
         vacancies = data.vacancies || [];
       }
 
-      // Инициализируем состояние вакансий
       vKeyCounter = 0;
       vacancyList = vacancies.map(function(v) {
         return {
@@ -569,7 +556,6 @@
         };
       });
 
-      // Гарантируем хотя бы 1 вакансию в списке
       if (vacancyList.length === 0) {
         vacancyList.push({
           _key: ++vKeyCounter, id: null, _isNew: true, _deleted: false, _original: null,
@@ -587,18 +573,15 @@
     }
   }
 
-  // ── Save ──
   async function saveAll() {
     var active = vacancyList.filter(function(v){ return !v._deleted; });
 
-    // Очищаем прежние inline-ошибки
     document.querySelectorAll('.field-error').forEach(function(el){ el.textContent=''; el.classList.remove('show'); });
     document.querySelectorAll('.vac-err-msg').forEach(function(el){ el.textContent=''; el.classList.remove('show'); });
     document.querySelectorAll('.inp-invalid').forEach(function(el){ el.classList.remove('inp-invalid'); });
 
     var hasErrors = false;
 
-    // Валидация заголовка
     var title = document.getElementById('f-title').value.trim();
     if (!title) {
       var errTitle = document.getElementById('err-title');
@@ -608,7 +591,6 @@
       hasErrors = true;
     }
 
-    // Валидация вакансий
     for (var i = 0; i < active.length; i++) {
       var vals = readVacancyFromDom(active[i]._key);
       if (!vals.role_type_id) {
@@ -632,7 +614,6 @@
 
     var errors = [];
 
-    // 1. PATCH проект
     var projPayload = {
       title: title,
       description: document.getElementById('f-description').value.trim() || null,
@@ -658,7 +639,6 @@
       btn.disabled = false; btn.textContent = 'Сохранить'; return;
     }
 
-    // 2. DELETE удалённые вакансии
     var toDelete = vacancyList.filter(function(v){ return v._deleted && !v._isNew && v.id; });
     await Promise.all(toDelete.map(async function(v) {
       try {
@@ -672,7 +652,6 @@
       } catch { errors.push('Удаление вакансии: ошибка соединения'); }
     }));
 
-    // 3. POST новые вакансии
     var toAdd = active.filter(function(v){ return v._isNew; });
     await Promise.all(toAdd.map(async function(v) {
       var vals = readVacancyFromDom(v._key);
@@ -691,7 +670,6 @@
       } catch { errors.push('Создание вакансии: ошибка соединения'); }
     }));
 
-    // 4. PATCH изменённые существующие вакансии
     var toUpdate = active.filter(function(v){ return !v._isNew && v.id; });
     await Promise.all(toUpdate.map(async function(v) {
       var vals = readVacancyFromDom(v._key);
@@ -748,7 +726,6 @@
     };
   }
 
-  // ── Delete project ──
   document.getElementById('confirm-cancel').addEventListener('click', function(){
     document.getElementById('confirm-modal').classList.remove('open');
   });

@@ -29,21 +29,19 @@
                   var(--bg);
       color:var(--ink); min-height:100vh; display:flex; flex-direction:column;
     }
-    /* ── Header ── */
     .header { position:fixed; inset:0 0 auto 0; z-index:1000; height:72px; background:var(--header); border-bottom:1px solid var(--line); }
     .header__inner { height:100%; padding:0 28px; display:flex; align-items:center; gap:14px; }
     .logo { width:46px; height:46px; border-radius:50px; object-fit:cover; }
     .back-link { display:inline-flex; align-items:center; gap:6px; color:var(--ink2); font-size:14px; font-weight:500; text-decoration:none; padding:8px 14px; border-radius:999px; border:1px solid var(--line); background:#fff; transition:all .2s; }
     .back-link:hover { background:var(--bg); color:var(--accent-2); border-color:var(--accent-2); }
-    /* ── Footer ── */
     .footer { width:100%; background:var(--footer); display:flex; align-items:center; justify-content:space-between; padding:0 24px; font-size:14px; color:var(--ink2); min-height:52px; }
-    /* ── Page ── */
+
     .page { width:100%; max-width:760px; margin:0 auto; padding:102px 20px 48px; flex:1; }
-    /* ── Card ── */
+
     .edit-card { background:var(--panel); border:1px solid var(--line); border-radius:20px; box-shadow:0 12px 30px rgba(0,0,0,.06); padding:32px 28px; margin-bottom:16px; }
     .section-title { font-size:18px; font-weight:700; color:var(--ink); margin-bottom:18px; padding-bottom:10px; border-bottom:1px solid var(--line); }
     .section-title span { color:var(--accent-2); }
-    /* ── Fields ── */
+
     .field { display:flex; flex-direction:column; gap:6px; margin-bottom:16px; }
     .field:last-of-type { margin-bottom:0; }
     .field label { font-size:13px; font-weight:600; color:#4c4c4c; }
@@ -52,14 +50,14 @@
     .field textarea { resize:vertical; min-height:110px; }
     .field-hint { font-size:12px; color:#aaa; margin-top:3px; }
     .field-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:16px; }
-    /* ── Skills grid ── */
+
     .skills-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(160px,1fr)); gap:8px; margin-bottom:10px; }
     .skill-label { display:flex; align-items:center; gap:8px; padding:8px 12px; border:1.5px solid #e4ddd5; border-radius:10px; cursor:pointer; background:#fff; transition:all .15s; font-size:13px; }
     .skill-label:hover { border-color:var(--accent-1); background:#fffbf5; }
     .skill-label input[type=checkbox] { accent-color:var(--accent-2); width:15px; height:15px; flex-shrink:0; cursor:pointer; }
     .skill-label.checked { border-color:var(--accent-2); background:#fff6f0; font-weight:600; }
     .skills-empty { color:#aaa; font-size:13px; padding:8px 0; }
-    /* ── Experience entries ── */
+
     .exp-entry { border:1.5px solid #e4ddd5; border-radius:14px; padding:16px; margin-bottom:12px; background:#fafaf8; position:relative; }
     .exp-entry.is-new { border-color:rgba(250,149,0,.5); background:#fffbf5; }
     .exp-entry-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
@@ -81,7 +79,7 @@
     .field-error.show { display:block; }
     .btn-add-exp { width:100%; padding:12px; border:1.5px dashed var(--accent-2); border-radius:12px; background:none; color:var(--accent-2); font-size:14px; font-weight:600; cursor:pointer; transition:.2s; font-family:inherit; }
     .btn-add-exp:hover { background:#fff4ea; }
-    /* ── Form actions ── */
+
     .form-actions { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-top:8px; }
     .form-actions__right { display:flex; gap:10px; }
     .btn { padding:11px 26px; border-radius:40px; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit; border:none; transition:all .2s; text-decoration:none; display:inline-flex; align-items:center; }
@@ -92,9 +90,9 @@
     .btn-primary:disabled { opacity:.6; cursor:default; transform:none; }
     .btn-danger { background:#fff0ee; color:#d14b2a; border:1px solid #f5c0b0; }
     .btn-danger:hover { background:#ffe0da; color:#c0391c; }
-    /* ── Loading ── */
+
     .loading-state { text-align:center; padding:60px 20px; color:#aaa; font-size:16px; }
-    /* ── Toast ── */
+
     .toast-container { position:fixed; top:84px; left:50%; transform:translateX(-50%); z-index:9999; display:flex; flex-direction:column; gap:10px; width:min(440px,92vw); pointer-events:none; }
     .tp-toast { display:flex; align-items:flex-start; gap:10px; padding:12px 16px; border-radius:12px; box-shadow:0 4px 14px rgba(0,0,0,.13); pointer-events:auto; animation:tpToastIn .3s ease; }
     .tp-toast.success { background:#f0fff4; border:1.5px solid #52c41a; }
@@ -110,7 +108,7 @@
     .tp-toast__close { background:none; border:none; cursor:pointer; font-size:20px; line-height:1; padding:0; margin-left:2px; opacity:.75; }
     @keyframes tpToastIn  { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
     @keyframes tpToastOut { to{opacity:0;transform:translateY(-10px)} }
-    /* ── Confirm modal ── */
+
     .modal { position:fixed; inset:0; background:rgba(20,20,20,.36); display:none; align-items:center; justify-content:center; z-index:1100; }
     .modal.open { display:flex; }
     .modal__card { width:min(92vw,440px); border-radius:16px; background:#fff; border:1px solid var(--line); padding:24px; box-shadow:0 24px 44px rgba(0,0,0,.2); }
@@ -165,7 +163,6 @@
   'use strict';
   document.getElementById('year').textContent = new Date().getFullYear();
 
-  // ══════ Toast ══════
   function showToast(msg, type, dur) {
     type = type || 'success'; dur = dur || 5000;
     const icons = { success:'✓', error:'✕', warning:'⚠', info:'ℹ' };
@@ -182,7 +179,6 @@
     }, dur);
   }
 
-  // ══════ Helpers ══════
   function esc(s) { return String(s||'').replace(/[&<>"]/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])); }
   function api(path, opts) {
     return fetch(API_BASE_URL + path, Object.assign({ credentials:'include', headers:{'Content-Type':'application/json'} }, opts));
@@ -202,7 +198,6 @@
     return m ? `${m[3]}.${m[2]}.${m[1]}` : dateStr;
   }
 
-  // ══════ LocalStorage position cache ══════
   function getPosCache() { try { return JSON.parse(localStorage.getItem('tp_resume_positions')||'{}'); } catch { return {}; } }
   function setPosCache(id, pos) {
     try {
@@ -212,7 +207,6 @@
     } catch {}
   }
 
-  // ══════ State ══════
   const params = new URLSearchParams(window.location.search);
   const resumeId = params.get('id');
   if (!resumeId) {
@@ -220,26 +214,21 @@
     return;
   }
 
-  let allSkills = [];          // [{id, name}]
-  let initialSkillMap = {};    // {skill_id → resume_skill_id}
-  let currentSkillIds = new Set(); // skill_id значения, выбранные в UI
-  let initialExpIds = new Set();  // id записей experience, пришедших с сервера
-  // Опыт: [{_key, id?, company_name, position, start_date, end_date, description, _isNew, _deleted}]
+  let allSkills = [];
+  let initialSkillMap = {};
+  let currentSkillIds = new Set();
+  let initialExpIds = new Set();
   let experiences = [];
   let expKeyCounter = 0;
 
-  // ══════ Confirm delete modal ══════
   document.getElementById('confirm-cancel').onclick = () => document.getElementById('confirm-modal').classList.remove('open');
   document.getElementById('confirm-modal').onclick = e => { if (e.target === document.getElementById('confirm-modal')) document.getElementById('confirm-modal').classList.remove('open'); };
   document.getElementById('confirm-ok').onclick = deleteResume;
 
-  // ══════ Load data ══════
   async function init() {
-    // Auth check
     const authResp = await api('/auth/me');
     if (!authResp.ok) { window.location.href = './authorization_page.html'; return; }
 
-    // Parallel load: resume data + all skills
     const [resumeResp, skillsResp] = await Promise.all([
       api('/my_resume/' + resumeId),
       api('/skills'),
@@ -260,12 +249,10 @@
       if (!Array.isArray(allSkills)) allSkills = [];
     }
 
-    // Build skill state
     initialSkillMap = {};
     apiSkills.forEach(s => { initialSkillMap[s.skill_id] = s.id; });
     currentSkillIds = new Set(Object.keys(initialSkillMap).map(Number));
 
-    // Build experience state
     experiences = apiExperiences.map(e => ({
       _key: ++expKeyCounter,
       id: e.id,
@@ -282,13 +269,11 @@
     renderPage(resume);
   }
 
-  // ══════ Render ══════
   function renderPage(resume) {
     const posCache = getPosCache();
     const cachedPos = posCache[String(resumeId)] || '';
 
     document.getElementById('main-page').innerHTML = `
-      <!-- Basic info -->
       <div class="edit-card" id="card-basic">
         <div class="section-title">Основная информация</div>
 
@@ -313,7 +298,6 @@
         </div>
       </div>
 
-      <!-- Skills -->
       <div class="edit-card" id="card-skills">
         <div class="section-title">Навыки / Стек технологий</div>
         ${allSkills.length === 0
@@ -323,14 +307,12 @@
         }
       </div>
 
-      <!-- Experience -->
       <div class="edit-card" id="card-exp">
         <div class="section-title">Опыт работы</div>
         <div id="exp-list">${renderExpList()}</div>
         <button class="btn-add-exp" id="btn-add-exp" type="button">+ Добавить место работы</button>
       </div>
 
-      <!-- Actions -->
       <div class="form-actions">
         <button class="btn btn-danger" id="btn-delete" type="button">Удалить резюме</button>
         <div class="form-actions__right">
@@ -396,7 +378,6 @@
   }
 
   function bindEvents() {
-    // Skills checkboxes
     document.querySelectorAll('[data-skill-id] input[type=checkbox]').forEach(cb => {
       cb.addEventListener('change', () => {
         const skillId = parseInt(cb.getAttribute('data-skill-id'));
@@ -411,14 +392,12 @@
       });
     });
 
-    // Experience field changes
     document.querySelectorAll('[data-exp-key][data-field]').forEach(input => {
       input.addEventListener('input', () => {
         const key = parseInt(input.getAttribute('data-exp-key'));
         const field = input.getAttribute('data-field');
         const exp = experiences.find(e => e._key === key);
         if (exp) exp[field] = input.value;
-        // Clear inline error for this field
         input.classList.remove('inp-invalid');
         const errEl = document.getElementById('exp-err-' + key);
         if (errEl && !input.closest('.exp-entry').querySelector('.inp-invalid')) {
@@ -427,7 +406,6 @@
       });
     });
 
-    // Remove experience
     document.querySelectorAll('[data-remove-exp]').forEach(btn => {
       btn.addEventListener('click', () => {
         const key = parseInt(btn.getAttribute('data-remove-exp'));
@@ -440,7 +418,6 @@
       });
     });
 
-    // Add experience
     document.getElementById('btn-add-exp').addEventListener('click', () => {
       experiences.push({
         _key: ++expKeyCounter,
@@ -451,17 +428,14 @@
       });
       document.getElementById('exp-list').innerHTML = renderExpList();
       bindExpEvents();
-      // Scroll to new entry
       const entries = document.querySelectorAll('.exp-entry');
       if (entries.length) entries[entries.length - 1].scrollIntoView({ behavior:'smooth', block:'start' });
     });
 
-    // Delete resume
     document.getElementById('btn-delete').addEventListener('click', () => {
       document.getElementById('confirm-modal').classList.add('open');
     });
 
-    // Save
     document.getElementById('btn-save').addEventListener('click', saveAll);
   }
 
@@ -487,7 +461,6 @@
     });
   }
 
-  // ══════ Save ══════
   async function saveAll() {
     const saveBtn = document.getElementById('btn-save');
     saveBtn.disabled = true;
@@ -496,12 +469,10 @@
     const errors = [];
     let ok = true;
 
-    // ── 1. Validate experience ──
     const toCreate = experiences.filter(e => e._isNew && !e._deleted);
     const toDelete = experiences.filter(e => !e._isNew && e._deleted && e.id);
     const toUpdate = experiences.filter(e => !e._isNew && !e._deleted && e.id);
 
-    // Clear previous inline errors
     document.querySelectorAll('.inp-invalid').forEach(el => el.classList.remove('inp-invalid'));
     document.querySelectorAll('.exp-err-msg').forEach(el => { el.textContent = ''; el.classList.remove('show'); });
     document.querySelectorAll('.field-error').forEach(el => { el.textContent = ''; el.classList.remove('show'); });
@@ -540,7 +511,6 @@
 
     const results = [];
 
-    // ── 2. PATCH basic fields ──
     const position = document.getElementById('f-position').value.trim();
     const aboutMe = document.getElementById('f-about').value.trim();
     const status = document.getElementById('f-status').value;
@@ -559,7 +529,6 @@
       }
     } catch { results.push('✗ Ошибка соединения (основные поля)'); }
 
-    // ── 3. Sync skills ──
     const toAddSkills = [...currentSkillIds].filter(id => !(id in initialSkillMap));
     const toRemoveSkills = Object.entries(initialSkillMap).filter(([skill_id]) => !currentSkillIds.has(Number(skill_id)));
 
@@ -590,7 +559,6 @@
       } catch { results.push('✗ Ошибка соединения (удаление навыка)'); }
     }
 
-    // ── 4. Delete removed experiences ──
     for (const exp of toDelete) {
       try {
         const r = await api('/resumes/' + resumeId + '/experiences/' + exp.id, { method:'DELETE' });
@@ -603,7 +571,6 @@
       } catch { results.push('✗ Ошибка соединения (удаление опыта)'); }
     }
 
-    // ── 5. PATCH existing experiences ──
     for (const exp of toUpdate) {
       const payload = {
         company_name: exp.company_name.trim() || null,
@@ -623,7 +590,6 @@
       } catch { results.push('✗ Ошибка соединения (обновление опыта)'); }
     }
 
-    // ── 6. POST new experiences ──
     for (const exp of toCreate) {
       const payload = {
         company_name: exp.company_name.trim(),
@@ -645,7 +611,6 @@
       } catch { results.push('✗ Ошибка соединения (добавление опыта)'); }
     }
 
-    // ── Result ──
     const hasErrors = results.some(r => r.startsWith('✗'));
     if (!hasErrors) {
       showToast('Резюме успешно сохранено', 'success');
@@ -658,7 +623,6 @@
     }
   }
 
-  // ══════ Delete resume ══════
   async function deleteResume() {
     document.getElementById('confirm-modal').classList.remove('open');
     try {
