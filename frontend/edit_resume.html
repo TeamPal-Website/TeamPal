@@ -96,6 +96,14 @@
     .selected-skill-tag button:hover { color:var(--accent-2); }
     .skills-hint { display:block; margin-top:12px; color:#8f7e68; font-size:13px; }
     .skills-empty { color:#aaa; font-size:13px; padding:8px 0; }
+    .exp-list-empty {
+      color: #8a7d72;
+      font-size: 14px;
+      text-align: center;
+      padding: 20px 12px;
+      line-height: 1.55;
+      margin-bottom: 4px;
+    }
     
     .exp-entry { border:1px solid var(--line); border-radius:20px; padding:18px; margin-bottom:16px; background:#fff; position:relative; }
     .exp-entry.is-new { border-color:rgba(250,149,0,.5); background:#fffbf5; }
@@ -435,6 +443,10 @@
     const commitmentLegacy = { flexible: 'side_project', remote: 'side_project', hybrid: 'side_project' };
     const commitment = commitmentLegacy[commitmentRaw] || commitmentRaw;
     const salaryVal = resume.salary_amount != null && resume.salary_amount !== '' ? String(resume.salary_amount) : '';
+    const salaryDisplay =
+      salaryVal && typeof window.tpFormatSalaryGroupedForDisplay === 'function'
+        ? window.tpFormatSalaryGroupedForDisplay(salaryVal)
+        : salaryVal;
     const intent = resume.employment_intent != null ? String(resume.employment_intent) : 'commercial';
 
     document.getElementById('main-page').innerHTML = `
@@ -459,8 +471,8 @@
             </select>
           </div>
           <div class="field exp-field-full">
-            <label for="f-salary">Заработная плата</label>
-            <input id="f-salary" type="number" min="0" max="${TP_MAX_SAL_SAFE}" step="1" placeholder="Сумма в рублях" value="${esc(salaryVal)}" />
+            <label for="f-salary">Заработная плата (в рублях)</label>
+            <input id="f-salary" type="text" class="tp-salary-input" inputmode="numeric" autocomplete="off" placeholder="Например: 1 200 000" value="${esc(salaryDisplay)}" />
           </div>
           <div class="field">
             <label for="f-employment-intent">Тип резюме <span class="req-star" aria-hidden="true">*</span></label>
@@ -555,7 +567,7 @@
   function renderExpList() {
     const visible = experiences.filter(e => !e._deleted);
     if (visible.length === 0) {
-      return '<div class="skills-empty" style="margin-bottom:12px;">Нет добавленного опыта.</div>';
+      return '<div class="exp-list-empty">Нет добавленного опыта работы</div>';
     }
     return visible.map((exp, idx) => `
       <div class="exp-entry${exp._isNew ? ' is-new' : ''}" data-exp-key="${exp._key}">
@@ -622,6 +634,9 @@
     const salaryEl = document.getElementById('f-salary');
     if (salaryEl) {
       salaryEl.addEventListener('input', () => salaryEl.classList.remove('inp-invalid'));
+      if (typeof window.tpBindSalaryGroupedInput === 'function') {
+        window.tpBindSalaryGroupedInput(salaryEl);
+      }
     }
     const listTitleEl = document.getElementById('f-resume-list-title');
     if (listTitleEl) {
@@ -783,17 +798,6 @@
     const commitmentRaw = document.getElementById('f-commitment').value;
     const salaryEl = document.getElementById('f-salary');
     const intent = document.getElementById('f-employment-intent').value;
-
-    if (salaryEl && salaryEl.validity && salaryEl.validity.badInput) {
-      showToast(
-        'Зарплата введена некорректно. Укажите сумму цифрами (можно с пробелами) или оставьте поле пустым.',
-        'error',
-        7000,
-      );
-      salaryEl.classList.add('inp-invalid');
-      salaryEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      return;
-    }
 
     if (!listTitle) {
       showToast('Укажите название резюме — это обязательное поле.', 'error', 5500);

@@ -159,6 +159,7 @@
       display: grid;
       grid-template-columns: 300px 1fr;
       gap: 20px;
+      min-width: 0;
     }
     .card {
       border: 1px solid var(--line);
@@ -213,7 +214,14 @@
       cursor: pointer;
       transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
-    .workspace { padding: 14px; }
+    .workspace {
+      padding: 14px;
+      min-width: 0;
+      overflow: hidden;
+    }
+    #projects-list {
+      min-width: 0;
+    }
     .tabs {
       display: flex;
       gap: 10px;
@@ -336,6 +344,8 @@
       margin-bottom: 12px;
       border: 1px solid var(--line);
       min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
     }
     .project-title {
       font-size: 18px;
@@ -1014,6 +1024,13 @@
         }
 
         const resumes = await response.json();
+        if (Array.isArray(resumes)) {
+          resumes.sort((a, b) => {
+            const ta = a && a.created_at ? new Date(a.created_at).getTime() : 0;
+            const tb = b && b.created_at ? new Date(b.created_at).getTime() : 0;
+            return tb - ta;
+          });
+        }
         const countSpan = document.getElementById("project-count");
         const n = Array.isArray(resumes) ? resumes.length : 0;
         myResumesCount = n;

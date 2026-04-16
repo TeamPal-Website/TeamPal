@@ -369,6 +369,14 @@
     .skills-hint { display: block; margin-top: 12px; color: #8f7e68; font-size: 13px; }
     .skills-empty { color: #aaa; font-size: 13px; padding: 8px 0; }
     #experienceList { margin-bottom: 16px; }
+    .exp-list-empty {
+      color: #8a7d72;
+      font-size: 14px;
+      text-align: center;
+      padding: 20px 12px;
+      line-height: 1.55;
+      margin-bottom: 4px;
+    }
     .skills-empty {
       color: #8a7d72;
       font-size: 14px;
@@ -635,8 +643,8 @@
             </select>
           </div>
           <div class="field exp-field-full">
-            <label>Заработная плата</label>
-            <input id="salary" type="number" min="0" max="50000000" step="1" placeholder="Сумма в рублях" />
+            <label>Заработная плата (в рублях)</label>
+            <input id="salary" type="text" class="tp-salary-input" inputmode="numeric" autocomplete="off" placeholder="Например: 1 200 000" />
           </div>
         </div>
       </div>
@@ -857,7 +865,7 @@
     function renderExperiences() {
       if (!experienceListDiv) return;
       if (experiences.length === 0) {
-        experienceListDiv.innerHTML = '<div class="skills-empty">Нет добавленного опыта. Нажмите «+ Добавить место работы»</div>';
+        experienceListDiv.innerHTML = '<div class="exp-list-empty">Нет добавленного опыта работы</div>';
         return;
       }
       experienceListDiv.innerHTML = experiences.map((exp, idx) => {
@@ -939,6 +947,9 @@
     const salaryInput = document.getElementById("salary");
     if (salaryInput) {
       salaryInput.addEventListener("input", () => salaryInput.classList.remove("inp-invalid"));
+      if (typeof window.tpBindSalaryGroupedInput === "function") {
+        window.tpBindSalaryGroupedInput(salaryInput);
+      }
     }
     const aboutMeTextarea = document.getElementById("aboutMe");
     const cancelBtn = document.getElementById("cancelBtn");
@@ -1072,17 +1083,6 @@
       desiredPositionInput?.classList.remove("inp-invalid");
 
       const schedule = (workScheduleSelect?.value || "").trim();
-
-      if (salaryInput && salaryInput.validity && salaryInput.validity.badInput) {
-        showNotification(
-          'Зарплата введена некорректно. Укажите сумму цифрами (можно с пробелами) или оставьте поле пустым.',
-          'error',
-          7000,
-        );
-        salaryInput.classList.add('inp-invalid');
-        salaryInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        return;
-      }
 
       const salaryRaw = salaryInput ? salaryInput.value : "";
       const salParseFn = window.tpParseAndValidateSalaryRaw;

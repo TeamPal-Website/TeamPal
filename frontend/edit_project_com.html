@@ -318,11 +318,19 @@
     return n != null ? String(n) : '';
   }
 
+  function vacancySalaryDisplayFormatted(v) {
+    var raw = vacancySalaryInputString(v);
+    if (!raw) return '';
+    if (typeof window.tpFormatSalaryGroupedForDisplay === 'function') {
+      return window.tpFormatSalaryGroupedForDisplay(raw);
+    }
+    return raw;
+  }
+
   function vacancyEditFieldsHtml(v) {
     var k = v._key;
-    var maxSal = (typeof TP_MAX_SALARY_RUB !== 'undefined' && TP_MAX_SALARY_RUB != null) ? TP_MAX_SALARY_RUB : 50000000;
     var roleName = roleInputValue(v);
-    var sal = vacancySalaryInputString(v);
+    var sal = vacancySalaryDisplayFormatted(v);
     return ''
       + '<div class="exp-grid">'
       + '<div class="exp-field exp-field-full"><label for="vac-' + k + '-role-input">Название роли <span class="req-star" aria-hidden="true">*</span></label>'
@@ -358,8 +366,8 @@
       +   '<option value="4/2"' + optSelected('4/2', v.schedule) + '>4/2</option>'
       +   '<option value="3/3"' + optSelected('3/3', v.schedule) + '>3/3</option>'
       + '</select></div>'
-      + '<div class="exp-field"><label for="vac-' + k + '-salary">Зарплата</label>'
-      + '<input type="number" id="vac-' + k + '-salary" min="0" max="' + maxSal + '" step="1" placeholder="Сумма в рублях" value="' + esc(sal) + '"></div>'
+      + '<div class="exp-field"><label for="vac-' + k + '-salary">Заработная плата (в рублях)</label>'
+      + '<input type="text" class="tp-salary-input" id="vac-' + k + '-salary" inputmode="numeric" autocomplete="off" placeholder="Например: 1 200 000" value="' + esc(sal) + '"></div>'
       + '<div class="exp-field"><label for="vac-' + k + '-salary-type">Тип зарплаты</label><select id="vac-' + k + '-salary-type">'
       +   '<option value="">— Тип зарплаты —</option>'
       +   '<option value="monthly"' + optSelected('monthly', v.salary_type) + '>В месяц</option>'
@@ -379,7 +387,7 @@
     var count = active.length;
     var atMax = count >= 10;
     var listHtml = count === 0
-      ? '<div class="skills-empty">Нет добавленных ролей. Нажмите «+ Добавить роль»</div>'
+      ? '<div class="skills-empty">Нет добавленных ролей</div>'
       : active.map(function(v, i) {
           return '<div class="exp-entry' + (v._isNew ? ' is-new' : '') + '" data-vkey="' + v._key + '">'
             + '<div class="exp-entry-header">'
@@ -505,11 +513,6 @@
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
         var key = parseInt(btn.getAttribute('data-remove-vkey'), 10);
-        var active = vacancyList.filter(function(v){ return !v._deleted; });
-        if (active.length <= 1) {
-          showToast('Нельзя удалить единственную роль', 'warning');
-          return;
-        }
         var v = vacancyList.find(function(x){ return x._key === key; });
         if (!v) return;
         v._deleted = true;
@@ -520,6 +523,11 @@
     var addBtn = document.getElementById('add-role-btn');
     if (addBtn) {
       addBtn.addEventListener('click', function() { addEmptyVacancySlot(); });
+    }
+    if (typeof window.tpBindSalaryGroupedInput === 'function') {
+      document.querySelectorAll('.tp-salary-input').forEach(function(el) {
+        window.tpBindSalaryGroupedInput(el);
+      });
     }
   }
 

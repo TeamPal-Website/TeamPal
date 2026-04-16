@@ -72,6 +72,55 @@ function tpValidateSalaryAmount(n) {
   return { ok: true, value: v };
 }
 
+/** Только цифры из строки (форматирование суммы в поле ввода). */
+function tpSalaryDigitsOnly(raw) {
+  return String(raw ?? "").replace(/\D/g, "");
+}
+
+/** Группировка цифр пробелами по разрядам (например 10 000 000). */
+function tpFormatSalaryGroupedFromDigits(digits) {
+  const d = tpSalaryDigitsOnly(digits);
+  if (!d) return "";
+  return d.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
+
+/** Отформатировать число или строку для отображения в поле зарплаты. */
+function tpFormatSalaryGroupedForDisplay(value) {
+  return tpFormatSalaryGroupedFromDigits(tpSalaryDigitsOnly(String(value ?? "")));
+}
+
+/**
+ * Поле ввода суммы: ввод только цифр, отображение с пробелами между тысячами.
+ * При отправке использовать tpParseAndValidateSalaryRaw.
+ */
+function tpBindSalaryGroupedInput(el) {
+  if (!el || el.nodeType !== 1) return;
+  try {
+    if (el.getAttribute("type") === "number") el.type = "text";
+  } catch (_) {}
+  el.setAttribute("inputmode", "numeric");
+  el.setAttribute("autocomplete", "off");
+  function refresh() {
+    const d = tpSalaryDigitsOnly(el.value);
+    const formatted = tpFormatSalaryGroupedFromDigits(d);
+    if (el.value !== formatted) {
+      const end = formatted.length;
+      el.value = formatted;
+      try {
+        el.setSelectionRange(end, end);
+      } catch (_) {}
+    }
+  }
+  if (el.dataset.tpSalaryBound === "1") {
+    refresh();
+    return;
+  }
+  el.dataset.tpSalaryBound = "1";
+  el.addEventListener("input", refresh);
+  el.addEventListener("focus", refresh);
+  refresh();
+}
+
 /**
  * Разбор суммы из поля ввода: пробелы/NBSP, подчёркивания; пусто → null.
  * @param {string|null|undefined} raw
@@ -134,4 +183,8 @@ if (typeof window !== "undefined") {
   window.tpValidateSalaryAmount = tpValidateSalaryAmount;
   window.tpParseAndValidateSalaryRaw = tpParseAndValidateSalaryRaw;
   window.tpFormatApiDetail = tpFormatApiDetail;
+  window.tpSalaryDigitsOnly = tpSalaryDigitsOnly;
+  window.tpFormatSalaryGroupedFromDigits = tpFormatSalaryGroupedFromDigits;
+  window.tpFormatSalaryGroupedForDisplay = tpFormatSalaryGroupedForDisplay;
+  window.tpBindSalaryGroupedInput = tpBindSalaryGroupedInput;
 }

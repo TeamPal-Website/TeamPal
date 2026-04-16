@@ -357,6 +357,14 @@
     .skills-hint { display: block; margin-top: 12px; color: #8f7e68; font-size: 13px; }
     .skills-empty { color: #aaa; font-size: 13px; padding: 8px 0; }
     #experienceList { margin-bottom: 16px; }
+    .exp-list-empty {
+      color: #8a7d72;
+      font-size: 14px;
+      text-align: center;
+      padding: 20px 12px;
+      line-height: 1.55;
+      margin-bottom: 4px;
+    }
     .skills-empty {
       color: #8a7d72;
       font-size: 14px;
@@ -812,7 +820,7 @@
     function renderExperiences() {
       if (!experienceListDiv) return;
       if (experiences.length === 0) {
-        experienceListDiv.innerHTML = '<div class="skills-empty">Нет добавленного опыта. Нажмите «+ Добавить место работы»</div>';
+        experienceListDiv.innerHTML = '<div class="exp-list-empty">Нет добавленного опыта работы</div>';
         return;
       }
       experienceListDiv.innerHTML = experiences.map((exp, idx) => {

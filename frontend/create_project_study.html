@@ -684,6 +684,11 @@
     function roleCardHtml(role, idx) {
       const rid = `rp-${idx}`;
       const nameVal = roleInputValue(role);
+      const salRaw = role.salary_amount != null && role.salary_amount !== "" ? String(role.salary_amount) : "";
+      const salDisplay =
+        salRaw && typeof window.tpFormatSalaryGroupedForDisplay === "function"
+          ? window.tpFormatSalaryGroupedForDisplay(salRaw)
+          : salRaw;
       return `
         <div class="exp-entry${!role.role_type_id ? " is-new" : ""}" data-role-idx="${idx}">
           <div class="exp-entry-header">
@@ -733,8 +738,8 @@
               </select>
             </div>
             <div class="exp-field">
-              <label for="${rid}-sal">Зарплата</label>
-              <input type="number" id="${rid}-sal" data-field="salary_amount" min="0" max="50000000" step="1" placeholder="Сумма в рублях" value="${role.salary_amount != null ? escapeHtml(String(role.salary_amount)) : ""}">
+              <label for="${rid}-sal">Заработная плата (в рублях)</label>
+              <input type="text" class="tp-salary-input" id="${rid}-sal" data-field="salary_amount" inputmode="numeric" autocomplete="off" placeholder="Например: 1 200 000" value="${escapeHtml(salDisplay)}">
             </div>
             <div class="exp-field">
               <label for="${rid}-st">Тип зарплаты</label>
@@ -804,11 +809,14 @@
     function renderRolesList() {
       if (!rolesContainer) return;
       if (rolesArray.length === 0) {
-        rolesContainer.innerHTML = '<p class="skills-empty">Нет добавленных ролей. Нажмите «+ Добавить роль»</p>';
+        rolesContainer.innerHTML = '<p class="skills-empty">Нет добавленных ролей</p>';
         refreshRoleInputsState();
         return;
       }
       rolesContainer.innerHTML = rolesArray.map((role, idx) => roleCardHtml(role, idx)).join("");
+      if (typeof window.tpBindSalaryGroupedInput === "function") {
+        rolesContainer.querySelectorAll(".tp-salary-input").forEach((el) => window.tpBindSalaryGroupedInput(el));
+      }
       rolesContainer.querySelectorAll(".btn-remove-exp").forEach((btn) => {
         btn.addEventListener("click", (e) => {
           e.preventDefault();
