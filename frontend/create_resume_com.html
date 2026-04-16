@@ -619,11 +619,11 @@
         <div class="exp-fields">
           <div class="field exp-field-full">
             <label>Название резюме <span class="req-star" aria-hidden="true">*</span></label>
-            <input id="resumeTitle" type="text" placeholder="Например: Junior Frontend" />
+            <input id="resumeTitle" type="text" maxlength="255" placeholder="Например: Junior Frontend" />
           </div>
           <div class="field">
             <label>Должность <span class="req-star" aria-hidden="true">*</span></label>
-            <input id="desiredPosition" type="text" placeholder="Frontend-разработчик" />
+            <input id="desiredPosition" type="text" maxlength="255" placeholder="Frontend-разработчик" />
           </div>
           <div class="field">
             <label>График работы</label>
@@ -871,11 +871,11 @@
           <div class="exp-grid">
             <div class="exp-field">
               <label>Компания <span class="req-star" aria-hidden="true">*</span></label>
-              <input type="text" class="exp-company-input" value="${escapeHtml(exp.company)}" placeholder="ООО Рога и Копыта">
+              <input type="text" class="exp-company-input" maxlength="255" value="${escapeHtml(exp.company)}" placeholder="ООО Рога и Копыта">
             </div>
             <div class="exp-field">
               <label>Должность <span class="req-star" aria-hidden="true">*</span></label>
-              <input type="text" class="exp-position-input" value="${escapeHtml(exp.position)}" placeholder="Backend Developer">
+              <input type="text" class="exp-position-input" maxlength="255" value="${escapeHtml(exp.position)}" placeholder="Backend Developer">
             </div>
             <div class="exp-field exp-field--date">
               <label>Дата начала <span class="req-star" aria-hidden="true">*</span></label>
@@ -943,6 +943,11 @@
     const aboutMeTextarea = document.getElementById("aboutMe");
     const cancelBtn = document.getElementById("cancelBtn");
     const publishBtn = document.getElementById("publishBtn");
+
+    [resumeTitleInput, desiredPositionInput, aboutMeTextarea].forEach((el) => {
+      if (!el) return;
+      el.addEventListener("input", () => el.classList.remove("inp-invalid"));
+    });
 
     function resetForm() {
       if (resumeTitleInput) resumeTitleInput.value = "";
@@ -1012,6 +1017,12 @@
 
     publishBtn.addEventListener("click", async () => {
       try {
+      document
+        .querySelectorAll(
+          "#resumeTitle.inp-invalid, #desiredPosition.inp-invalid, #aboutMe.inp-invalid",
+        )
+        .forEach((el) => el.classList.remove("inp-invalid"));
+
       const title = (resumeTitleInput?.value || "").trim();
       if (!title) {
         showNotification('Пожалуйста, заполните поле "Название резюме"', 'error');
@@ -1023,6 +1034,42 @@
         showNotification('Пожалуйста, заполните поле "Должность"', 'error');
         return;
       }
+
+      const V255 =
+        typeof window.TP_ORM_VARCHAR255 === "number" ? window.TP_ORM_VARCHAR255 : 255;
+      const TMAX =
+        typeof window.TP_ORM_TEXT_SAFE_MAX === "number" ? window.TP_ORM_TEXT_SAFE_MAX : 100000;
+      const maxCheck =
+        typeof window.tpCheckStringMaxLen === "function"
+          ? window.tpCheckStringMaxLen
+          : function (s, max, label) {
+              const v = s == null ? "" : String(s);
+              if (v.length > max) {
+                return {
+                  ok: false,
+                  message: label + ": не более " + String(max) + " символов.",
+                };
+              }
+              return { ok: true, value: v };
+            };
+
+      let lenChk = maxCheck(title, V255, "Название резюме");
+      if (!lenChk.ok) {
+        showNotification(lenChk.message, "error", 7000);
+        resumeTitleInput?.classList.add("inp-invalid");
+        resumeTitleInput?.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+      resumeTitleInput?.classList.remove("inp-invalid");
+
+      lenChk = maxCheck(position, V255, "Должность");
+      if (!lenChk.ok) {
+        showNotification(lenChk.message, "error", 7000);
+        desiredPositionInput?.classList.add("inp-invalid");
+        desiredPositionInput?.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+      desiredPositionInput?.classList.remove("inp-invalid");
 
       const schedule = (workScheduleSelect?.value || "").trim();
 
@@ -1065,12 +1112,25 @@
       const salaryAmount = salChk.value;
 
       const aboutText = (aboutMeTextarea && aboutMeTextarea.value ? aboutMeTextarea.value : "").trim();
+      lenChk = maxCheck(aboutText, TMAX, "Поле «О себе»");
+      if (!lenChk.ok) {
+        showNotification(lenChk.message, "error", 7000);
+        aboutMeTextarea?.classList.add("inp-invalid");
+        aboutMeTextarea?.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+      aboutMeTextarea?.classList.remove("inp-invalid");
+
       if (selectedSkillIds.length === 0) {
         showNotification('В резюме должен быть хотя бы один навык', 'warning');
         return;
       }
 
-      document.querySelectorAll('.exp-start-input.inp-invalid, .exp-end-input.inp-invalid, .exp-company-input.inp-invalid, .exp-position-input.inp-invalid, #salary.inp-invalid').forEach((el) => el.classList.remove('inp-invalid'));
+      document
+        .querySelectorAll(
+          ".exp-start-input.inp-invalid, .exp-end-input.inp-invalid, .exp-company-input.inp-invalid, .exp-position-input.inp-invalid, .exp-desc-input.inp-invalid, #salary.inp-invalid",
+        )
+        .forEach((el) => el.classList.remove("inp-invalid"));
 
       const cleanedExperiences = [];
       for (let idx = 0; idx < (experiences || []).length; idx++) {
@@ -1107,6 +1167,27 @@
         if (row.dateEnd && !isAcceptableEndDateInput(row.dateEnd)) {
           showNotification('Дата окончания введена неверно. Оставьте поле пустым (по настоящее время) или укажите дату в формате ДД.ММ.ГГГГ или ГГГГ-ММ-ДД.', 'error', 6500);
           entry?.querySelector('.exp-end-input')?.classList.add('inp-invalid');
+          return;
+        }
+        lenChk = maxCheck(row.company, V255, "Компания в опыте работы");
+        if (!lenChk.ok) {
+          showNotification(lenChk.message, "error", 7000);
+          entry?.querySelector(".exp-company-input")?.classList.add("inp-invalid");
+          entry?.scrollIntoView({ behavior: "smooth", block: "center" });
+          return;
+        }
+        lenChk = maxCheck(row.position, V255, "Должность в опыте работы");
+        if (!lenChk.ok) {
+          showNotification(lenChk.message, "error", 7000);
+          entry?.querySelector(".exp-position-input")?.classList.add("inp-invalid");
+          entry?.scrollIntoView({ behavior: "smooth", block: "center" });
+          return;
+        }
+        lenChk = maxCheck(row.description, TMAX, "Описание в опыте работы");
+        if (!lenChk.ok) {
+          showNotification(lenChk.message, "error", 7000);
+          entry?.querySelector(".exp-desc-input")?.classList.add("inp-invalid");
+          entry?.scrollIntoView({ behavior: "smooth", block: "center" });
           return;
         }
         cleanedExperiences.push(row);

@@ -20,6 +20,36 @@ const API_BASE_URL = (() => {
 /** Лимит как в backend: MAX_SALARY_AMOUNT_RUB в schemas/resumes.py и project_vacancies.py (50_000_000). */
 const TP_MAX_SALARY_RUB = 50000000;
 
+/** Как в ORM: String(255) — например resumes.desired_position, resume_experiences.company_name / position. */
+const TP_ORM_VARCHAR255 = 255;
+
+/**
+ * В ORM поля Text без max_length; верхняя граница для проверки на фронте (защита от случайной вставки очень длинного текста).
+ * Согласуйте при изменении лимитов на бэкенде.
+ */
+const TP_ORM_TEXT_SAFE_MAX = 100000;
+
+/**
+ * @param {string|null|undefined} s
+ * @param {number} maxLen
+ * @param {string} fieldLabel
+ * @returns {{ ok: true, value: string } | { ok: false, message: string }}
+ */
+function tpCheckStringMaxLen(s, maxLen, fieldLabel) {
+  const v = s == null ? "" : String(s);
+  if (v.length > maxLen) {
+    return {
+      ok: false,
+      message:
+        fieldLabel +
+        ": не более " +
+        String(maxLen) +
+        " символов (ограничение поля в базе данных).",
+    };
+  }
+  return { ok: true, value: v };
+}
+
 /**
  * @param {number|null|undefined} n
  * @returns {{ ok: true, value: number|null } | { ok: false, message: string }}
@@ -98,6 +128,9 @@ function tpFormatApiDetail(detail) {
 
 if (typeof window !== "undefined") {
   window.TP_MAX_SALARY_RUB = TP_MAX_SALARY_RUB;
+  window.TP_ORM_VARCHAR255 = TP_ORM_VARCHAR255;
+  window.TP_ORM_TEXT_SAFE_MAX = TP_ORM_TEXT_SAFE_MAX;
+  window.tpCheckStringMaxLen = tpCheckStringMaxLen;
   window.tpValidateSalaryAmount = tpValidateSalaryAmount;
   window.tpParseAndValidateSalaryRaw = tpParseAndValidateSalaryRaw;
   window.tpFormatApiDetail = tpFormatApiDetail;

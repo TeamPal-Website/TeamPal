@@ -830,6 +830,7 @@
           e.stopPropagation();
           const idx = parseInt(btn.getAttribute('data-remove-idx'), 10);
           if (!isNaN(idx)) {
+            syncAllRolesFromDom();
             rolesArray.splice(idx, 1);
             renderRolesList();
           }
@@ -843,6 +844,7 @@
         showNotification('В проекте не больше 10 ролей', 'warning', 3000);
         return;
       }
+      syncAllRolesFromDom();
       rolesArray.push({
         role_type_id: null,
         name_label: '',

@@ -733,16 +733,6 @@
               </select>
             </div>
             <div class="exp-field">
-              <label for="${rid}-sch">График</label>
-              <select id="${rid}-sch" data-field="schedule">
-                <option value="">— График —</option>
-                <option value="5/2"${role.schedule === "5/2" ? " selected" : ""}>5/2</option>
-                <option value="2/2"${role.schedule === "2/2" ? " selected" : ""}>2/2</option>
-                <option value="4/2"${role.schedule === "4/2" ? " selected" : ""}>4/2</option>
-                <option value="3/3"${role.schedule === "3/3" ? " selected" : ""}>3/3</option>
-              </select>
-            </div>
-            <div class="exp-field">
               <label for="${rid}-sal">Зарплата</label>
               <input type="number" id="${rid}-sal" data-field="salary_amount" min="0" max="50000000" step="1" placeholder="Сумма в рублях" value="${role.salary_amount != null ? escapeHtml(String(role.salary_amount)) : ""}">
             </div>
@@ -786,7 +776,7 @@
       r.experience = get('[data-field="experience"]') || null;
       r.work_format = get('[data-field="work_format"]') || null;
       r.employment = get('[data-field="employment"]') || null;
-      r.schedule = get('[data-field="schedule"]') || null;
+      r.schedule = null;
       const salEl = card.querySelector('[data-field="salary_amount"]');
       const salRaw = salEl ? salEl.value : "";
       var salFn = window.tpParseAndValidateSalaryRaw;
@@ -824,6 +814,7 @@
           e.preventDefault();
           const i = parseInt(btn.getAttribute("data-remove-idx"), 10);
           if (!Number.isFinite(i)) return;
+          syncAllRolesFromDom();
           rolesArray.splice(i, 1);
           renderRolesList();
         });
@@ -832,6 +823,7 @@
     }
 
     function addEmptyRoleSlot() {
+      syncAllRolesFromDom();
       rolesArray.push({
         role_type_id: null,
         name_label: null,
@@ -962,7 +954,7 @@
             experience:       r.experience        || null,
             work_format:      r.work_format       || null,
             employment:       r.employment        || null,
-            schedule:         r.schedule          || null,
+            schedule:         null,
             salary_amount:    r.salary_amount     != null ? r.salary_amount : null,
             salary_type:      r.salary_type       || null,
             contract_type:    r.contract_type     || null,

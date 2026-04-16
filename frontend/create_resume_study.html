@@ -617,20 +617,11 @@
         <div class="exp-fields">
           <div class="field exp-field-full">
             <label>Название резюме <span class="req-star" aria-hidden="true">*</span></label>
-            <input id="resumeTitle" type="text" placeholder="Например: Frontend стажёр" />
+            <input id="resumeTitle" type="text" maxlength="255" placeholder="Например: Frontend стажёр" />
           </div>
           <div class="field">
             <label>Должность <span class="req-star" aria-hidden="true">*</span></label>
-            <input id="desiredPosition" type="text" placeholder="Frontend-разработчик" />
-          </div>
-          <div class="field">
-            <label>График работы</label>
-            <select id="workSchedule">
-              <option value="">Не указывать</option>
-              <option value="full_time">Полный день</option>
-              <option value="part_time">Неполный день</option>
-              <option value="side_project">Подработка / гибкий формат</option>
-            </select>
+            <input id="desiredPosition" type="text" maxlength="255" placeholder="Frontend-разработчик" />
           </div>
         </div>
       </div>
@@ -855,11 +846,11 @@
           <div class="exp-grid">
             <div class="exp-field">
               <label>Компания <span class="req-star" aria-hidden="true">*</span></label>
-              <input type="text" class="exp-company-input" value="${escapeHtml(exp.company)}" placeholder="ООО Рога и Копыта">
+              <input type="text" class="exp-company-input" maxlength="255" value="${escapeHtml(exp.company)}" placeholder="ООО Рога и Копыта">
             </div>
             <div class="exp-field">
               <label>Должность <span class="req-star" aria-hidden="true">*</span></label>
-              <input type="text" class="exp-position-input" value="${escapeHtml(exp.position)}" placeholder="Frontend-разработчик">
+              <input type="text" class="exp-position-input" maxlength="255" value="${escapeHtml(exp.position)}" placeholder="Frontend-разработчик">
             </div>
             <div class="exp-field exp-field--date">
               <label>Дата прихода <span class="req-star" aria-hidden="true">*</span></label>
@@ -919,15 +910,18 @@
 
     const resumeTitleInput = document.getElementById("resumeTitle");
     const desiredPositionInput = document.getElementById("desiredPosition");
-    const workScheduleSelect = document.getElementById("workSchedule");
     const aboutMeTextarea = document.getElementById("aboutMe");
     const cancelBtn = document.getElementById("cancelBtn");
     const publishBtn = document.getElementById("publishBtn");
 
+    [resumeTitleInput, desiredPositionInput, aboutMeTextarea].forEach((el) => {
+      if (!el) return;
+      el.addEventListener("input", () => el.classList.remove("inp-invalid"));
+    });
+
     function resetForm() {
       if (resumeTitleInput) resumeTitleInput.value = "";
       if (desiredPositionInput) desiredPositionInput.value = "";
-      if (workScheduleSelect) workScheduleSelect.value = "";
       aboutMeTextarea.value = "";
       selectedSkillIds = [];
       renderSkillsGrid();
@@ -990,6 +984,12 @@
     });
 
     publishBtn.addEventListener("click", async () => {
+      document
+        .querySelectorAll(
+          "#resumeTitle.inp-invalid, #desiredPosition.inp-invalid, #aboutMe.inp-invalid",
+        )
+        .forEach((el) => el.classList.remove("inp-invalid"));
+
       const title = (resumeTitleInput?.value || "").trim();
       if (!title) {
         showNotification('Пожалуйста, заполните поле "Название резюме"', 'error');
@@ -1002,15 +1002,61 @@
         return;
       }
 
-      const schedule = (workScheduleSelect?.value || "").trim();
+      const V255 =
+        typeof window.TP_ORM_VARCHAR255 === "number" ? window.TP_ORM_VARCHAR255 : 255;
+      const TMAX =
+        typeof window.TP_ORM_TEXT_SAFE_MAX === "number" ? window.TP_ORM_TEXT_SAFE_MAX : 100000;
+      const maxCheck =
+        typeof window.tpCheckStringMaxLen === "function"
+          ? window.tpCheckStringMaxLen
+          : function (s, max, label) {
+              const v = s == null ? "" : String(s);
+              if (v.length > max) {
+                return {
+                  ok: false,
+                  message: label + ": не более " + String(max) + " символов.",
+                };
+              }
+              return { ok: true, value: v };
+            };
 
-      const aboutText = aboutMeTextarea.value.trim();
+      let lenChk = maxCheck(title, V255, "Название резюме");
+      if (!lenChk.ok) {
+        showNotification(lenChk.message, "error", 7000);
+        resumeTitleInput?.classList.add("inp-invalid");
+        resumeTitleInput?.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+      resumeTitleInput?.classList.remove("inp-invalid");
+
+      lenChk = maxCheck(position, V255, "Должность");
+      if (!lenChk.ok) {
+        showNotification(lenChk.message, "error", 7000);
+        desiredPositionInput?.classList.add("inp-invalid");
+        desiredPositionInput?.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+      desiredPositionInput?.classList.remove("inp-invalid");
+
+      const aboutText = (aboutMeTextarea && aboutMeTextarea.value ? aboutMeTextarea.value : "").trim();
+      lenChk = maxCheck(aboutText, TMAX, "Поле «О себе»");
+      if (!lenChk.ok) {
+        showNotification(lenChk.message, "error", 7000);
+        aboutMeTextarea?.classList.add("inp-invalid");
+        aboutMeTextarea?.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+      aboutMeTextarea?.classList.remove("inp-invalid");
       if (selectedSkillIds.length === 0) {
         showNotification('В резюме должен быть хотя бы один навык', 'warning');
         return;
       }
 
-      document.querySelectorAll('.exp-start-input.inp-invalid, .exp-end-input.inp-invalid, .exp-company-input.inp-invalid, .exp-position-input.inp-invalid').forEach((el) => el.classList.remove('inp-invalid'));
+      document
+        .querySelectorAll(
+          ".exp-start-input.inp-invalid, .exp-end-input.inp-invalid, .exp-company-input.inp-invalid, .exp-position-input.inp-invalid, .exp-desc-input.inp-invalid",
+        )
+        .forEach((el) => el.classList.remove("inp-invalid"));
 
       const cleanedExperiences = [];
       for (let idx = 0; idx < (experiences || []).length; idx++) {
@@ -1049,6 +1095,27 @@
           entry?.querySelector('.exp-end-input')?.classList.add('inp-invalid');
           return;
         }
+        lenChk = maxCheck(row.company, V255, "Компания в опыте работы");
+        if (!lenChk.ok) {
+          showNotification(lenChk.message, "error", 7000);
+          entry?.querySelector(".exp-company-input")?.classList.add("inp-invalid");
+          entry?.scrollIntoView({ behavior: "smooth", block: "center" });
+          return;
+        }
+        lenChk = maxCheck(row.position, V255, "Должность в опыте работы");
+        if (!lenChk.ok) {
+          showNotification(lenChk.message, "error", 7000);
+          entry?.querySelector(".exp-position-input")?.classList.add("inp-invalid");
+          entry?.scrollIntoView({ behavior: "smooth", block: "center" });
+          return;
+        }
+        lenChk = maxCheck(row.description, TMAX, "Описание в опыте работы");
+        if (!lenChk.ok) {
+          showNotification(lenChk.message, "error", 7000);
+          entry?.querySelector(".exp-desc-input")?.classList.add("inp-invalid");
+          entry?.scrollIntoView({ behavior: "smooth", block: "center" });
+          return;
+        }
         cleanedExperiences.push(row);
       }
 
@@ -1078,7 +1145,6 @@
           description: exp.description || null,
         })),
       };
-      if (schedule) resumeData.commitment_level = schedule;
 
       try {
         const response = await fetch(API_BASE_URL + "/resumes", {
@@ -1112,7 +1178,13 @@
           }, 1500);
         } else {
           const error = await response.json().catch(() => ({}));
-          showNotification(error.detail || 'Ошибка при создании резюме', 'error', 3000);
+          const msg =
+            (typeof window.tpFormatApiDetail === "function"
+              ? window.tpFormatApiDetail(error.detail)
+              : "") ||
+            (typeof error.detail === "string" ? error.detail : "") ||
+            "Ошибка при создании резюме";
+          showNotification(msg, "error", 6500);
         }
       } catch (error) {
         console.error('Create resume error:', error);

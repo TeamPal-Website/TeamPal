@@ -242,6 +242,7 @@
       background: var(--panel-soft);
       padding: 18px;
       min-height: 380px;
+      min-width: 0;
     }
     .hidden { display: none; }
     .info-grid {
@@ -334,12 +335,17 @@
       padding: 14px;
       margin-bottom: 12px;
       border: 1px solid var(--line);
+      min-width: 0;
     }
     .project-title {
       font-size: 18px;
       font-weight: 700;
       color: var(--accent-2);
       margin-bottom: 6px;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     .project-info { font-size: 13px; color: #666; margin: 4px 0; }
     .project-roles { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
@@ -539,7 +545,6 @@
           </fieldset>
         </form>
         <div class="actions">
-          <button class="action-btn" id="personal-cancel" type="button">Отмена</button>
           <button class="action-btn action-btn--accent" id="personal-save" type="button">Сохранить</button>
         </div>
       </div>
@@ -1068,7 +1073,7 @@
           return `
             <div class="project-card" style="display:flex;justify-content:space-between;gap:12px;align-items:center;">
               <div style="flex:1;min-width:0;">
-                <div class="project-title" style="margin-bottom:6px;">${esc(displayTitle)}</div>
+                <div class="project-title" title="${esc(displayTitle)}">${esc(displayTitle)}</div>
                 ${rTypeLabel ? `<div class="project-info"><b>Тип:</b> ${esc(rTypeLabel)}</div>` : ""}
                 <div class="project-info"><b>Создано:</b> ${esc(createdAt)}</div>
               </div>
@@ -1233,19 +1238,7 @@
       }
     }
 
-    function cancelPersonalChanges() {
-      document.getElementById("first-name").value = personalData.firstName || "";
-      document.getElementById("last-name").value = personalData.lastName || "";
-      document.getElementById("age").value = personalData.age || "";
-      document.getElementById("gender").value = personalData.gender || "";
-      document.getElementById("city").value = personalData.cityId ? String(personalData.cityId) : "";
-      document.getElementById("phone").value = personalData.phone || "";
-      document.getElementById("telegram").value = personalData.telegram || "";
-      document.getElementById("github").value = personalData.github || "";
-    }
-
     document.getElementById("personal-save")?.addEventListener("click", savePersonalData);
-    document.getElementById("personal-cancel")?.addEventListener("click", cancelPersonalChanges);
 
     const avatarWrap = document.getElementById("avatar-wrap");
     const avatarInput = document.getElementById("avatar-input");
@@ -1383,13 +1376,38 @@
           showToast("Пароли не совпадают", "error");
           return;
         }
-        if (newPass && newPass.length < 8) {
+        if (!newPass || newPass.length < 8) {
           showToast("Новый пароль должен содержать минимум 8 символов", "warning");
           return;
         }
-        
-        showToast("Смена пароля пока не поддерживается сервером", "info");
-        closePasswordModal();
+
+        try {
+          const response = await fetch(API_BASE_URL + "/auth/change_password", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+              old_password: oldPass,
+              new_password: newPass,
+            }),
+          });
+          if (response.ok) {
+            showToast("Пароль успешно изменён", "success");
+            closePasswordModal();
+          } else {
+            const err = await response.json().catch(() => ({}));
+            const msg =
+              (typeof window.tpFormatApiDetail === "function"
+                ? window.tpFormatApiDetail(err.detail)
+                : "") ||
+              (typeof err.detail === "string" ? err.detail : "") ||
+              "Не удалось сменить пароль";
+            showToast(msg, "error");
+          }
+        } catch (e) {
+          console.error(e);
+          showToast("Ошибка соединения с сервером", "error");
+        }
       });
     }
 
