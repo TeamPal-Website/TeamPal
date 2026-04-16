@@ -14,6 +14,7 @@
       --bg: #f7f5f2;
       --header: #eae8e4;
       --panel: #ffffff;
+      --panel-soft: #fffaf3;
       --ink: #1a1a1a;
       --ink2: #3a3a3a;
       --line: rgba(0,0,0,0.09);
@@ -34,65 +35,80 @@
     .header__left { display:flex; align-items:center; gap:12px; }
     .logo { width:46px; height:46px; border-radius:50px; object-fit:cover; }
     .back-link {
-      display:inline-flex; align-items:center; gap:6px;
-      color:var(--ink2); font-size:14px; font-weight:500; text-decoration:none;
-      padding:8px 14px; border-radius:999px; border:1px solid var(--line);
-      background:#fff; transition:all .2s;
+      display:inline-flex; align-items:center; gap:8px; background:none; border:none;
+      font-size:16px; font-weight:500; color:var(--accent-2); cursor:pointer;
+      text-decoration:none; transition:transform .2s;
     }
-    .back-link:hover { background:var(--bg); color:var(--accent-2); border-color:var(--accent-2); }
-    .footer { width:100%; background:var(--footer); display:flex; align-items:center; justify-content:space-between; padding:0 24px; font-size:14px; color:var(--ink2); min-height:52px; flex-wrap:wrap; }
+    .back-link:hover { transform:translateX(-4px); color:#c13f0a; }
+    .constructor-card { background:var(--panel); border:1px solid var(--line); border-radius:20px; box-shadow:0 12px 30px rgba(0,0,0,.06); overflow:hidden; }
+    .constructor-header { padding:24px 28px 16px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:16px; flex-wrap:wrap; justify-content:space-between; }
+    .constructor-title { font-size:28px; font-weight:700; background:linear-gradient(135deg,var(--accent-2),var(--accent-1)); background-clip:text; -webkit-background-clip:text; color:transparent; }
+    .constructor-body { padding:28px; }
+    .footer { width:100%; background:#eae8e4; display:flex; align-items:center; justify-content:space-between; padding:0 24px; font-size:13px; color:#6b6560; min-height:48px; flex-wrap:wrap; }
+    .footer a { color:#c44c08; text-decoration:none; transition:color .2s; }
+    .footer a:hover { color:#1a1a1a; }
     .page { width:100%; max-width:760px; margin:0 auto; padding:102px 20px 48px; flex:1; }
-    .edit-card { background:var(--panel); border:1px solid var(--line); border-radius:20px; box-shadow:0 12px 30px rgba(0,0,0,0.06); padding:28px 28px; margin-bottom:20px; }
-    .edit-title { font-size:26px; font-weight:700; margin-bottom:22px; }
-    .edit-title span { color:var(--accent-2); }
-    .section-title { font-size:17px; font-weight:700; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
-    .vacancy-badge { background:#f0ece8; color:#7a6a5a; font-size:12px; font-weight:700; border-radius:20px; padding:2px 9px; }
-    .field { display:flex; flex-direction:column; gap:5px; margin-bottom:16px; }
-    .field label { font-size:13px; font-weight:600; color:#4c4c4c; }
-    .field input, .field select, .field textarea {
-      width:100%; border:1.5px solid #ddd; border-radius:12px;
-      padding:11px 14px; font-family:inherit; font-size:15px; background:#fff;
-      transition:border-color .2s;
+    .resume-section { background:var(--panel-soft); border:1px solid var(--line); border-radius:24px; padding:20px 24px; margin-bottom:28px; }
+    .project-form { display:grid; grid-template-columns:repeat(2,1fr); gap:20px 24px; align-items:start; }
+    .form-field { display:flex; flex-direction:column; gap:8px; }
+    .form-field--full { grid-column:1 / -1; }
+    .form-field label { font-size:13px; font-weight:700; color:#4e3e2e; }
+    .req-star { color:#e05a2a; font-weight:700; margin-left:2px; }
+    .form-field input, .form-field textarea, .form-field select {
+      width:100%; border:1.5px solid #ddd; border-radius:12px; padding:14px 16px; font-family:inherit; font-size:15px; background:#fff;
+      min-height:52px; line-height:1.45; box-sizing:border-box; transition:border-color .2s, box-shadow .2s;
     }
-    .field input:focus, .field select:focus, .field textarea:focus {
-      outline:2px solid rgba(248,90,11,.2); border-color:#f85a0b;
+    .form-field textarea { min-height:100px; resize:vertical; }
+    .form-field select {
+      appearance:none; -webkit-appearance:none; cursor:pointer; padding-right:44px;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat:no-repeat; background-position:right 14px center;
     }
-    .field textarea { resize:vertical; min-height:100px; }
-    .field-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
-    .sep { border:none; border-top:1px solid var(--line); margin:20px 0; }
-    .vacancy-card {
-      border:1.5px solid var(--line); border-radius:14px; padding:18px 18px 16px;
-      margin-bottom:14px; background:#fafaf8; position:relative;
+    .form-field input:focus, .form-field textarea:focus, .form-field select:focus {
+      outline:none; border-color:#f85a0b; box-shadow:0 0 0 3px rgba(248,90,11,.12);
     }
-    .vacancy-card:last-child { margin-bottom:0; }
-    .vacancy-header { display:flex; align-items:center; gap:10px; margin-bottom:16px; }
-    .vacancy-num { font-size:12px; color:#aaa; font-weight:700; white-space:nowrap; flex-shrink:0; }
-    .vacancy-header select { flex:1; min-width:0; border:1.5px solid #ddd; border-radius:10px; padding:10px 12px; font-family:inherit; font-size:14px; background:#fff; }
-    .vac-del-btn { padding:8px 14px; border-radius:10px; border:1px solid #f5c0b0; background:#fff0ee; color:#d14b2a; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; font-family:inherit; transition:all .2s; flex-shrink:0; }
-    .vac-del-btn:hover:not(:disabled) { background:#ffe0da; }
-    .vac-del-btn:disabled { opacity:.4; cursor:not-allowed; }
-    .vac-grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:12px; }
-    .vac-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
-    .vac-field { display:flex; flex-direction:column; gap:4px; }
-    .vac-field label { font-size:12px; font-weight:600; color:#666; }
-    .vac-field input, .vac-field select, .vac-field textarea {
-      width:100%; border:1.5px solid #e0d8cf; border-radius:10px;
-      padding:9px 11px; font-family:inherit; font-size:13px; background:#fff;
-      transition:border-color .2s;
+    .roles-block { background:#fefaf5; border-radius:18px; padding:16px; border:1px solid var(--line); font-family:"Space Grotesk",system-ui,sans-serif; }
+    .section-title { font-size:20px; font-weight:700; color:#2d2a24; margin-bottom:18px; display:flex; align-items:center; gap:8px; }
+    .roles-list {
+      display:flex; flex-direction:column; gap:0; margin-bottom:16px;
+      max-height:none; overflow:visible;
     }
-    .vac-field input:focus, .vac-field select:focus, .vac-field textarea:focus {
-      outline:2px solid rgba(248,90,11,.15); border-color:#f85a0b;
+    .skills-empty {
+      color:#8a7d72; font-size:14px; text-align:center; padding:20px 12px; line-height:1.55;
+      margin-bottom:4px;
     }
-    .vac-field textarea { resize:vertical; min-height:72px; }
-    .btn-add-vac {
-      width:100%; padding:13px; border-radius:14px; border:2px dashed #d4d0ca;
-      background:transparent; font-size:14px; font-weight:600; color:#999;
-      cursor:pointer; font-family:inherit; transition:all .2s; margin-top:10px;
+    .exp-entry { border:1px solid var(--line); border-radius:20px; padding:18px; margin-bottom:16px; background:#fff; }
+    .exp-entry.is-new { border-color:rgba(250,149,0,.55); background:#fffbf5; }
+    .exp-entry-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding-bottom:8px; border-bottom:1px dashed #ece3d9; }
+    .exp-entry-num { font-size:13px; font-weight:700; color:var(--accent-2); }
+    .btn-remove-exp { background:none; border:none; font-size:18px; cursor:pointer; color:#bc9a7a; line-height:1; padding:2px 6px; border-radius:6px; font-family:inherit; }
+    .btn-remove-exp:hover { background:#fff0ee; color:#d14b2a; }
+    .exp-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .exp-field { display:flex; flex-direction:column; gap:5px; }
+    .exp-field-full { grid-column:1 / -1; }
+    .exp-field label { font-size:13px; font-weight:600; color:#4e3e2e; margin-bottom:2px; }
+    .exp-field input,.exp-field textarea,.exp-field select {
+      width:100%; border:1.5px solid #ddd; border-radius:12px; padding:12px 14px; font-family:inherit; font-size:14px; background:#fff;
+      transition:border-color .15s, box-shadow .15s; min-height:48px; box-sizing:border-box; line-height:1.45;
     }
-    .btn-add-vac:hover:not(:disabled) { border-color:var(--accent-1); color:var(--accent-1); background:rgba(250,149,0,0.04); }
-    .btn-add-vac:disabled { opacity:.45; cursor:not-allowed; }
-
-    .form-actions { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+    .exp-field textarea { min-height:72px; resize:vertical; }
+    .exp-field select {
+      appearance:none; -webkit-appearance:none; cursor:pointer; padding-right:40px;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat:no-repeat; background-position:right 12px center;
+    }
+    .exp-field input:focus,.exp-field textarea:focus,.exp-field select:focus {
+      outline:none; border-color:var(--accent-2); box-shadow:0 0 0 3px rgba(248,90,11,.12);
+    }
+    .btn-add-exp {
+      width:100%; padding:12px; border:1px dashed var(--accent-2); border-radius:60px; background:none; color:var(--accent-2);
+      font-size:14px; font-weight:600; cursor:pointer; transition:.2s; font-family:inherit;
+    }
+    .btn-add-exp:hover:not(:disabled) { background:#fff4ea; }
+    .btn-add-exp:disabled { opacity:.45; cursor:not-allowed; }
+    #roles-panel-error { margin-bottom:10px; }
+    
+    .form-actions { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-top:16px; border-top:1px solid var(--line); padding-top:24px; }
     .form-actions__right { display:flex; gap:10px; }
     .btn { padding:11px 24px; border-radius:40px; font-size:15px; font-weight:600; cursor:pointer; font-family:inherit; border:none; transition:all .2s; }
     .btn-secondary { background:#fff; border:1px solid #dbd2c7; color:#4a3a2a; }
@@ -109,7 +125,7 @@
     .vac-err-msg { font-size:12px; color:#c0391c; background:#fff0ee; border:1px solid #f5c0b0; border-radius:8px; padding:6px 10px; margin-bottom:12px; display:none; }
     .vac-err-msg.show { display:flex; align-items:center; gap:6px; }
     .vac-err-msg::before { content:"⚠"; flex-shrink:0; }
-
+    
     .toast-container { position:fixed; top:84px; left:50%; transform:translateX(-50%); z-index:9999; display:flex; flex-direction:column; gap:10px; width:min(440px,92vw); pointer-events:none; }
     .tp-toast { display:flex; align-items:flex-start; gap:10px; padding:12px 16px; border-radius:12px; box-shadow:0 4px 14px rgba(0,0,0,.13); pointer-events:auto; animation:tpToastIn .3s ease; }
     .tp-toast.success { background:#f0fff4; border:1.5px solid #52c41a; }
@@ -125,7 +141,7 @@
     .tp-toast__close { background:none; border:none; cursor:pointer; font-size:20px; line-height:1; padding:0; margin-left:2px; opacity:.75; }
     @keyframes tpToastIn  { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
     @keyframes tpToastOut { to{opacity:0;transform:translateY(-10px)} }
-
+    
     .modal { position:fixed; inset:0; background:rgba(20,20,20,0.36); display:none; align-items:center; justify-content:center; z-index:1100; }
     .modal.open { display:flex; }
     .modal__card { width:min(92vw,440px); border-radius:16px; background:#fff; border:1px solid var(--line); padding:24px; box-shadow:0 24px 44px rgba(0,0,0,0.2); }
@@ -134,15 +150,15 @@
     .modal__actions { display:flex; justify-content:flex-end; gap:10px; }
     @media (max-width:640px) {
       .page { padding:92px 14px 36px; }
-      .edit-card { padding:20px 16px; }
-      .field-grid { grid-template-columns:1fr; }
-      .vac-grid-3 { grid-template-columns:1fr 1fr; }
+      .resume-section { padding:16px; }
+      .project-form { grid-template-columns:1fr; }
+      .form-field--full { grid-column:1; }
+      .constructor-header { flex-direction:column; align-items:flex-start; }
+      .constructor-body { padding:20px 16px; }
+      .exp-grid { grid-template-columns:1fr; }
+      .exp-field-full { grid-column:1; }
       .form-actions { flex-direction:column; align-items:stretch; }
       .form-actions__right { justify-content:flex-end; }
-    }
-    @media (max-width:400px) {
-      .vac-grid-3 { grid-template-columns:1fr; }
-      .vac-grid-2 { grid-template-columns:1fr; }
     }
   </style>
 </head>
@@ -165,20 +181,25 @@
   <div class="header__inner">
     <div class="header__left">
       <img class="logo" src="./assets/logo.png" alt="TeamPal">
-      <a href="./account_manager.html" class="back-link">← Назад к проектам</a>
     </div>
   </div>
 </header>
 
 <main class="page">
-  <div id="page-content">
+  <div class="constructor-card">
+    <div class="constructor-header">
+      <a href="./account_manager.html" class="back-link" style="text-decoration:none;">← Назад к проектам</a>
+      <span class="constructor-title">Редактирование проекта</span>
+    </div>
+    <div class="constructor-body" id="page-content">
     <div class="loading-state">Загрузка проекта…</div>
+    </div>
   </div>
 </main>
 
 <footer class="footer">
-  <span>TeamPal<span id="year"></span></span>
-  <span>обратная связь: teampal@dimple.ru</span>
+  <span>&copy;&nbsp;TeamPal <span id="year"></span></span>
+  <span>Обратная связь: <a href="mailto:teampal@dimple.ru">teampal@dimple.ru</a></span>
 </footer>
 
 <script src="./config.js"></script>
@@ -187,6 +208,7 @@
   'use strict';
 
   document.getElementById('year').textContent = ' ' + new Date().getFullYear();
+
 
   function showToast(message, type, duration) {
     duration = duration || 5000;
@@ -217,6 +239,27 @@
     return;
   }
 
+  var allCities = [];
+  async function loadCities() {
+    if (allCities.length) return;
+    try {
+      var r = await fetch(API_BASE_URL + '/cities', { credentials:'include' });
+      if (!r.ok) return;
+      var d = await r.json();
+      allCities = Array.isArray(d) ? d : [];
+    } catch (e) {}
+  }
+  function cityOptionsHtml(selectedId) {
+    var sid = selectedId != null ? String(selectedId) : '';
+    var html = '<option value="">Не указан</option>';
+    allCities.forEach(function(c) {
+      var sel = String(c.id) === sid ? ' selected' : '';
+      html += '<option value="' + esc(String(c.id)) + '"' + sel + '>' + esc(c.title) + '</option>';
+    });
+    return html;
+  }
+
+
   var INTENT_OPTS = [
     {value:'commercial',    label:'Коммерческий'},
     {value:'noncommercial', label:'Некоммерческий'},
@@ -225,132 +268,95 @@
     {value:'active', label:'Активен'},
     {value:'paused', label:'Приостановлен'},
   ];
-  var EXPERIENCE_OPTS = [
-    {value:'',    label:'— Не указан —'},
-    {value:'none',label:'Без опыта'},
-    {value:'<1',  label:'До 1 года'},
-    {value:'1-3', label:'1–3 года'},
-    {value:'3-6', label:'3–6 лет'},
-    {value:'6+',  label:'6+ лет'},
-  ];
-  var WORK_FORMAT_OPTS = [
-    {value:'',      label:'— Не указан —'},
-    {value:'remote',label:'Удалённо'},
-    {value:'office',label:'В офисе'},
-    {value:'hybrid',label:'Гибрид'},
-  ];
-  var SCHEDULE_OPTS = [
-    {value:'',    label:'— Не указан —'},
-    {value:'5/2', label:'5/2'},
-    {value:'2/2', label:'2/2'},
-    {value:'4/2', label:'4/2'},
-    {value:'3/3', label:'3/3'},
-  ];
-  var EMPLOYMENT_OPTS = [
-    {value:'',           label:'— Не указана —'},
-    {value:'full_time',  label:'Полная занятость'},
-    {value:'part_time',  label:'Частичная занятость'},
-    {value:'side_project',label:'Подработка'},
-  ];
-  var SALARY_TYPE_OPTS = [
-    {value:'',           label:'— Не указан —'},
-    {value:'monthly',    label:'В месяц'},
-    {value:'per_project',label:'За проект'},
-  ];
-  var CONTRACT_OPTS = [
-    {value:'',          label:'— Не указан —'},
-    {value:'gph',       label:'ГПХ'},
-    {value:'tk',        label:'ТК'},
-    {value:'internship',label:'Стажировка'},
-  ];
+
 
   var allRoles = [];
   var vacancyList = [];
   var vKeyCounter = 0;
 
-  function buildSelect(cls, key, options, currentVal) {
-    var attr = key != null ? ' data-key="'+key+'"' : '';
-    var cur = String(currentVal == null ? '' : currentVal);
-    var opts = options.map(function(o){
-      return '<option value="'+esc(o.value)+'"'+(String(o.value)===cur?' selected':'')+'>'+esc(o.label)+'</option>';
-    }).join('');
-    return '<select class="'+cls+'"'+attr+'>'+opts+'</select>';
-  }
-
-  function buildRoleSelect(key, roleTypeId) {
-    var roleOpts = [{value:'', label:'— Выберите роль —'}].concat(
-      allRoles.map(function(r){ return {value:String(r.id), label:r.name}; })
-    );
-    return buildSelect('vac-role', key, roleOpts, roleTypeId != null ? String(roleTypeId) : '');
-  }
-
-  function getFieldVal(cls, key) {
-    var el = document.querySelector('.'+cls+'[data-key="'+key+'"]');
-    return el ? el.value : '';
-  }
-
-  function readVacancyFromDom(key) {
-    var roleVal = getFieldVal('vac-role', key);
-    var salRaw = getFieldVal('vac-salary', key);
+  function readVacancyFromState(v) {
     return {
-      role_type_id:     roleVal ? parseInt(roleVal, 10) : null,
-      work_format:      getFieldVal('vac-work-format',  key) || null,
-      employment:       getFieldVal('vac-employment',   key) || null,
-      experience:       getFieldVal('vac-experience',   key) || null,
-      salary_amount:    salRaw !== '' && salRaw !== null ? parseInt(salRaw, 10) : null,
-      salary_type:      getFieldVal('vac-salary-type',  key) || null,
-      schedule:         getFieldVal('vac-schedule',     key) || null,
-      responsibilities: getFieldVal('vac-responsibilities', key).trim() || null,
-      requirements:     getFieldVal('vac-requirements',     key).trim() || null,
-      contract_type:    getFieldVal('vac-contract',     key) || null,
+      role_type_id:     v.role_type_id,
+      work_format:      v.work_format      || null,
+      employment:       v.employment       || null,
+      experience:       v.experience       || null,
+      salary_amount:    v.salary_amount != null && v.salary_amount !== '' ? Number(v.salary_amount) : null,
+      salary_type:      v.salary_type      || null,
+      schedule:         v.schedule         || null,
+      responsibilities: v.responsibilities != null ? String(v.responsibilities).trim() || null : null,
+      requirements:     v.requirements     != null ? String(v.requirements).trim()     || null : null,
+      contract_type:    v.contract_type    || null,
     };
   }
 
-  function syncVacancyStateFromDom() {
-    vacancyList.forEach(function(v) {
-      if (v._deleted) return;
-      var vals = readVacancyFromDom(v._key);
-      Object.assign(v, vals);
-    });
+  function getRoleNameLabel(roleTypeId) {
+    if (roleTypeId == null) return 'Роль не указана';
+    var r = allRoles.find(function(x){ return x.id === roleTypeId; });
+    return r ? r.name : ('Роль #' + roleTypeId);
   }
 
-  function renderVacancyCard(v, num, totalActive) {
-    var isLast = totalActive <= 1;
-    return '<div class="vacancy-card" data-vkey="'+v._key+'">'
-      + '<div class="vac-err-msg" id="vac-err-'+v._key+'"></div>'
-      + '<div class="vacancy-header">'
-      + '<span class="vacancy-num">Вакансия '+num+'</span>'
-      + buildRoleSelect(v._key, v.role_type_id)
-      + '<button class="vac-del-btn" data-vkey="'+v._key+'" type="button"'+(isLast?' disabled title="Нельзя удалить единственную вакансию"':'')+'>Удалить</button>'
-      + '</div>'
+  function roleInputValue(v) {
+    if (v.role_type_id == null) return '';
+    var r = allRoles.find(function(x){ return x.id === v.role_type_id; });
+    return r ? r.name : '';
+  }
 
-      + '<div class="vac-grid-3">'
-      + '<div class="vac-field"><label>Формат работы</label>'
-      +   buildSelect('vac-work-format', v._key, WORK_FORMAT_OPTS, v.work_format)+'</div>'
-      + '<div class="vac-field"><label>Занятость</label>'
-      +   buildSelect('vac-employment', v._key, EMPLOYMENT_OPTS, v.employment)+'</div>'
-      + '<div class="vac-field"><label>Опыт</label>'
-      +   buildSelect('vac-experience', v._key, EXPERIENCE_OPTS, v.experience)+'</div>'
-      + '</div>'
+  function optSelected(val, cur) {
+    return String(val || '') === String(cur == null ? '' : cur) ? ' selected' : '';
+  }
 
-      + '<div class="vac-grid-3">'
-      + '<div class="vac-field"><label>Зарплата</label>'
-      +   '<input class="vac-salary" data-key="'+v._key+'" type="number" min="0" step="1000" placeholder="Не указана" value="'+(v.salary_amount != null ? v.salary_amount : '')+'"></div>'
-      + '<div class="vac-field"><label>Тип зарплаты</label>'
-      +   buildSelect('vac-salary-type', v._key, SALARY_TYPE_OPTS, v.salary_type)+'</div>'
-      + '<div class="vac-field"><label>График</label>'
-      +   buildSelect('vac-schedule', v._key, SCHEDULE_OPTS, v.schedule)+'</div>'
-      + '</div>'
-
-      + '<div class="vac-grid-2">'
-      + '<div class="vac-field"><label>Обязанности</label>'
-      +   '<textarea class="vac-responsibilities" data-key="'+v._key+'" placeholder="Что предстоит делать…">'+esc(v.responsibilities||'')+'</textarea></div>'
-      + '<div class="vac-field"><label>Требования</label>'
-      +   '<textarea class="vac-requirements" data-key="'+v._key+'" placeholder="Навыки, опыт…">'+esc(v.requirements||'')+'</textarea></div>'
-      + '</div>'
-
-      + '<div class="vac-field"><label>Тип договора</label>'
-      +   buildSelect('vac-contract', v._key, CONTRACT_OPTS, v.contract_type)+'</div>'
+  function vacancyEditFieldsHtml(v) {
+    var k = v._key;
+    var roleName = roleInputValue(v);
+    var sal = v.salary_amount != null && v.salary_amount !== '' ? String(v.salary_amount) : '';
+    return ''
+      + '<div class="exp-grid">'
+      + '<div class="exp-field exp-field-full"><label for="vac-' + k + '-role-input">Название роли <span class="req-star" aria-hidden="true">*</span></label>'
+      + '<input type="text" id="vac-' + k + '-role-input" class="vac-role-input" placeholder="Выберите из подсказок (например: Backend-разработчик)" autocomplete="off" value="' + esc(roleName) + '"></div>'
+      + '<div class="exp-field exp-field-full"><label for="vac-' + k + '-resp">Обязанности / зона ответственности</label>'
+      + '<textarea id="vac-' + k + '-resp" placeholder="Обязанности / зона ответственности">' + esc(v.responsibilities || '') + '</textarea></div>'
+      + '<div class="exp-field exp-field-full"><label for="vac-' + k + '-req">Требования (навыки, опыт)</label>'
+      + '<textarea id="vac-' + k + '-req" placeholder="Требования (навыки, опыт)">' + esc(v.requirements || '') + '</textarea></div>'
+      + '<div class="exp-field"><label for="vac-' + k + '-experience">Опыт работы</label><select id="vac-' + k + '-experience">'
+      +   '<option value="">— Опыт работы —</option>'
+      +   '<option value="none"' + optSelected('none', v.experience) + '>Без опыта</option>'
+      +   '<option value="<1"' + optSelected('<1', v.experience) + '>До 1 года</option>'
+      +   '<option value="1-3"' + optSelected('1-3', v.experience) + '>1–3 года</option>'
+      +   '<option value="3-6"' + optSelected('3-6', v.experience) + '>3–6 лет</option>'
+      +   '<option value="6+"' + optSelected('6+', v.experience) + '>6+ лет</option>'
+      + '</select></div>'
+      + '<div class="exp-field"><label for="vac-' + k + '-format">Формат работы</label><select id="vac-' + k + '-format">'
+      +   '<option value="">— Формат работы —</option>'
+      +   '<option value="remote"' + optSelected('remote', v.work_format) + '>Удалённо</option>'
+      +   '<option value="office"' + optSelected('office', v.work_format) + '>В офисе</option>'
+      +   '<option value="hybrid"' + optSelected('hybrid', v.work_format) + '>Гибрид</option>'
+      + '</select></div>'
+      + '<div class="exp-field"><label for="vac-' + k + '-employment">Занятость</label><select id="vac-' + k + '-employment">'
+      +   '<option value="">— Занятость —</option>'
+      +   '<option value="full_time"' + optSelected('full_time', v.employment) + '>Полная занятость</option>'
+      +   '<option value="part_time"' + optSelected('part_time', v.employment) + '>Частичная занятость</option>'
+      +   '<option value="side_project"' + optSelected('side_project', v.employment) + '>Подработка</option>'
+      + '</select></div>'
+      + '<div class="exp-field"><label for="vac-' + k + '-schedule">График</label><select id="vac-' + k + '-schedule">'
+      +   '<option value="">— График —</option>'
+      +   '<option value="5/2"' + optSelected('5/2', v.schedule) + '>5/2</option>'
+      +   '<option value="2/2"' + optSelected('2/2', v.schedule) + '>2/2</option>'
+      +   '<option value="4/2"' + optSelected('4/2', v.schedule) + '>4/2</option>'
+      +   '<option value="3/3"' + optSelected('3/3', v.schedule) + '>3/3</option>'
+      + '</select></div>'
+      + '<div class="exp-field"><label for="vac-' + k + '-salary">Зарплата</label>'
+      + '<input type="number" id="vac-' + k + '-salary" min="0" step="1000" placeholder="Сумма в ₽" value="' + esc(sal) + '"></div>'
+      + '<div class="exp-field"><label for="vac-' + k + '-salary-type">Тип зарплаты</label><select id="vac-' + k + '-salary-type">'
+      +   '<option value="">— Тип зарплаты —</option>'
+      +   '<option value="monthly"' + optSelected('monthly', v.salary_type) + '>В месяц</option>'
+      +   '<option value="per_project"' + optSelected('per_project', v.salary_type) + '>За проект</option>'
+      + '</select></div>'
+      + '<div class="exp-field exp-field-full"><label for="vac-' + k + '-contract">Тип договора</label><select id="vac-' + k + '-contract">'
+      +   '<option value="">— Тип договора —</option>'
+      +   '<option value="gph"' + optSelected('gph', v.contract_type) + '>ГПХ</option>'
+      +   '<option value="tk"' + optSelected('tk', v.contract_type) + '>ТК</option>'
+      +   '<option value="internship"' + optSelected('internship', v.contract_type) + '>Стажировка</option>'
+      + '</select></div>'
       + '</div>';
   }
 
@@ -358,71 +364,151 @@
     var active = vacancyList.filter(function(v){ return !v._deleted; });
     var count = active.length;
     var atMax = count >= 10;
-    var cards = active.map(function(v, i){
-      return renderVacancyCard(v, i+1, count);
+    var listHtml = count === 0
+      ? '<div class="skills-empty">Нет добавленных ролей. Нажмите «+ Добавить роль»</div>'
+      : active.map(function(v, i) {
+          return '<div class="exp-entry' + (v._isNew ? ' is-new' : '') + '" data-vkey="' + v._key + '">'
+            + '<div class="exp-entry-header">'
+            +   '<span class="exp-entry-num">Роль ' + (i + 1) + (v._isNew ? ' (новая)' : '') + '</span>'
+            +   '<button type="button" class="btn-remove-exp" data-remove-vkey="' + v._key + '" title="Удалить роль">✕</button>'
+            + '</div>'
+            + vacancyEditFieldsHtml(v)
+            + '</div>';
     }).join('');
 
-    return '<div class="edit-card" id="card-vacancies">'
-      + '<div class="section-title">Вакансии <span class="vacancy-badge">'+count+'/10</span></div>'
-      + '<div id="vacancy-list">'+cards+'</div>'
-      + '<button class="btn-add-vac" id="btn-add-vac" type="button"'+(atMax?' disabled':'')+'>'
-      +   (atMax ? 'Достигнут лимит вакансий (10)' : '+ Добавить вакансию')
+    return '<div class="resume-section roles-block" id="card-vacancies">'
+      + '<div class="vac-err-msg" id="roles-panel-error"></div>'
+      + '<div class="section-title">Требуемые роли <span class="req-star" aria-hidden="true">*</span></div>'
+      + '<div class="roles-list" id="roles-list-container">' + listHtml + '</div>'
+      + '<button type="button" id="add-role-btn" class="btn-add-exp"' + (atMax ? ' disabled' : '') + '>'
+      +   (atMax ? 'Достигнут лимит (10 ролей)' : '+ Добавить роль')
       + '</button>'
       + '</div>';
   }
 
+  function renderRoleDatalist() {
+    var dl = document.getElementById('roles-datalist');
+    if (!dl) {
+      dl = document.createElement('datalist');
+      dl.id = 'roles-datalist';
+      document.body.appendChild(dl);
+    }
+    dl.innerHTML = allRoles.map(function(r){ return '<option value="'+esc(r.name)+'"></option>'; }).join('');
+    document.querySelectorAll('.vac-role-input').forEach(function(inp) {
+      inp.setAttribute('list', 'roles-datalist');
+    });
+  }
+
+  function updateRoleInputHint() {
+    var addRoleBtn = document.getElementById('add-role-btn');
+    var active = vacancyList.filter(function(v){ return !v._deleted; });
+    if (allRoles.length === 0) {
+      document.querySelectorAll('.vac-role-input').forEach(function(el) {
+        el.disabled = true;
+        el.placeholder = 'Справочник ролей недоступен';
+      });
+      if (addRoleBtn) addRoleBtn.disabled = true;
+    } else {
+      document.querySelectorAll('.vac-role-input').forEach(function(el) {
+        el.disabled = false;
+        el.placeholder = 'Выберите из подсказок (например: Backend-разработчик)';
+      });
+      if (addRoleBtn) addRoleBtn.disabled = (active.length >= 10);
+      renderRoleDatalist();
+    }
+  }
+
+  function syncVacancyFromDom(v) {
+    var k = v._key;
+    var inp = document.getElementById('vac-' + k + '-role-input');
+    var roleText = inp ? inp.value.trim() : '';
+    var found = roleText ? allRoles.find(function(r){ return r.name.toLowerCase() === roleText.toLowerCase(); }) : null;
+    if (roleText && found) v.role_type_id = found.id;
+    else if (roleText && !found) v.role_type_id = null;
+    else if (!roleText) v.role_type_id = null;
+
+    function gv(suffix) {
+      var el = document.getElementById('vac-' + k + '-' + suffix);
+      return el && el.value ? el.value : '';
+    }
+    var respEl = document.getElementById('vac-' + k + '-resp');
+    var reqEl = document.getElementById('vac-' + k + '-req');
+    v.responsibilities = respEl && respEl.value.trim() ? respEl.value.trim() : null;
+    v.requirements = reqEl && reqEl.value.trim() ? reqEl.value.trim() : null;
+    v.experience = gv('experience') || null;
+    v.work_format = gv('format') || null;
+    v.employment = gv('employment') || null;
+    v.schedule = gv('schedule') || null;
+    v.salary_type = gv('salary-type') || null;
+    v.contract_type = gv('contract') || null;
+    var salEl = document.getElementById('vac-' + k + '-salary');
+    var salRaw = salEl && salEl.value != null ? String(salEl.value).trim() : '';
+    if (!salRaw) {
+      v.salary_amount = null;
+    } else {
+      var n = parseInt(salRaw, 10);
+      v.salary_amount = !isNaN(n) && n >= 0 ? n : null;
+    }
+  }
+
+  function syncAllVacanciesFromDom() {
+    vacancyList.filter(function(v){ return !v._deleted; }).forEach(syncVacancyFromDom);
+  }
+
+  function addEmptyVacancySlot() {
+    var active = vacancyList.filter(function(v){ return !v._deleted; });
+    if (active.length >= 10) return;
+    vacancyList.push({
+      _key: ++vKeyCounter,
+      id: null,
+      _isNew: true,
+      _deleted: false,
+      _original: null,
+      role_type_id: null,
+      responsibilities: null,
+      requirements: null,
+      experience: null,
+      work_format: null,
+      employment: null,
+      schedule: null,
+      salary_amount: null,
+      salary_type: null,
+      contract_type: null,
+    });
+    refreshVacancySection();
+  }
+
   function refreshVacancySection() {
-    syncVacancyStateFromDom();
     var card = document.getElementById('card-vacancies');
     if (!card) return;
     card.outerHTML = renderVacancySection();
     bindVacancyEvents();
+    updateRoleInputHint();
   }
 
   function bindVacancyEvents() {
-    document.querySelectorAll('.vac-role').forEach(function(sel) {
-      sel.addEventListener('change', function() {
-        sel.classList.remove('inp-invalid');
-        var key = sel.getAttribute('data-key');
-        var e = document.getElementById('vac-err-' + key);
-        if (e) { e.textContent = ''; e.classList.remove('show'); }
-      });
-    });
-
-    document.querySelectorAll('.vac-del-btn').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var key = parseInt(btn.getAttribute('data-vkey'), 10);
+    document.querySelectorAll('.btn-remove-exp[data-remove-vkey]').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var key = parseInt(btn.getAttribute('data-remove-vkey'), 10);
         var active = vacancyList.filter(function(v){ return !v._deleted; });
-        if (active.length <= 1) { showToast('Нельзя удалить единственную вакансию', 'warning'); return; }
+        if (active.length <= 1) {
+          showToast('Нельзя удалить единственную роль', 'warning');
+          return;
+        }
         var v = vacancyList.find(function(x){ return x._key === key; });
         if (!v) return;
-        syncVacancyStateFromDom();
         v._deleted = true;
         refreshVacancySection();
       });
     });
 
-    var addBtn = document.getElementById('btn-add-vac');
+    var addBtn = document.getElementById('add-role-btn');
     if (addBtn) {
-      addBtn.addEventListener('click', function() {
-        var active = vacancyList.filter(function(v){ return !v._deleted; });
-        if (active.length >= 10) return;
-        syncVacancyStateFromDom();
-        vacancyList.push({
-          _key: ++vKeyCounter,
-          id: null,
-          _isNew: true,
-          _deleted: false,
-          _original: null,
-          role_type_id: null,
-          work_format: null, employment: null, experience: null,
-          salary_amount: null, salary_type: null, schedule: null,
-          responsibilities: null, requirements: null, contract_type: null,
-        });
-        refreshVacancySection();
-      });
+      addBtn.addEventListener('click', function() { addEmptyVacancySlot(); });
     }
   }
+
 
   function renderPage(project, vacancies) {
     function selOpts(opts, cur) {
@@ -432,40 +518,53 @@
     }
 
     document.getElementById('page-content').innerHTML =
-      '<div class="edit-card">'
-      + '<div class="edit-title">Редактирование <span>проекта</span></div>'
-
-      + '<div class="field"><label for="f-title">Название проекта</label>'
-      + '<input id="f-title" type="text" placeholder="Название проекта" maxlength="255" value="'+esc(project.title||'')+'">'
-      + '<span class="field-error" id="err-title"></span></div>'
-
-      + '<div class="field"><label for="f-description">Описание проекта</label>'
-      + '<textarea id="f-description" placeholder="Краткое описание…">'+esc(project.description||'')+'</textarea></div>'
-
-      + '<div class="field"><label for="f-tasks">Задачи / что предстоит делать</label>'
-      + '<textarea id="f-tasks" style="min-height:88px;" placeholder="Что предстоит делать участникам…">'+esc(project.tasks||'')+'</textarea></div>'
-
-      + '<div class="field-grid">'
-      + '<div class="field" style="margin-bottom:0;"><label for="f-intent">Тип проекта</label>'
-      + '<select id="f-intent">'+selOpts(INTENT_OPTS, project.employment_intent)+'</select></div>'
-      + '<div class="field" style="margin-bottom:0;"><label for="f-status">Статус проекта</label>'
-      + '<select id="f-status">'+selOpts(STATUS_OPTS, project.status)+'</select></div>'
+      '<div class="resume-section">'
+      + '<div class="section-title">Проект</div>'
+      + '<div class="project-form">'
+      +   '<div class="form-field form-field--full">'
+      +     '<label for="f-title">Название проекта <span class="req-star" aria-hidden="true">*</span></label>'
+      +     '<input id="f-title" type="text" placeholder="Например: AI-ассистент для бизнеса" maxlength="255" value="'+esc(project.title||'')+'">'
+      +     '<span class="field-error" id="err-title"></span>'
+      +   '</div>'
+      +   '<div class="form-field">'
+      +     '<label for="f-company">Название компании</label>'
+      +     '<input id="f-company" type="text" placeholder="Юридическое или брендовое название" value="'+esc(project.company_name||'')+'">'
+      +   '</div>'
+      +   '<div class="form-field">'
+      +     '<label for="f-city">Город</label>'
+      +     '<select id="f-city">'+cityOptionsHtml(project.city_id)+'</select>'
+      +   '</div>'
+      +   '<div class="form-field form-field--full">'
+      +     '<label for="f-description">Описание проекта</label>'
+      +     '<textarea id="f-description" placeholder="Расскажите о целях, задачах и стеке технологий…">'+esc(project.description||'')+'</textarea>'
+      +   '</div>'
+      +   '<div class="form-field form-field--full">'
+      +     '<label for="f-tasks">Задачи / что предстоит делать</label>'
+      +     '<textarea id="f-tasks" style="min-height:88px;" placeholder="Что предстоит делать участникам…">'+esc(project.tasks||'')+'</textarea>'
+      +   '</div>'
+      +   '<div class="form-field">'
+      +     '<label for="f-intent">Тип проекта</label>'
+      +     '<select id="f-intent">'+selOpts(INTENT_OPTS, project.employment_intent)+'</select>'
+      +   '</div>'
+      +   '<div class="form-field">'
+      +     '<label for="f-status">Статус проекта</label>'
+      +     '<select id="f-status">'+selOpts(STATUS_OPTS, project.status)+'</select>'
+      +   '</div>'
       + '</div>'
       + '</div>'
 
       + renderVacancySection()
 
-      + '<div class="edit-card">'
       + '<div class="form-actions">'
       + '<button class="btn btn-danger" id="btn-delete" type="button">Удалить проект</button>'
       + '<div class="form-actions__right">'
-      + '<a href="./account_manager.html" class="btn btn-secondary">Отмена</a>'
+      + '<a href="./account_manager.html" class="btn btn-secondary" style="text-decoration:none;">Отмена</a>'
       + '<button class="btn btn-primary" id="btn-save" type="button">Сохранить</button>'
-      + '</div>'
       + '</div>'
       + '</div>';
 
     document.getElementById('btn-save').addEventListener('click', saveAll);
+
 
     var titleInput = document.getElementById('f-title');
     if (titleInput) {
@@ -483,7 +582,9 @@
     });
 
     bindVacancyEvents();
+    updateRoleInputHint();
   }
+
 
   async function loadProject() {
     try {
@@ -508,8 +609,10 @@
         if (projResp.status === 404) {
           var errBody = await projResp.json().catch(function(){ return {}; });
           if (errBody.detail === 'У проекта нет вакансий') {
+
+
             showToast('У проекта нет вакансий — добавьте хотя бы одну', 'warning', 7000);
-            project = { id: parseInt(projectId, 10), title:'', employment_intent:'commercial', status:'active', description:'', tasks:'' };
+            project = { id: parseInt(projectId, 10), title:'', company_name:'', city_id:null, employment_intent:'commercial', status:'active', description:'', tasks:'' };
           } else {
             document.getElementById('page-content').innerHTML = '<div class="loading-state">Проект не найден. <a href="./account_manager.html">← Назад</a></div>';
             return;
@@ -523,6 +626,7 @@
         project  = data.project || data;
         vacancies = data.vacancies || [];
       }
+
 
       vKeyCounter = 0;
       vacancyList = vacancies.map(function(v) {
@@ -556,15 +660,7 @@
         };
       });
 
-      if (vacancyList.length === 0) {
-        vacancyList.push({
-          _key: ++vKeyCounter, id: null, _isNew: true, _deleted: false, _original: null,
-          role_type_id: null, work_format: null, employment: null, experience: null,
-          salary_amount: null, salary_type: null, schedule: null,
-          responsibilities: null, requirements: null, contract_type: null,
-        });
-      }
-
+      await loadCities();
       renderPage(project, vacancies);
 
     } catch (e) {
@@ -573,14 +669,18 @@
     }
   }
 
+
   async function saveAll() {
+    syncAllVacanciesFromDom();
     var active = vacancyList.filter(function(v){ return !v._deleted; });
+
 
     document.querySelectorAll('.field-error').forEach(function(el){ el.textContent=''; el.classList.remove('show'); });
     document.querySelectorAll('.vac-err-msg').forEach(function(el){ el.textContent=''; el.classList.remove('show'); });
     document.querySelectorAll('.inp-invalid').forEach(function(el){ el.classList.remove('inp-invalid'); });
 
     var hasErrors = false;
+
 
     var title = document.getElementById('f-title').value.trim();
     if (!title) {
@@ -591,13 +691,17 @@
       hasErrors = true;
     }
 
+
+    if (active.length === 0) {
+      var re0 = document.getElementById('roles-panel-error');
+      if (re0) { re0.textContent = 'Добавьте хотя бы одну роль кнопкой «+ Добавить роль»'; re0.classList.add('show'); }
+      hasErrors = true;
+    }
     for (var i = 0; i < active.length; i++) {
-      var vals = readVacancyFromDom(active[i]._key);
+      var vals = readVacancyFromState(active[i]);
       if (!vals.role_type_id) {
-        var vErr = document.getElementById('vac-err-' + active[i]._key);
-        if (vErr) { vErr.textContent = 'Выберите роль для этой вакансии'; vErr.classList.add('show'); }
-        var roleEl = document.querySelector('.vac-role[data-key="' + active[i]._key + '"]');
-        if (roleEl) roleEl.classList.add('inp-invalid');
+        var vErr = document.getElementById('roles-panel-error');
+        if (vErr) { vErr.textContent = 'У каждой роли должно быть название из справочника. Удалите пустую запись или добавьте роль заново.'; vErr.classList.add('show'); }
         hasErrors = true;
       }
     }
@@ -614,8 +718,13 @@
 
     var errors = [];
 
+
+    var cityEl = document.getElementById('f-city');
+    var cityRaw = cityEl && cityEl.value ? parseInt(cityEl.value, 10) : NaN;
     var projPayload = {
       title: title,
+      company_name: (document.getElementById('f-company') && document.getElementById('f-company').value.trim()) || null,
+      city_id: Number.isFinite(cityRaw) && cityRaw > 0 ? cityRaw : null,
       description: document.getElementById('f-description').value.trim() || null,
       tasks: document.getElementById('f-tasks').value.trim() || null,
       employment_intent: document.getElementById('f-intent').value,
@@ -639,6 +748,7 @@
       btn.disabled = false; btn.textContent = 'Сохранить'; return;
     }
 
+
     var toDelete = vacancyList.filter(function(v){ return v._deleted && !v._isNew && v.id; });
     await Promise.all(toDelete.map(async function(v) {
       try {
@@ -652,9 +762,10 @@
       } catch { errors.push('Удаление вакансии: ошибка соединения'); }
     }));
 
+
     var toAdd = active.filter(function(v){ return v._isNew; });
     await Promise.all(toAdd.map(async function(v) {
-      var vals = readVacancyFromDom(v._key);
+      var vals = readVacancyFromState(v);
       var payload = buildVacancyPayload(vals);
       try {
         var r = await fetch(API_BASE_URL + '/projects/' + projectId + '/vacancies', {
@@ -670,9 +781,10 @@
       } catch { errors.push('Создание вакансии: ошибка соединения'); }
     }));
 
+
     var toUpdate = active.filter(function(v){ return !v._isNew && v.id; });
     await Promise.all(toUpdate.map(async function(v) {
-      var vals = readVacancyFromDom(v._key);
+      var vals = readVacancyFromState(v);
       var orig = v._original || {};
       var changed = (
         vals.role_type_id !== orig.role_type_id ||
@@ -725,6 +837,7 @@
       contract_type:    vals.contract_type    || null,
     };
   }
+
 
   document.getElementById('confirm-cancel').addEventListener('click', function(){
     document.getElementById('confirm-modal').classList.remove('open');

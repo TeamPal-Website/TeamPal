@@ -9,7 +9,6 @@
   <title>Создание проекта | TeamPal</title>
   <link rel="icon" type="image/png" href="./assets/logo.png">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #f7f5f2;
@@ -71,9 +70,9 @@
       from { transform: translateY(0); opacity: 1; }
       to { transform: translateY(-20px); opacity: 0; }
     }
-    .notification.error { border-left: 3px solid #2d3e56; }
-    .notification.success { border-left: 3px solid #2d3e56; }
-    .notification.warning { border-left: 3px solid #2d3e56; }
+    .notification.error { border-left: 3px solid #e05a2a; background: #fff6f4; }
+    .notification.success { border-left: 3px solid #52c41a; background: #f6ffed; }
+    .notification.warning { border-left: 3px solid #faad14; background: #fffbe6; }
     .notification-content {
       flex: 1;
       font-size: 14px;
@@ -110,40 +109,32 @@
     .header__left { display: flex; align-items: center; gap: 12px; }
     .logo { width: 46px; height: 46px; border-radius: 50px; object-fit: cover; }
     .header__actions { display: flex; align-items: center; gap: 12px; position: relative; }
-    .role-select { position: relative; }
-    .role-btn {
-      min-width: 190px;
-      border: 1px solid var(--line);
-      background: #fff;
+    .role-toggle {
+      display: flex;
+      background: #f0ece7;
       border-radius: 999px;
-      padding: 10px 14px;
-      font-size: 14px;
-      cursor: pointer;
-      font-family: "Space Grotesk", system-ui, sans-serif;
-    }
-    .role-btn::after { content: "▾"; float: right; color: #555; }
-    .role-dropdown {
-      position: absolute;
-      top: calc(100% + 8px);
-      left: 0;
-      width: 100%;
+      padding: 3px;
       border: 1px solid var(--line);
-      border-radius: 14px;
-      background: #fff;
-      display: none;
     }
-    .role-select.open .role-dropdown { display: block; }
-    .role-dropdown button {
-      width: 100%;
-      border: 0;
-      background: #fff;
-      text-align: left;
-      padding: 10px 12px;
-      font-size: 14px;
+    .role-toggle__btn {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
       cursor: pointer;
+      background: transparent;
+      color: #7a7060;
+      transition: all 0.25s ease;
       font-family: "Space Grotesk", system-ui, sans-serif;
+      white-space: nowrap;
     }
-    .role-dropdown button:hover { background: #fff7ec; }
+    .role-toggle__btn:hover { color: var(--ink); }
+    .role-toggle__btn.active {
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(248, 90, 11, 0.25);
+    }
     .burger {
       width: 48px;
       height: 48px;
@@ -206,16 +197,16 @@
     .header-menu__exit { margin-top: 8px; color: #d14b2a; border-top: 1px solid var(--line); border-radius: 0; padding-top: 12px; }
     .page {
       width: 100%;
-      max-width: 1000px;
+      max-width: 760px;
       margin: 0 auto;
-      padding: 102px 20px 26px;
+      padding: 102px 20px 48px;
       flex: 1;
     }
     .constructor-card {
       background: var(--panel);
       border: 1px solid var(--line);
-      border-radius: 28px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+      border-radius: 20px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
       overflow: hidden;
     }
     .constructor-header {
@@ -265,16 +256,18 @@
       color: #4e3e2e;
       font-family: "Space Grotesk", system-ui, sans-serif;
     }
+    .req-star { color: #e05a2a; font-weight: 700; margin-left: 2px; }
     .form-field input,
     .form-field select,
     .form-field textarea {
-      border: 1px solid #e0dbd3;
-      border-radius: 14px;
-      padding: 12px 16px;
+      border: 1.5px solid #ddd;
+      border-radius: 12px;
+      padding: 13px 16px;
       font-family: "Space Grotesk", system-ui, sans-serif;
       font-size: 15px;
       background: white;
       transition: 0.2s;
+      min-height: 48px;
     }
     .form-field select {
       appearance: none;
@@ -335,108 +328,101 @@
       gap: 8px;
       font-family: "Space Grotesk", system-ui, sans-serif;
     }
-    .roles-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-bottom: 14px;
-      max-height: 480px;
-      overflow-y: auto;
+    .roles-list { display: flex; flex-direction: column; gap: 0; margin-bottom: 16px; }
+    .skills-empty {
+      color: #8a7d72;
+      font-size: 14px;
+      text-align: center;
+      padding: 20px 12px;
+      line-height: 1.55;
     }
-    .role-item-card {
-      background: white;
-      border: 1px solid #e8e0d5;
-      border-radius: 18px;
-      padding: 14px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+    .exp-entry {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 18px;
+      margin-bottom: 16px;
+      background: #fff;
     }
-    .role-item-card__head {
+    .exp-entry.is-new { border-color: rgba(250, 149, 0, 0.55); background: #fffbf5; }
+    .exp-entry-header {
       display: flex;
-      align-items: flex-start;
       justify-content: space-between;
-      gap: 10px;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px dashed #ece3d9;
     }
-    .role-name {
-      font-size: 15px;
-      font-weight: 600;
-      color: #2c2c2c;
-      font-family: "Space Grotesk", system-ui, sans-serif;
-    }
-    .role-item-card__body {
-      display: grid;
-      gap: 6px;
-      font-size: 13px;
-      color: #4a4a4a;
-      line-height: 1.45;
-      font-family: "Space Grotesk", system-ui, sans-serif;
-    }
-    .role-item-card__body dt {
-      font-weight: 600;
-      color: #6b5a48;
-      margin-top: 4px;
-    }
-    .role-item-card__body dt:first-child { margin-top: 0; }
-    .role-item-card__body dd { margin: 0; }
-    .remove-role {
+    .exp-entry-num { font-size: 13px; font-weight: 700; color: var(--accent-2); }
+    .btn-remove-exp {
       background: none;
       border: none;
       font-size: 18px;
       cursor: pointer;
-      color: #b0a088;
-      transition: 0.2s;
-      padding: 0 6px;
+      color: #bc9a7a;
+      line-height: 1;
+      padding: 2px 6px;
+      border-radius: 6px;
       font-family: "Space Grotesk", system-ui, sans-serif;
     }
-    .remove-role:hover { color: var(--accent-2); transform: scale(1.1); }
-    .add-role-fields {
+    .btn-remove-exp:hover { background: #fff0ee; color: #d14b2a; }
+    .exp-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 10px 12px;
-      margin-top: 8px;
+      gap: 14px;
     }
-    .add-role-fields input,
-    .add-role-fields textarea,
-    .add-role-fields select {
-      padding: 10px 14px;
-      border: 1px solid #e0dbd3;
-      border-radius: 14px;
+    .exp-field { display: flex; flex-direction: column; gap: 5px; }
+    .exp-field-full { grid-column: 1 / -1; }
+    .exp-field label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #4e3e2e;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+    }
+    .exp-field input,
+    .exp-field textarea,
+    .exp-field select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid #ddd;
+      border-radius: 12px;
       font-family: "Space Grotesk", system-ui, sans-serif;
       font-size: 14px;
       background: #fff;
+      box-sizing: border-box;
+      min-height: 48px;
     }
-    .add-role-fields select {
+    .exp-field textarea { min-height: 72px; resize: vertical; }
+    .exp-field select {
       appearance: none;
       -webkit-appearance: none;
+      cursor: pointer;
+      padding-right: 40px;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
       background-position: right 12px center;
-      padding-right: 36px;
-      cursor: pointer;
     }
-    .add-role-fields textarea {
-      grid-column: span 2;
-      min-height: 72px;
-      resize: vertical;
+    .exp-field input:focus,
+    .exp-field textarea:focus,
+    .exp-field select:focus {
+      outline: none;
+      border-color: var(--accent-2);
+      box-shadow: 0 0 0 3px rgba(248, 90, 11, 0.12);
     }
-    .add-role-fields .add-role-field--full { grid-column: span 2; }
-    .add-role-actions {
-      margin-top: 12px;
-      display: flex;
-      justify-content: flex-end;
-    }
-    .add-role-actions button {
-      background: linear-gradient(135deg, #f0e5d8, #fff);
-      border: 1px solid #e0dbd3;
-      border-radius: 40px;
-      padding: 10px 22px;
+    .btn-add-exp {
+      width: 100%;
+      padding: 12px;
+      border: 1px dashed var(--accent-2);
+      border-radius: 60px;
+      background: none;
+      color: var(--accent-2);
+      font-size: 14px;
       font-weight: 600;
       cursor: pointer;
       transition: 0.2s;
       font-family: "Space Grotesk", system-ui, sans-serif;
     }
-    .add-role-actions button:hover { background: var(--accent-1); color: white; border-color: var(--accent-1); }
+    .btn-add-exp:hover:not(:disabled) { background: #fff4ea; }
+    .btn-add-exp:disabled { opacity: 0.45; cursor: not-allowed; }
     .form-actions {
       margin-top: 32px;
       display: flex;
@@ -446,12 +432,12 @@
       padding-top: 24px;
     }
     .btn {
-      padding: 10px 28px;
+      padding: 11px 26px;
       border-radius: 40px;
       font-weight: 600;
-      font-size: 14px;
+      font-size: 15px;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all .2s;
       font-family: "Space Grotesk", system-ui, sans-serif;
       border: none;
     }
@@ -469,27 +455,27 @@
     .btn-primary:hover { transform: translateY(-2px); opacity: 0.95; }
     .footer {
       width: 100%;
-      background: var(--footer);
+      background: #eae8e4;
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 0 24px;
-      font-size: 14px;
-      color: var(--ink2);
-      min-height: 52px;
+      font-size: 13px;
+      color: #6b6560;
+      min-height: 48px;
       flex-wrap: wrap;
-      margin-top: 20px;
       font-family: "Space Grotesk", system-ui, sans-serif;
     }
+    .footer a { color: #c44c08; text-decoration: none; transition: color .2s; }
+    .footer a:hover { color: #1a1a1a; }
     @media (max-width: 760px) {
       .project-form { grid-template-columns: 1fr; }
       .form-field--full { grid-column: span 1; }
       .constructor-header { flex-direction: column; align-items: flex-start; }
       .page { padding: 92px 16px 24px; }
       .header__inner { padding: 0 16px; }
-      .add-role-fields { grid-template-columns: 1fr; }
-      .add-role-fields textarea,
-      .add-role-fields .add-role-field--full { grid-column: span 1; }
+      .exp-grid { grid-template-columns: 1fr; }
+      .exp-field-full { grid-column: 1; }
     }
   </style>
 </head>
@@ -500,12 +486,9 @@
   <div class="header__inner">
     <div class="header__left">
       <img class="logo" src="./assets/logo.png" alt="TeamPal">
-      <div class="role-select" id="role-select">
-        <button class="role-btn" id="role-btn" type="button">Ищу сотрудника</button>
-        <div class="role-dropdown" id="role-dropdown">
-          <button type="button" data-role="Ищу вакансию">Ищу вакансию</button>
-          <button type="button" data-role="Ищу сотрудника">Ищу сотрудника</button>
-        </div>
+      <div class="role-toggle" id="role-toggle">
+        <button class="role-toggle__btn" type="button" data-role="Ищу вакансию">Ищу вакансию</button>
+        <button class="role-toggle__btn active" type="button" data-role="Ищу сотрудника">Ищу сотрудника</button>
       </div>
     </div>
     <div class="header__actions">
@@ -533,7 +516,7 @@
     <div class="constructor-body">
       <form class="project-form" id="create-project-form">
         <div class="form-field form-field--full">
-          <label for="proj-name">Название проекта</label>
+          <label for="proj-name">Название проекта <span class="req-star" aria-hidden="true">*</span></label>
           <div class="name-with-kind">
             <input type="text" id="proj-name" placeholder="Например: AI-ассистент для бизнеса" autocomplete="off">
             <span class="project-kind-hint">Коммерческий проект</span>
@@ -544,76 +527,26 @@
           <input type="text" id="proj-company" placeholder="Юридическое или брендовое название" autocomplete="organization">
         </div>
         <div class="form-field">
-          <label for="proj-deadline">Сроки реализации</label>
-          <input type="text" id="proj-deadline" placeholder="3 месяца / до декабря 2025">
+          <label for="proj-city">Город</label>
+          <select id="proj-city">
+            <option value="">Не указан</option>
+          </select>
         </div>
         <div class="form-field form-field--full">
           <label for="proj-desc">Описание проекта</label>
           <textarea id="proj-desc" placeholder="Расскажите о целях, задачах и стеке технологий..."></textarea>
         </div>
+        <div class="form-field form-field--full">
+          <label for="proj-tasks">Задачи / что предстоит делать</label>
+          <textarea id="proj-tasks" placeholder="Кратко опишите задачи проекта…"></textarea>
+        </div>
 
         <div class="form-field form-field--full roles-block">
-          <div class="roles-title">
-            <span>Требуемые роли (можно добавить несколько)</span>
-          </div>
+          <div class="roles-title"><span>Требуемые роли <span class="req-star" aria-hidden="true">*</span></span></div>
           <div class="roles-list" id="roles-list-container"></div>
-          <div class="add-role-fields">
-            <input type="text" id="new-role-name" class="add-role-field--full" placeholder="Название роли (например: Backend-разработчик)" autocomplete="off">
-            <textarea id="new-role-responsibilities" class="add-role-field--full" placeholder="Обязанности / зона ответственности"></textarea>
-            <textarea id="new-role-requirements" class="add-role-field--full" placeholder="Требования (навыки, опыт)"></textarea>
-            <select id="new-role-experience">
-              <option value="">— Опыт работы —</option>
-              <option value="none">Без опыта</option>
-              <option value="<1">До 1 года</option>
-              <option value="1-3">1–3 года</option>
-              <option value="3-6">3–6 лет</option>
-              <option value="6+">6+ лет</option>
-            </select>
-            <select id="new-role-format">
-              <option value="">— Формат работы —</option>
-              <option value="remote">Удалённо</option>
-              <option value="office">В офисе</option>
-              <option value="hybrid">Гибрид</option>
-            </select>
-            <select id="new-role-employment">
-              <option value="">— Занятость —</option>
-              <option value="full_time">Полная занятость</option>
-              <option value="part_time">Частичная занятость</option>
-              <option value="side_project">Подработка</option>
-            </select>
-            <select id="new-role-schedule">
-              <option value="">— График —</option>
-              <option value="5/2">5/2</option>
-              <option value="2/2">2/2</option>
-              <option value="4/2">4/2</option>
-              <option value="3/3">3/3</option>
-            </select>
-            <input type="number" id="new-role-salary" min="0" step="1000" placeholder="Зарплата (сумма, необязательно)">
-            <select id="new-role-salary-type">
-              <option value="">— Тип зарплаты —</option>
-              <option value="monthly">В месяц</option>
-              <option value="per_project">За проект</option>
-            </select>
-            <select id="new-role-contract" class="add-role-field--full">
-              <option value="">— Тип договора —</option>
-              <option value="gph">ГПХ</option>
-              <option value="tk">ТК</option>
-              <option value="internship">Стажировка</option>
-            </select>
-          </div>
-          <div class="add-role-actions">
-            <button type="button" id="add-role-btn">Добавить роль</button>
-          </div>
+          <button type="button" id="add-role-btn" class="btn-add-exp">+ Добавить роль</button>
         </div>
 
-        <div class="form-field">
-          <label for="proj-members">План по участникам</label>
-          <input type="text" id="proj-members" placeholder="5/7">
-        </div>
-        <div class="form-field">
-          <label for="proj-contact">Контакт для связи</label>
-          <input type="text" id="proj-contact" placeholder="Telegram / email">
-        </div>
       </form>
       <div class="form-actions">
         <button type="button" class="btn btn-secondary" id="cancel-btn">Отменить</button>
@@ -624,8 +557,8 @@
 </main>
 
 <footer class="footer">
-  <span>TeamPal<span id="year"></span></span>
-  <span>обратная связь: teampal@dimple.ru</span>
+  <span>&copy;&nbsp;TeamPal <span id="year"></span></span>
+  <span>Обратная связь: <a href="mailto:teampal@dimple.ru">teampal@dimple.ru</a></span>
 </footer>
 
 
@@ -658,20 +591,40 @@
     const yearSpan = document.getElementById("year");
     if (yearSpan) yearSpan.textContent = " " + new Date().getFullYear();
 
+
     let allRolesFromApi = [];
+    let allCities = [];
+
     let rolesArray = [];
     const rolesContainer = document.getElementById("roles-list-container");
-    const newRoleName = document.getElementById("new-role-name");
-    const newRoleResponsibilities = document.getElementById("new-role-responsibilities");
-    const newRoleRequirements = document.getElementById("new-role-requirements");
-    const newRoleExperience = document.getElementById("new-role-experience");
-    const newRoleFormat = document.getElementById("new-role-format");
-    const newRoleEmployment = document.getElementById("new-role-employment");
-    const newRoleSchedule = document.getElementById("new-role-schedule");
-    const newRoleSalary = document.getElementById("new-role-salary");
-    const newRoleSalaryType = document.getElementById("new-role-salary-type");
-    const newRoleContract = document.getElementById("new-role-contract");
     const addRoleBtn = document.getElementById("add-role-btn");
+
+    async function loadCitiesFromApi() {
+      const sel = document.getElementById("proj-city");
+      if (!sel) return;
+      try {
+        const resp = await fetch(API_BASE_URL + "/cities", { credentials: "include" });
+        if (resp.ok) {
+          const data = await resp.json();
+          allCities = Array.isArray(data) ? data : [];
+          const keep = sel.querySelector('option[value=""]');
+          sel.innerHTML = "";
+          if (keep) sel.appendChild(keep);
+          else {
+            const o0 = document.createElement("option");
+            o0.value = "";
+            o0.textContent = "Не указан";
+            sel.appendChild(o0);
+          }
+          allCities.forEach((c) => {
+            const o = document.createElement("option");
+            o.value = String(c.id);
+            o.textContent = c.title || String(c.id);
+            sel.appendChild(o);
+          });
+        }
+      } catch (_) {}
+    }
 
     async function loadRolesFromApi() {
       try {
@@ -681,56 +634,14 @@
           allRolesFromApi = Array.isArray(data) ? data.filter(r => r.is_active !== false) : [];
         }
       } catch (_) {}
-      if (newRoleName) {
-        if (allRolesFromApi.length === 0) {
-          newRoleName.placeholder = "Роли ещё не добавлены (обратитесь к администратору)";
-          newRoleName.disabled = true;
-          if (addRoleBtn) addRoleBtn.disabled = true;
-        } else {
-          newRoleName.placeholder = "Название роли из справочника (" + allRolesFromApi.map(r => r.name).slice(0, 2).join(', ') + "...)";
-          newRoleName.disabled = false;
-          if (addRoleBtn) addRoleBtn.disabled = false;
-          let dl = document.getElementById("roles-datalist");
-          if (!dl) {
-            dl = document.createElement("datalist");
-            dl.id = "roles-datalist";
-            document.body.appendChild(dl);
-            newRoleName.setAttribute("list", "roles-datalist");
-          }
-          dl.innerHTML = allRolesFromApi.map(r => `<option value="${escapeHtml(r.name)}"></option>`).join('');
-        }
+      let dl = document.getElementById("roles-datalist");
+      if (!dl) {
+        dl = document.createElement("datalist");
+        dl.id = "roles-datalist";
+        document.body.appendChild(dl);
       }
-    }
-
-    function renderRolesList() {
-      if (!rolesContainer) return;
-      if (rolesArray.length === 0) {
-        rolesContainer.innerHTML = '<div class="empty-roles-msg" style="color:#aaa; text-align:center; padding:8px; font-family:\'Space Grotesk\', sans-serif;"> Добавьте роли, которые нужны в проекте</div>';
-        return;
-      }
-      rolesContainer.innerHTML = rolesArray.map((role, idx) => `
-        <div class="role-item-card" data-role-idx="${idx}">
-          <div class="role-item-card__head">
-            <span class="role-name">${escapeHtml(role.name_label)}</span>
-            <button type="button" class="remove-role" data-remove-idx="${idx}" title="Удалить роль">✕</button>
-          </div>
-          <dl class="role-item-card__body">
-            ${role.responsibilities ? `<dt>Обязанности</dt><dd>${escapeHtml(role.responsibilities)}</dd>` : ''}
-            ${role.requirements ? `<dt>Требования</dt><dd>${escapeHtml(role.requirements)}</dd>` : ''}
-          </dl>
-        </div>
-      `).join('');
-
-      document.querySelectorAll('.remove-role').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const idx = btn.getAttribute('data-remove-idx');
-          if (idx !== null) {
-            rolesArray.splice(parseInt(idx), 1);
-            renderRolesList();
-          }
-        });
-      });
+      dl.innerHTML = allRolesFromApi.map(r => `<option value="${escapeHtml(r.name)}"></option>`).join('');
+      refreshRoleInputsState();
     }
 
     function escapeHtml(str) {
@@ -743,78 +654,208 @@
       });
     }
 
-    function addRole() {
-      const roleText = newRoleName ? newRoleName.value.trim() : "";
-      if (!roleText) {
-        showNotification('Введите название роли', 'warning', 3000);
-        return;
-      }
-      const found = allRolesFromApi.find(r => r.name.toLowerCase() === roleText.toLowerCase());
-      if (!found) {
-        showNotification(`Роль "${roleText}" не найдена в справочнике. Выберите из предложенных вариантов.`, 'warning', 4000);
-        return;
-      }
-      if (rolesArray.some(r => r.role_type_id === found.id)) {
-        showNotification('Роль с таким названием уже добавлена', 'warning', 3000);
-        return;
-      }
-
-      const salaryRaw = newRoleSalary ? newRoleSalary.value.trim() : "";
-      rolesArray.push({
-        role_type_id:     found.id,
-        name_label:       found.name,
-        responsibilities: newRoleResponsibilities ? newRoleResponsibilities.value.trim() || null : null,
-        requirements:     newRoleRequirements ? newRoleRequirements.value.trim() || null : null,
-        experience:       newRoleExperience  ? newRoleExperience.value  || null : null,
-        work_format:      newRoleFormat      ? newRoleFormat.value      || null : null,
-        employment:       newRoleEmployment  ? newRoleEmployment.value  || null : null,
-        schedule:         newRoleSchedule    ? newRoleSchedule.value    || null : null,
-        salary_amount:    salaryRaw ? parseInt(salaryRaw, 10) : null,
-        salary_type:      newRoleSalaryType  ? newRoleSalaryType.value  || null : null,
-        contract_type:    newRoleContract    ? newRoleContract.value    || null : null,
-      });
-      renderRolesList();
-      if (newRoleName)            newRoleName.value = "";
-      if (newRoleResponsibilities) newRoleResponsibilities.value = "";
-      if (newRoleRequirements)    newRoleRequirements.value = "";
-      if (newRoleExperience)      newRoleExperience.value = "";
-      if (newRoleFormat)          newRoleFormat.value = "";
-      if (newRoleEmployment)      newRoleEmployment.value = "";
-      if (newRoleSchedule)        newRoleSchedule.value = "";
-      if (newRoleSalary)          newRoleSalary.value = "";
-      if (newRoleSalaryType)      newRoleSalaryType.value = "";
-      if (newRoleContract)        newRoleContract.value = "";
-      showNotification(`Роль "${found.name}" добавлена`, 'success', 2000);
+    function optSel(val, cur) {
+      return String(val || '') === String(cur == null ? '' : cur) ? ' selected' : '';
     }
 
-    if (addRoleBtn) addRoleBtn.addEventListener("click", addRole);
+    function roleInputDisplay(role) {
+      if (!role.role_type_id) return '';
+      const r = allRolesFromApi.find(x => x.id === role.role_type_id);
+      return r ? r.name : '';
+    }
+
+    function roleCardHtml(role, idx) {
+      const p = 'rp-' + idx + '-';
+      const sal = role.salary_amount != null && role.salary_amount !== '' ? String(role.salary_amount) : '';
+      return `
+        <div class="exp-entry${!role.role_type_id ? ' is-new' : ''}" data-role-idx="${idx}">
+          <div class="exp-entry-header">
+            <span class="exp-entry-num">Роль ${idx + 1}${!role.role_type_id ? ' (новая)' : ''}</span>
+            <button type="button" class="btn-remove-exp" data-remove-idx="${idx}" title="Удалить">✕</button>
+          </div>
+          <div class="exp-grid">
+            <div class="exp-field exp-field-full">
+              <label for="${p}role">Название роли <span class="req-star" aria-hidden="true">*</span></label>
+              <input type="text" id="${p}role" class="vac-role-input" placeholder="Из подсказок справочника" autocomplete="off" value="${escapeHtml(roleInputDisplay(role))}">
+            </div>
+            <div class="exp-field exp-field-full">
+              <label for="${p}resp">Обязанности / зона ответственности</label>
+              <textarea id="${p}resp" placeholder="Обязанности / зона ответственности">${escapeHtml(role.responsibilities || '')}</textarea>
+            </div>
+            <div class="exp-field exp-field-full">
+              <label for="${p}req">Требования (навыки, опыт)</label>
+              <textarea id="${p}req" placeholder="Требования (навыки, опыт)">${escapeHtml(role.requirements || '')}</textarea>
+            </div>
+            <div class="exp-field">
+              <label for="${p}experience">Опыт работы</label>
+              <select id="${p}experience">
+                <option value="">— Опыт работы —</option>
+                <option value="none"${optSel('none', role.experience)}>Без опыта</option>
+                <option value="<1"${optSel('<1', role.experience)}>До 1 года</option>
+                <option value="1-3"${optSel('1-3', role.experience)}>1–3 года</option>
+                <option value="3-6"${optSel('3-6', role.experience)}>3–6 лет</option>
+                <option value="6+"${optSel('6+', role.experience)}>6+ лет</option>
+              </select>
+            </div>
+            <div class="exp-field">
+              <label for="${p}format">Формат работы</label>
+              <select id="${p}format">
+                <option value="">— Формат работы —</option>
+                <option value="remote"${optSel('remote', role.work_format)}>Удалённо</option>
+                <option value="office"${optSel('office', role.work_format)}>В офисе</option>
+                <option value="hybrid"${optSel('hybrid', role.work_format)}>Гибрид</option>
+              </select>
+            </div>
+            <div class="exp-field">
+              <label for="${p}employment">Занятость</label>
+              <select id="${p}employment">
+                <option value="">— Занятость —</option>
+                <option value="full_time"${optSel('full_time', role.employment)}>Полная занятость</option>
+                <option value="part_time"${optSel('part_time', role.employment)}>Частичная занятость</option>
+                <option value="side_project"${optSel('side_project', role.employment)}>Подработка</option>
+              </select>
+            </div>
+            <div class="exp-field">
+              <label for="${p}schedule">График</label>
+              <select id="${p}schedule">
+                <option value="">— График —</option>
+                <option value="5/2"${optSel('5/2', role.schedule)}>5/2</option>
+                <option value="2/2"${optSel('2/2', role.schedule)}>2/2</option>
+                <option value="4/2"${optSel('4/2', role.schedule)}>4/2</option>
+                <option value="3/3"${optSel('3/3', role.schedule)}>3/3</option>
+              </select>
+            </div>
+            <div class="exp-field">
+              <label for="${p}salary">Зарплата</label>
+              <input type="number" id="${p}salary" min="0" step="1000" placeholder="Сумма в ₽" value="${escapeHtml(sal)}">
+            </div>
+            <div class="exp-field">
+              <label for="${p}salary-type">Тип зарплаты</label>
+              <select id="${p}salary-type">
+                <option value="">— Тип зарплаты —</option>
+                <option value="monthly"${optSel('monthly', role.salary_type)}>В месяц</option>
+                <option value="per_project"${optSel('per_project', role.salary_type)}>За проект</option>
+              </select>
+            </div>
+            <div class="exp-field exp-field-full">
+              <label for="${p}contract">Тип договора</label>
+              <select id="${p}contract">
+                <option value="">— Тип договора —</option>
+                <option value="gph"${optSel('gph', role.contract_type)}>ГПХ</option>
+                <option value="tk"${optSel('tk', role.contract_type)}>ТК</option>
+                <option value="internship"${optSel('internship', role.contract_type)}>Стажировка</option>
+              </select>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function syncRoleFromDom(idx) {
+      const role = rolesArray[idx];
+      if (!role) return;
+      const p = 'rp-' + idx + '-';
+      const roleText = (document.getElementById(p + 'role') || {}).value.trim();
+      const found = roleText ? allRolesFromApi.find(r => r.name.toLowerCase() === roleText.toLowerCase()) : null;
+      if (roleText && found) {
+        role.role_type_id = found.id;
+        role.name_label = found.name;
+      } else {
+        role.role_type_id = null;
+        role.name_label = '';
+      }
+      const gv = id => {
+        const el = document.getElementById(id);
+        return el && el.value ? el.value : '';
+      };
+      role.responsibilities = (document.getElementById(p + 'resp') || {}).value.trim() || null;
+      role.requirements = (document.getElementById(p + 'req') || {}).value.trim() || null;
+      role.experience = gv(p + 'experience') || null;
+      role.work_format = gv(p + 'format') || null;
+      role.employment = gv(p + 'employment') || null;
+      role.schedule = gv(p + 'schedule') || null;
+      role.salary_type = gv(p + 'salary-type') || null;
+      role.contract_type = gv(p + 'contract') || null;
+      const salRaw = (document.getElementById(p + 'salary') || {}).value.trim();
+      if (!salRaw) role.salary_amount = null;
+      else {
+        const n = parseInt(salRaw, 10);
+        role.salary_amount = !isNaN(n) && n >= 0 ? n : null;
+      }
+    }
+
+    function syncAllRolesFromDom() {
+      rolesArray.forEach((_, i) => syncRoleFromDom(i));
+    }
+
+    function refreshRoleInputsState() {
+      document.querySelectorAll('.vac-role-input').forEach(inp => {
+        inp.setAttribute('list', 'roles-datalist');
+        inp.disabled = allRolesFromApi.length === 0;
+        if (allRolesFromApi.length === 0) inp.placeholder = 'Справочник ролей недоступен';
+      });
+      if (addRoleBtn) {
+        addRoleBtn.disabled = allRolesFromApi.length === 0 || rolesArray.length >= 10;
+      }
+    }
+
+    function renderRolesList() {
+      if (!rolesContainer) return;
+      if (rolesArray.length === 0) {
+        rolesContainer.innerHTML = '<div class="skills-empty">Нет добавленных ролей. Нажмите «+ Добавить роль»</div>';
+        refreshRoleInputsState();
+        return;
+      }
+      rolesContainer.innerHTML = rolesArray.map((role, idx) => roleCardHtml(role, idx)).join('');
+      document.querySelectorAll('.btn-remove-exp[data-remove-idx]').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          const idx = parseInt(btn.getAttribute('data-remove-idx'), 10);
+          if (!isNaN(idx)) {
+            rolesArray.splice(idx, 1);
+            renderRolesList();
+          }
+        });
+      });
+      refreshRoleInputsState();
+    }
+
+    function addEmptyRoleSlot() {
+      if (rolesArray.length >= 10) {
+        showNotification('В проекте не больше 10 ролей', 'warning', 3000);
+        return;
+      }
+      rolesArray.push({
+        role_type_id: null,
+        name_label: '',
+        responsibilities: null,
+        requirements: null,
+        experience: null,
+        work_format: null,
+        employment: null,
+        schedule: null,
+        salary_amount: null,
+        salary_type: null,
+        contract_type: null,
+      });
+      renderRolesList();
+    }
+
+    if (addRoleBtn) addRoleBtn.addEventListener("click", addEmptyRoleSlot);
 
     const nameInput = document.getElementById("proj-name");
     const companyInput = document.getElementById("proj-company");
-    const deadlineInput = document.getElementById("proj-deadline");
+    const citySelect = document.getElementById("proj-city");
     const descTextarea = document.getElementById("proj-desc");
-    const membersInput = document.getElementById("proj-members");
-    const contactInput = document.getElementById("proj-contact");
+    const tasksTextarea = document.getElementById("proj-tasks");
     const cancelBtn = document.getElementById("cancel-btn");
     const publishBtn = document.getElementById("publish-btn");
 
     function resetForm() {
       if (nameInput) nameInput.value = "";
       if (companyInput) companyInput.value = "";
-      if (deadlineInput) deadlineInput.value = "";
+      if (citySelect) citySelect.value = "";
       if (descTextarea) descTextarea.value = "";
-      if (membersInput) membersInput.value = "";
-      if (contactInput) contactInput.value = "";
-      if (newRoleName)             newRoleName.value = "";
-      if (newRoleResponsibilities) newRoleResponsibilities.value = "";
-      if (newRoleRequirements)     newRoleRequirements.value = "";
-      if (newRoleExperience)       newRoleExperience.value = "";
-      if (newRoleFormat)           newRoleFormat.value = "";
-      if (newRoleEmployment)       newRoleEmployment.value = "";
-      if (newRoleSchedule)         newRoleSchedule.value = "";
-      if (newRoleSalary)           newRoleSalary.value = "";
-      if (newRoleSalaryType)       newRoleSalaryType.value = "";
-      if (newRoleContract)         newRoleContract.value = "";
+      if (tasksTextarea) tasksTextarea.value = "";
       rolesArray = [];
       renderRolesList();
     }
@@ -859,15 +900,34 @@
           return;
         }
 
+        syncAllRolesFromDom();
+        for (let i = 0; i < rolesArray.length; i++) {
+          if (!rolesArray[i].role_type_id) {
+            showNotification('Укажите название роли из справочника для каждой вакансии', 'warning', 4500);
+            return;
+          }
+        }
+        const seen = new Set();
+        for (const r of rolesArray) {
+          if (seen.has(r.role_type_id)) {
+            showNotification('Нельзя добавить одну и ту же роль дважды', 'warning', 4000);
+            return;
+          }
+          seen.add(r.role_type_id);
+        }
+
         const isAuth = await checkAuth();
         if (!isAuth) return;
 
         const companyNameVal = companyInput ? companyInput.value.trim() : "";
+        const cityRaw = citySelect && citySelect.value ? parseInt(citySelect.value, 10) : NaN;
         const projectData = {
           title: projectName,
           company_name: companyNameVal || null,
+          city_id: Number.isFinite(cityRaw) && cityRaw > 0 ? cityRaw : null,
           employment_intent: "commercial",
           description: (descTextarea ? descTextarea.value.trim() : "") || null,
+          tasks: (tasksTextarea ? tasksTextarea.value.trim() : "") || null,
           vacancies: rolesArray.map(r => ({
             role_type_id:     r.role_type_id,
             responsibilities: r.responsibilities  || null,
@@ -909,32 +969,25 @@
       });
     }
 
-    const roleSelect = document.getElementById("role-select");
-    const roleBtn = document.getElementById("role-btn");
-    const roleDropdown = document.getElementById("role-dropdown");
+    const roleToggle = document.getElementById("role-toggle");
     const burgerBtn = document.getElementById("burger-btn");
     const headerMenu = document.getElementById("header-menu");
 
     function closeMenus() {
-      if (roleSelect) roleSelect.classList.remove("open");
       if (headerMenu) headerMenu.classList.remove("open");
       if (burgerBtn) burgerBtn.classList.remove("open");
     }
 
-    if (roleBtn) {
-      roleBtn.addEventListener("click", function(e) {
-        e.stopPropagation();
-        if (roleSelect) roleSelect.classList.toggle("open");
-        if (headerMenu) headerMenu.classList.remove("open");
-        if (burgerBtn) burgerBtn.classList.remove("open");
-      });
-    }
-
-    if (roleDropdown) {
-      roleDropdown.addEventListener("click", function(e) {
-        if (e.target.tagName === 'BUTTON' && roleBtn) {
-          roleBtn.textContent = e.target.dataset.role || "Ищу сотрудника";
-          if (roleSelect) roleSelect.classList.remove("open");
+    if (roleToggle) {
+      roleToggle.addEventListener("click", function(e) {
+        const btn = e.target.closest(".role-toggle__btn");
+        if (!btn) return;
+        const role = btn.dataset.role;
+        try { localStorage.setItem("tp_role", role); } catch (_) {}
+        roleToggle.querySelectorAll(".role-toggle__btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        if (role === "Ищу вакансию") {
+          window.location.href = "./account_employee.html";
         }
       });
     }
@@ -944,7 +997,6 @@
         e.stopPropagation();
         this.classList.toggle("open");
         if (headerMenu) headerMenu.classList.toggle("open");
-        if (roleSelect) roleSelect.classList.remove("open");
       });
     }
 
@@ -972,6 +1024,7 @@
     }
 
     loadRolesFromApi();
+    loadCitiesFromApi();
     renderRolesList();
   })();
 </script>

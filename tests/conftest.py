@@ -18,9 +18,9 @@ from sqlalchemy.pool import StaticPool
 
 from src.database import Base
 
-import src.models.skills  # noqa: F401
-import src.models.projects  # noqa: F401
-import src.models.roles_dictionary  # noqa: F401
+import src.models.skills
+import src.models.projects
+import src.models.roles_dictionary
 
 from src.main import app
 

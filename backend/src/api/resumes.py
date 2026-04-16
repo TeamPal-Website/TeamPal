@@ -120,6 +120,9 @@ async def create_resume(
             desired_position=resume_data.desired_position.strip()
             if resume_data.desired_position
             else "Не указано",
+            employment_intent=resume_data.employment_intent,
+            commitment_level=resume_data.commitment_level,
+            salary_amount=resume_data.salary_amount,
             about_me=resume_data.about_me,
             status=resume_data.status,
         )

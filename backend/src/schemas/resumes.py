@@ -8,6 +8,10 @@ from src.schemas.resume_experiences import ResumeExperienceRequestAdd
 class Resume(BaseModel):
     id: int
     profile_id: int
+    desired_position: str
+    employment_intent: EmploymentIntent
+    commitment_level: CommitmentLevel | None
+    salary_amount: int | None
     about_me: str | None
     status: ResumeStatus
     created_at: datetime
@@ -19,6 +23,9 @@ class ResumeRequestAdd(BaseModel):
     desired_position: str = Field(default="Не указано", max_length=255)
     about_me: str | None = None
     status: ResumeStatus = ResumeStatus.LOOKING_FOR_JOB
+    employment_intent: EmploymentIntent = EmploymentIntent.COMMERCIAL
+    commitment_level: CommitmentLevel | None = None
+    salary_amount: int | None = Field(default=None, ge=0)
     experiences: list[ResumeExperienceRequestAdd] = Field(default_factory=list)
     skill_ids: list[int] = Field(..., min_length=1)
 

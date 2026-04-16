@@ -9,7 +9,6 @@
   <title>Личный кабинет | TeamPal</title>
   <link rel="icon" type="image/png" href="./assets/logo.png">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #f7f5f2;
@@ -54,38 +53,32 @@
     .header__left { display: flex; align-items: center; gap: 12px; }
     .logo { width: 46px; height: 46px; border-radius: 50px; object-fit: cover; }
     .header__actions { display: flex; align-items: center; gap: 12px; position: relative; }
-    .role-select { position: relative; }
-    .role-btn {
-      min-width: 190px;
-      border: 1px solid var(--line);
-      background: #fff;
+    .role-toggle {
+      display: flex;
+      background: #f0ece7;
       border-radius: 999px;
-      padding: 10px 14px;
-      font-size: 14px;
-      cursor: pointer;
-    }
-    .role-btn::after { content: "▾"; float: right; color: #555; }
-    .role-dropdown {
-      position: absolute;
-      top: calc(100% + 8px);
-      left: 0;
-      width: 100%;
+      padding: 3px;
       border: 1px solid var(--line);
-      border-radius: 14px;
-      background: #fff;
-      display: none;
     }
-    .role-select.open .role-dropdown { display: block; }
-    .role-dropdown button {
-      width: 100%;
-      border: 0;
-      background: #fff;
-      text-align: left;
-      padding: 10px 12px;
-      font-size: 14px;
+    .role-toggle__btn {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
       cursor: pointer;
+      background: transparent;
+      color: #7a7060;
+      transition: all 0.25s ease;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      white-space: nowrap;
     }
-    .role-dropdown button:hover { background: #fff7ec; }
+    .role-toggle__btn:hover { color: var(--ink); }
+    .role-toggle__btn.active {
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(248, 90, 11, 0.25);
+    }
     .burger {
       width: 48px;
       height: 48px;
@@ -178,8 +171,8 @@
       background: linear-gradient(180deg, rgba(255, 208, 102, 0.16), transparent 38%), #fff;
     }
     .avatar-wrap {
-      width: 128px;
-      height: 128px;
+      width: 168px;
+      height: 168px;
       border-radius: 50%;
       border: 4px solid var(--accent-2);
       padding: 4px;
@@ -190,17 +183,17 @@
     .avatar-wrap:hover::after {
       content: " ";
       position: absolute;
-      bottom: 4px;
-      right: 4px;
+      bottom: 6px;
+      right: 6px;
       background: var(--accent-2);
       color: white;
-      width: 32px;
-      height: 32px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 18px;
+      font-size: 20px;
     }
     .avatar {
       width: 100%;
@@ -261,15 +254,29 @@
     .field label { font-size: 13px; color: #4c4c4c; font-weight: 500; }
     .field input, .field select, .field textarea {
       width: 100%;
-      border: 2px solid #dfdfdf;
-      border-radius: 10px;
+      border: 1.5px solid #ddd;
+      border-radius: 12px;
       background: #fff;
-      font-size: 14px;
-      padding: 10px 11px;
+      font-size: 15px;
+      padding: 14px 16px;
       font-family: inherit;
+      min-height: 52px;
+      line-height: 1.45;
+      box-sizing: border-box;
+    }
+    .field textarea { min-height: 100px; }
+    .field select {
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+      padding-right: 44px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
     }
     .field input:focus, .field select:focus, .field textarea:focus {
-      outline: 2px solid rgba(248, 90, 11, 0.24);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(248, 90, 11, 0.12);
       border-color: #f85a0b;
     }
     .about-text {
@@ -277,8 +284,9 @@
       border: 1px solid #dfdfdf;
       border-radius: 10px;
       background: #fff;
-      font-size: 14px;
-      padding: 10px 11px;
+      font-size: 16px;
+      line-height: 1.55;
+      padding: 12px 14px;
       min-height: 258px;
       resize: vertical;
       font-family: inherit;
@@ -306,16 +314,32 @@
     }
     .footer {
       width: 100%;
-      background: var(--footer);
+      background: #eae8e4;
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 0 24px;
-      font-size: 14px;
-      color: var(--ink2);
-      min-height: 52px;
+      font-size: 13px;
+      color: #6b6560;
+      min-height: 48px;
       flex-wrap: wrap;
     }
+    .footer a { color: #c44c08; text-decoration: none; transition: color .2s; }
+    .footer a:hover { color: #1a1a1a; }
+
+    .status-toggle { position:relative; width:44px; height:24px; flex-shrink:0; }
+    .status-toggle input { opacity:0; width:0; height:0; position:absolute; }
+    .status-toggle__track {
+      display:block; width:100%; height:100%; border-radius:12px; cursor:pointer;
+      background:#ccc; transition: background .25s;
+    }
+    .status-toggle__track::after {
+      content:""; position:absolute; top:3px; left:3px; width:18px; height:18px;
+      border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.18);
+      transition: transform .25s;
+    }
+    .status-toggle input:checked + .status-toggle__track { background: var(--accent-2); }
+    .status-toggle input:checked + .status-toggle__track::after { transform: translateX(20px); }
     .project-card {
       background: white;
       border-radius: 12px;
@@ -377,9 +401,9 @@
       padding: 18px;
       box-shadow: 0 24px 44px rgba(0, 0, 0, 0.2);
     }
-    .modal__title { font-family: "Space Grotesk", sans-serif; font-size: 24px; margin-bottom: 12px; }
-    .modal__group { display: grid; gap: 9px; }
-    .modal__group input { border: 1px solid #dddddd; border-radius: 10px; padding: 10px; }
+    .modal__title { font-family: "Space Grotesk", system-ui, sans-serif; font-size: 24px; margin-bottom: 12px; }
+    .modal__group { display: grid; gap: 12px; }
+    .modal__group input { border: 1px solid #dddddd; border-radius: 10px; padding: 14px 16px; font-size: 16px; font-family: inherit; min-height: 50px; }
     .modal__actions { margin-top: 12px; display: flex; justify-content: flex-end; gap: 8px; }
     @media (max-width: 960px) { 
       .dashboard { grid-template-columns: 1fr; }
@@ -388,7 +412,7 @@
     @media (max-width: 700px) {
       .header__inner { padding: 0 16px; }
       .page { padding: 92px 14px 24px; }
-      .role-btn { min-width: 158px; font-size: 13px; }
+      .role-toggle__btn { padding: 7px 14px; font-size: 12px; }
       .actions { flex-wrap: wrap; }
       .action-btn { flex: 1; min-width: 120px; }
     }
@@ -398,6 +422,8 @@
       border-top: 1px solid var(--line);
       padding-top: 12px;
       margin-top: 4px;
+      display: grid;
+      gap: 14px;
     }
     .contacts-group legend {
       font-size: 14px;
@@ -406,9 +432,10 @@
       padding: 0 6px;
       width: auto;
     }
+    
     .action-btn--danger { background:#fff0ee; color:#d14b2a; border-color:#f5c0b0; }
     .action-btn--danger:hover { background:#ffe0da; color:#c0391c; }
-
+    
     .toast-container { position:fixed; top:84px; left:50%; transform:translateX(-50%); z-index:9999; display:flex; flex-direction:column; gap:10px; width:min(440px,92vw); pointer-events:none; }
     .tp-toast { display:flex; align-items:flex-start; gap:10px; padding:12px 16px; border-radius:12px; box-shadow:0 4px 14px rgba(0,0,0,.13); pointer-events:auto; animation:tpToastIn .3s ease; }
     .tp-toast.success { background:#f0fff4; border:1.5px solid #52c41a; }
@@ -424,7 +451,7 @@
     .tp-toast__close { background:none; border:none; cursor:pointer; font-size:20px; line-height:1; padding:0; margin-left:2px; opacity:.75; }
     @keyframes tpToastIn  { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
     @keyframes tpToastOut { to{opacity:0;transform:translateY(-10px)} }
-    /* ── Modal field styles ── */
+    
     .modal__field { display:flex; flex-direction:column; gap:5px; margin-bottom:10px; }
     .modal__field:last-child { margin-bottom:0; }
     .modal__field label { font-size:13px; color:#4c4c4c; font-weight:600; }
@@ -439,12 +466,9 @@
   <div class="header__inner">
     <div class="header__left">
       <img class="logo" src="./assets/logo.png" alt="Логотип TeamPal">
-      <div class="role-select" id="role-select">
-        <button class="role-btn" id="role-btn" type="button">Ищу вакансию</button>
-        <div class="role-dropdown" id="role-dropdown">
-          <button type="button" data-role="Ищу вакансию">Ищу вакансию</button>
-          <button type="button" data-role="Ищу сотрудника">Ищу сотрудника</button>
-        </div>
+      <div class="role-toggle" id="role-toggle">
+        <button class="role-toggle__btn active" type="button" data-role="Ищу вакансию">Ищу вакансию</button>
+        <button class="role-toggle__btn" type="button" data-role="Ищу сотрудника">Ищу сотрудника</button>
       </div>
     </div>
     <div class="header__actions">
@@ -553,8 +577,8 @@
 </main>
 
 <footer class="footer">
-  <span>TeamPal<span id="year"></span></span>
-  <span>обратная связь: teampal@dimple.ru</span>
+  <span>&copy;&nbsp;TeamPal <span id="year"></span></span>
+  <span>Обратная связь: <a href="mailto:teampal@dimple.ru">teampal@dimple.ru</a></span>
 </footer>
 
 <div class="modal" id="password-modal" aria-hidden="true">
@@ -578,14 +602,14 @@
     <div style="color:#555; font-size:14px; margin: -4px 0 12px;">
       Хотите подать резюме на коммерческий или учебный проект?
     </div>
-    <div class="modal__group" style="gap: 10px;">
-      <label style="display:flex; gap:10px; align-items:center; cursor:pointer;">
-        <input type="radio" name="resume-type" value="com" checked />
-        <span>Коммерческий проект</span>
+    <div style="display:flex; flex-direction:column; gap:4px; margin:4px 0 8px;">
+      <label style="display:flex; gap:10px; align-items:center; cursor:pointer; padding:8px 0;">
+        <input type="radio" name="resume-type" value="com" checked style="width:18px;height:18px;accent-color:var(--accent-2);" />
+        <span style="font-size:15px;">Коммерческий проект</span>
       </label>
-      <label style="display:flex; gap:10px; align-items:center; cursor:pointer;">
-        <input type="radio" name="resume-type" value="study" />
-        <span>Учебный проект</span>
+      <label style="display:flex; gap:10px; align-items:center; cursor:pointer; padding:8px 0;">
+        <input type="radio" name="resume-type" value="study" style="width:18px;height:18px;accent-color:var(--accent-2);" />
+        <span style="font-size:15px;">Учебный проект</span>
       </label>
     </div>
     <div class="modal__actions">
@@ -595,7 +619,10 @@
   </div>
 </div>
 
+
+
 <div id="toast-container" class="toast-container"></div>
+
 
 <div class="modal" id="confirm-modal" aria-hidden="true">
   <div class="modal__card">
@@ -607,6 +634,7 @@
     </div>
   </div>
 </div>
+
 
 <div class="modal" id="resume-edit-modal" aria-hidden="true">
   <div class="modal__card" style="width:min(92vw,540px);">
@@ -642,6 +670,9 @@
     const yearSpan = document.getElementById("year");
     if (yearSpan) yearSpan.textContent = " " + new Date().getFullYear();
 
+
+
+
     function showToast(message, type = "success", duration = 5000) {
       const icons = { success: "✓", error: "✕", warning: "⚠", info: "ℹ" };
       const container = document.getElementById("toast-container");
@@ -659,6 +690,9 @@
         }
       }, duration);
     }
+
+
+
 
     let _confirmCb = null;
     function showConfirm(title, text, onConfirm, { danger = true, okLabel = "Подтвердить" } = {}) {
@@ -687,6 +721,10 @@
       if (e.target === document.getElementById("confirm-modal")) _closeConfirmModal();
     });
 
+
+
+
+
     function _getPosCache() {
       try { return JSON.parse(localStorage.getItem("tp_resume_positions") || "{}"); } catch { return {}; }
     }
@@ -697,6 +735,9 @@
         localStorage.setItem("tp_resume_positions", JSON.stringify(c));
       } catch {}
     }
+
+
+
 
     let _editingResumeId = null;
 
@@ -715,6 +756,11 @@
         if (resp.ok) {
           const data = await resp.json();
           const r = data.resume || data;
+          const listTitle = posCache[_editingResumeId] || "";
+          const posEl = document.getElementById("edit-resume-position");
+          if (posEl) {
+            posEl.value = (r.desired_position || "").trim() || listTitle;
+          }
           document.getElementById("edit-resume-about").value = r.about_me || "";
           document.getElementById("edit-resume-status").value = r.status || "looking_for_job";
         }
@@ -1006,6 +1052,9 @@
         }
 
         const posCache = _getPosCache();
+        let typeCache = {};
+        try { typeCache = JSON.parse(localStorage.getItem("tp_resume_types") || "{}"); } catch {}
+        const intentLabel = { commercial: "Коммерческий", noncommercial: "Учебный" };
         const safe = (v) => (v === null || v === undefined) ? "" : String(v);
         const esc = (s) => safe(s).replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
         const statusLabel = { looking_for_job: "Ищу работу", not_looking_for_job: "Не ищу работу" };
@@ -1023,6 +1072,11 @@
               if (detResp.ok) {
                 const det = await detResp.json();
                 const r = det.resume || det;
+                const pos = r.desired_position || null;
+                if (pos && pos !== "Не указано") {
+                  _setPosCache(id, pos);
+                  return { ...resume, _displayTitle: pos };
+                }
                 const aboutPreview = r.about_me
                   ? (r.about_me.length > 50 ? r.about_me.slice(0, 50) + "…" : r.about_me)
                   : null;
@@ -1040,30 +1094,36 @@
           const isLooking = currentStatus === "looking_for_job";
           const statusText = statusLabel[currentStatus] || currentStatus;
           const createdAt = resume?.created_at ? new Date(resume.created_at).toLocaleDateString("ru-RU") : "—";
+          const rType = resume?.employment_intent || typeCache[id] || "";
+          const rTypeLabel = intentLabel[rType] || "";
 
           return `
-            <div class="project-card" style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;">
+            <div class="project-card" style="display:flex;justify-content:space-between;gap:12px;align-items:center;">
               <div style="flex:1;min-width:0;">
-                <div class="project-title" style="margin-bottom:8px;">${esc(displayTitle)}</div>
-                <div class="project-info"><b>Статус:</b> ${esc(statusText)}</div>
+                <div class="project-title" style="margin-bottom:6px;">${esc(displayTitle)}</div>
+                ${rTypeLabel ? `<div class="project-info"><b>Тип:</b> ${esc(rTypeLabel)}</div>` : ""}
                 <div class="project-info"><b>Создано:</b> ${esc(createdAt)}</div>
               </div>
-              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0;">
-                <label style="display:flex;flex-direction:column;align-items:center;gap:3px;user-select:none;cursor:pointer;">
-                  <span style="font-size:11px;color:#666;">Ищу работу</span>
-                  <input type="checkbox" class="proj-status-check" data-resume-id="${esc(id)}"
-                    data-resume-title="${esc(displayTitle)}" data-current-status="${esc(currentStatus)}"
-                    ${isLooking ? "checked" : ""} />
+              <div style="display:flex;align-items:center;gap:14px;flex-shrink:0;">
+                <label style="display:flex;align-items:center;gap:8px;user-select:none;cursor:pointer;">
+                  <span style="font-size:12px;color:#666;">${isLooking ? "Ищу работу" : "Не ищу"}</span>
+                  <span class="status-toggle">
+                    <input type="checkbox" class="proj-status-check" data-resume-id="${esc(id)}"
+                      data-resume-title="${esc(displayTitle)}" data-current-status="${esc(currentStatus)}"
+                      ${isLooking ? "checked" : ""} />
+                    <span class="status-toggle__track"></span>
+                  </span>
                 </label>
                 <a href="./edit_resume.html?id=${esc(id)}"
                    class="action-btn"
-                   style="font-size:13px;padding:5px 12px;white-space:nowrap;text-decoration:none;display:inline-block;">
+                   style="font-size:13px;padding:6px 14px;white-space:nowrap;text-decoration:none;display:inline-block;">
                   Редактировать
                 </a>
               </div>
             </div>
           `;
         }).join("");
+
 
         projectsList.querySelectorAll(".proj-status-check").forEach((checkbox) => {
           checkbox.addEventListener("click", (e) => {
@@ -1108,28 +1168,44 @@
     }
 
     async function savePersonalData() {
+      const genderRaw = document.getElementById("gender").value;
       const newData = {
         first_name: strip(document.getElementById("first-name").value),
         last_name: strip(document.getElementById("last-name").value),
-        age: document.getElementById("age").value ? parseInt(document.getElementById("age").value) : null,
-        gender: document.getElementById("gender").value,
-        city_id: document.getElementById("city").value ? parseInt(document.getElementById("city").value) : null,
+        age: document.getElementById("age").value ? parseInt(document.getElementById("age").value, 10) : null,
+        gender: genderRaw || null,
+        city_id: document.getElementById("city").value ? parseInt(document.getElementById("city").value, 10) : null,
         contacts: {
           phone: strip(document.getElementById("phone").value) || null,
           telegram: strip(document.getElementById("telegram").value) || null,
           github: strip(document.getElementById("github").value) || null,
         },
       };
-      
+
       const errors = [];
-      if (!newData.first_name) errors.push("Имя не может быть пустым");
-      if (!newData.last_name) errors.push("Фамилия не может быть пустой");
-      
+      if (newData.first_name && !newData.last_name) errors.push("Укажите фамилию");
+      if (!newData.first_name && newData.last_name) errors.push("Укажите имя");
+
+      const phone = newData.contacts && newData.contacts.phone;
+      if (phone && !/^(\+7|8)\d{10}$/.test(phone.replace(/[\s\-()]/g, ""))) {
+        errors.push("Введите корректный российский номер телефона");
+      }
+
+      const tg = newData.contacts && newData.contacts.telegram;
+      if (tg && !/^@[A-Za-z0-9_]{5,32}$/.test(tg)) {
+        errors.push("Telegram должен начинаться с @ и содержать 5–32 символа (буквы, цифры, _)");
+      }
+
+      const gh = newData.contacts && newData.contacts.github;
+      if (gh && !/^https?:\/\/.+/.test(gh)) {
+        errors.push("Введите корректную ссылку (https://...)");
+      }
+
       if (errors.length > 0) {
         showToast(errors.join("; "), "error");
         return;
       }
-      
+
       try {
         const response = await fetch(API_BASE_URL + "/profiles", {
           method: "PATCH",
@@ -1137,14 +1213,14 @@
           credentials: "include",
           body: JSON.stringify(newData),
         });
-        
+
         if (response.ok) {
           personalData = {
             ...personalData,
             firstName: newData.first_name,
             lastName: newData.last_name,
             age: newData.age,
-            gender: newData.gender,
+            gender: newData.gender || "",
             cityId: newData.city_id,
             phone: (newData.contacts && newData.contacts.phone) || "",
             telegram: (newData.contacts && newData.contacts.telegram) || "",
@@ -1154,7 +1230,11 @@
           showToast("Личная информация сохранена", "success");
         } else {
           const error = await response.json().catch(() => ({}));
-          showToast("Ошибка: " + (error.detail || "Не удалось сохранить"), "error");
+          const detail = error.detail;
+          const msg = Array.isArray(detail)
+            ? detail.map((d) => d.msg || JSON.stringify(d)).join("; ")
+            : (detail || "Не удалось сохранить");
+          showToast("Ошибка: " + msg, "error");
         }
       } catch (error) {
         console.error("Ошибка сохранения:", error);
@@ -1215,38 +1295,26 @@
       });
     }
 
-    const roleBtn = document.getElementById("role-btn");
-    const roleDropdown = document.getElementById("role-dropdown");
+    const roleToggle = document.getElementById("role-toggle");
     const burgerBtn = document.getElementById("burger-btn");
     const headerMenu = document.getElementById("header-menu");
 
     function closeMenus() { 
-      const roleSelect = document.querySelector(".role-select");
-      if (roleSelect) roleSelect.classList.remove("open"); 
       if (headerMenu) headerMenu.classList.remove("open"); 
       if (burgerBtn) burgerBtn.classList.remove("open"); 
     }
 
-    if (roleBtn && roleDropdown) {
-      roleBtn.addEventListener("click", function (event) { 
-        event.stopPropagation(); 
-        const roleSelect = document.querySelector(".role-select");
-        if (roleSelect) roleSelect.classList.toggle("open"); 
-        if (headerMenu) headerMenu.classList.remove("open"); 
-        if (burgerBtn) burgerBtn.classList.remove("open"); 
-      });
-      roleDropdown.addEventListener("click", function (event) { 
-        if (event.target instanceof HTMLButtonElement && roleBtn) { 
-          const role = event.target.dataset.role || "Ищу вакансию";
-          roleBtn.textContent = role;
-          try { localStorage.setItem("tp_role", role); } catch (_) {}
-          if (role === "Ищу сотрудника") {
-            window.location.href = "./account_manager.html";
-            return;
-          }
-          const roleSelect = document.querySelector(".role-select");
-          if (roleSelect) roleSelect.classList.remove("open"); 
-        } 
+    if (roleToggle) {
+      roleToggle.addEventListener("click", function (event) {
+        const btn = event.target.closest(".role-toggle__btn");
+        if (!btn) return;
+        const role = btn.dataset.role;
+        try { localStorage.setItem("tp_role", role); } catch (_) {}
+        roleToggle.querySelectorAll(".role-toggle__btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        if (role === "Ищу сотрудника") {
+          window.location.href = "./account_manager.html";
+        }
       });
     }
 
@@ -1366,8 +1434,6 @@
 
     try {
       const savedRole = localStorage.getItem("tp_role");
-      if (savedRole && roleBtn) roleBtn.textContent = savedRole;
-      // If user previously selected employer mode, redirect to employer account
       if (savedRole === "Ищу сотрудника") {
         window.location.replace("./account_manager.html");
         return;
