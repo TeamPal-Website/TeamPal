@@ -22,7 +22,18 @@ class UserRequestAdd(BaseModel):
 class UserLoginRequest(BaseModel):
     email: EmailStr = Field(description="Email пользователя", examples=["user@example.com"], max_length=200)
     password: str = Field(examples=["secret123"])
-    
+
+
+class UserChangePasswordRequest(BaseModel):
+    """Смена пароля для текущего пользователя (по cookie JWT)."""
+
+    old_password: str = Field(min_length=1, description="Текущий пароль")
+    new_password: str = Field(min_length=8, description="Новый пароль (не менее 8 символов)")
+
+
+class UserHashedPasswordUpdate(BaseModel):
+    hashed_password: str = Field(min_length=1, max_length=200)
+
 
 class User(BaseModel):
     id: int

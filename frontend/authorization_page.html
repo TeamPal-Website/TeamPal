@@ -2,6 +2,9 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Вход | TeamPal</title>
 
@@ -21,7 +24,7 @@
 }
 
 body {
-  font-family: "Space Grotesk", sans-serif;
+  font-family: "Space Grotesk", system-ui, sans-serif;
   font-optical-sizing: auto;
   font-weight: 700;
   font-style: normal;
@@ -83,15 +86,18 @@ body {
 }
 
 .notification.error {
-    border-left: 3px solid #2d3e56;
+    border-left: 3px solid #e05a2a;
+    background: #fff6f4;
 }
 
 .notification.success {
-    border-left: 3px solid #2d3e56;
+    border-left: 3px solid #52c41a;
+    background: #f6ffed;
 }
 
 .notification.warning {
-    border-left: 3px solid #2d3e56;
+    border-left: 3px solid #faad14;
+    background: #fffbe6;
 }
 
 .notification-content {
@@ -99,7 +105,7 @@ body {
     font-size: 14px;
     line-height: 1.4;
     color: #2d3e56;
-    font-family: "Gabriela", serif;
+    font-family: "Space Grotesk", system-ui, sans-serif;
     text-align: center;
 }
 
@@ -110,7 +116,7 @@ body {
     transition: color 0.2s;
     line-height: 1;
     flex-shrink: 0;
-    font-family: "Gabriela", serif;
+    font-family: "Space Grotesk", system-ui, sans-serif;
 }
 
 .notification-close:hover {
@@ -137,7 +143,7 @@ body {
 .wrapper .subtitle, .wrapper button {
     text-align: center;
     color:#2d3e56;
-    font-family: "Space Grotesk", sans-serif;
+    font-family: "Space Grotesk", system-ui, sans-serif;
 }
 
 .wrapper h1 {
@@ -343,6 +349,16 @@ button {
             const submitBtn = document.getElementById('submitBtn');
             const notificationContainer = document.getElementById('notificationContainer');
 
+            function accountPageUrl() {
+                try {
+                    const role = localStorage.getItem('tp_role');
+                    if (role === 'Ищу вакансию') {
+                        return './account_employee.html';
+                    }
+                } catch (e) {}
+                return './account_manager.html';
+            }
+
             function isNetworkError(error) {
                 const msg = error && error.message ? error.message : String(error);
                 return (
@@ -455,7 +471,7 @@ button {
                         credentials: 'include',
                     });
                     if (response.ok) {
-                        window.location.href = './account.html';
+                        window.location.href = accountPageUrl();
                     }
                 } catch (error) {
                     console.error(error);
@@ -528,7 +544,7 @@ button {
                     
                     showNotification('Вход выполнен успешно! Перенаправление...', 'success', 1500);
                     setTimeout(() => {
-                        window.location.href = './account.html';
+                        window.location.href = accountPageUrl();
                     }, 1000);
                     
                 } catch (error) {

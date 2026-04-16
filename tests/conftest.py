@@ -3,14 +3,25 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
 
+import sqlalchemy.dialects.postgresql as _pg
+from sqlalchemy import JSON as _JSON
+
+_pg.JSONB = _JSON
+
 import pytest
 from unittest.mock import patch
 
 from httpx import AsyncClient, ASGITransport
+from sqlalchemy import event
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from src.database import Base
+
+import src.models.skills
+import src.models.projects
+import src.models.roles_dictionary
+
 from src.main import app
 
 test_engine = create_async_engine(
@@ -19,6 +30,14 @@ test_engine = create_async_engine(
     poolclass=StaticPool,
 )
 test_async_session_maker = async_sessionmaker(bind=test_engine, expire_on_commit=False)
+
+
+@event.listens_for(test_engine.sync_engine, "connect")
+def _sqlite_enable_foreign_keys(dbapi_connection, _connection_record):
+    if test_engine.sync_engine.dialect.name == "sqlite":
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
 
 
 @pytest.fixture(autouse=True)
@@ -40,8 +59,8 @@ async def db_session():
 async def client():
     with patch("src.api.dependencies.async_session_maker", test_async_session_maker):
         async with AsyncClient(
-            transport=ASGITransport(app=app),
-            base_url="http://test",
+                transport=ASGITransport(app=app),
+                base_url="http://test",
         ) as ac:
             yield ac
 
@@ -63,3 +82,15 @@ async def auth_token(client: AsyncClient, registered_user: dict):
 async def authenticated_client(client: AsyncClient, auth_token: str):
     client.cookies.set("access_token", auth_token)
     return client
+
+
+@pytest.fixture
+async def city(client: AsyncClient):
+    response = await client.post("/cities", json={"title": "Москва"})
+    return response.json()["data"]
+
+
+@pytest.fixture
+async def user_id(authenticated_client: AsyncClient):
+    response = await authenticated_client.get("/auth/me")
+    return response.json()["id"]

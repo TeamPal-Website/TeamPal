@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Создание резюме | TeamPal</title>
+  <link rel="icon" type="image/png" href="./assets/logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f7f5f2;
+      --header: #eae8e4;
+      --panel: #ffffff;
+      --panel-soft: #fffaf3;
+      --ink: #1a1a1a;
+      --ink2: #3a3a3a;
+      --line: rgba(0, 0, 0, 0.09);
+      --accent-1: #fa9500;
+      --accent-2: #f85a0b;
+      --footer: #d4d3cb;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      background: radial-gradient(900px 500px at -10% -25%, rgba(255, 208, 102, 0.28), transparent 70%),
+                  radial-gradient(700px 420px at 110% 0%, rgba(248, 90, 11, 0.14), transparent 68%),
+                  var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .notification-container {
+      position: fixed;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      width: auto;
+      min-width: 280px;
+      max-width: 500px;
+      pointer-events: none;
+    }
+    .notification {
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 12px 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      animation: fadeInDown 0.25s ease-out;
+      pointer-events: auto;
+      border: 1px solid #0000001a;
+      width: 100%;
+    }
+    @keyframes fadeInDown {
+      from { transform: translateY(-20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes fadeOutUp {
+      from { transform: translateY(0); opacity: 1; }
+      to { transform: translateY(-20px); opacity: 0; }
+    }
+    .notification.error { border-left: 3px solid #e05a2a; background: #fff6f4; }
+    .notification.success { border-left: 3px solid #52c41a; background: #f6ffed; }
+    .notification.warning { border-left: 3px solid #faad14; background: #fffbe6; }
+    .notification-content {
+      flex: 1;
+      font-size: 14px;
+      line-height: 1.4;
+      color: #2d3e56;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      text-align: center;
+    }
+    .notification-close {
+      cursor: pointer;
+      font-size: 18px;
+      color: #b5b5b5;
+      transition: color 0.2s;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .notification-close:hover { color: #F85A0B; }
+
+    .header {
+      position: fixed;
+      inset: 0 0 auto 0;
+      z-index: 1000;
+      height: 72px;
+      background: var(--header);
+      border-bottom: 1px solid var(--line);
+    }
+    .header__inner {
+      height: 100%;
+      padding: 0 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+    .header__left { display: flex; align-items: center; gap: 12px; }
+    .logo { width: 46px; height: 46px; border-radius: 50px; object-fit: cover; }
+    .header__actions { display: flex; align-items: center; gap: 12px; position: relative; }
+    .role-toggle {
+      display: flex;
+      background: #f0ece7;
+      border-radius: 999px;
+      padding: 3px;
+      border: 1px solid var(--line);
+    }
+    .role-toggle__btn {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      background: transparent;
+      color: #7a7060;
+      transition: all 0.25s ease;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      white-space: nowrap;
+    }
+    .role-toggle__btn:hover { color: var(--ink); }
+    .role-toggle__btn.active {
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(248, 90, 11, 0.25);
+    }
+    .burger {
+      width: 48px;
+      height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+    .burger span {
+      width: 22px;
+      height: 2.5px;
+      background: linear-gradient(90deg, #5a4a3a, #3a2a1a);
+      display: block;
+      border-radius: 4px;
+      transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+    .burger.open span:nth-child(1) { transform: translateY(8.5px) rotate(45deg); width: 24px; background: linear-gradient(90deg, var(--accent-2), var(--accent-1)); }
+    .burger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+    .burger.open span:nth-child(3) { transform: translateY(-8.5px) rotate(-45deg); width: 24px; background: linear-gradient(90deg, var(--accent-2), var(--accent-1)); }
+    .header-menu {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 12px);
+      width: 244px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 12px 8px;
+      display: none;
+    }
+    .header-menu.open { display: block; }
+    .header-menu__title {
+      font-size: 12px;
+      font-weight: 500;
+      color: #8b8b8b;
+      margin-bottom: 12px;
+      padding: 0 10px;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+    }
+    .header-menu__item, .header-menu__exit {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      border-radius: 14px;
+      text-align: left;
+      padding: 10px 14px;
+      margin-bottom: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink);
+      font-family: "Space Grotesk", system-ui, sans-serif;
+    }
+    .header-menu__item:hover { background: #fff5e8; color: var(--accent-2); }
+    .header-menu__exit { margin-top: 8px; color: #d14b2a; border-top: 1px solid var(--line); border-radius: 0; padding-top: 12px; }
+    .page {
+      width: 100%;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 102px 20px 48px;
+      flex: 1;
+    }
+    .constructor-card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
+      overflow: hidden;
+    }
+    .constructor-header {
+      padding: 24px 28px 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: space-between;
+    }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: none;
+      border: none;
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--accent-2);
+      cursor: pointer;
+      text-decoration: none;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      transition: transform 0.2s;
+    }
+    .back-link:hover { transform: translateX(-4px); color: #c13f0a; }
+    .constructor-title {
+      font-size: 28px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-2), var(--accent-1));
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+    }
+    .constructor-body { padding: 28px; }
+    .resume-section {
+      background: var(--panel-soft);
+      border-radius: 24px;
+      padding: 20px 24px;
+      margin-bottom: 28px;
+      border: 1px solid var(--line);
+      font-family: "Space Grotesk", system-ui, sans-serif;
+    }
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #2d2a24;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+    }
+    .req-star { color: #e05a2a; font-weight: 700; margin-left: 2px; }
+    textarea, input, select {
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      border: 1.5px solid #ddd;
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 15px;
+      background: white;
+      width: 100%;
+      min-height: 52px;
+      line-height: 1.45;
+      box-sizing: border-box;
+    }
+    textarea { min-height: 120px; }
+    select {
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+      padding-right: 44px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+    }
+    textarea:focus, input:focus, select:focus {
+      outline: none;
+      border-color: var(--accent-2);
+      box-shadow: 0 0 0 3px rgba(248, 90, 11, 0.1);
+    }
+    
+    .skills-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px 16px;
+      margin-bottom: 16px;
+      max-height: 280px;
+      overflow-y: auto;
+      padding: 4px 2px;
+    }
+    .skill-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #fff;
+      padding: 8px 14px;
+      border-radius: 40px;
+      border: 1px solid #e8e0d5;
+      cursor: pointer;
+      transition: 0.2s;
+      font-size: 14px;
+      font-weight: 500;
+      color: #3a2e24;
+    }
+    .skill-checkbox:hover { background: #fff7ef; border-color: var(--accent-1); }
+    .skill-checkbox input {
+      width: 18px;
+      height: 18px;
+      min-height: 18px !important;
+      margin: 0;
+      accent-color: var(--accent-2);
+      cursor: pointer;
+      flex-shrink: 0;
+      padding: 0;
+      border: none;
+    }
+    .skill-checkbox span {
+      flex: 1;
+      cursor: pointer;
+    }
+    .skill-checkbox.checked {
+      border-color: var(--accent-2);
+      background: #fff6f0;
+      font-weight: 600;
+    }
+    .selected-skills-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px dashed #e2d8ce;
+      min-height: 32px;
+    }
+    .selected-skill-tag {
+      background: linear-gradient(115deg, #fff0e0, #fff7ef);
+      border-radius: 30px;
+      padding: 5px 12px;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 500;
+      color: var(--accent-2);
+    }
+    .selected-skill-tag button {
+      background: none;
+      border: none;
+      font-size: 14px;
+      cursor: pointer;
+      color: #b78f64;
+      line-height: 1;
+      padding: 0 2px;
+    }
+    .selected-skill-tag button:hover { color: var(--accent-2); }
+    .skills-hint { display: block; margin-top: 12px; color: #8f7e68; font-size: 13px; }
+    .skills-empty { color: #aaa; font-size: 13px; padding: 8px 0; }
+    #experienceList { margin-bottom: 16px; }
+    .exp-list-empty {
+      color: #8a7d72;
+      font-size: 14px;
+      text-align: center;
+      padding: 20px 12px;
+      line-height: 1.55;
+      margin-bottom: 4px;
+    }
+    .skills-empty {
+      color: #8a7d72;
+      font-size: 14px;
+      text-align: center;
+      padding: 20px 12px;
+      line-height: 1.55;
+    }
+    .exp-entry {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 18px;
+      margin-bottom: 16px;
+      background: #fff;
+    }
+    .exp-entry.is-new { border-color: rgba(250, 149, 0, 0.55); background: #fffbf5; }
+    .exp-entry-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px dashed #ece3d9;
+    }
+    .exp-entry-num { font-size: 13px; font-weight: 700; color: var(--accent-2); }
+    .btn-remove-exp {
+      background: none;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      color: #bc9a7a;
+      line-height: 1;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+    }
+    .btn-remove-exp:hover { background: #fff0ee; color: #d14b2a; }
+    .exp-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .exp-field { display: flex; flex-direction: column; gap: 5px; }
+    .exp-field-full { grid-column: 1 / -1; }
+    .exp-field label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #4e3e2e;
+      margin-bottom: 2px;
+      display: block;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+    }
+    .exp-grid > .exp-field--date { align-self: stretch; }
+    .exp-field--date { gap: 4px; }
+    .exp-field--date > label:first-of-type { margin-bottom: 0; line-height: 1.35; }
+    .exp-field--date > input { margin-top: auto; }
+    .exp-field input,
+    .exp-field textarea {
+      width: 100%;
+      border: 1.5px solid #ddd;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      font-size: 15px;
+      background: #fff;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      min-height: 48px;
+      box-sizing: border-box;
+      line-height: 1.45;
+    }
+    .exp-field textarea { min-height: 88px; resize: vertical; }
+    .exp-field input:focus,
+    .exp-field textarea:focus {
+      outline: none;
+      border-color: var(--accent-2);
+      box-shadow: 0 0 0 3px rgba(248, 90, 11, 0.12);
+    }
+    .exp-fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    .resume-section .exp-fields .exp-field-full { grid-column: span 2; }
+    .field label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #4e3e2e;
+      display: block;
+      margin-bottom: 6px;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+    }
+    .error-msg {
+      font-size: 11px;
+      color: #e05a2a;
+      margin-top: 4px;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+    }
+    .exp-field input.inp-invalid,
+    .exp-field textarea.inp-invalid,
+    .field input.inp-invalid,
+    .field textarea.inp-invalid {
+      border-color: #e05a2a !important;
+      background: #fff8f7 !important;
+    }
+    .btn-add-exp {
+      background: none;
+      border: 1px dashed var(--accent-2);
+      border-radius: 60px;
+      padding: 12px;
+      width: 100%;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--accent-2);
+      transition: 0.2s;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+    }
+    .btn-add-exp:hover { background: #fff4ea; }
+    .form-actions {
+      margin-top: 16px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 14px;
+      border-top: 1px solid var(--line);
+      padding-top: 24px;
+    }
+    .btn {
+      padding: 11px 26px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      border: none;
+      transition: all .2s;
+    }
+    .btn-secondary {
+      background: #fff;
+      border: 1px solid #dbd2c7;
+      color: #4a3a2a;
+    }
+    .btn-secondary:hover { background: #f5f0ea; }
+    .btn-primary {
+      background: linear-gradient(105deg, var(--accent-1), var(--accent-2));
+      color: white;
+      box-shadow: 0 4px 10px rgba(248, 90, 11, 0.25);
+    }
+    .btn-primary:hover { transform: translateY(-2px); opacity: 0.95; }
+    .btn-danger {
+      background: #fff0ee;
+      color: #d14b2a;
+      border: 1px solid #f5c0b0;
+    }
+    .btn-danger:hover { background: #ffe0da; color: #c0391c; }
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 20, 20, 0.36);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1100;
+    }
+    .modal.open { display: flex; }
+    .modal__card {
+      width: min(92vw, 440px);
+      border-radius: 16px;
+      background: #fff;
+      border: 1px solid var(--line);
+      padding: 24px;
+      box-shadow: 0 24px 44px rgba(0, 0, 0, 0.2);
+    }
+    .modal__title { font-size: 22px; font-weight: 700; margin-bottom: 10px; }
+    .modal__text { color: #555; font-size: 14px; line-height: 1.5; margin-bottom: 18px; }
+    .modal__actions { display: flex; justify-content: flex-end; gap: 10px; }
+    .footer {
+      width: 100%;
+      background: #eae8e4;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      font-size: 13px;
+      color: #6b6560;
+      min-height: 48px;
+      flex-wrap: wrap;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+    }
+    .footer a { color: #c44c08; text-decoration: none; transition: color .2s; }
+    .footer a:hover { color: #1a1a1a; }
+    @media (max-width: 760px) {
+      .exp-fields { grid-template-columns: 1fr; }
+      .resume-section .exp-fields .exp-field-full { grid-column: span 1; }
+      .exp-grid { grid-template-columns: 1fr; }
+      .exp-field-full { grid-column: 1; }
+      .constructor-header { flex-direction: column; align-items: flex-start; }
+      .page { padding: 92px 16px 40px; }
+      .skills-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+  <div class="notification-container" id="notificationContainer"></div>
+
+  <div class="modal" id="cancel-form-modal" aria-hidden="true">
+    <div class="modal__card" role="dialog" aria-labelledby="cancel-form-title" aria-modal="true">
+      <div class="modal__title" id="cancel-form-title">Отменить создание резюме?</div>
+      <div class="modal__text">Все введённые данные будут сброшены.</div>
+      <div class="modal__actions">
+        <button type="button" class="btn btn-secondary" id="cancel-form-stay">Остаться</button>
+        <button type="button" class="btn btn-danger" id="cancel-form-reset">Сбросить</button>
+      </div>
+    </div>
+  </div>
+
+<header class="header">
+  <div class="header__inner">
+    <div class="header__left">
+      <img class="logo" src="./assets/logo.png" alt="TeamPal">
+      <div class="role-toggle" id="role-toggle">
+        <button class="role-toggle__btn active" type="button" data-role="Ищу вакансию">Ищу вакансию</button>
+        <button class="role-toggle__btn" type="button" data-role="Ищу сотрудника">Ищу сотрудника</button>
+      </div>
+    </div>
+    <div class="header__actions">
+      <button class="burger" id="burger-btn" type="button">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="header-menu" id="header-menu">
+        <div class="header-menu__title">Меню</div>
+        <button class="header-menu__item" type="button">Личный кабинет</button>
+        <button class="header-menu__item" type="button">Мои заявки</button>
+        <button class="header-menu__item" type="button">Каталог</button>
+        <button class="header-menu__item" type="button">Поддержать проект</button>
+        <button class="header-menu__exit" type="button">Выйти</button>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="constructor-card">
+    <div class="constructor-header">
+      <a href="javascript:history.back()" class="back-link">← Назад к резюме</a>
+      <span class="constructor-title">Конструктор резюме</span>
+    </div>
+    <div class="constructor-body">
+      <div class="resume-section">
+        <div class="section-title">Основное</div>
+        <div class="exp-fields">
+          <div class="field exp-field-full">
+            <label>Название резюме <span class="req-star" aria-hidden="true">*</span></label>
+            <input id="resumeTitle" type="text" maxlength="255" placeholder="Например: Junior Frontend" />
+          </div>
+          <div class="field">
+            <label>Должность <span class="req-star" aria-hidden="true">*</span></label>
+            <input id="desiredPosition" type="text" maxlength="255" placeholder="Frontend-разработчик" />
+          </div>
+          <div class="field">
+            <label>График работы</label>
+            <select id="workSchedule">
+              <option value="">Не указывать</option>
+              <option value="full_time">Полный день</option>
+              <option value="part_time">Неполный день</option>
+              <option value="side_project">Подработка / гибкий формат</option>
+            </select>
+          </div>
+          <div class="field exp-field-full">
+            <label>Заработная плата (в рублях)</label>
+            <input id="salary" type="text" class="tp-salary-input" inputmode="numeric" autocomplete="off" placeholder="Например: 1 200 000" />
+          </div>
+        </div>
+      </div>
+
+      <div class="resume-section">
+        <div class="section-title">О себе</div>
+        <textarea id="aboutMe" rows="4" placeholder="Расскажите о вашем опыте, навыках и карьерных целях..."></textarea>
+      </div>
+
+      <div class="resume-section">
+        <div class="section-title">Стек технологий / Скиллы <span class="req-star" aria-hidden="true">*</span></div>
+        <div class="selected-skills-tags" id="selectedSkillsTags"></div>
+        <div class="skills-grid" id="skillsGrid"></div>
+        <small class="skills-hint">✓ Отметьте навыки в списке ниже. Выбранные отображаются выше — снять можно крестиком.</small>
+      </div>
+
+      <div class="resume-section">
+        <div class="section-title">Опыт работы</div>
+        <div id="experienceList"></div>
+        <button type="button" id="addExperienceBtn" class="btn-add-exp">+ Добавить место работы</button>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" id="cancelBtn">Отменить</button>
+        <button type="button" class="btn btn-primary" id="publishBtn">Опубликовать резюме</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <span>&copy;&nbsp;TeamPal <span id="year"></span></span>
+  <span>Обратная связь: <a href="mailto:teampal@dimple.ru">teampal@dimple.ru</a></span>
+</footer>
+
+
+<script src="./config.js"></script>
+<script>
+(function () {
+  const TP_RESUMES_MAX = 5;
+  fetch(API_BASE_URL + "/my_resumes", { credentials: "include" })
+    .then(function (r) { return r.ok ? r.json() : []; })
+    .then(function (arr) {
+      if (!Array.isArray(arr) || arr.length < TP_RESUMES_MAX) return;
+      try {
+        sessionStorage.setItem(
+          "tp_flash_error",
+          "Достигнут лимит резюме (не более " + TP_RESUMES_MAX + "). Удалите резюме или отредактируйте существующее.",
+        );
+      } catch (e) {}
+      window.location.replace("./account_employee.html");
+    })
+    .catch(function () {});
+})();
+</script>
+<script>
+  (function() {
+    const notificationContainer = document.getElementById('notificationContainer');
+
+    function showNotification(message, type = 'error', duration = 5000) {
+      const text = message == null ? '' : String(message);
+      if (!notificationContainer) {
+        console.warn('[TeamPal]', text);
+        try {
+          window.alert(text);
+        } catch (_) {}
+        return;
+      }
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+      notification.innerHTML = `
+        <div class="notification-content"></div>
+        <div class="notification-close">×</div>
+      `;
+      const contentEl = notification.querySelector('.notification-content');
+      if (contentEl) contentEl.textContent = text;
+      notificationContainer.appendChild(notification);
+      const closeBtn = notification.querySelector('.notification-close');
+      closeBtn.addEventListener('click', () => {
+        notification.style.animation = 'fadeOutUp 0.25s ease-out forwards';
+        setTimeout(() => { notification.remove(); }, 250);
+      });
+      setTimeout(() => {
+        if (notification.parentElement) {
+          notification.style.animation = 'fadeOutUp 0.25s ease-out forwards';
+          setTimeout(() => { notification.remove(); }, 250);
+        }
+      }, duration);
+    }
+
+    const yearSpan = document.getElementById("year");
+    if (yearSpan) yearSpan.textContent = " " + new Date().getFullYear();
+
+
+    let allSkillsList = [];
+    let selectedSkillIds = [];
+    const skillsGrid = document.getElementById("skillsGrid");
+    const selectedTagsContainer = document.getElementById("selectedSkillsTags");
+
+    async function loadSkillsFromApi() {
+      if (!skillsGrid) return;
+      skillsGrid.innerHTML = '<div style="color:#aaa; font-size:13px; padding:8px;">Загрузка навыков...</div>';
+      try {
+        const resp = await fetch(API_BASE_URL + "/skills", { credentials: "include" });
+        if (resp.ok) {
+          const data = await resp.json();
+          allSkillsList = Array.isArray(data) ? data : [];
+        }
+      } catch (_) {}
+      if (allSkillsList.length === 0) {
+        skillsGrid.innerHTML = '<div style="color:#aaa; font-size:13px; padding:8px;">Навыки ещё не добавлены. Обратитесь к администратору.</div>';
+        return;
+      }
+      renderSkillsGrid();
+    }
+
+    function renderSkillsGrid() {
+      if (!skillsGrid) return;
+      skillsGrid.innerHTML = allSkillsList.map(skill => {
+        const checked = selectedSkillIds.includes(skill.id);
+        return `
+        <label class="skill-checkbox${checked ? ' checked' : ''}" data-skill-label="${skill.id}">
+          <input type="checkbox" class="skill-check" value="${skill.id}" data-skill-id="${skill.id}" ${checked ? 'checked' : ''}>
+          <span>${escapeHtml(skill.name)}</span>
+        </label>`;
+      }).join('');
+      document.querySelectorAll('.skill-check').forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+          const skillId = parseInt(checkbox.value, 10);
+          const lab = checkbox.closest('.skill-checkbox');
+          if (lab) {
+            if (checkbox.checked) lab.classList.add('checked');
+            else lab.classList.remove('checked');
+          }
+          if (checkbox.checked) {
+            if (!selectedSkillIds.includes(skillId)) selectedSkillIds.push(skillId);
+          } else {
+            const idx = selectedSkillIds.indexOf(skillId);
+            if (idx !== -1) selectedSkillIds.splice(idx, 1);
+          }
+          renderSelectedTags();
+        });
+      });
+      renderSelectedTags();
+    }
+
+    function renderSelectedTags() {
+      if (!selectedTagsContainer) return;
+      if (selectedSkillIds.length === 0) {
+        selectedTagsContainer.innerHTML = '<div class="skills-empty" style="margin:0;">Выберите навыки в списке ниже</div>';
+        return;
+      }
+      const selectedSkillObjects = allSkillsList.filter(s => selectedSkillIds.includes(s.id));
+      selectedTagsContainer.innerHTML = selectedSkillObjects.map((skill) => `
+        <div class="selected-skill-tag">
+          ${escapeHtml(skill.name)}
+          <button type="button" data-skill-remove="${skill.id}" aria-label="Удалить">✕</button>
+        </div>
+      `).join('');
+      document.querySelectorAll('[data-skill-remove]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const skillId = parseInt(btn.getAttribute('data-skill-remove'), 10);
+          const idx = selectedSkillIds.indexOf(skillId);
+          if (idx !== -1) selectedSkillIds.splice(idx, 1);
+          const checkboxToUncheck = document.querySelector('.skill-check[data-skill-id="' + skillId + '"]');
+          if (checkboxToUncheck) {
+            checkboxToUncheck.checked = false;
+            const lab = checkboxToUncheck.closest('.skill-checkbox');
+            if (lab) lab.classList.remove('checked');
+          }
+          renderSelectedTags();
+        });
+      });
+    }
+
+    let experiences = [];
+    const experienceListDiv = document.getElementById("experienceList");
+    const addExpBtn = document.getElementById("addExperienceBtn");
+
+    function isValidDateString(dateStr) {
+      if (!dateStr.trim()) return true;
+      let day, month, year;
+      if (dateStr.includes('-')) {
+        let parts = dateStr.split('-');
+        if (parts.length !== 3) return false;
+        year = parseInt(parts[0], 10);
+        month = parseInt(parts[1], 10);
+        day = parseInt(parts[2], 10);
+      } else if (dateStr.includes('.')) {
+        let parts = dateStr.split('.');
+        if (parts.length !== 3) return false;
+        day = parseInt(parts[0], 10);
+        month = parseInt(parts[1], 10);
+        year = parseInt(parts[2], 10);
+      } else {
+        return false;
+      }
+      if (isNaN(year) || isNaN(month) || isNaN(day)) return false;
+      if (month < 1 || month > 12) return false;
+      const daysInMonth = new Date(year, month, 0).getDate();
+      if (day < 1 || day > daysInMonth) return false;
+      if (year < 1900 || year > 2100) return false;
+      return true;
+    }
+
+    function isAcceptableEndDateInput(v) {
+      const s = (v || "").trim();
+      if (!s) return true;
+      if (isValidDateString(s)) return true;
+      const t = s.toLowerCase().replace(/\s+/g, " ");
+      const synonyms = [
+        "до сих пор", "по н.в.", "н.в.", "по настоящее время", "настоящее время",
+        "по сей день", "сейчас", "работаю", "до настоящего времени", "now", "present", "current"
+      ];
+      return synonyms.some((ph) => t === ph || t.includes(ph));
+    }
+
+    function renderExperiences() {
+      if (!experienceListDiv) return;
+      if (experiences.length === 0) {
+        experienceListDiv.innerHTML = '<div class="exp-list-empty">Нет добавленного опыта работы</div>';
+        return;
+      }
+      experienceListDiv.innerHTML = experiences.map((exp, idx) => {
+        const emptySlot = !(String(exp.company || '').trim()) && !(String(exp.position || '').trim()) && !(String(exp.dateStart || '').trim());
+        return `
+        <div class="exp-entry${emptySlot ? ' is-new' : ''}" data-exp-idx="${idx}">
+          <div class="exp-entry-header">
+            <span class="exp-entry-num">Место работы ${idx + 1}</span>
+            <button type="button" class="btn-remove-exp" data-remove-exp="${idx}" title="Удалить">✕</button>
+          </div>
+          <div class="exp-grid">
+            <div class="exp-field">
+              <label>Компания <span class="req-star" aria-hidden="true">*</span></label>
+              <input type="text" class="exp-company-input" maxlength="255" value="${escapeHtml(exp.company)}" placeholder="ООО Рога и Копыта">
+            </div>
+            <div class="exp-field">
+              <label>Должность <span class="req-star" aria-hidden="true">*</span></label>
+              <input type="text" class="exp-position-input" maxlength="255" value="${escapeHtml(exp.position)}" placeholder="Backend Developer">
+            </div>
+            <div class="exp-field exp-field--date">
+              <label>Дата начала <span class="req-star" aria-hidden="true">*</span></label>
+              <input type="text" class="exp-start-input" data-exp-idx="${idx}" value="${escapeHtml(exp.dateStart)}" placeholder="ДД.ММ.ГГГГ или ГГГГ-ММ-ДД">
+            </div>
+            <div class="exp-field exp-field--date">
+              <label>Дата окончания (если не заполнено — по настоящее время)</label>
+              <input type="text" class="exp-end-input" data-exp-idx="${idx}" value="${escapeHtml(exp.dateEnd)}" placeholder="ДД.ММ.ГГГГ или оставьте пустым">
+            </div>
+            <div class="exp-field exp-field-full">
+              <label>Описание</label>
+              <textarea class="exp-desc-input" placeholder="Чем вы занимались…">${escapeHtml(exp.description)}</textarea>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+      document.querySelectorAll('.btn-remove-exp[data-remove-exp]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = btn.getAttribute('data-remove-exp');
+          if (idx !== null) { experiences.splice(parseInt(idx, 10), 1); renderExperiences(); }
+        });
+      });
+      document.querySelectorAll('.exp-entry').forEach((item, idx) => {
+        const companyInput = item.querySelector('.exp-company-input');
+        const positionInput = item.querySelector('.exp-position-input');
+        const startInput = item.querySelector('.exp-start-input');
+        const endInput = item.querySelector('.exp-end-input');
+        const descInput = item.querySelector('.exp-desc-input');
+        function updateExpData() {
+          if (experiences[idx]) {
+            experiences[idx].company = companyInput.value;
+            experiences[idx].position = positionInput.value;
+            experiences[idx].description = descInput.value;
+            experiences[idx].dateStart = startInput.value;
+            experiences[idx].dateEnd = endInput.value;
+          }
+        }
+        function clearExpInvalid() {
+          companyInput.classList.remove('inp-invalid');
+          positionInput.classList.remove('inp-invalid');
+          startInput.classList.remove('inp-invalid');
+          endInput.classList.remove('inp-invalid');
+        }
+        companyInput.addEventListener('input', () => { clearExpInvalid(); updateExpData(); });
+        positionInput.addEventListener('input', () => { clearExpInvalid(); updateExpData(); });
+        descInput.addEventListener('input', () => { clearExpInvalid(); updateExpData(); });
+        startInput.addEventListener('input', () => { clearExpInvalid(); updateExpData(); });
+        endInput.addEventListener('input', () => { clearExpInvalid(); updateExpData(); });
+        updateExpData();
+      });
+    }
+
+    addExpBtn.addEventListener("click", () => {
+      experiences.push({ company: "", position: "", dateStart: "", dateEnd: "", description: "" });
+      renderExperiences();
+    });
+
+    const resumeTitleInput = document.getElementById("resumeTitle");
+    const desiredPositionInput = document.getElementById("desiredPosition");
+    const workScheduleSelect = document.getElementById("workSchedule");
+    const salaryInput = document.getElementById("salary");
+    if (salaryInput) {
+      salaryInput.addEventListener("input", () => salaryInput.classList.remove("inp-invalid"));
+      if (typeof window.tpBindSalaryGroupedInput === "function") {
+        window.tpBindSalaryGroupedInput(salaryInput);
+      }
+    }
+    const aboutMeTextarea = document.getElementById("aboutMe");
+    const cancelBtn = document.getElementById("cancelBtn");
+    const publishBtn = document.getElementById("publishBtn");
+
+    [resumeTitleInput, desiredPositionInput, aboutMeTextarea].forEach((el) => {
+      if (!el) return;
+      el.addEventListener("input", () => el.classList.remove("inp-invalid"));
+    });
+
+    function resetForm() {
+      if (resumeTitleInput) resumeTitleInput.value = "";
+      if (desiredPositionInput) desiredPositionInput.value = "";
+      if (workScheduleSelect) workScheduleSelect.value = "";
+      if (salaryInput) salaryInput.value = "";
+      if (aboutMeTextarea) aboutMeTextarea.value = "";
+      selectedSkillIds = [];
+      renderSkillsGrid();
+      renderSelectedTags();
+      experiences = [];
+      renderExperiences();
+    }
+
+    async function checkAuth() {
+      try {
+        const response = await fetch(API_BASE_URL + "/auth/me", {
+          method: "GET",
+          credentials: "include",
+        });
+        if (!response.ok) {
+          showNotification('Пожалуйста, авторизуйтесь для создания резюме', 'warning', 3000);
+          setTimeout(() => {
+            window.location.href = "./authorization_page.html";
+          }, 1500);
+          return false;
+        }
+        return true;
+      } catch (error) {
+        console.error('Auth check error:', error);
+        showNotification('Ошибка соединения с сервером', 'error', 3000);
+        return false;
+      }
+    }
+
+    const cancelFormModal = document.getElementById('cancel-form-modal');
+    const cancelFormStay = document.getElementById('cancel-form-stay');
+    const cancelFormReset = document.getElementById('cancel-form-reset');
+    function openCancelFormModal() {
+      if (cancelFormModal) {
+        cancelFormModal.classList.add('open');
+        cancelFormModal.setAttribute('aria-hidden', 'false');
+      }
+    }
+    function closeCancelFormModal() {
+      if (cancelFormModal) {
+        cancelFormModal.classList.remove('open');
+        cancelFormModal.setAttribute('aria-hidden', 'true');
+      }
+    }
+    if (cancelFormStay) cancelFormStay.addEventListener('click', closeCancelFormModal);
+    if (cancelFormModal) {
+      cancelFormModal.addEventListener('click', (e) => {
+        if (e.target === cancelFormModal) closeCancelFormModal();
+      });
+    }
+    if (cancelFormReset) {
+      cancelFormReset.addEventListener('click', () => {
+        closeCancelFormModal();
+        resetForm();
+        showNotification('Форма сброшена', 'success', 2000);
+      });
+    }
+    cancelBtn.addEventListener("click", () => {
+      openCancelFormModal();
+    });
+
+    publishBtn.addEventListener("click", async () => {
+      try {
+      document
+        .querySelectorAll(
+          "#resumeTitle.inp-invalid, #desiredPosition.inp-invalid, #aboutMe.inp-invalid",
+        )
+        .forEach((el) => el.classList.remove("inp-invalid"));
+
+      const title = (resumeTitleInput?.value || "").trim();
+      if (!title) {
+        showNotification('Пожалуйста, заполните поле "Название резюме"', 'error');
+        return;
+      }
+
+      const position = (desiredPositionInput?.value || "").trim();
+      if (!position) {
+        showNotification('Пожалуйста, заполните поле "Должность"', 'error');
+        return;
+      }
+
+      const V255 =
+        typeof window.TP_ORM_VARCHAR255 === "number" ? window.TP_ORM_VARCHAR255 : 255;
+      const TMAX =
+        typeof window.TP_ORM_TEXT_SAFE_MAX === "number" ? window.TP_ORM_TEXT_SAFE_MAX : 100000;
+      const maxCheck =
+        typeof window.tpCheckStringMaxLen === "function"
+          ? window.tpCheckStringMaxLen
+          : function (s, max, label) {
+              const v = s == null ? "" : String(s);
+              if (v.length > max) {
+                return {
+                  ok: false,
+                  message: label + ": не более " + String(max) + " символов.",
+                };
+              }
+              return { ok: true, value: v };
+            };
+
+      let lenChk = maxCheck(title, V255, "Название резюме");
+      if (!lenChk.ok) {
+        showNotification(lenChk.message, "error", 7000);
+        resumeTitleInput?.classList.add("inp-invalid");
+        resumeTitleInput?.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+      resumeTitleInput?.classList.remove("inp-invalid");
+
+      lenChk = maxCheck(position, V255, "Должность");
+      if (!lenChk.ok) {
+        showNotification(lenChk.message, "error", 7000);
+        desiredPositionInput?.classList.add("inp-invalid");
+        desiredPositionInput?.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+      desiredPositionInput?.classList.remove("inp-invalid");
+
+      const schedule = (workScheduleSelect?.value || "").trim();
+
+      const salaryRaw = salaryInput ? salaryInput.value : "";
+      const salParseFn = window.tpParseAndValidateSalaryRaw;
+      const salChk =
+        typeof salParseFn === "function"
+          ? salParseFn(salaryRaw)
+          : typeof window.tpValidateSalaryAmount === "function"
+            ? window.tpValidateSalaryAmount(
+                String(salaryRaw || "").trim() === ""
+                  ? null
+                  : Math.trunc(Number(String(salaryRaw).replace(/[\s\u00a0]/g, ""))),
+              )
+            : { ok: true, value: null };
+      if (!salChk || salChk.ok !== true) {
+        showNotification(
+          (salChk && salChk.message) ||
+            'Зарплата введена некорректно. Укажите сумму цифрами или оставьте поле пустым.',
+          'error',
+          7000,
+        );
+        if (salaryInput) {
+          salaryInput.classList.add('inp-invalid');
+          salaryInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      }
+      const salaryAmount = salChk.value;
+
+      const aboutText = (aboutMeTextarea && aboutMeTextarea.value ? aboutMeTextarea.value : "").trim();
+      lenChk = maxCheck(aboutText, TMAX, "Поле «О себе»");
+      if (!lenChk.ok) {
+        showNotification(lenChk.message, "error", 7000);
+        aboutMeTextarea?.classList.add("inp-invalid");
+        aboutMeTextarea?.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+      aboutMeTextarea?.classList.remove("inp-invalid");
+
+      if (selectedSkillIds.length === 0) {
+        showNotification('В резюме должен быть хотя бы один навык', 'warning');
+        return;
+      }
+
+      document
+        .querySelectorAll(
+          ".exp-start-input.inp-invalid, .exp-end-input.inp-invalid, .exp-company-input.inp-invalid, .exp-position-input.inp-invalid, .exp-desc-input.inp-invalid, #salary.inp-invalid",
+        )
+        .forEach((el) => el.classList.remove("inp-invalid"));
+
+      const cleanedExperiences = [];
+      for (let idx = 0; idx < (experiences || []).length; idx++) {
+        const exp = experiences[idx];
+        const row = {
+          company: (exp.company || "").trim(),
+          position: (exp.position || "").trim(),
+          dateStart: (exp.dateStart || "").trim(),
+          dateEnd: (exp.dateEnd || "").trim(),
+          description: (exp.description || "").trim(),
+        };
+        if (!row.company && !row.position && !row.dateStart && !row.dateEnd && !row.description) continue;
+        const entry = experienceListDiv && experienceListDiv.querySelector(`.exp-entry[data-exp-idx="${idx}"]`);
+        if (!row.company) {
+          showNotification('Заполните "Компания" в опыте работы (или удалите пустой блок)', 'error');
+          entry?.querySelector('.exp-company-input')?.classList.add('inp-invalid');
+          return;
+        }
+        if (!row.position) {
+          showNotification('Заполните "Должность" в опыте работы (или удалите пустой блок)', 'error');
+          entry?.querySelector('.exp-position-input')?.classList.add('inp-invalid');
+          return;
+        }
+        if (!row.dateStart) {
+          showNotification('Укажите дату начала в блоке опыта или удалите пустой блок.', 'error', 5500);
+          entry?.querySelector('.exp-start-input')?.classList.add('inp-invalid');
+          return;
+        }
+        if (!isValidDateString(row.dateStart)) {
+          showNotification('Дата начала введена неверно. Укажите дату в формате ДД.ММ.ГГГГ или ГГГГ-ММ-ДД.', 'error', 5500);
+          entry?.querySelector('.exp-start-input')?.classList.add('inp-invalid');
+          return;
+        }
+        if (row.dateEnd && !isAcceptableEndDateInput(row.dateEnd)) {
+          showNotification('Дата окончания введена неверно. Оставьте поле пустым (по настоящее время) или укажите дату в формате ДД.ММ.ГГГГ или ГГГГ-ММ-ДД.', 'error', 6500);
+          entry?.querySelector('.exp-end-input')?.classList.add('inp-invalid');
+          return;
+        }
+        lenChk = maxCheck(row.company, V255, "Компания в опыте работы");
+        if (!lenChk.ok) {
+          showNotification(lenChk.message, "error", 7000);
+          entry?.querySelector(".exp-company-input")?.classList.add("inp-invalid");
+          entry?.scrollIntoView({ behavior: "smooth", block: "center" });
+          return;
+        }
+        lenChk = maxCheck(row.position, V255, "Должность в опыте работы");
+        if (!lenChk.ok) {
+          showNotification(lenChk.message, "error", 7000);
+          entry?.querySelector(".exp-position-input")?.classList.add("inp-invalid");
+          entry?.scrollIntoView({ behavior: "smooth", block: "center" });
+          return;
+        }
+        lenChk = maxCheck(row.description, TMAX, "Описание в опыте работы");
+        if (!lenChk.ok) {
+          showNotification(lenChk.message, "error", 7000);
+          entry?.querySelector(".exp-desc-input")?.classList.add("inp-invalid");
+          entry?.scrollIntoView({ behavior: "smooth", block: "center" });
+          return;
+        }
+        cleanedExperiences.push(row);
+      }
+
+      const isAuth = await checkAuth();
+      if (!isAuth) return;
+
+      function toISODate(dateStr) {
+        if (!dateStr || !dateStr.trim()) return null;
+        if (dateStr.includes('.')) {
+          const parts = dateStr.split('.');
+          if (parts.length === 3) return `${parts[2]}-${parts[1].padStart(2,'0')}-${parts[0].padStart(2,'0')}`;
+        }
+        return dateStr;
+      }
+
+
+      const resumeData = {
+        desired_position: position,
+        about_me: aboutText || null,
+        employment_intent: "commercial",
+        skill_ids: selectedSkillIds,
+        experiences: cleanedExperiences.map(exp => ({
+          company_name: exp.company,
+          position: exp.position,
+          start_date: toISODate(exp.dateStart),
+          end_date: isValidDateString(exp.dateEnd) ? toISODate(exp.dateEnd) : null,
+          description: exp.description || null,
+        })),
+      };
+      if (schedule) resumeData.commitment_level = schedule;
+      if (salaryAmount != null && salaryAmount !== undefined) resumeData.salary_amount = salaryAmount;
+
+      try {
+        const response = await fetch(API_BASE_URL + "/resumes", {
+          method: "POST",
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: "include",
+          body: JSON.stringify(resumeData),
+        });
+
+        if (response.ok) {
+          try {
+            const created = await response.json().catch(() => null);
+            const rid = created?.data?.resume?.id || created?.id;
+            if (rid && title) {
+              const posCache = JSON.parse(localStorage.getItem("tp_resume_positions") || "{}");
+              posCache[String(rid)] = title;
+              localStorage.setItem("tp_resume_positions", JSON.stringify(posCache));
+            }
+            if (rid) {
+              const typeCache = JSON.parse(localStorage.getItem("tp_resume_types") || "{}");
+              typeCache[String(rid)] = "commercial";
+              localStorage.setItem("tp_resume_types", JSON.stringify(typeCache));
+            }
+          } catch {}
+          showNotification('Резюме успешно создано!', 'success', 3000);
+          resetForm();
+          setTimeout(() => {
+            window.location.href = "./account_employee.html";
+          }, 1500);
+        } else {
+          const error = await response.json().catch(() => ({}));
+          const msg =
+            (typeof window.tpFormatApiDetail === 'function' ? window.tpFormatApiDetail(error.detail) : '') ||
+            (typeof error.detail === 'string' ? error.detail : '') ||
+            'Ошибка при создании резюме';
+          showNotification(msg, 'error', 6500);
+        }
+      } catch (error) {
+        console.error('Create resume error:', error);
+        showNotification('Не удалось подключиться к серверу', 'error', 3000);
+      }
+      } catch (e) {
+        console.error(e);
+        showNotification(
+          (e && e.message) ? 'Ошибка: ' + e.message : 'Произошла ошибка при публикации резюме. Проверьте поля и попробуйте снова.',
+          'error',
+          7000,
+        );
+      }
+    });
+
+    const roleToggle = document.getElementById("role-toggle");
+    const burgerBtn = document.getElementById("burger-btn");
+    const headerMenu = document.getElementById("header-menu");
+
+    function closeMenus() {
+      if (headerMenu) headerMenu.classList.remove("open");
+      if (burgerBtn) burgerBtn.classList.remove("open");
+    }
+    if (roleToggle) {
+      roleToggle.addEventListener("click", function(e) {
+        const btn = e.target.closest(".role-toggle__btn");
+        if (!btn) return;
+        const role = btn.dataset.role;
+        try { localStorage.setItem("tp_role", role); } catch (_) {}
+        roleToggle.querySelectorAll(".role-toggle__btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        if (role === "Ищу сотрудника") {
+          window.location.href = "./account_manager.html";
+        }
+      });
+    }
+    if (burgerBtn) {
+      burgerBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        burgerBtn.classList.toggle("open");
+        if (headerMenu) headerMenu.classList.toggle("open");
+      });
+    }
+    document.addEventListener("click", (e) => { if (!e.target.closest(".header__actions")) closeMenus(); });
+    const logoutMenuItem = document.querySelector(".header-menu__exit");
+    if (logoutMenuItem) {
+      logoutMenuItem.addEventListener("click", async () => {
+        try {
+          await fetch(API_BASE_URL + "/auth/logout", {
+            method: "POST",
+            credentials: "include",
+          });
+        } catch (error) {
+          console.error(error);
+        } finally {
+          showNotification('Вы вышли из системы', 'warning', 2000);
+          setTimeout(() => {
+            window.location.href = "./authorization_page.html";
+          }, 1500);
+        }
+      });
+    }
+
+    function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
+
+    loadSkillsFromApi();
+    renderSelectedTags();
+    renderExperiences();
+  })();
+</script>
+</body>
+</html>

@@ -173,3 +173,43 @@ class TestLogout:
 
         me_after = await authenticated_client.get("/auth/me")
         assert me_after.status_code == 401
+
+
+class TestChangePassword:
+
+    async def test_change_password_success(self, authenticated_client: AsyncClient, registered_user: dict):
+        r = await authenticated_client.post(
+            "/auth/change_password",
+            json={"old_password": registered_user["password"], "new_password": "newpass999"},
+        )
+        assert r.status_code == 200
+        assert r.json() == {"status": "OK"}
+
+        await authenticated_client.post("/auth/logout")
+        authenticated_client.cookies.clear()
+
+        bad = await authenticated_client.post(
+            "/auth/login",
+            json={"email": registered_user["email"], "password": registered_user["password"]},
+        )
+        assert bad.status_code == 401
+
+        ok = await authenticated_client.post(
+            "/auth/login",
+            json={"email": registered_user["email"], "password": "newpass999"},
+        )
+        assert ok.status_code == 200
+
+    async def test_change_password_wrong_old(self, authenticated_client: AsyncClient):
+        r = await authenticated_client.post(
+            "/auth/change_password",
+            json={"old_password": "wrong-old-pass-xxx", "new_password": "another888"},
+        )
+        assert r.status_code == 401
+
+    async def test_change_password_requires_auth(self, client: AsyncClient):
+        r = await client.post(
+            "/auth/change_password",
+            json={"old_password": "x", "new_password": "12345678"},
+        )
+        assert r.status_code == 401

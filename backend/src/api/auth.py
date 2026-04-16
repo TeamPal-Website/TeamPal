@@ -2,9 +2,14 @@ from fastapi import APIRouter, Response, HTTPException
 from sqlalchemy.exc import IntegrityError
 
 from src.api.dependencies import UserIdDep, DBDep
-from src.database import async_session_maker
-from src.repositories.users import UsersRepository
-from src.schemas.users import UserAdd, UserRequestAdd, UserLoginRequest
+from src.schemas.users import (
+    UserAdd,
+    UserRequestAdd,
+    UserLoginRequest,
+    UserChangePasswordRequest,
+    UserHashedPasswordUpdate,
+)
+from src.schemas.profiles import ProfileAdd
 from src.services.auth import AuthService
 
 
@@ -30,7 +35,8 @@ async def register_user(
         is_active=True
     )
     try:
-        await db.users.add(new_user_data)
+        created_user = await db.users.add(new_user_data)
+        await db.profiles.add(ProfileAdd(user_id=created_user.id))
         await db.commit()
     except IntegrityError:
         raise HTTPException(status_code=409, detail="Пользователь с таким email уже существует")
@@ -82,4 +88,29 @@ async def get_me(db: DBDep, user_id: UserIdDep):
 )
 async def logout(response: Response):
     response.delete_cookie("access_token",)
+    return {"status": "OK"}
+
+
+@router.post(
+    "/change_password",
+    summary="Смена пароля текущего пользователя",
+    description="Проверяет текущий пароль и обновляет хэш. Требует аутентификации (cookie JWT).",
+)
+async def change_password(
+        db: DBDep,
+        user_id: UserIdDep,
+        data: UserChangePasswordRequest,
+):
+    user = await db.users.get_user_with_hashed_password_by_id(user_id)
+    if not AuthService().verify_password(data.old_password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Текущий пароль указан неверно")
+
+    new_hash = AuthService().get_password_hash(data.new_password)
+    rows = await db.users.edit(
+        UserHashedPasswordUpdate(hashed_password=new_hash),
+        id=user_id,
+    )
+    if rows == 0:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+    await db.commit()
     return {"status": "OK"}
