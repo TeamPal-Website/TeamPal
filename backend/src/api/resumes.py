@@ -71,8 +71,6 @@ async def get_my_resume(
         raise HTTPException(status_code=404, detail="Резюме не найдено")
 
     skills = await db.resume_skills.get_filtered(resume_id=resume.id)
-    if not skills:
-        raise HTTPException(status_code=404, detail="У резюме нет навыков")
 
     experiences = await db.resume_experiences.get_filtered(resume_id=resume.id)
 

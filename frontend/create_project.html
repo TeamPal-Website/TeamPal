@@ -495,7 +495,7 @@
       <span class="constructor-title">Конструктор нового проекта</span>
     </div>
     <div class="constructor-body">
-      <form class="project-form" id="create-project-form">
+      <form class="project-form" id="create-project-form" novalidate onsubmit="return false;">
         <div class="form-field">
           <label for="proj-name">Название проекта <span class="req-star" aria-hidden="true">*</span></label>
           <input type="text" id="proj-name" placeholder="Например: AI-ассистент для бизнеса" autocomplete="off">
@@ -547,6 +547,24 @@
 
 
 <script src="./config.js"></script>
+<script>
+(function () {
+  const TP_PROJECTS_MAX = 10;
+  fetch(API_BASE_URL + "/my_projects", { credentials: "include" })
+    .then(function (r) { return r.ok ? r.json() : []; })
+    .then(function (arr) {
+      if (!Array.isArray(arr) || arr.length < TP_PROJECTS_MAX) return;
+      try {
+        sessionStorage.setItem(
+          "tp_flash_error",
+          "Достигнут лимит проектов (не более " + TP_PROJECTS_MAX + "). Удалите проект или отредактируйте существующий.",
+        );
+      } catch (e) {}
+      window.location.replace("./account_manager.html");
+    })
+    .catch(function () {});
+})();
+</script>
 <script>
   (function() {
     const notificationContainer = document.getElementById('notificationContainer');
@@ -648,7 +666,7 @@
       return `
         <div class="exp-entry${!role.role_type_id ? ' is-new' : ''}" data-role-idx="${idx}">
           <div class="exp-entry-header">
-            <span class="exp-entry-num">Роль ${idx + 1}${!role.role_type_id ? ' (новая)' : ''}</span>
+            <span class="exp-entry-num">Роль ${idx + 1}</span>
             <button type="button" class="btn-remove-exp" data-remove-idx="${idx}" title="Удалить">✕</button>
           </div>
           <div class="exp-grid">
@@ -705,7 +723,7 @@
             </div>
             <div class="exp-field">
               <label for="${p}salary">Зарплата</label>
-              <input type="number" id="${p}salary" min="0" step="1000" placeholder="Сумма в ₽" value="${escapeHtml(sal)}">
+              <input type="number" id="${p}salary" min="0" max="50000000" step="1" placeholder="Сумма в рублях" value="${escapeHtml(sal)}">
             </div>
             <div class="exp-field">
               <label for="${p}salary-type">Тип зарплаты</label>
@@ -753,12 +771,13 @@
       role.schedule = gv(p + 'schedule') || null;
       role.salary_type = gv(p + 'salary-type') || null;
       role.contract_type = gv(p + 'contract') || null;
-      const salRaw = (document.getElementById(p + 'salary') || {}).value.trim();
-      if (!salRaw) role.salary_amount = null;
-      else {
-        const n = parseInt(salRaw, 10);
-        role.salary_amount = !isNaN(n) && n >= 0 ? n : null;
-      }
+      const salRaw = (document.getElementById(p + 'salary') || {}).value;
+      var salFn = window.tpParseAndValidateSalaryRaw;
+      const salParsed =
+        typeof salFn === 'function'
+          ? salFn(salRaw)
+          : { ok: true, value: (salRaw || '').trim() ? parseInt(String(salRaw).replace(/[\s\u00a0]/g, ''), 10) : null };
+      role.salary_amount = salParsed && salParsed.ok === true ? salParsed.value : null;
     }
 
     function syncAllRolesFromDom() {
@@ -887,13 +906,34 @@
             return;
           }
         }
-        const seen = new Set();
-        for (const r of rolesArray) {
-          if (seen.has(r.role_type_id)) {
-            showNotification('Нельзя добавить одну и ту же роль дважды', 'warning', 4000);
+        for (let i = 0; i < rolesArray.length; i++) {
+          const p = "rp-" + i + "-";
+          const salEl = document.getElementById(p + "salary");
+          if (salEl && salEl.validity && salEl.validity.badInput) {
+            showNotification(
+              "Вакансия " + (i + 1) + ": укажите сумму цифрами (можно с пробелами) или оставьте поле пустым.",
+              "error",
+              6000,
+            );
+            salEl.classList.add("inp-invalid");
             return;
           }
-          seen.add(r.role_type_id);
+          const salRaw = (salEl || {}).value;
+          var salFn2 = window.tpParseAndValidateSalaryRaw;
+          const chk =
+            typeof salFn2 === "function"
+              ? salFn2(salRaw)
+              : { ok: true, value: null };
+          if (!chk || chk.ok !== true) {
+            showNotification(
+              "Вакансия " + (i + 1) + ": " + ((chk && chk.message) || "Укажите корректную сумму зарплаты или оставьте поле пустым."),
+              "error",
+              6000,
+            );
+            if (salEl) salEl.classList.add("inp-invalid");
+            return;
+          }
+          rolesArray[i].salary_amount = chk.value;
         }
 
         const isAuth = await checkAuth();
@@ -919,7 +959,7 @@
             work_format:      r.work_format     || null,
             employment:       r.employment      || null,
             schedule:         r.schedule        || null,
-            salary_amount:    r.salary_amount   || null,
+            salary_amount:    r.salary_amount != null && r.salary_amount !== '' ? r.salary_amount : null,
             salary_type:      r.salary_type     || null,
             contract_type:    r.contract_type   || null,
           })),
@@ -943,7 +983,11 @@
             }, 1500);
           } else {
             const error = await response.json().catch(() => ({}));
-            showNotification(error.detail || 'Ошибка при создании проекта', 'error', 3000);
+            const msg =
+              (typeof tpFormatApiDetail === "function" ? tpFormatApiDetail(error.detail) : "") ||
+              (typeof error.detail === "string" ? error.detail : "") ||
+              "Ошибка при создании проекта";
+            showNotification(msg, "error", 6500);
           }
         } catch (error) {
           console.error('Create project error:', error);

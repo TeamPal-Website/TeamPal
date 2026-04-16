@@ -240,6 +240,21 @@
     try { return JSON.stringify(detail); } catch { return String(detail); }
   }
 
+  const TP_MAX_SAL_SAFE = (typeof window.TP_MAX_SALARY_RUB !== 'undefined' && window.TP_MAX_SALARY_RUB != null) ? window.TP_MAX_SALARY_RUB : 50000000;
+  function tpValidateSalarySafe(n) {
+    if (typeof window.tpValidateSalaryAmount === 'function') return window.tpValidateSalaryAmount(n);
+    if (n === null || n === undefined || Number.isNaN(n)) return { ok: true, value: null };
+    const v = Math.trunc(Number(n));
+    if (v < 0) return { ok: false, message: 'Сумма заработной платы не может быть отрицательной' };
+    if (v > TP_MAX_SAL_SAFE) {
+      return {
+        ok: false,
+        message: 'Превышена допустимая сумма заработной платы (не более ' + String(TP_MAX_SAL_SAFE) + ' ₽).',
+      };
+    }
+    return { ok: true, value: v };
+  }
+
   function showToast(msg, type, dur) {
     type = type || 'success'; dur = dur || 5000;
     const icons = { success:'✓', error:'✕', warning:'⚠', info:'ℹ' };
@@ -363,14 +378,25 @@
       return;
     }
 
-    const resumeData = await resumeResp.json();
+    let resumeData;
+    try {
+      resumeData = await resumeResp.json();
+    } catch (parseErr) {
+      console.error(parseErr);
+      document.getElementById('main-page').innerHTML = '<div class="loading-state">Не удалось разобрать ответ сервера. <a href="./account_employee.html">← Назад</a></div>';
+      return;
+    }
     const resume = resumeData.resume || resumeData;
-    const apiSkills = resumeData.skills || [];
-    const apiExperiences = resumeData.experiences || [];
+    const apiSkills = Array.isArray(resumeData.skills) ? resumeData.skills : [];
+    const apiExperiences = Array.isArray(resumeData.experiences) ? resumeData.experiences : [];
 
     if (skillsResp.ok) {
-      allSkills = await skillsResp.json();
-      if (!Array.isArray(allSkills)) allSkills = [];
+      try {
+        allSkills = await skillsResp.json();
+        if (!Array.isArray(allSkills)) allSkills = [];
+      } catch {
+        allSkills = [];
+      }
     }
 
 
@@ -392,7 +418,12 @@
     }));
     initialExpIds = new Set(experiences.map(e => e.id));
 
-    renderPage(resume);
+    try {
+      renderPage(resume);
+    } catch (renderErr) {
+      console.error(renderErr);
+      document.getElementById('main-page').innerHTML = '<div class="loading-state">Ошибка отображения формы. Обновите страницу или откройте <a href="./account_employee.html">← личный кабинет</a>.</div>';
+    }
   }
 
 
@@ -428,8 +459,8 @@
             </select>
           </div>
           <div class="field exp-field-full">
-            <label for="f-salary">Заработная плата (₽)</label>
-            <input id="f-salary" type="number" min="0" step="1000" placeholder="Например: 120000" value="${esc(salaryVal)}" />
+            <label for="f-salary">Заработная плата</label>
+            <input id="f-salary" type="number" min="0" max="${TP_MAX_SAL_SAFE}" step="1" placeholder="Сумма в рублях" value="${esc(salaryVal)}" />
           </div>
           <div class="field">
             <label for="f-employment-intent">Тип резюме <span class="req-star" aria-hidden="true">*</span></label>
@@ -750,8 +781,19 @@
     const aboutMe = document.getElementById('f-about').value.trim();
     const status = document.getElementById('f-status').value;
     const commitmentRaw = document.getElementById('f-commitment').value;
-    const salaryRaw = (document.getElementById('f-salary').value || '').trim();
+    const salaryEl = document.getElementById('f-salary');
     const intent = document.getElementById('f-employment-intent').value;
+
+    if (salaryEl && salaryEl.validity && salaryEl.validity.badInput) {
+      showToast(
+        'Зарплата введена некорректно. Укажите сумму цифрами (можно с пробелами) или оставьте поле пустым.',
+        'error',
+        7000,
+      );
+      salaryEl.classList.add('inp-invalid');
+      salaryEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
 
     if (!listTitle) {
       showToast('Укажите название резюме — это обязательное поле.', 'error', 5500);
@@ -769,15 +811,26 @@
       return;
     }
 
-    if (salaryRaw !== '') {
-      const n = parseInt(salaryRaw, 10);
-      if (Number.isNaN(n) || n < 0) {
-        showToast('Некорректная сумма зарплаты. Введите число ≥ 0 или оставьте поле пустым.', 'error', 5500);
-        document.getElementById('f-salary')?.classList.add('inp-invalid');
-        document.getElementById('f-salary')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        return;
-      }
+    var salParseFn = window.tpParseAndValidateSalaryRaw;
+    const salChk =
+      typeof salParseFn === 'function'
+        ? salParseFn(salaryEl ? salaryEl.value : '')
+        : tpValidateSalarySafe(
+            salaryEl && String(salaryEl.value).trim() !== ''
+              ? Math.trunc(Number(String(salaryEl.value).replace(/[\s\u00a0]/g, '')))
+              : null,
+          );
+    if (!salChk || salChk.ok !== true) {
+      showToast(
+        (salChk && salChk.message) || 'Укажите корректную сумму заработной платы или оставьте поле пустым.',
+        'error',
+        7000,
+      );
+      salaryEl?.classList.add('inp-invalid');
+      salaryEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
     }
+    const validatedSalary = salChk.value;
 
     saveBtn.disabled = true;
     saveBtn.textContent = 'Сохранение…';
@@ -793,11 +846,8 @@
     if (commitmentRaw) basicPayload.commitment_level = commitmentRaw;
     else basicPayload.commitment_level = null;
 
-    if (salaryRaw === '') basicPayload.salary_amount = null;
-    else {
-      const n = parseInt(salaryRaw, 10);
-      if (!Number.isNaN(n) && n >= 0) basicPayload.salary_amount = n;
-    }
+    if (validatedSalary == null) basicPayload.salary_amount = null;
+    else basicPayload.salary_amount = validatedSalary;
 
     try {
       const r = await api('/resumes/' + resumeId, { method:'PATCH', body:JSON.stringify(basicPayload) });

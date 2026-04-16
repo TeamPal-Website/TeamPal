@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from src.enums import (
     CommitmentLevel,
@@ -10,6 +10,21 @@ from src.enums import (
     Schedule,
     WorkFormat,
 )
+
+MAX_SALARY_AMOUNT_RUB = 50_000_000
+
+
+def _validate_salary_amount(v: int | None) -> int | None:
+    if v is None:
+        return v
+    if v < 0:
+        raise ValueError("Сумма заработной платы не может быть отрицательной")
+    if v > MAX_SALARY_AMOUNT_RUB:
+        raise ValueError(
+            "Превышена допустимая сумма заработной платы (не более "
+            f"{MAX_SALARY_AMOUNT_RUB} ₽).",
+        )
+    return v
 
 
 class ProjectVacancy(BaseModel):
@@ -38,9 +53,14 @@ class ProjectVacancyRequestAdd(BaseModel):
     employment: CommitmentLevel | None = None
     responsibilities: str | None = None
     requirements: str | None = None
-    salary_amount: int | None = Field(default=None, ge=0)
+    salary_amount: int | None = Field(default=None)
     salary_type: SalaryType | None = None
     contract_type: ContractType | None = None
+
+    @field_validator("salary_amount")
+    @classmethod
+    def validate_salary_request(cls, v: int | None) -> int | None:
+        return _validate_salary_amount(v)
 
 
 class ProjectVacancyAdd(ProjectVacancyRequestAdd):
@@ -55,6 +75,11 @@ class ProjectVacancyPatch(BaseModel):
     employment: CommitmentLevel | None = None
     responsibilities: str | None = None
     requirements: str | None = None
-    salary_amount: int | None = Field(default=None, ge=0)
+    salary_amount: int | None = Field(default=None)
     salary_type: SalaryType | None = None
     contract_type: ContractType | None = None
+
+    @field_validator("salary_amount")
+    @classmethod
+    def validate_salary_patch(cls, v: int | None) -> int | None:
+        return _validate_salary_amount(v)

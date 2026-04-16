@@ -4,12 +4,14 @@ import pytest
 from pydantic import ValidationError
 
 from src.schemas.cities import CityAdd, City
+from src.schemas.resumes import MAX_SALARY_AMOUNT_RUB
 from src.schemas.profiles import (
     ProfileAdd,
     ProfileBase,
     ProfileContacts,
     ProfileRequestPatch,
 )
+from src.schemas.resumes import ResumeRequestAdd
 from src.enums import Gender
 
 
@@ -139,6 +141,14 @@ class TestProfileBase:
         profile = ProfileBase(first_name="А" * 35)
         assert len(profile.first_name) == 35
 
+    def test_first_name_latin_rejected(self):
+        with pytest.raises(ValidationError):
+            ProfileBase(first_name="John")
+
+    def test_first_name_hyphenated_russian_accepted(self):
+        profile = ProfileBase(first_name="Анна-Мария")
+        assert profile.first_name == "Анна-Мария"
+
     def test_city_id_zero_fails(self):
         with pytest.raises(ValidationError):
             ProfileBase(city_id=0)
@@ -190,3 +200,23 @@ class TestProfileRequestPatch:
         dumped = patch_data.model_dump(exclude_unset=True)
         assert dumped["first_name"] == "Ольга"
         assert dumped["age"] == 28
+
+
+class TestResumeRequestAddSalary:
+    def test_salary_at_max_ok(self):
+        r = ResumeRequestAdd(
+            desired_position="Разработчик",
+            salary_amount=MAX_SALARY_AMOUNT_RUB,
+            skill_ids=[1],
+            experiences=[],
+        )
+        assert r.salary_amount == MAX_SALARY_AMOUNT_RUB
+
+    def test_salary_above_max_fails(self):
+        with pytest.raises(ValidationError):
+            ResumeRequestAdd(
+                desired_position="Разработчик",
+                salary_amount=MAX_SALARY_AMOUNT_RUB + 1,
+                skill_ids=[1],
+                experiences=[],
+            )

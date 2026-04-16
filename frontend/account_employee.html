@@ -279,18 +279,6 @@
       box-shadow: 0 0 0 3px rgba(248, 90, 11, 0.12);
       border-color: #f85a0b;
     }
-    .about-text {
-      width: 100%;
-      border: 1px solid #dfdfdf;
-      border-radius: 10px;
-      background: #fff;
-      font-size: 16px;
-      line-height: 1.55;
-      padding: 12px 14px;
-      min-height: 258px;
-      resize: vertical;
-      font-family: inherit;
-    }
     .actions {
       margin-top: 14px;
       display: flex;
@@ -503,22 +491,21 @@
       <div class="tabs">
         <button class="tab-btn active" id="tab-personal" type="button">Личная информация</button>
         <button class="tab-btn" id="tab-myprojects" type="button">Мои резюме</button>
-        <button class="tab-btn" id="tab-about" type="button">О себе</button>
       </div>
 
       <div class="tab-panel" id="panel-personal">
         <form class="info-grid" id="personal-form">
           <div class="field">
             <label for="first-name">Имя</label>
-            <input id="first-name" type="text" pattern="[A-Za-zА-Яа-яЁё]" placeholder="Ваше имя" maxlength="50" />
+            <input id="first-name" type="text" placeholder="Только русские буквы" maxlength="35" title="Русские буквы, до 35 символов" />
           </div>
           <div class="field">
             <label for="last-name">Фамилия</label>
-            <input id="last-name" type="text" pattern="[A-Za-zА-Яа-яЁё]" placeholder="Ваша фамилия" maxlength="50" />
+            <input id="last-name" type="text" placeholder="Только русские буквы" maxlength="35" title="Русские буквы, до 35 символов" />
           </div>
           <div class="field">
             <label for="age">Возраст</label>
-            <input id="age" type="number" placeholder="18" min="16" max="120" />
+            <input id="age" type="number" placeholder="18" min="16" max="100" />
           </div>
           <div class="field">
             <label for="gender">Пол</label>
@@ -565,13 +552,6 @@
         <div id="projects-list"></div>
       </div>
 
-      <div class="tab-panel hidden" id="panel-about">
-        <textarea class="about-text" id="about-text" placeholder="Напишите информацию о себе..." maxlength="1000"></textarea>
-        <div class="actions">
-          <button class="action-btn" id="about-cancel" type="button">Отмена</button>
-          <button class="action-btn action-btn--accent" id="about-save" type="button">Сохранить</button>
-        </div>
-      </div>
     </section>
   </section>
 </main>
@@ -845,10 +825,8 @@
 
     const tabPersonal = document.getElementById("tab-personal");
     const tabMyProjects = document.getElementById("tab-myprojects");
-    const tabAbout = document.getElementById("tab-about");
     const panelPersonal = document.getElementById("panel-personal");
     const panelMyProjects = document.getElementById("panel-myprojects");
-    const panelAbout = document.getElementById("panel-about");
     const userMailSpan = document.getElementById("user-mail");
     const userNameSpan = document.getElementById("user-name-display");
 
@@ -895,36 +873,21 @@
     function showPersonal() {
       tabPersonal.classList.add("active");
       tabMyProjects.classList.remove("active");
-      tabAbout.classList.remove("active");
       panelPersonal.classList.remove("hidden");
       panelMyProjects.classList.add("hidden");
-      panelAbout.classList.add("hidden");
       loadPersonalData();
     }
-    
+
     function showMyProjects() {
       tabMyProjects.classList.add("active");
       tabPersonal.classList.remove("active");
-      tabAbout.classList.remove("active");
       panelMyProjects.classList.remove("hidden");
       panelPersonal.classList.add("hidden");
-      panelAbout.classList.add("hidden");
       loadMyProjects();
-    }
-    
-    function showAbout() {
-      tabAbout.classList.add("active");
-      tabPersonal.classList.remove("active");
-      tabMyProjects.classList.remove("active");
-      panelAbout.classList.remove("hidden");
-      panelPersonal.classList.add("hidden");
-      panelMyProjects.classList.add("hidden");
-      loadAboutData();
     }
 
     if (tabPersonal) tabPersonal.addEventListener("click", showPersonal);
     if (tabMyProjects) tabMyProjects.addEventListener("click", showMyProjects);
-    if (tabAbout) tabAbout.addEventListener("click", showAbout);
 
     let personalData = {
       firstName: "",
@@ -938,7 +901,20 @@
       avatar: ""
     };
     
-    let aboutData = "";
+    const TP_RESUMES_MAX = 5;
+    let myResumesCount = 0;
+    async function refreshMyResumesCount() {
+      try {
+        const response = await fetch(API_BASE_URL + "/my_resumes", { credentials: "include" });
+        if (response.ok) {
+          const data = await response.json();
+          if (Array.isArray(data)) myResumesCount = data.length;
+        }
+      } catch (_) {}
+    }
+
+    const TP_PROFILE_NAME_MAX = 35;
+    const TP_NAME_RE = /^[А-ЯЁа-яё]+(?:[-' ][А-ЯЁа-яё]+)*$/;
 
     function strip(str) {
       return str ? str.trim() : "";
@@ -1018,16 +994,6 @@
       if (userDisplay) userDisplay.textContent = displayName;
     }
 
-    async function loadAboutData() {
-      try {
-        aboutData = localStorage.getItem("tp_about_employee") || "";
-      } catch (_) {
-        aboutData = "";
-      }
-      const el = document.getElementById("about-text");
-      if (el) el.value = aboutData;
-    }
-
     async function loadMyProjects() {
       const projectsList = document.getElementById("projects-list");
       if (!projectsList) return;
@@ -1044,7 +1010,9 @@
 
         const resumes = await response.json();
         const countSpan = document.getElementById("project-count");
-        if (countSpan) countSpan.textContent = Array.isArray(resumes) ? String(resumes.length) : "0";
+        const n = Array.isArray(resumes) ? resumes.length : 0;
+        myResumesCount = n;
+        if (countSpan) countSpan.textContent = String(n);
 
         if (!Array.isArray(resumes) || resumes.length === 0) {
           projectsList.innerHTML = '<div class="empty-state">У вас пока нет резюме. Нажмите «Создать резюме»</div>';
@@ -1186,6 +1154,29 @@
       if (newData.first_name && !newData.last_name) errors.push("Укажите фамилию");
       if (!newData.first_name && newData.last_name) errors.push("Укажите имя");
 
+      const collapseWs = (s) => (s || "").replace(/\s+/g, " ").trim();
+      if (newData.first_name) {
+        const s = collapseWs(newData.first_name);
+        if (s.length > TP_PROFILE_NAME_MAX || !TP_NAME_RE.test(s)) {
+          errors.push(
+            "Имя: только русские буквы, не длиннее 35 символов; между частями допускаются пробел, дефис или апостроф.",
+          );
+        }
+      }
+      if (newData.last_name) {
+        const s = collapseWs(newData.last_name);
+        if (s.length > TP_PROFILE_NAME_MAX || !TP_NAME_RE.test(s)) {
+          errors.push(
+            "Фамилия: только русские буквы, не длиннее 35 символов; между частями допускаются пробел, дефис или апостроф.",
+          );
+        }
+      }
+      if (newData.age !== null && newData.age !== undefined && !Number.isNaN(newData.age)) {
+        if (newData.age < 16 || newData.age > 100) {
+          errors.push("Возраст должен быть от 16 до 100 лет.");
+        }
+      }
+
       const phone = newData.contacts && newData.contacts.phone;
       if (phone && !/^(\+7|8)\d{10}$/.test(phone.replace(/[\s\-()]/g, ""))) {
         errors.push("Введите корректный российский номер телефона");
@@ -1242,18 +1233,6 @@
       }
     }
 
-    async function saveAboutData() {
-      const newAbout = document.getElementById("about-text").value;
-      try {
-        localStorage.setItem("tp_about_employee", newAbout || "");
-        aboutData = newAbout || "";
-        showToast("Информация о себе сохранена", "success");
-      } catch (error) {
-        console.error("Ошибка сохранения информации о себе:", error);
-        showToast("Не удалось сохранить", "error");
-      }
-    }
-
     function cancelPersonalChanges() {
       document.getElementById("first-name").value = personalData.firstName || "";
       document.getElementById("last-name").value = personalData.lastName || "";
@@ -1265,14 +1244,8 @@
       document.getElementById("github").value = personalData.github || "";
     }
 
-    function cancelAboutChanges() {
-      document.getElementById("about-text").value = aboutData;
-    }
-
     document.getElementById("personal-save")?.addEventListener("click", savePersonalData);
     document.getElementById("personal-cancel")?.addEventListener("click", cancelPersonalChanges);
-    document.getElementById("about-save")?.addEventListener("click", saveAboutData);
-    document.getElementById("about-cancel")?.addEventListener("click", cancelAboutChanges);
 
     const avatarWrap = document.getElementById("avatar-wrap");
     const avatarInput = document.getElementById("avatar-input");
@@ -1356,8 +1329,18 @@
     }
 
     if (createResumeLink) {
-      createResumeLink.addEventListener("click", (e) => {
+      createResumeLink.addEventListener("click", async (e) => {
         e.preventDefault();
+        await refreshMyResumesCount();
+        if (myResumesCount >= TP_RESUMES_MAX) {
+          showToast(
+            "Достигнут лимит резюме (не более " +
+              TP_RESUMES_MAX +
+              "). Удалите резюме или отредактируйте существующее.",
+            "warning",
+          );
+          return;
+        }
         openResumeTypeModal();
       });
     }
@@ -1440,9 +1423,16 @@
       }
     } catch (_) {}
 
+    try {
+      const flash = sessionStorage.getItem("tp_flash_error");
+      if (flash) {
+        sessionStorage.removeItem("tp_flash_error");
+        showToast(flash, "warning");
+      }
+    } catch (_) {}
+
     loadCurrentUser();
     loadCities().then(() => loadPersonalData());
-    loadAboutData();
   })();
 </script>
 </body>

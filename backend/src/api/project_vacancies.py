@@ -1,5 +1,4 @@
 from fastapi import APIRouter, HTTPException
-from sqlalchemy.exc import IntegrityError
 
 from src.api.dependencies import DBDep, UserIdDep
 from src.schemas.project_vacancies import ProjectVacancyAdd, ProjectVacancyPatch, ProjectVacancyRequestAdd
@@ -49,13 +48,10 @@ async def create_project_vacancy(
     if role is None:
         raise HTTPException(status_code=404, detail="Роль не найдена")
 
-    try:
-        res = await db.project_vacancies.add(
-            ProjectVacancyAdd(project_id=project.id, **data.model_dump())
-        )
-        await db.commit()
-    except IntegrityError:
-        raise HTTPException(status_code=409, detail="Роль уже добавлена к этому проекту")
+    res = await db.project_vacancies.add(
+        ProjectVacancyAdd(project_id=project.id, **data.model_dump())
+    )
+    await db.commit()
 
     return {"status": "OK", "data": res}
 
@@ -89,17 +85,14 @@ async def update_project_vacancy(
     if not payload:
         return {"status": "OK"}
 
-    try:
-        rows = await db.project_vacancies.edit(
-            data,
-            exclude_unset=True,
-            id=vacancy_id,
-        )
-        if rows == 0:
-            raise HTTPException(status_code=404, detail="Вакансия не найдена")
-        await db.commit()
-    except IntegrityError:
-        raise HTTPException(status_code=409, detail="Роль уже добавлена к этому проекту")
+    rows = await db.project_vacancies.edit(
+        data,
+        exclude_unset=True,
+        id=vacancy_id,
+    )
+    if rows == 0:
+        raise HTTPException(status_code=404, detail="Вакансия не найдена")
+    await db.commit()
 
     return {"status": "OK"}
 

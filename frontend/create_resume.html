@@ -640,6 +640,24 @@
 
 <script src="./config.js"></script>
 <script>
+(function () {
+  const TP_RESUMES_MAX = 5;
+  fetch(API_BASE_URL + "/my_resumes", { credentials: "include" })
+    .then(function (r) { return r.ok ? r.json() : []; })
+    .then(function (arr) {
+      if (!Array.isArray(arr) || arr.length < TP_RESUMES_MAX) return;
+      try {
+        sessionStorage.setItem(
+          "tp_flash_error",
+          "Достигнут лимит резюме (не более " + TP_RESUMES_MAX + "). Удалите резюме или отредактируйте существующее.",
+        );
+      } catch (e) {}
+      window.location.replace("./account_employee.html");
+    })
+    .catch(function () {});
+})();
+</script>
+<script>
   (function() {
     const notificationContainer = document.getElementById('notificationContainer');
     
@@ -802,7 +820,7 @@
         return `
         <div class="exp-entry${emptySlot ? ' is-new' : ''}" data-exp-idx="${idx}">
           <div class="exp-entry-header">
-            <span class="exp-entry-num">Место работы ${idx + 1}${emptySlot ? ' (новое)' : ''}</span>
+            <span class="exp-entry-num">Место работы ${idx + 1}</span>
             <button type="button" class="btn-remove-exp" data-remove-exp="${idx}" title="Удалить">✕</button>
           </div>
           <div class="exp-grid">

@@ -305,10 +305,24 @@
     return String(val || '') === String(cur == null ? '' : cur) ? ' selected' : '';
   }
 
+  function normalizeSalaryAmount(x) {
+    if (x === undefined || x === null || x === '') return null;
+    if (typeof x === 'number' && Number.isFinite(x)) return Math.trunc(x);
+    var s = String(x).replace(/[\s\u00a0]/g, '').replace(/,/g, '.');
+    var n = Number(s);
+    return Number.isFinite(n) ? Math.trunc(n) : null;
+  }
+
+  function vacancySalaryInputString(v) {
+    var n = normalizeSalaryAmount(v && (v.salary_amount != null ? v.salary_amount : v.salaryAmount));
+    return n != null ? String(n) : '';
+  }
+
   function vacancyEditFieldsHtml(v) {
     var k = v._key;
+    var maxSal = (typeof TP_MAX_SALARY_RUB !== 'undefined' && TP_MAX_SALARY_RUB != null) ? TP_MAX_SALARY_RUB : 50000000;
     var roleName = roleInputValue(v);
-    var sal = v.salary_amount != null && v.salary_amount !== '' ? String(v.salary_amount) : '';
+    var sal = vacancySalaryInputString(v);
     return ''
       + '<div class="exp-grid">'
       + '<div class="exp-field exp-field-full"><label for="vac-' + k + '-role-input">Название роли <span class="req-star" aria-hidden="true">*</span></label>'
@@ -345,7 +359,7 @@
       +   '<option value="3/3"' + optSelected('3/3', v.schedule) + '>3/3</option>'
       + '</select></div>'
       + '<div class="exp-field"><label for="vac-' + k + '-salary">Зарплата</label>'
-      + '<input type="number" id="vac-' + k + '-salary" min="0" step="1000" placeholder="Сумма в ₽" value="' + esc(sal) + '"></div>'
+      + '<input type="number" id="vac-' + k + '-salary" min="0" max="' + maxSal + '" step="1" placeholder="Сумма в рублях" value="' + esc(sal) + '"></div>'
       + '<div class="exp-field"><label for="vac-' + k + '-salary-type">Тип зарплаты</label><select id="vac-' + k + '-salary-type">'
       +   '<option value="">— Тип зарплаты —</option>'
       +   '<option value="monthly"' + optSelected('monthly', v.salary_type) + '>В месяц</option>'
@@ -442,13 +456,13 @@
     v.salary_type = gv('salary-type') || null;
     v.contract_type = gv('contract') || null;
     var salEl = document.getElementById('vac-' + k + '-salary');
-    var salRaw = salEl && salEl.value != null ? String(salEl.value).trim() : '';
-    if (!salRaw) {
-      v.salary_amount = null;
-    } else {
-      var n = parseInt(salRaw, 10);
-      v.salary_amount = !isNaN(n) && n >= 0 ? n : null;
-    }
+    var salRaw = salEl && salEl.value != null ? String(salEl.value) : '';
+    var salFn = window.tpParseAndValidateSalaryRaw;
+    var salParsed =
+      typeof salFn === 'function'
+        ? salFn(salRaw)
+        : { ok: true, value: salRaw.trim() ? parseInt(salRaw.replace(/[\s\u00a0]/g, ''), 10) : null };
+    v.salary_amount = salParsed && salParsed.ok === true ? salParsed.value : null;
   }
 
   function syncAllVacanciesFromDom() {
@@ -630,6 +644,7 @@
 
       vKeyCounter = 0;
       vacancyList = vacancies.map(function(v) {
+        var salN = normalizeSalaryAmount(v && (v.salary_amount != null ? v.salary_amount : v.salaryAmount));
         return {
           _key: ++vKeyCounter,
           id:   v.id,
@@ -640,7 +655,7 @@
             work_format:  v.work_format,
             employment:   v.employment,
             experience:   v.experience,
-            salary_amount:    v.salary_amount,
+            salary_amount:    salN,
             salary_type:      v.salary_type,
             schedule:         v.schedule,
             responsibilities: v.responsibilities,
@@ -651,7 +666,7 @@
           work_format:  v.work_format,
           employment:   v.employment,
           experience:   v.experience,
-          salary_amount:    v.salary_amount,
+          salary_amount:    salN,
           salary_type:      v.salary_type,
           schedule:         v.schedule,
           responsibilities: v.responsibilities,
@@ -704,11 +719,27 @@
         if (vErr) { vErr.textContent = 'У каждой роли должно быть название из справочника. Удалите пустую запись или добавьте роль заново.'; vErr.classList.add('show'); }
         hasErrors = true;
       }
+      var vk = active[i]._key;
+      var salElV = document.getElementById('vac-' + vk + '-salary');
+      var salRaw = salElV && salElV.value != null ? String(salElV.value) : '';
+      var salFn2 = window.tpParseAndValidateSalaryRaw;
+      var salChk =
+        typeof salFn2 === 'function'
+          ? salFn2(salRaw)
+          : { ok: true, value: null };
+      if (!salChk || salChk.ok !== true) {
+        if (salElV) salElV.classList.add('inp-invalid');
+        var salMsg = (salChk && salChk.message) ? salChk.message : 'Укажите корректную сумму зарплаты или оставьте поле пустым.';
+        showToast(salMsg, 'error', 7000);
+        hasErrors = true;
+      } else {
+        active[i].salary_amount = salChk.value;
+      }
     }
 
     if (hasErrors) {
-      var firstErr = document.querySelector('.field-error.show, .vac-err-msg.show');
-      if (firstErr) firstErr.scrollIntoView({ behavior:'smooth', block:'center' });
+      var scrollEl = document.querySelector('.inp-invalid') || document.querySelector('.field-error.show, .vac-err-msg.show');
+      if (scrollEl) scrollEl.scrollIntoView({ behavior:'smooth', block:'center' });
       return;
     }
 

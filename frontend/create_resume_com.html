@@ -466,7 +466,9 @@
       font-family: "Space Grotesk", system-ui, sans-serif;
     }
     .exp-field input.inp-invalid,
-    .exp-field textarea.inp-invalid {
+    .exp-field textarea.inp-invalid,
+    .field input.inp-invalid,
+    .field textarea.inp-invalid {
       border-color: #e05a2a !important;
       background: #fff8f7 !important;
     }
@@ -634,7 +636,7 @@
           </div>
           <div class="field exp-field-full">
             <label>Заработная плата</label>
-            <input id="salary" type="number" min="0" step="1000" placeholder="Например: 120000" />
+            <input id="salary" type="number" min="0" max="50000000" step="1" placeholder="Сумма в рублях" />
           </div>
         </div>
       </div>
@@ -673,16 +675,44 @@
 
 <script src="./config.js"></script>
 <script>
+(function () {
+  const TP_RESUMES_MAX = 5;
+  fetch(API_BASE_URL + "/my_resumes", { credentials: "include" })
+    .then(function (r) { return r.ok ? r.json() : []; })
+    .then(function (arr) {
+      if (!Array.isArray(arr) || arr.length < TP_RESUMES_MAX) return;
+      try {
+        sessionStorage.setItem(
+          "tp_flash_error",
+          "Достигнут лимит резюме (не более " + TP_RESUMES_MAX + "). Удалите резюме или отредактируйте существующее.",
+        );
+      } catch (e) {}
+      window.location.replace("./account_employee.html");
+    })
+    .catch(function () {});
+})();
+</script>
+<script>
   (function() {
     const notificationContainer = document.getElementById('notificationContainer');
 
     function showNotification(message, type = 'error', duration = 5000) {
+      const text = message == null ? '' : String(message);
+      if (!notificationContainer) {
+        console.warn('[TeamPal]', text);
+        try {
+          window.alert(text);
+        } catch (_) {}
+        return;
+      }
       const notification = document.createElement('div');
       notification.className = `notification ${type}`;
       notification.innerHTML = `
-        <div class="notification-content">${message}</div>
+        <div class="notification-content"></div>
         <div class="notification-close">×</div>
       `;
+      const contentEl = notification.querySelector('.notification-content');
+      if (contentEl) contentEl.textContent = text;
       notificationContainer.appendChild(notification);
       const closeBtn = notification.querySelector('.notification-close');
       closeBtn.addEventListener('click', () => {
@@ -835,7 +865,7 @@
         return `
         <div class="exp-entry${emptySlot ? ' is-new' : ''}" data-exp-idx="${idx}">
           <div class="exp-entry-header">
-            <span class="exp-entry-num">Место работы ${idx + 1}${emptySlot ? ' (новое)' : ''}</span>
+            <span class="exp-entry-num">Место работы ${idx + 1}</span>
             <button type="button" class="btn-remove-exp" data-remove-exp="${idx}" title="Удалить">✕</button>
           </div>
           <div class="exp-grid">
@@ -907,6 +937,9 @@
     const desiredPositionInput = document.getElementById("desiredPosition");
     const workScheduleSelect = document.getElementById("workSchedule");
     const salaryInput = document.getElementById("salary");
+    if (salaryInput) {
+      salaryInput.addEventListener("input", () => salaryInput.classList.remove("inp-invalid"));
+    }
     const aboutMeTextarea = document.getElementById("aboutMe");
     const cancelBtn = document.getElementById("cancelBtn");
     const publishBtn = document.getElementById("publishBtn");
@@ -916,7 +949,7 @@
       if (desiredPositionInput) desiredPositionInput.value = "";
       if (workScheduleSelect) workScheduleSelect.value = "";
       if (salaryInput) salaryInput.value = "";
-      aboutMeTextarea.value = "";
+      if (aboutMeTextarea) aboutMeTextarea.value = "";
       selectedSkillIds = [];
       renderSkillsGrid();
       renderSelectedTags();
@@ -978,6 +1011,7 @@
     });
 
     publishBtn.addEventListener("click", async () => {
+      try {
       const title = (resumeTitleInput?.value || "").trim();
       if (!title) {
         showNotification('Пожалуйста, заполните поле "Название резюме"', 'error');
@@ -992,24 +1026,51 @@
 
       const schedule = (workScheduleSelect?.value || "").trim();
 
-      const salaryRaw = (salaryInput?.value || "").trim();
-      let salaryAmount = null;
-      if (salaryRaw !== "") {
-        const salary = Number(salaryRaw);
-        if (Number.isNaN(salary) || salary < 0) {
-          showNotification('Укажите корректную сумму зарплаты или оставьте поле пустым', 'error');
-          return;
-        }
-        salaryAmount = salary;
+      if (salaryInput && salaryInput.validity && salaryInput.validity.badInput) {
+        showNotification(
+          'Зарплата введена некорректно. Укажите сумму цифрами (можно с пробелами) или оставьте поле пустым.',
+          'error',
+          7000,
+        );
+        salaryInput.classList.add('inp-invalid');
+        salaryInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
       }
 
-      const aboutText = aboutMeTextarea.value.trim();
+      const salaryRaw = salaryInput ? salaryInput.value : "";
+      const salParseFn = window.tpParseAndValidateSalaryRaw;
+      const salChk =
+        typeof salParseFn === "function"
+          ? salParseFn(salaryRaw)
+          : typeof window.tpValidateSalaryAmount === "function"
+            ? window.tpValidateSalaryAmount(
+                String(salaryRaw || "").trim() === ""
+                  ? null
+                  : Math.trunc(Number(String(salaryRaw).replace(/[\s\u00a0]/g, ""))),
+              )
+            : { ok: true, value: null };
+      if (!salChk || salChk.ok !== true) {
+        showNotification(
+          (salChk && salChk.message) ||
+            'Зарплата введена некорректно. Укажите сумму цифрами или оставьте поле пустым.',
+          'error',
+          7000,
+        );
+        if (salaryInput) {
+          salaryInput.classList.add('inp-invalid');
+          salaryInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      }
+      const salaryAmount = salChk.value;
+
+      const aboutText = (aboutMeTextarea && aboutMeTextarea.value ? aboutMeTextarea.value : "").trim();
       if (selectedSkillIds.length === 0) {
         showNotification('В резюме должен быть хотя бы один навык', 'warning');
         return;
       }
 
-      document.querySelectorAll('.exp-start-input.inp-invalid, .exp-end-input.inp-invalid, .exp-company-input.inp-invalid, .exp-position-input.inp-invalid').forEach((el) => el.classList.remove('inp-invalid'));
+      document.querySelectorAll('.exp-start-input.inp-invalid, .exp-end-input.inp-invalid, .exp-company-input.inp-invalid, .exp-position-input.inp-invalid, #salary.inp-invalid').forEach((el) => el.classList.remove('inp-invalid'));
 
       const cleanedExperiences = [];
       for (let idx = 0; idx < (experiences || []).length; idx++) {
@@ -1078,7 +1139,7 @@
         })),
       };
       if (schedule) resumeData.commitment_level = schedule;
-      if (salaryAmount != null) resumeData.salary_amount = salaryAmount;
+      if (salaryAmount != null && salaryAmount !== undefined) resumeData.salary_amount = salaryAmount;
 
       try {
         const response = await fetch(API_BASE_URL + "/resumes", {
@@ -1112,11 +1173,23 @@
           }, 1500);
         } else {
           const error = await response.json().catch(() => ({}));
-          showNotification(error.detail || 'Ошибка при создании резюме', 'error', 3000);
+          const msg =
+            (typeof window.tpFormatApiDetail === 'function' ? window.tpFormatApiDetail(error.detail) : '') ||
+            (typeof error.detail === 'string' ? error.detail : '') ||
+            'Ошибка при создании резюме';
+          showNotification(msg, 'error', 6500);
         }
       } catch (error) {
         console.error('Create resume error:', error);
         showNotification('Не удалось подключиться к серверу', 'error', 3000);
+      }
+      } catch (e) {
+        console.error(e);
+        showNotification(
+          (e && e.message) ? 'Ошибка: ' + e.message : 'Произошла ошибка при публикации резюме. Проверьте поля и попробуйте снова.',
+          'error',
+          7000,
+        );
       }
     });
 

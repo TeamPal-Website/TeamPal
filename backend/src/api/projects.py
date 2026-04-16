@@ -1,5 +1,4 @@
 from fastapi import APIRouter, HTTPException
-from sqlalchemy.exc import IntegrityError
 
 from src.api.dependencies import DBDep, UserIdDep
 from src.schemas.project_vacancies import ProjectVacancyAdd
@@ -126,16 +125,13 @@ async def create_project(
 
     vacancies = []
     for vacancy_data in project_data.vacancies:
-        try:
-            vacancy = await db.project_vacancies.add(
-                ProjectVacancyAdd(
-                    project_id=project.id,
-                    **vacancy_data.model_dump(),
-                )
+        vacancy = await db.project_vacancies.add(
+            ProjectVacancyAdd(
+                project_id=project.id,
+                **vacancy_data.model_dump(),
             )
-            vacancies.append(vacancy)
-        except IntegrityError:
-            raise HTTPException(status_code=409, detail="Роль уже добавлена к этому проекту")
+        )
+        vacancies.append(vacancy)
 
     await db.commit()
     return {"status": "OK", "data": {"project": project, "vacancies": vacancies}}
