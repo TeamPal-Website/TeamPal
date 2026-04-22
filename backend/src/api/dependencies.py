@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import Depends, Request, HTTPException
+from fastapi import Depends, Request, HTTPException, Query
 
 from src.services.auth import AuthService
 
@@ -32,3 +32,20 @@ async def get_db():
 
 
 DBDep = Annotated[DBManager, Depends(get_db)]
+
+
+PageDep = Annotated[int, Query(ge=1)]
+PerPageDep = Annotated[int, Query(ge=1, le=50)]
+
+
+def normalize_search_q(
+        q: str | None = Query(default=None, max_length=100),
+):
+    if q is None:
+        return None
+
+    q = q.strip()
+    return q or None
+
+
+SearchQDep = Annotated[str | None, Depends(normalize_search_q)]

@@ -1,8 +1,10 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 
-from src.api.dependencies import DBDep, UserIdDep
+from src.api.dependencies import DBDep, UserIdDep, PageDep, PerPageDep, SearchQDep
+from src.enums import EmploymentIntent, ProjectsStatus
 from src.schemas.project_vacancies import ProjectVacancyAdd
 from src.schemas.projects import ProjectAdd, ProjectPatch, ProjectRequestAdd
+from src.schemas.search_public import ProjectSearchItem
 
 router = APIRouter(prefix="", tags=["Проекты"])
 
@@ -22,6 +24,7 @@ async def get_project(
     project = await db.projects.get_one_or_none(
         id=project_id,
         profile_id=profile.id,
+        status=ProjectsStatus.ACTIVE,
     )
     if project is None:
         raise HTTPException(status_code=404, detail="Проект не найден")
@@ -45,7 +48,10 @@ async def get_profile_projects(
     if profile is None:
         raise HTTPException(status_code=404, detail="Профиль не найден")
 
-    return await db.projects.get_filtered(profile_id=profile.id)
+    return await db.projects.get_filtered(
+        profile_id=profile.id,
+        status=ProjectsStatus.ACTIVE,
+    )
 
 
 @router.get("/my_project/{project_id}")
@@ -84,6 +90,26 @@ async def get_my_projects(
     if profile is None:
         raise HTTPException(status_code=404, detail="Профиль не найден")
     return await db.projects.get_filtered(profile_id=profile.id)
+
+
+@router.get("/projects", response_model=list[ProjectSearchItem])
+async def search_projects(
+        db: DBDep,
+        q: SearchQDep,
+        page: PageDep = 1,
+        per_page: PerPageDep = 10,
+        city_id: int | None = Query(default=None, gt=0),
+        employment_intent: EmploymentIntent | None = None,
+        role_type_id: int | None = Query(default=None, gt=0),
+):
+    return await db.projects.search_public(
+        q=q,
+        city_id=city_id,
+        employment_intent=employment_intent,
+        role_type_id=role_type_id,
+        limit=per_page,
+        offset=per_page * (page - 1),
+    )
 
 
 @router.post("/projects")
