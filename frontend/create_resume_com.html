@@ -136,6 +136,24 @@
       color: #fff;
       box-shadow: 0 2px 8px rgba(248, 90, 11, 0.25);
     }
+    .notify-btn {
+      width: 48px;
+      height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .notify-btn:hover {
+      background: linear-gradient(135deg, #fff5e8, #ffffff);
+      border-color: rgba(248, 90, 11, 0.55);
+      box-shadow: 0 8px 18px rgba(250, 149, 0, 0.18);
+    }
+    .notify-btn svg { width: 22px; height: 22px; display: block; }
     .burger {
       width: 48px;
       height: 48px;
@@ -600,14 +618,19 @@
       </div>
     </div>
     <div class="header__actions">
+      <button class="notify-btn" type="button" aria-label="Уведомления" onclick="window.location.href='./notifications.html'">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 4a5 5 0 0 0-5 5v2.6c0 .7-.24 1.38-.68 1.9L5 15h14l-1.32-1.5a3 3 0 0 1-.68-1.9V9a5 5 0 0 0-5-5Z" stroke="#f85a0b" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M10 18a2 2 0 0 0 4 0" stroke="#f85a0b" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
       <button class="burger" id="burger-btn" type="button">
         <span></span><span></span><span></span>
       </button>
       <nav class="header-menu" id="header-menu">
         <div class="header-menu__title">Меню</div>
         <button class="header-menu__item" type="button">Личный кабинет</button>
-        <button class="header-menu__item" type="button">Мои заявки</button>
-        <button class="header-menu__item" type="button">Каталог</button>
+        <button class="header-menu__item" type="button">Поиск</button>
         <button class="header-menu__item" type="button">Поддержать проект</button>
         <button class="header-menu__exit" type="button">Выйти</button>
       </nav>

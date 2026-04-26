@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Уведомления | TeamPal</title>
+  <link rel="icon" type="image/png" href="./assets/logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f7f5f2; --header: #eae8e4; --panel: #ffffff; --line: rgba(0,0,0,.09);
+      --accent-1: #fa9500; --accent-2: #f85a0b; --footer: #d4d3cb; --ink: #1a1a1a; --ink2: #3a3a3a;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      background: radial-gradient(900px 500px at -10% -25%, rgba(255, 208, 102, 0.28), transparent 70%),
+                  radial-gradient(700px 420px at 110% 0%, rgba(248, 90, 11, 0.14), transparent 68%), var(--bg);
+      color: var(--ink); min-height: 100vh; display: flex; flex-direction: column;
+    }
+    .header { position: fixed; inset: 0 0 auto 0; z-index: 1000; height: 72px; background: var(--header); border-bottom: 1px solid var(--line); }
+    .header__inner { height: 100%; padding: 0 28px; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+    .header__left { display: flex; align-items: center; gap: 12px; }
+    .logo { width: 46px; height: 46px; border-radius: 50px; object-fit: cover; }
+    .header__actions { display: flex; align-items: center; gap: 12px; position: relative; }
+    .notify-btn, .burger {
+      width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 16px; background: #fff;
+      display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all .2s ease;
+    }
+    .notify-btn.active { border-color: rgba(248, 90, 11, 0.55); background: linear-gradient(135deg, #fff5e8, #ffffff); }
+    .notify-btn svg { width: 22px; height: 22px; display: block; }
+    .burger { flex-direction: column; gap: 6px; }
+    .burger span { width: 22px; height: 2.5px; background: linear-gradient(90deg, #5a4a3a, #3a2a1a); border-radius: 4px; display: block; }
+    .header-menu { position: absolute; right: 0; top: calc(100% + 12px); width: 244px; background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 12px 8px; display: none; }
+    .header-menu.open { display: block; }
+    .header-menu__title { font-size: 12px; font-weight: 500; text-transform: uppercase; color: #8b8b8b; margin-bottom: 12px; padding: 0 10px; }
+    .header-menu__item, .header-menu__exit { width: 100%; border: 0; background: transparent; border-radius: 14px; text-align: left; padding: 10px 14px; margin-bottom: 4px; cursor: pointer; font-size: 14px; color: var(--ink); font-family: inherit; }
+    .header-menu__exit { margin-top: 8px; margin-bottom: 0; color: #d14b2a; border-top: 1px solid var(--line); border-radius: 0; padding-top: 12px; }
+    .page { width: 100%; max-width: 1100px; margin: 0 auto; padding: 102px 20px 26px; flex: 1; }
+    .card { border: 1px solid var(--line); border-radius: 18px; background: var(--panel); box-shadow: 0 12px 30px rgba(0,0,0,.06); padding: 18px; }
+    .title { font-size: 28px; margin-bottom: 12px; color: var(--accent-2); }
+    .empty { border: 1px dashed #dfd7cf; border-radius: 14px; padding: 22px; color: #7a7a7a; text-align: center; background: #fffaf3; }
+    .footer { width: 100%; background: var(--footer); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; font-size: 14px; color: var(--ink2); min-height: 52px; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+<header class="header">
+  <div class="header__inner">
+    <div class="header__left">
+      <img class="logo" src="./assets/logo.png" alt="Логотип TeamPal">
+    </div>
+    <div class="header__actions">
+      <button class="notify-btn active" type="button" aria-label="Уведомления">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 4a5 5 0 0 0-5 5v2.6c0 .7-.24 1.38-.68 1.9L5 15h14l-1.32-1.5a3 3 0 0 1-.68-1.9V9a5 5 0 0 0-5-5Z" stroke="#f85a0b" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M10 18a2 2 0 0 0 4 0" stroke="#f85a0b" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button class="burger" id="burger-btn" type="button" aria-label="Открыть меню"><span></span><span></span><span></span></button>
+      <nav class="header-menu" id="header-menu">
+        <div class="header-menu__title">Меню</div>
+        <button class="header-menu__item" type="button" data-nav="./account_employee.html">Личный кабинет</button>
+        <button class="header-menu__item" type="button" data-nav="./search_project.html">Поиск</button>
+        <button class="header-menu__item" type="button" data-nav="./support_project.html">Поддержать проект</button>
+        <button class="header-menu__exit" type="button" data-nav="./authorization_page.html">Выйти</button>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <section class="card">
+    <h1 class="title">Уведомления</h1>
+    <div class="empty">Новых уведомлений пока нет.</div>
+  </section>
+</main>
+
+<footer class="footer">
+  <span>TeamPal <span id="year"></span></span>
+  <span>обратная связь: teampal@dimple.ru</span>
+</footer>
+
+<script>
+  (function () {
+    const year = document.getElementById("year");
+    if (year) year.textContent = " " + new Date().getFullYear();
+    const burgerBtn = document.getElementById("burger-btn");
+    const headerMenu = document.getElementById("header-menu");
+    if (burgerBtn && headerMenu) {
+      burgerBtn.addEventListener("click", function (event) {
+        event.stopPropagation();
+        headerMenu.classList.toggle("open");
+      });
+    }
+    document.addEventListener("click", function (event) {
+      if (!event.target.closest(".header__actions") && headerMenu) headerMenu.classList.remove("open");
+    });
+    document.querySelectorAll("[data-nav]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const href = btn.getAttribute("data-nav");
+        if (href) window.location.href = href;
+      });
+    });
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Карточка резюме | TeamPal</title>
+  <link rel="icon" type="image/png" href="./assets/logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f7f5f2; --header: #eae8e4; --panel: #ffffff; --panel-soft: #fffaf3;
+      --ink: #1a1a1a; --ink2: #3a3a3a; --line: rgba(0, 0, 0, 0.09);
+      --accent-1: #fa9500; --accent-2: #f85a0b; --footer: #d4d3cb;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      background: radial-gradient(900px 500px at -10% -25%, rgba(255, 208, 102, 0.28), transparent 70%),
+                  radial-gradient(700px 420px at 110% 0%, rgba(248, 90, 11, 0.14), transparent 68%), var(--bg);
+      color: var(--ink); min-height: 100vh; display: flex; flex-direction: column;
+    }
+    .header { position: fixed; inset: 0 0 auto 0; z-index: 1000; height: 72px; background: var(--header); border-bottom: 1px solid var(--line); }
+    .header__inner { height: 100%; padding: 0 28px; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+    .header__left { display: flex; align-items: center; gap: 12px; }
+    .logo { width: 46px; height: 46px; border-radius: 50px; object-fit: cover; }
+    .header__actions { display: flex; align-items: center; gap: 12px; position: relative; }
+    .role-toggle { display: flex; background: #f0ece7; border-radius: 999px; padding: 3px; border: 1px solid var(--line); }
+    .role-toggle__btn { padding: 8px 18px; border: none; border-radius: 999px; font-size: 13px; font-weight: 600; cursor: pointer; background: transparent; color: #7a7060; font-family: inherit; }
+    .role-toggle__btn.active { background: linear-gradient(135deg, var(--accent-1), var(--accent-2)); color: #fff; box-shadow: 0 2px 8px rgba(248,90,11,.25); }
+    .notify-btn {
+      width: 48px;
+      height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .notify-btn:hover { background: linear-gradient(135deg, #fff5e8, #ffffff); border-color: rgba(248, 90, 11, 0.55); box-shadow: 0 8px 18px rgba(250, 149, 0, 0.18); }
+    .notify-btn svg { width: 22px; height: 22px; display: block; }
+    .burger { width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 16px; background: #fff; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px; cursor: pointer; }
+    .burger span { width: 22px; height: 2.5px; background: linear-gradient(90deg, #5a4a3a, #3a2a1a); border-radius: 4px; display: block; }
+    .header-menu { position: absolute; right: 0; top: calc(100% + 12px); width: 244px; background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 12px 8px; display: none; }
+    .header-menu.open { display: block; }
+    .header-menu__title { font-size: 12px; font-weight: 500; text-transform: uppercase; color: #8b8b8b; margin-bottom: 12px; padding: 0 10px; }
+    .header-menu__item, .header-menu__exit { width: 100%; border: 0; background: transparent; border-radius: 14px; text-align: left; padding: 10px 14px; margin-bottom: 4px; cursor: pointer; font-size: 14px; color: var(--ink); font-family: inherit; }
+    .header-menu__exit { margin-top: 8px; margin-bottom: 0; color: #d14b2a; border-top: 1px solid var(--line); border-radius: 0; padding-top: 12px; }
+    .page { width: 100%; max-width: 1160px; margin: 0 auto; padding: 102px 20px 26px; flex: 1; }
+    .card { border: 1px solid var(--line); border-radius: 18px; background: var(--panel); box-shadow: 0 12px 30px rgba(0,0,0,.06); }
+    .top { padding: 18px 20px; margin-bottom: 14px; background: linear-gradient(180deg, rgba(255,208,102,.16), transparent 38%), #fff; }
+    .title { font-size: 28px; color: var(--accent-2); line-height: 1.15; }
+    .sub { margin-top: 6px; color: #6d6155; font-size: 14px; }
+    .grid { margin-top: 14px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+    .field { border: 1px solid #ece9e5; border-radius: 12px; background: #faf9f7; padding: 10px 12px; font-size: 13px; }
+    .field b { color: #6a625b; margin-right: 4px; }
+    .section { padding: 18px 20px; margin-bottom: 14px; }
+    .section h2 { font-size: 20px; margin-bottom: 10px; color: #2d2a24; }
+    .text { white-space: pre-wrap; line-height: 1.5; color: #2e2b27; background: var(--panel-soft); border: 1px solid #f0ebe4; border-radius: 14px; padding: 12px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip { border-radius: 999px; padding: 6px 10px; border: 1px solid rgba(248,90,11,.16); background: #fff3e8; color: #83451f; font-size: 12px; }
+    .exp-list { display: grid; gap: 10px; }
+    .exp { border: 1px solid #ece4db; border-radius: 12px; background: #fff; padding: 12px; }
+    .exp-title { color: var(--accent-2); font-weight: 700; }
+    .exp-meta { margin-top: 6px; color: #5c5c5c; font-size: 13px; }
+    .footer { width: 100%; background: var(--footer); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; font-size: 14px; color: var(--ink2); min-height: 52px; flex-wrap: wrap; }
+    .empty { border: 1px solid var(--line); border-radius: 14px; background: var(--panel-soft); padding: 18px; color: #7a7a7a; text-align: center; }
+    @media (max-width: 700px) { .header__inner { padding: 0 16px; } .page { padding: 92px 14px 24px; } .role-toggle__btn { padding: 7px 14px; font-size: 12px; } }
+  </style>
+</head>
+<body>
+<header class="header">
+  <div class="header__inner">
+    <div class="header__left">
+      <img class="logo" src="./assets/logo.png" alt="Логотип TeamPal">
+      <div class="role-toggle" id="role-toggle">
+        <button class="role-toggle__btn active" type="button" data-role="Ищу вакансию">Ищу вакансию</button>
+        <button class="role-toggle__btn" type="button" data-role="Ищу сотрудника">Ищу сотрудника</button>
+      </div>
+    </div>
+    <div class="header__actions">
+      <button class="notify-btn" type="button" aria-label="Уведомления" onclick="window.location.href='./notifications.html'">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 4a5 5 0 0 0-5 5v2.6c0 .7-.24 1.38-.68 1.9L5 15h14l-1.32-1.5a3 3 0 0 1-.68-1.9V9a5 5 0 0 0-5-5Z" stroke="#f85a0b" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M10 18a2 2 0 0 0 4 0" stroke="#f85a0b" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button class="burger" id="burger-btn" type="button"><span></span><span></span><span></span></button>
+      <nav class="header-menu" id="header-menu">
+        <div class="header-menu__title">Меню</div>
+        <button class="header-menu__item" type="button" data-nav="./account_employee.html">Личный кабинет</button>
+        <button class="header-menu__item" type="button" data-nav="./search_project.html">Поиск</button>
+        <button class="header-menu__item" type="button" data-nav="./support_project.html">Поддержать проект</button>
+        <button class="header-menu__exit" type="button" data-nav="./authorization_page.html">Выйти</button>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <section class="card top">
+    <h1 class="title" id="resume-title">Карточка резюме</h1>
+    <div class="sub" id="resume-sub">Загрузка...</div>
+    <div class="grid" id="resume-main-fields"></div>
+  </section>
+
+  <section class="card section">
+    <h2>О себе</h2>
+    <div class="text" id="resume-about">—</div>
+  </section>
+
+  <section class="card section">
+    <h2>Навыки</h2>
+    <div class="chips" id="resume-skills"></div>
+  </section>
+
+  <section class="card section">
+    <h2>Опыт работы</h2>
+    <div class="exp-list" id="resume-experiences"></div>
+  </section>
+</main>
+
+<footer class="footer">
+  <span>TeamPal <span id="year"></span></span>
+  <span>обратная связь: teampal@dimple.ru</span>
+</footer>
+
+<script src="./config.js"></script>
+<script>
+  (function () {
+    const yearSpan = document.getElementById("year");
+    if (yearSpan) yearSpan.textContent = " " + new Date().getFullYear();
+
+    const roleToggle = document.getElementById("role-toggle");
+    const burgerBtn = document.getElementById("burger-btn");
+    const headerMenu = document.getElementById("header-menu");
+    function closeMenus() { if (headerMenu) headerMenu.classList.remove("open"); if (burgerBtn) burgerBtn.classList.remove("open"); }
+    if (roleToggle) roleToggle.addEventListener("click", function (event) {
+      const btn = event.target.closest(".role-toggle__btn"); if (!btn) return;
+      const role = btn.dataset.role || "Ищу вакансию";
+      try { localStorage.setItem("tp_role", role); } catch (_) {}
+      roleToggle.querySelectorAll(".role-toggle__btn").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      if (role === "Ищу сотрудника") window.location.href = "./search_resume.html";
+    });
+    if (burgerBtn && headerMenu) burgerBtn.addEventListener("click", (e) => { e.stopPropagation(); burgerBtn.classList.toggle("open"); headerMenu.classList.toggle("open"); });
+    document.addEventListener("click", (e) => { if (!e.target.closest(".header__actions")) closeMenus(); });
+    document.querySelectorAll("[data-nav]").forEach((btn) => btn.addEventListener("click", () => { const href = btn.getAttribute("data-nav"); if (href) window.location.href = href; }));
+
+    function esc(v) { return String(v == null ? "" : v).replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m])); }
+    function mapIntent(v) { return v === "commercial" ? "Коммерческий проект" : (v === "noncommercial" ? "Некоммерческий проект" : "—"); }
+    function mapStatus(v) { return v === "looking_for_job" ? "Ищу работу" : (v === "not_looking_for_job" ? "Не ищу работу" : "—"); }
+    function mapCommit(v) { return ({ full_time: "Полный день", part_time: "Неполный день", side_project: "Подработка / гибкий формат" })[v] || "—"; }
+    function salary(v) { if (v == null || v === "") return "—"; const n = Number(v); if (!Number.isFinite(n)) return "—"; return n.toLocaleString("ru-RU") + " ₽"; }
+    function fmtDate(v) { if (!v) return "—"; const d = new Date(v); return isNaN(d.getTime()) ? String(v) : d.toLocaleDateString("ru-RU"); }
+
+    async function loadResume() {
+      const id = new URLSearchParams(window.location.search).get("id");
+      if (!id) {
+        document.getElementById("resume-sub").textContent = "ID резюме не указан";
+        return;
+      }
+
+      let resumeData = null;
+      for (const path of ["/resumes/" + id, "/my_resume/" + id]) {
+        try {
+          const r = await fetch(API_BASE_URL + path, { credentials: "include" });
+          if (r.ok) { const data = await r.json(); resumeData = data.resume || data; break; }
+        } catch (_) {}
+      }
+      if (!resumeData) {
+        document.getElementById("resume-sub").textContent = "Не удалось загрузить резюме";
+        document.getElementById("resume-experiences").innerHTML = '<div class="empty">Проверьте доступ или попробуйте позже</div>';
+        return;
+      }
+
+      const displayTitle = resumeData.title || resumeData.desired_position || "Резюме";
+      document.getElementById("resume-title").textContent = displayTitle;
+      document.getElementById("resume-sub").textContent = mapIntent(resumeData.employment_intent);
+      document.getElementById("resume-about").textContent = resumeData.about_me || "Не заполнено";
+
+      const contacts = resumeData.contacts || resumeData.profile?.contacts || {};
+      const mainFields = [
+        ["Должность", resumeData.desired_position || "—"],
+        ["Тип резюме", mapIntent(resumeData.employment_intent)],
+        ["Статус поиска", mapStatus(resumeData.status)],
+        ["График работы", mapCommit(resumeData.commitment_level)],
+        ["Желаемая зарплата", salary(resumeData.salary_amount)],
+        ["Телефон", contacts.phone || "—"],
+        ["Telegram", contacts.telegram || "—"],
+        ["GitHub", contacts.github || "—"],
+      ];
+      document.getElementById("resume-main-fields").innerHTML = mainFields.map((f) => `<div class="field"><b>${esc(f[0])}:</b>${esc(f[1])}</div>`).join("");
+
+      const skills = Array.isArray(resumeData.skills) ? resumeData.skills : [];
+      document.getElementById("resume-skills").innerHTML = skills.length
+        ? skills.map((s) => `<span class="chip">${esc(s.name || s.title || s)}</span>`).join("")
+        : '<div class="empty" style="width:100%;">Навыки не указаны</div>';
+
+      const experiences = Array.isArray(resumeData.experiences) ? resumeData.experiences : [];
+      document.getElementById("resume-experiences").innerHTML = experiences.length
+        ? experiences.map((e) => `
+            <article class="exp">
+              <div class="exp-title">${esc(e.position || "Должность не указана")}</div>
+              <div class="exp-meta"><b>Компания:</b> ${esc(e.company_name || "—")}</div>
+              <div class="exp-meta"><b>Период:</b> ${esc(fmtDate(e.start_date))} - ${esc(e.end_date ? fmtDate(e.end_date) : "по настоящее время")}</div>
+              <div class="text" style="margin-top:8px;">${esc(e.description || "Описание не указано")}</div>
+            </article>
+          `).join("")
+        : '<div class="empty">Опыт работы не указан</div>';
+    }
+
+    loadResume();
+  })();
+</script>
+</body>
+</html>
