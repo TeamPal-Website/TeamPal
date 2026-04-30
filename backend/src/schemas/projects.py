@@ -16,6 +16,8 @@ class Project(BaseModel):
     description: str | None
     tasks: str | None
     status: ProjectsStatus
+    last_seen_applications_at: datetime | None
+    close_member_ids: list[int] | None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -43,14 +45,11 @@ class ProjectRequestAdd(BaseModel):
             raise ValueError("Название не должно быть пустым")
         return v
 
-    @field_validator("vacancies")
+    @field_validator("status")
     @classmethod
-    def unique_role_ids(cls, v: list[ProjectVacancyRequestAdd]) -> list[ProjectVacancyRequestAdd]:
-        seen: set[int] = set()
-        for row in v:
-            if row.role_type_id in seen:
-                raise ValueError("Дублирующийся role_type_id в списке вакансий")
-            seen.add(row.role_type_id)
+    def validate_initial_status(cls, v: ProjectsStatus) -> ProjectsStatus:
+        if v in (ProjectsStatus.CLOSE, ProjectsStatus.DELETED):
+            raise ValueError("Проект нельзя создать сразу в этом статусе")
         return v
 
 
@@ -73,6 +72,13 @@ class ProjectPatch(BaseModel):
     description: str | None = None
     tasks: str | None = None
     status: ProjectsStatus | None = None
+
+    @field_validator("status")
+    @classmethod
+    def validate_status(cls, v: ProjectsStatus | None) -> ProjectsStatus | None:
+        if v in (ProjectsStatus.CLOSE, ProjectsStatus.DELETED):
+            raise ValueError("Статус нельзя установить напрямую через этот метод")
+        return v
 
     @field_validator("title")
     @classmethod

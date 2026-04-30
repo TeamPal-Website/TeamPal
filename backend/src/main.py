@@ -18,6 +18,9 @@ from src.api.skills import router as router_catalog_skills
 from src.api.projects import router as router_projects
 from src.api.project_vacancies import router as router_project_vacancies
 from src.api.roles_dictionary import router as router_roles_dictionary
+from src.api.applications import router as router_applications
+from src.api.vacancies import router as router_vacancies
+from src.api.notifications import router as router_notifications
 from src.config import settings
 
 app = FastAPI()
@@ -41,6 +44,9 @@ app.include_router(router_catalog_skills)
 app.include_router(router_projects)
 app.include_router(router_project_vacancies)
 app.include_router(router_roles_dictionary)
+app.include_router(router_applications)
+app.include_router(router_vacancies)
+app.include_router(router_notifications)
 
 app.mount("/", StaticFiles(
     directory=str(Path(__file__)

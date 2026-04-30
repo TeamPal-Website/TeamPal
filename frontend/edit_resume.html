@@ -189,11 +189,6 @@
       .form-actions__right { justify-content:flex-end; }
     }
   </style>
-<script>
-  const EDIT_PAGE_BLOCKED = true;
-  alert('Редактирование на этой странице отключено');
-  window.location.replace('./account_employee.html');
-</script>
 </head>
 <body>
 
@@ -400,6 +395,11 @@
       return;
     }
     const resume = resumeData.resume || resumeData;
+    if (resume.status === "looking_for_job") {
+      document.getElementById("main-page").innerHTML =
+        '<div class="loading-state">Редактирование недоступно, пока резюме активно в поиске (переключатель «Ищу работу»). Отключите его в <a href="./account_employee.html">личном кабинете</a>.</div>';
+      return;
+    }
     const apiSkills = Array.isArray(resumeData.skills) ? resumeData.skills : [];
     const apiExperiences = Array.isArray(resumeData.experiences) ? resumeData.experiences : [];
 
@@ -447,6 +447,10 @@
     const commitmentRaw = resume.commitment_level != null && resume.commitment_level !== '' ? String(resume.commitment_level).trim() : '';
     const commitmentLegacy = { flexible: 'side_project', remote: 'side_project', hybrid: 'side_project' };
     const commitment = commitmentLegacy[commitmentRaw] || commitmentRaw;
+    const workFormat = resume.work_format != null && resume.work_format !== '' ? String(resume.work_format).trim() : '';
+    const scheduleValue = resume.schedule != null && resume.schedule !== '' ? String(resume.schedule).trim() : '';
+    const salaryType = resume.salary_type != null && resume.salary_type !== '' ? String(resume.salary_type).trim() : '';
+    const contractType = resume.contract_type != null && resume.contract_type !== '' ? String(resume.contract_type).trim() : '';
     const salaryVal = resume.salary_amount != null && resume.salary_amount !== '' ? String(resume.salary_amount) : '';
     const salaryDisplay =
       salaryVal && typeof window.tpFormatSalaryGroupedForDisplay === 'function'
@@ -475,7 +479,43 @@
               <option value="side_project"${commitment === 'side_project' ? ' selected' : ''}>Подработка / гибкий формат</option>
             </select>
           </div>
-          <div class="field exp-field-full">
+          <div class="field">
+            <label for="f-work-format">Формат работы</label>
+            <select id="f-work-format">
+              <option value=""${!workFormat ? ' selected' : ''}>Не указывать</option>
+              <option value="remote"${workFormat === 'remote' ? ' selected' : ''}>Удалённо</option>
+              <option value="office"${workFormat === 'office' ? ' selected' : ''}>В офисе</option>
+              <option value="hybrid"${workFormat === 'hybrid' ? ' selected' : ''}>Гибрид</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-schedule">График</label>
+            <select id="f-schedule">
+              <option value=""${!scheduleValue ? ' selected' : ''}>Не указывать</option>
+              <option value="5/2"${scheduleValue === '5/2' ? ' selected' : ''}>5/2</option>
+              <option value="2/2"${scheduleValue === '2/2' ? ' selected' : ''}>2/2</option>
+              <option value="4/2"${scheduleValue === '4/2' ? ' selected' : ''}>4/2</option>
+              <option value="3/3"${scheduleValue === '3/3' ? ' selected' : ''}>3/3</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-salary-type">Тип зарплаты</label>
+            <select id="f-salary-type">
+              <option value=""${!salaryType ? ' selected' : ''}>Не указывать</option>
+              <option value="monthly"${salaryType === 'monthly' ? ' selected' : ''}>В месяц</option>
+              <option value="per_project"${salaryType === 'per_project' ? ' selected' : ''}>За проект</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-contract-type">Тип договора</label>
+            <select id="f-contract-type">
+              <option value=""${!contractType ? ' selected' : ''}>Не указывать</option>
+              <option value="gph"${contractType === 'gph' ? ' selected' : ''}>ГПХ</option>
+              <option value="tk"${contractType === 'tk' ? ' selected' : ''}>ТК РФ</option>
+              <option value="internship"${contractType === 'internship' ? ' selected' : ''}>Стажировка</option>
+            </select>
+          </div>
+          <div class="field">
             <label for="f-salary">Заработная плата (в рублях)</label>
             <input id="f-salary" type="text" class="tp-salary-input" inputmode="numeric" autocomplete="off" placeholder="Например: 1 200 000" value="${esc(salaryDisplay)}" />
           </div>
@@ -801,6 +841,10 @@
     const aboutMe = document.getElementById('f-about').value.trim();
     const status = document.getElementById('f-status').value;
     const commitmentRaw = document.getElementById('f-commitment').value;
+    const workFormatRaw = document.getElementById('f-work-format').value;
+    const scheduleRaw = document.getElementById('f-schedule').value;
+    const salaryTypeRaw = document.getElementById('f-salary-type').value;
+    const contractTypeRaw = document.getElementById('f-contract-type').value;
     const salaryEl = document.getElementById('f-salary');
     const intent = document.getElementById('f-employment-intent').value;
 
@@ -854,6 +898,10 @@
     };
     if (commitmentRaw) basicPayload.commitment_level = commitmentRaw;
     else basicPayload.commitment_level = null;
+    basicPayload.work_format = workFormatRaw || null;
+    basicPayload.schedule = scheduleRaw || null;
+    basicPayload.salary_type = salaryTypeRaw || null;
+    basicPayload.contract_type = contractTypeRaw || null;
 
     if (validatedSalary == null) basicPayload.salary_amount = null;
     else basicPayload.salary_amount = validatedSalary;

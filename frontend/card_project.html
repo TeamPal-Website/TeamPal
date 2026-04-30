@@ -168,7 +168,39 @@
     .meta { margin-top: 10px; display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px 10px; }
     .taken-users { margin-top: 10px; border-top: 1px dashed #ece5dd; padding-top: 10px; font-size: 13px; color: #3a3a3a; }
     .users-list { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 8px; }
-    .user-chip { border-radius: 999px; padding: 5px 10px; border: 1px solid #d7e9d5; background: #f3fbf2; font-size: 12px; color: #2d6c2a; }
+    .user-chip { border-radius: 999px; padding: 5px 10px; border: 1px solid #d7e9d5; background: #f3fbf2; font-size: 12px; color: #2d6c2a; text-decoration: none; }
+    .user-chip[href]:hover { border-color: #9bc995; }
+    .btn-remove-member {
+      margin-top: 10px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-family: inherit;
+      border-radius: 10px;
+      border: 1px solid #f5c0b0;
+      background: #fff5f3;
+      color: #c0392b;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn-remove-member:hover { background: #ffe8e4; border-color: #e57373; }
+    .toast-container {
+      position: fixed; top: 84px; left: 50%; transform: translateX(-50%); z-index: 9999;
+      display: flex; flex-direction: column; gap: 10px; width: min(440px, 92vw); pointer-events: none;
+    }
+    .tp-toast {
+      display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px; border-radius: 14px;
+      pointer-events: auto; animation: tpToastIn 0.28s ease;
+      box-shadow: 0 8px 22px rgba(248, 90, 11, 0.12), 0 4px 14px rgba(0, 0, 0, 0.08);
+      font-family: inherit; border: 1px solid transparent;
+    }
+    .tp-toast.success { background: linear-gradient(135deg, #f3fff6, #fff); border-color: rgba(82, 196, 26, 0.45); }
+    .tp-toast.error { background: linear-gradient(135deg, #fff8f6, #fff); border-color: rgba(255, 77, 79, 0.45); }
+    .tp-toast__icon { font-size: 18px; flex-shrink: 0; }
+    .tp-toast.success .tp-toast__icon, .tp-toast.success .tp-toast__text { color: #2d7a2d; }
+    .tp-toast.error .tp-toast__icon, .tp-toast.error .tp-toast__text { color: #c0392b; }
+    .tp-toast__text { flex: 1; font-size: 14px; line-height: 1.45; }
+    @keyframes tpToastIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes tpToastOut { to { opacity: 0; transform: translateY(-8px); } }
     .footer { width: 100%; background: var(--footer); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; font-size: 14px; color: var(--ink2); min-height: 52px; flex-wrap: wrap; }
     .empty { border: 1px solid var(--line); border-radius: 14px; background: var(--panel-soft); padding: 18px; color: #7a7a7a; text-align: center; }
     @media (max-width: 700px) {
@@ -189,7 +221,7 @@
       </div>
     </div>
     <div class="header__actions">
-      <button class="notify-btn" type="button" aria-label="Уведомления" onclick="window.location.href='./notifications.html'">
+      <button class="notify-btn" type="button" aria-label="Отклики" onclick="window.location.href='./applications.html'">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M12 4a5 5 0 0 0-5 5v2.6c0 .7-.24 1.38-.68 1.9L5 15h14l-1.32-1.5a3 3 0 0 1-.68-1.9V9a5 5 0 0 0-5-5Z" stroke="#f85a0b" stroke-width="1.8" stroke-linejoin="round"/>
           <path d="M10 18a2 2 0 0 0 4 0" stroke="#f85a0b" stroke-width="1.8" stroke-linecap="round"/>
@@ -215,6 +247,11 @@
   </section>
 
   <section class="card section">
+    <h2>Сводка по проекту</h2>
+    <div class="grid" id="project-extra-fields"></div>
+  </section>
+
+  <section class="card section">
     <h2>Описание проекта</h2>
     <div class="text" id="project-description">—</div>
   </section>
@@ -235,6 +272,8 @@
   <span>TeamPal <span id="year"></span></span>
   <span>обратная связь: teampal@dimple.ru</span>
 </footer>
+
+<div id="toast-container" class="toast-container"></div>
 
 <script src="./config.js"></script>
 <script>
@@ -262,8 +301,22 @@
     document.querySelectorAll("[data-nav]").forEach((btn) => btn.addEventListener("click", () => { const href = btn.getAttribute("data-nav"); if (href) window.location.href = href; }));
 
     function esc(v) { return String(v == null ? "" : v).replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m])); }
+    function showToast(message, type) {
+      type = type || "success";
+      const container = document.getElementById("toast-container");
+      if (!container) return;
+      const icons = { success: "✓", error: "✕" };
+      const el = document.createElement("div");
+      el.className = "tp-toast " + type;
+      el.innerHTML = `<span class="tp-toast__icon">${icons[type] || ""}</span><span class="tp-toast__text">${esc(String(message || ""))}</span>`;
+      container.appendChild(el);
+      setTimeout(() => {
+        el.style.animation = "tpToastOut .22s ease forwards";
+        setTimeout(() => el.remove(), 240);
+      }, 4200);
+    }
     function mapIntent(v) { return v === "commercial" ? "Коммерческий" : (v === "noncommercial" ? "Некоммерческий" : "—"); }
-    function mapStatus(v) { return v === "active" ? "Активен" : (v === "paused" ? "Пауза" : (v || "—")); }
+    function mapStatus(v) { return ({ active: "Активен", paused: "Пауза", close: "Закрыт", deleted: "Удалён" })[v] || (v || "—"); }
     function mapExp(v) { return ({ none: "Без опыта", "<1": "До 1 года", "1-3": "1-3 года", "3-6": "3-6 лет", "6+": "6+ лет" })[v] || "—"; }
     function mapWork(v) { return ({ remote: "Удаленно", office: "Офис", hybrid: "Гибрид" })[v] || "—"; }
     function mapEmployment(v) { return ({ full_time: "Полная", part_time: "Частичная", side_project: "Подработка" })[v] || "—"; }
@@ -272,6 +325,7 @@
 
     function extractUsers(vacancy) {
       const sources = [];
+      if (vacancy.occupant) sources.push(vacancy.occupant);
       if (Array.isArray(vacancy.occupied_by_users)) sources.push(...vacancy.occupied_by_users);
       if (Array.isArray(vacancy.assigned_users)) sources.push(...vacancy.assigned_users);
       if (Array.isArray(vacancy.members)) sources.push(...vacancy.members);
@@ -279,13 +333,31 @@
       if (vacancy.user) sources.push(vacancy.user);
       if (vacancy.assigned_user) sources.push(vacancy.assigned_user);
       if (vacancy.resume && vacancy.resume.user) sources.push(vacancy.resume.user);
-      const names = sources.map((u) => {
-        if (!u) return "";
-        if (typeof u === "string") return u;
+      const seen = new Set();
+      return sources.map((u) => {
+        if (!u) return null;
+        if (typeof u === "string") return { name: u, resume_id: null, user_id: null };
         const full = [u.last_name, u.first_name].filter(Boolean).join(" ").trim();
-        return full || u.full_name || u.username || u.email || "";
-      }).filter(Boolean);
-      return Array.from(new Set(names));
+        return {
+          name: full || u.full_name || u.username || u.email || u.desired_position || (u.resume_id ? "Резюме #" + u.resume_id : ""),
+          resume_id: u.resume_id || u.resume?.id || null,
+          user_id: u.user_id || u.resume?.user_id || null,
+        };
+      }).filter((u) => {
+        if (!u || !u.name) return false;
+        const key = [u.resume_id || "", u.user_id || "", u.name].join(":");
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
+    function renderUserChip(user) {
+      const label = esc(user.name);
+      if (!user.resume_id) return `<span class="user-chip">${label}</span>`;
+      const params = new URLSearchParams({ id: String(user.resume_id) });
+      if (user.user_id) params.set("user_id", String(user.user_id));
+      return `<a class="user-chip" href="./card_resume.html?${params.toString()}">${label}</a>`;
     }
 
     async function loadCitiesMap() {
@@ -301,18 +373,28 @@
 
     async function loadData() {
       const params = new URLSearchParams(window.location.search);
-      const id = params.get("id");
+      const id = params.get("id") || params.get("project");
       if (!id) {
         document.getElementById("project-sub").textContent = "ID проекта не указан";
         return;
       }
       const citiesMap = await loadCitiesMap();
+      let myProfileId = null;
       try {
-        const resp = await fetch(API_BASE_URL + "/my_project/" + id, { credentials: "include" });
+        const pm = await fetch(API_BASE_URL + "/profiles/me", { credentials: "include" });
+        if (pm.ok) myProfileId = (await pm.json()).id;
+      } catch (_) {}
+
+      try {
+        let resp = await fetch(API_BASE_URL + "/projects/" + id, { credentials: "include" });
+        if (!resp.ok) {
+          resp = await fetch(API_BASE_URL + "/my_project/" + id, { credentials: "include" });
+        }
         if (!resp.ok) throw new Error("Не удалось загрузить проект");
         const data = await resp.json();
         const project = data.project || data;
         const vacancies = Array.isArray(data.vacancies) ? data.vacancies : (Array.isArray(project.vacancies) ? project.vacancies : []);
+        const isOwner = myProfileId != null && Number(project.profile_id) === Number(myProfileId);
 
         document.getElementById("project-title").textContent = project.title || "Без названия";
         document.getElementById("project-sub").textContent = (project.company_name ? project.company_name + " • " : "") + mapIntent(project.employment_intent);
@@ -331,50 +413,138 @@
         document.getElementById("project-main-fields").innerHTML = mainFields.map((f) => `<div class="field"><b>${esc(f[0])}:</b>${esc(f[1])}</div>`).join("");
 
         const list = document.getElementById("vacancies-list");
+        const extraEl = document.getElementById("project-extra-fields");
+        const totalSlots = Number.isFinite(Number(project.planned_members)) && Number(project.planned_members) > 0
+          ? Number(project.planned_members)
+          : Math.max(vacancies.length, 1);
+
+        function fillSummary(occupiedCount) {
+          if (!extraEl) return;
+          const rows = [
+            ["ID проекта", "#" + project.id],
+            ["Вакансий в карточке", String(vacancies.length)],
+            ["Занято слотов команды", occupiedCount + " / " + totalSlots],
+          ];
+          if (isOwner) rows.push(["Владелец", "Вы можете исключить участника из проекта — освободится слот для новых откликов (кнопка под карточкой вакансии)."]);
+          else rows.push(["Просмотр", "Ниже — описание ролей, требования и принятые по откликам участники."]);
+          extraEl.innerHTML = rows.map((f) => `<div class="field"><b>${esc(f[0])}:</b>${esc(f[1])}</div>`).join("");
+        }
+
         if (vacancies.length === 0) {
           list.innerHTML = '<div class="empty">По этому проекту пока нет вакансий</div>';
           document.getElementById("team-progress").textContent = "В проекте: 0/0";
+          fillSummary(0);
           return;
         }
 
         let occupiedSlots = 0;
         list.innerHTML = vacancies.map((v) => {
           const users = extractUsers(v);
+          const occ = v.occupant;
+          const useResume = !!(occ && occ.resume_id != null);
           const isTaken = users.length > 0 || v.is_filled === true || v.status === "filled" || v.status === "closed";
           if (isTaken) occupiedSlots += 1;
+
+          const slotTitle = esc(v.role_name || v.role_type?.name || "Роль");
+          const titleMain = useResume ? esc(occ.desired_position || v.role_name || "Участник") : slotTitle;
+
+          const metaExp = mapExp(useResume ? occ.computed_experience_level : v.experience);
+          const metaWork = mapWork(useResume ? occ.work_format : v.work_format);
+          const metaEmp = mapEmployment(useResume ? occ.commitment_level : (v.commitment_level || v.employment));
+          const metaSched = esc((useResume && occ.schedule != null ? occ.schedule : v.schedule) || "—");
+          const metaSal = salary(useResume ? occ.salary_amount : v.salary_amount, useResume ? occ.salary_type : v.salary_type);
+          const metaContract = mapContract(useResume ? occ.contract_type : v.contract_type);
+
+          const metaBlock = `
+              <div class="meta">
+                <div class="field"><b>${useResume ? "Опыт (резюме):" : "Опыт:"}</b>${esc(metaExp)}</div>
+                <div class="field"><b>${useResume ? "Формат (резюме):" : "Формат:"}</b>${esc(metaWork)}</div>
+                <div class="field"><b>${useResume ? "Занятость (резюме):" : "Занятость:"}</b>${esc(metaEmp)}</div>
+                <div class="field"><b>${useResume ? "График (резюме):" : "График:"}</b>${metaSched}</div>
+                <div class="field"><b>${useResume ? "Ожидания по зарплате:" : "Зарплата:"}</b>${esc(metaSal)}</div>
+                <div class="field"><b>${useResume ? "Договор (резюме):" : "Договор:"}</b>${esc(metaContract)}</div>
+              </div>`;
+
+          const aboutBlock =
+            useResume && occ.about_me
+              ? `<div class="text" style="margin-top:10px;"><b>О себе (из резюме):</b> ${esc(occ.about_me)}</div>`
+              : "";
+
+          const reqBlocks =
+            !useResume && v.requirements
+              ? `<div class="text" style="margin-top:10px;"><b>Требования:</b> ${esc(v.requirements)}</div>`
+              : "";
+
+          const respBlocks =
+            !useResume && v.responsibilities
+              ? `<div class="text" style="margin-top:10px;"><b>Обязанности:</b> ${esc(v.responsibilities)}</div>`
+              : "";
+
+          const memberLabel =
+            useResume && occ
+              ? ([occ.first_name, occ.last_name].filter(Boolean).join(" ").trim() || occ.desired_position || "Участник")
+              : "";
+          const removeBtn =
+            isOwner && occ && occ.resume_id != null
+              ? `<button type="button" class="btn-remove-member" data-remove-member="${esc(String(occ.resume_id))}" data-member-label="${esc(memberLabel)}">Исключить из проекта</button>`
+              : "";
+
           return `
             <article class="vacancy">
               <div class="vacancy-head">
-                <div class="vacancy-title">${esc(v.role_name || v.role_type?.name || "Роль")}</div>
+                <div>
+                  <div class="vacancy-title">${titleMain}</div>
+                  ${useResume ? `<div style="font-size:13px;color:#7a7060;margin-top:4px;">Слот в проекте: ${slotTitle}</div>` : ""}
+                </div>
                 <span class="badge ${isTaken ? "taken" : "open"}">${isTaken ? "Занята" : "Свободна"}</span>
               </div>
-              <div class="meta">
-                <div class="field"><b>Опыт:</b>${esc(mapExp(v.experience))}</div>
-                <div class="field"><b>Формат:</b>${esc(mapWork(v.work_format))}</div>
-                <div class="field"><b>Занятость:</b>${esc(mapEmployment(v.employment))}</div>
-                <div class="field"><b>График:</b>${esc(v.schedule || "—")}</div>
-                <div class="field"><b>Зарплата:</b>${esc(salary(v.salary_amount, v.salary_type))}</div>
-                <div class="field"><b>Договор:</b>${esc(mapContract(v.contract_type))}</div>
-              </div>
+              ${metaBlock}
               <div class="taken-users">
                 <div><b>Кто занимает вакансию:</b> ${users.length ? "" : "пока никто"}</div>
-                ${users.length ? `<div class="users-list">${users.map((u) => `<span class="user-chip">${esc(u)}</span>`).join("")}</div>` : ""}
+                ${users.length ? `<div class="users-list">${users.map(renderUserChip).join("")}</div>` : ""}
               </div>
-              ${v.requirements ? `<div class="text" style="margin-top:10px;"><b>Требования:</b> ${esc(v.requirements)}</div>` : ""}
-              ${v.responsibilities ? `<div class="text" style="margin-top:10px;"><b>Обязанности:</b> ${esc(v.responsibilities)}</div>` : ""}
+              ${aboutBlock}
+              ${reqBlocks}
+              ${respBlocks}
+              ${removeBtn}
             </article>
           `;
         }).join("");
 
-        const totalSlots = Number.isFinite(Number(project.planned_members)) && Number(project.planned_members) > 0
-          ? Number(project.planned_members)
-          : vacancies.length;
+        fillSummary(occupiedSlots);
         document.getElementById("team-progress").textContent = "В проекте: " + occupiedSlots + "/" + totalSlots;
       } catch (e) {
         document.getElementById("project-sub").textContent = "Ошибка загрузки проекта";
         document.getElementById("vacancies-list").innerHTML = '<div class="empty">Не удалось загрузить данные. Проверьте доступ или попробуйте позже.</div>';
       }
     }
+
+    document.getElementById("vacancies-list").addEventListener("click", async (ev) => {
+      const btn = ev.target.closest("[data-remove-member]");
+      if (!btn) return;
+      const resumeId = btn.getAttribute("data-remove-member");
+      const label = btn.getAttribute("data-member-label") || "Участник";
+      const params = new URLSearchParams(window.location.search);
+      const pid = params.get("id") || params.get("project");
+      if (!resumeId || !pid) return;
+      if (!window.confirm('Исключить «' + label + '» из проекта? Слот станет свободным, участник получит уведомление.')) return;
+      try {
+        const r = await fetch(API_BASE_URL + "/projects/" + encodeURIComponent(pid) + "/members/" + encodeURIComponent(resumeId), {
+          method: "DELETE",
+          credentials: "include",
+        });
+        if (r.ok) {
+          showToast("Участник исключён из проекта", "success");
+          loadData();
+        } else {
+          const err = await r.json().catch(() => ({}));
+          const msg = typeof err.detail === "string" ? err.detail : "Не удалось исключить";
+          showToast("Ошибка: " + msg, "error");
+        }
+      } catch {
+        showToast("Ошибка соединения с сервером", "error");
+      }
+    });
 
     loadData();
   })();

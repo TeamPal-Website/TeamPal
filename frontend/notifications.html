@@ -21,6 +21,15 @@
     .header { position: fixed; inset: 0 0 auto 0; z-index: 1000; height: 72px; background: var(--header); border-bottom: 1px solid var(--line); }
     .header__inner { height: 100%; padding: 0 28px; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
     .header__left { display: flex; align-items: center; gap: 12px; }
+    .header-nav-btn {
+      width: 46px; height: 46px; border-radius: 14px; border: 1px solid var(--line); background: #fff;
+      display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+      transition: all .2s ease; flex-shrink: 0;
+    }
+    .header-nav-btn:hover {
+      border-color: rgba(248, 90, 11, .55); box-shadow: 0 8px 18px rgba(250, 149, 0, .14);
+    }
+    .header-nav-btn svg { width: 22px; height: 22px; display: block; }
     .logo { width: 46px; height: 46px; border-radius: 50px; object-fit: cover; }
     .header__actions { display: flex; align-items: center; gap: 12px; position: relative; }
     .notify-btn, .burger {
@@ -40,6 +49,16 @@
     .card { border: 1px solid var(--line); border-radius: 18px; background: var(--panel); box-shadow: 0 12px 30px rgba(0,0,0,.06); padding: 18px; }
     .title { font-size: 28px; margin-bottom: 12px; color: var(--accent-2); }
     .empty { border: 1px dashed #dfd7cf; border-radius: 14px; padding: 22px; color: #7a7a7a; text-align: center; background: #fffaf3; }
+    .card-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+    .mark-btn { border: 1px solid var(--line); border-radius: 12px; background: #fff; padding: 10px 14px; cursor: pointer; font-family: inherit; font-weight: 700; color: var(--ink); }
+    .mark-btn:hover { border-color: rgba(248, 90, 11, .55); color: var(--accent-2); }
+    .notification-list { display: grid; gap: 10px; }
+    .notification-item { border: 1px solid var(--line); border-radius: 14px; padding: 14px; background: #fff; display: grid; gap: 6px; }
+    .notification-item.unread { border-color: rgba(248, 90, 11, .45); background: #fffaf3; }
+    .notification-title { font-size: 16px; font-weight: 800; }
+    .notification-meta { color: #6a5a4a; font-size: 13px; line-height: 1.35; }
+    .notification-link { color: var(--accent-2); font-weight: 800; text-decoration: none; width: fit-content; }
+    .notification-link:hover { text-decoration: underline; }
     .footer { width: 100%; background: var(--footer); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; font-size: 14px; color: var(--ink2); min-height: 52px; flex-wrap: wrap; }
   </style>
 </head>
@@ -47,10 +66,13 @@
 <header class="header">
   <div class="header__inner">
     <div class="header__left">
+      <button class="header-nav-btn" type="button" id="nav-back" aria-label="Назад в личный кабинет" title="Личный кабинет">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 6l-6 6 6 6" stroke="#f85a0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
       <img class="logo" src="./assets/logo.png" alt="Логотип TeamPal">
     </div>
     <div class="header__actions">
-      <button class="notify-btn active" type="button" aria-label="Уведомления">
+      <button class="notify-btn" type="button" aria-label="Отклики" onclick="window.location.href='./applications.html'" title="Отклики">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M12 4a5 5 0 0 0-5 5v2.6c0 .7-.24 1.38-.68 1.9L5 15h14l-1.32-1.5a3 3 0 0 1-.68-1.9V9a5 5 0 0 0-5-5Z" stroke="#f85a0b" stroke-width="1.8" stroke-linejoin="round"/>
           <path d="M10 18a2 2 0 0 0 4 0" stroke="#f85a0b" stroke-width="1.8" stroke-linecap="round"/>
@@ -59,8 +81,9 @@
       <button class="burger" id="burger-btn" type="button" aria-label="Открыть меню"><span></span><span></span><span></span></button>
       <nav class="header-menu" id="header-menu">
         <div class="header-menu__title">Меню</div>
-        <button class="header-menu__item" type="button" data-nav="./account_employee.html">Личный кабинет</button>
+        <button class="header-menu__item" type="button" id="menu-account">Личный кабинет</button>
         <button class="header-menu__item" type="button" data-nav="./search_project.html">Поиск</button>
+        <button class="header-menu__item" type="button" data-nav="./applications.html">Отклики</button>
         <button class="header-menu__item" type="button" data-nav="./support_project.html">Поддержать проект</button>
         <button class="header-menu__exit" type="button" data-nav="./authorization_page.html">Выйти</button>
       </nav>
@@ -70,8 +93,13 @@
 
 <main class="page">
   <section class="card">
-    <h1 class="title">Уведомления</h1>
-    <div class="empty">Новых уведомлений пока нет.</div>
+    <div class="card-head">
+      <h1 class="title">Уведомления</h1>
+      <button class="mark-btn" id="mark-all" type="button">Отметить прочитанными</button>
+    </div>
+    <div id="notifications-list" class="notification-list">
+      <div class="empty">Загрузка…</div>
+    </div>
   </section>
 </main>
 
@@ -80,6 +108,7 @@
   <span>обратная связь: teampal@dimple.ru</span>
 </footer>
 
+<script src="./config.js"></script>
 <script>
   (function () {
     const year = document.getElementById("year");
@@ -101,6 +130,122 @@
         if (href) window.location.href = href;
       });
     });
+
+    function resolveAccountHref() {
+      try {
+        return localStorage.getItem("tp_role") === "Ищу сотрудника"
+          ? "./account_manager.html"
+          : "./account_employee.html";
+      } catch (_) {
+        return "./account_employee.html";
+      }
+    }
+
+    const navBack = document.getElementById("nav-back");
+    if (navBack) navBack.addEventListener("click", () => { window.location.href = resolveAccountHref(); });
+
+    const menuAccount = document.getElementById("menu-account");
+    if (menuAccount) menuAccount.addEventListener("click", () => { window.location.href = resolveAccountHref(); });
+
+    const list = document.getElementById("notifications-list");
+    const markAll = document.getElementById("mark-all");
+
+    function esc(v) {
+      return String(v == null ? "" : v).replace(/[&<>"']/g, (ch) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      })[ch]);
+    }
+
+    function eventTitle(item) {
+      const p = item.payload || {};
+      if (item.event === "application_received") return "Новый отклик";
+      if (item.event === "employer_invited") return "Приглашение от работодателя";
+      if (item.event === "application_accepted") return "Отклик принят";
+      if (item.event === "application_rejected") return "Отклик отклонён";
+      if (item.event === "application_cancelled") {
+        if (p.reason === "resume_updated") return "Отклик отменён: резюме обновлено";
+        if (p.reason === "user_withdrawn") return "Отклик отозван";
+        if (p.reason === "user_left") return "Участник вышел из проекта";
+        if (p.reason === "removed_by_owner") return "Участник снят с проекта";
+        if (p.reason === "project_closed") return "Проект закрыт";
+        return "Отклик отменён";
+      }
+      return "Уведомление";
+    }
+
+    function eventText(item) {
+      const p = item.payload || {};
+      const parts = [];
+      if (p.project_title) parts.push(p.project_title);
+      if (p.role_name) parts.push(p.role_name);
+      if (p.vacancy_id && !p.role_name) parts.push("Вакансия #" + p.vacancy_id);
+      if (p.resume_id) parts.push("Резюме #" + p.resume_id);
+      return parts.length ? parts.join(" · ") : "Событие по отклику";
+    }
+
+    function formatDate(value) {
+      if (!value) return "";
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return "";
+      return d.toLocaleString("ru-RU", { dateStyle: "short", timeStyle: "short" });
+    }
+
+    function render(items) {
+      if (!list) return;
+      if (!Array.isArray(items) || items.length === 0) {
+        list.innerHTML = '<div class="empty">Новых уведомлений пока нет.</div>';
+        return;
+      }
+      list.innerHTML = items.map((item) => {
+        const p = item.payload || {};
+        const href = p.project_id ? "./card_project.html?project=" + encodeURIComponent(p.project_id) + (p.vacancy_id ? "&vacancy=" + encodeURIComponent(p.vacancy_id) : "") : "";
+        return `
+          <article class="notification-item ${item.is_read ? "" : "unread"}">
+            <div class="notification-title">${esc(eventTitle(item))}</div>
+            <div class="notification-meta">${esc(eventText(item))}</div>
+            <div class="notification-meta">${esc(formatDate(item.created_at))}</div>
+            ${href ? `<a class="notification-link" href="${esc(href)}">Открыть</a>` : ""}
+          </article>
+        `;
+      }).join("");
+    }
+
+    async function loadNotifications() {
+      try {
+        const resp = await fetch(API_BASE_URL + "/notifications?per_page=100", { credentials: "include" });
+        if (resp.status === 401) {
+          window.location.href = "./authorization_page.html";
+          return;
+        }
+        const data = resp.ok ? await resp.json() : [];
+        render(data);
+      } catch (_) {
+        if (list) list.innerHTML = '<div class="empty">Не удалось загрузить уведомления.</div>';
+      }
+    }
+
+    if (markAll) {
+      markAll.addEventListener("click", async () => {
+        markAll.disabled = true;
+        try {
+          await fetch(API_BASE_URL + "/notifications/read", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ mark_all: true }),
+          });
+          await loadNotifications();
+        } finally {
+          markAll.disabled = false;
+        }
+      });
+    }
+
+    loadNotifications();
   })();
 </script>
 </body>

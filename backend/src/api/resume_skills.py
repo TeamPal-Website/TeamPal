@@ -2,6 +2,7 @@ from fastapi import HTTPException, APIRouter
 from sqlalchemy.exc import IntegrityError
 
 from src.api.dependencies import DBDep, UserIdDep
+from src.api.resume_edit_policy import raise_if_resume_locked_for_editing
 from src.schemas.resume_skills import ResumeSkillAdd, ResumeSkillCreate, ResumeSkillPatch
 
 router = APIRouter(prefix="/resumes", tags=["Скиллы в резюме"])
@@ -38,6 +39,13 @@ async def create_resume_skill(
     resume = await db.resumes.get_one_or_none(id=resume_id, profile_id=profile.id)
     if resume is None:
         raise HTTPException(status_code=404, detail="Резюме не найдено")
+
+    if await db.resumes.has_active_assignment(resume_id):
+        raise HTTPException(
+            status_code=409,
+            detail="Нельзя редактировать резюме, пока оно принято в проект. Сначала покиньте проект.",
+        )
+    raise_if_resume_locked_for_editing(resume)
 
     skill = await db.skills.get_one_or_none(id=data.skill_id)
     if skill is None:
@@ -76,6 +84,13 @@ async def update_resume_skill(
     if resume.profile_id != profile.id:
         raise HTTPException(status_code=404, detail="Резюме не найдено")
 
+    if await db.resumes.has_active_assignment(resume.id):
+        raise HTTPException(
+            status_code=409,
+            detail="Нельзя редактировать резюме, пока оно принято в проект. Сначала покиньте проект.",
+        )
+    raise_if_resume_locked_for_editing(resume)
+
     skill = await db.skills.get_one_or_none(id=data.skill_id)
     if skill is None:
         raise HTTPException(status_code=404, detail="Навык не найден")
@@ -112,6 +127,13 @@ async def delete_resume_skill(
     resume = await db.resumes.get_one_or_none(id=link.resume_id, profile_id=profile.id)
     if resume is None:
         raise HTTPException(status_code=404, detail="Резюме не найдено")
+
+    if await db.resumes.has_active_assignment(resume.id):
+        raise HTTPException(
+            status_code=409,
+            detail="Нельзя редактировать резюме, пока оно принято в проект. Сначала покиньте проект.",
+        )
+    raise_if_resume_locked_for_editing(resume)
 
     await db.resume_skills.delete(id=resume_skill_id)
 

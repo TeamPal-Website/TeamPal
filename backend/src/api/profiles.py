@@ -2,15 +2,15 @@ from fastapi import APIRouter, HTTPException
 from sqlalchemy.exc import IntegrityError
 
 from src.api.dependencies import DBDep, UserIdDep
-from src.schemas.profiles import ProfileRequestPatch
+from src.schemas.profiles import ProfileRequestPatch, PublicProfile
 
 router = APIRouter(prefix="/profiles", tags=["Профили"])
 
 
 @router.get("/me")
 async def get_me(
-        db: DBDep,
-        user_id: UserIdDep,
+    db: DBDep,
+    user_id: UserIdDep,
 ):
     res = await db.profiles.get_one_or_none(user_id=user_id)
     if res is None:
@@ -20,20 +20,29 @@ async def get_me(
 
 @router.get("/{user_id}")
 async def get_profile(
-        db: DBDep,
-        user_id: int,
+    db: DBDep,
+    user_id: int,
 ):
     res = await db.profiles.get_one_or_none(user_id=user_id)
     if res is None:
         raise HTTPException(status_code=404, detail="Профиль не найден")
-    return res
+    return PublicProfile(
+        id=res.id,
+        user_id=user_id,
+        avatar=res.avatar,
+        first_name=res.first_name,
+        last_name=res.last_name,
+        age=res.age,
+        gender=res.gender,
+        city_id=res.city_id,
+    )
 
 
 @router.patch("")
 async def edit_profile(
-        db: DBDep,
-        profile_data: ProfileRequestPatch,
-        user_id: UserIdDep,
+    db: DBDep,
+    profile_data: ProfileRequestPatch,
+    user_id: UserIdDep,
 ):
     if profile_data.city_id is not None:
         city = await db.cities.get_one_or_none(id=profile_data.city_id)

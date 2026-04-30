@@ -510,7 +510,7 @@
       </div>
     </div>
     <div class="header__actions">
-      <button class="notify-btn" type="button" aria-label="Уведомления" onclick="window.location.href='./notifications.html'">
+      <button class="notify-btn" type="button" aria-label="Отклики" onclick="window.location.href='./applications.html'">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M12 4a5 5 0 0 0-5 5v2.6c0 .7-.24 1.38-.68 1.9L5 15h14l-1.32-1.5a3 3 0 0 1-.68-1.9V9a5 5 0 0 0-5-5Z" stroke="#f85a0b" stroke-width="1.8" stroke-linejoin="round"/>
           <path d="M10 18a2 2 0 0 0 4 0" stroke="#f85a0b" stroke-width="1.8" stroke-linecap="round"/>
@@ -755,9 +755,9 @@
               <label for="${rid}-emp">Занятость</label>
               <select id="${rid}-emp" data-field="employment">
                 <option value="">— Занятость —</option>
-                <option value="full_time"${role.employment === "full_time" ? " selected" : ""}>Полная занятость</option>
-                <option value="part_time"${role.employment === "part_time" ? " selected" : ""}>Частичная занятость</option>
-                <option value="side_project"${role.employment === "side_project" ? " selected" : ""}>Подработка</option>
+                <option value="full_time"${role.employment === "full_time" ? " selected" : ""}>Полный день</option>
+                <option value="part_time"${role.employment === "part_time" ? " selected" : ""}>Неполный день</option>
+                <option value="side_project"${role.employment === "side_project" ? " selected" : ""}>Подработка / гибкий формат</option>
               </select>
             </div>
             <div class="exp-field">
@@ -777,7 +777,7 @@
               <select id="${rid}-ct" data-field="contract_type">
                 <option value="">— Тип договора —</option>
                 <option value="gph"${role.contract_type === "gph" ? " selected" : ""}>ГПХ</option>
-                <option value="tk"${role.contract_type === "tk" ? " selected" : ""}>ТК</option>
+                <option value="tk"${role.contract_type === "tk" ? " selected" : ""}>ТК РФ</option>
                 <option value="internship"${role.contract_type === "internship" ? " selected" : ""}>Стажировка</option>
               </select>
             </div>
@@ -984,7 +984,7 @@
             requirements:     r.requirements      || null,
             experience:       r.experience        || null,
             work_format:      r.work_format       || null,
-            employment:       r.employment        || null,
+            commitment_level: r.employment        || null,
             schedule:         null,
             salary_amount:    r.salary_amount     != null ? r.salary_amount : null,
             salary_type:      r.salary_type       || null,

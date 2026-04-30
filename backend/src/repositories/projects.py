@@ -1,4 +1,6 @@
-from sqlalchemy import or_, select
+from datetime import datetime
+
+from sqlalchemy import or_, select, update
 
 from src.enums import EmploymentIntent, ProjectsStatus
 from src.models.profiles import ProfilesOrm
@@ -12,15 +14,52 @@ class ProjectsRepository(BaseRepository):
     model = ProjectsOrm
     schema = Project
 
+    async def get_filtered_not_deleted(self, **filter_by) -> list[Project]:
+        query = (
+            select(self.model)
+            .filter_by(**filter_by)
+            .where(ProjectsOrm.status != ProjectsStatus.DELETED)
+        )
+        result = await self.session.execute(query)
+        return [
+            Project.model_validate(row, from_attributes=True)
+            for row in result.scalars().all()
+        ]
+
+    async def set_close(
+        self, project_id: int, profile_id: int, close_member_ids: list[int]
+    ) -> None:
+        await self.session.execute(
+            update(ProjectsOrm)
+            .where(ProjectsOrm.id == project_id, ProjectsOrm.profile_id == profile_id)
+            .values(
+                status=ProjectsStatus.CLOSE.value, close_member_ids=close_member_ids
+            )
+        )
+
+    async def set_deleted(self, project_id: int, profile_id: int) -> None:
+        await self.session.execute(
+            update(ProjectsOrm)
+            .where(ProjectsOrm.id == project_id, ProjectsOrm.profile_id == profile_id)
+            .values(status=ProjectsStatus.DELETED.value)
+        )
+
+    async def mark_applications_seen(self, project_id: int, profile_id: int) -> None:
+        await self.session.execute(
+            update(ProjectsOrm)
+            .where(ProjectsOrm.id == project_id, ProjectsOrm.profile_id == profile_id)
+            .values(last_seen_applications_at=datetime.utcnow())
+        )
+
     async def search_public(
-            self,
-            *,
-            q: str | None = None,
-            city_id: int | None = None,
-            employment_intent: EmploymentIntent | None = None,
-            role_type_id: int | None = None,
-            limit: int = 10,
-            offset: int = 0,
+        self,
+        *,
+        q: str | None = None,
+        city_id: int | None = None,
+        employment_intent: EmploymentIntent | None = None,
+        role_type_id: int | None = None,
+        limit: int = 10,
+        offset: int = 0,
     ) -> list[ProjectSearchItem]:
         filters = [ProjectsOrm.status == ProjectsStatus.ACTIVE]
 
@@ -61,7 +100,7 @@ class ProjectsRepository(BaseRepository):
         )
         result = await self.session.execute(query)
 
-        items = [
+        return [
             ProjectSearchItem(
                 id=project.id,
                 user_id=user_id,
@@ -77,5 +116,3 @@ class ProjectsRepository(BaseRepository):
             )
             for project, user_id in result.all()
         ]
-
-        return items

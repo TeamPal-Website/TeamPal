@@ -81,7 +81,7 @@
       </div>
     </div>
     <div class="header__actions">
-      <button class="notify-btn" type="button" aria-label="Уведомления" onclick="window.location.href='./notifications.html'">
+      <button class="notify-btn" type="button" aria-label="Отклики" onclick="window.location.href='./applications.html'">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M12 4a5 5 0 0 0-5 5v2.6c0 .7-.24 1.38-.68 1.9L5 15h14l-1.32-1.5a3 3 0 0 1-.68-1.9V9a5 5 0 0 0-5-5Z" stroke="#f85a0b" stroke-width="1.8" stroke-linejoin="round"/>
           <path d="M10 18a2 2 0 0 0 4 0" stroke="#f85a0b" stroke-width="1.8" stroke-linecap="round"/>
@@ -106,7 +106,7 @@
     <div class="grid" id="resume-main-fields"></div>
   </section>
 
-  <section class="card section">
+  <section class="card section" id="resume-about-section">
     <h2>О себе</h2>
     <div class="text" id="resume-about">—</div>
   </section>
@@ -119,6 +119,11 @@
   <section class="card section">
     <h2>Опыт работы</h2>
     <div class="exp-list" id="resume-experiences"></div>
+  </section>
+
+  <section class="card section">
+    <h2>Контакты</h2>
+    <div class="grid" id="resume-contacts"></div>
   </section>
 </main>
 
@@ -153,21 +158,56 @@
     function mapIntent(v) { return v === "commercial" ? "Коммерческий проект" : (v === "noncommercial" ? "Некоммерческий проект" : "—"); }
     function mapStatus(v) { return v === "looking_for_job" ? "Ищу работу" : (v === "not_looking_for_job" ? "Не ищу работу" : "—"); }
     function mapCommit(v) { return ({ full_time: "Полный день", part_time: "Неполный день", side_project: "Подработка / гибкий формат" })[v] || "—"; }
-    function salary(v) { if (v == null || v === "") return "—"; const n = Number(v); if (!Number.isFinite(n)) return "—"; return n.toLocaleString("ru-RU") + " ₽"; }
+    function mapWork(v) { return ({ remote: "Удалённо", office: "В офисе", hybrid: "Гибрид" })[v] || "—"; }
+    function mapSchedule(v) { return ({ "5/2": "5/2", "2/2": "2/2", "4/2": "4/2", "3/3": "3/3" })[v] || "—"; }
+    function mapContract(v) { return ({ gph: "ГПХ", tk: "ТК РФ", internship: "Стажировка" })[v] || "—"; }
+    function salary(v, t) { if (v == null || v === "") return "—"; const n = Number(v); if (!Number.isFinite(n)) return "—"; const unit = t === "per_project" ? " за проект" : (t === "monthly" ? " в месяц" : ""); return n.toLocaleString("ru-RU") + " ₽" + unit; }
     function fmtDate(v) { if (!v) return "—"; const d = new Date(v); return isNaN(d.getTime()) ? String(v) : d.toLocaleDateString("ru-RU"); }
 
+    let skillsCatalogCache = null;
+    async function loadSkillsCatalogMap() {
+      if (skillsCatalogCache) return skillsCatalogCache;
+      try {
+        const r = await fetch(API_BASE_URL + "/skills", { credentials: "include" });
+        if (!r.ok) return {};
+        const arr = await r.json();
+        const map = {};
+        if (Array.isArray(arr)) arr.forEach((x) => { if (x && x.id != null) map[String(x.id)] = x.name || ""; });
+        skillsCatalogCache = map;
+        return map;
+      } catch {
+        skillsCatalogCache = {};
+        return skillsCatalogCache;
+      }
+    }
+
     async function loadResume() {
-      const id = new URLSearchParams(window.location.search).get("id");
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("id");
+      const userId = params.get("user_id") || params.get("user");
       if (!id) {
         document.getElementById("resume-sub").textContent = "ID резюме не указан";
         return;
       }
 
+      const skillMap = await loadSkillsCatalogMap();
+
       let resumeData = null;
-      for (const path of ["/resumes/" + id, "/my_resume/" + id]) {
+      const paths = [];
+      if (userId) paths.push("/profiles/" + encodeURIComponent(userId) + "/resumes/" + encodeURIComponent(id));
+      paths.push("/resumes/" + encodeURIComponent(id), "/my_resume/" + encodeURIComponent(id));
+      for (const path of paths) {
         try {
           const r = await fetch(API_BASE_URL + path, { credentials: "include" });
-          if (r.ok) { const data = await r.json(); resumeData = data.resume || data; break; }
+          if (r.ok) {
+            const data = await r.json();
+            resumeData = data.resume || data;
+            const skillsArr = Array.isArray(data.skills) ? data.skills : resumeData.skills;
+            const expArr = Array.isArray(data.experiences) ? data.experiences : resumeData.experiences;
+            resumeData.skills = Array.isArray(skillsArr) ? skillsArr : [];
+            resumeData.experiences = Array.isArray(expArr) ? expArr : [];
+            break;
+          }
         } catch (_) {}
       }
       if (!resumeData) {
@@ -178,25 +218,42 @@
 
       const displayTitle = resumeData.title || resumeData.desired_position || "Резюме";
       document.getElementById("resume-title").textContent = displayTitle;
-      document.getElementById("resume-sub").textContent = mapIntent(resumeData.employment_intent);
-      document.getElementById("resume-about").textContent = resumeData.about_me || "Не заполнено";
+      const subLine = (resumeData.desired_position ? String(resumeData.desired_position) + " · " : "") + mapIntent(resumeData.employment_intent);
+      document.getElementById("resume-sub").textContent = subLine;
+
+      const aboutSection = document.getElementById("resume-about-section");
+      const aboutRaw = resumeData.about_me != null ? String(resumeData.about_me).trim() : "";
+      if (aboutRaw) {
+        document.getElementById("resume-about").textContent = aboutRaw;
+        if (aboutSection) aboutSection.style.display = "";
+      } else if (aboutSection) {
+        aboutSection.style.display = "none";
+      }
 
       const contacts = resumeData.contacts || resumeData.profile?.contacts || {};
       const mainFields = [
         ["Должность", resumeData.desired_position || "—"],
         ["Тип резюме", mapIntent(resumeData.employment_intent)],
         ["Статус поиска", mapStatus(resumeData.status)],
-        ["График работы", mapCommit(resumeData.commitment_level)],
-        ["Желаемая зарплата", salary(resumeData.salary_amount)],
-        ["Телефон", contacts.phone || "—"],
-        ["Telegram", contacts.telegram || "—"],
-        ["GitHub", contacts.github || "—"],
+        ["Занятость", mapCommit(resumeData.commitment_level)],
+        ["Формат работы", mapWork(resumeData.work_format)],
+        ["График", mapSchedule(resumeData.schedule)],
+        ["Желаемая зарплата", salary(resumeData.salary_amount, resumeData.salary_type)],
+        ["Тип договора", mapContract(resumeData.contract_type)],
       ];
       document.getElementById("resume-main-fields").innerHTML = mainFields.map((f) => `<div class="field"><b>${esc(f[0])}:</b>${esc(f[1])}</div>`).join("");
 
       const skills = Array.isArray(resumeData.skills) ? resumeData.skills : [];
       document.getElementById("resume-skills").innerHTML = skills.length
-        ? skills.map((s) => `<span class="chip">${esc(s.name || s.title || s)}</span>`).join("")
+        ? skills.map((s) => {
+          let label = "";
+          if (typeof s === "string") label = s;
+          else if (s && typeof s === "object") {
+            label = (s.name || s.title || "").trim();
+            if (!label && s.skill_id != null) label = skillMap[String(s.skill_id)] || ("Навык #" + s.skill_id);
+          }
+          return `<span class="chip">${esc(label || "—")}</span>`;
+        }).join("")
         : '<div class="empty" style="width:100%;">Навыки не указаны</div>';
 
       const experiences = Array.isArray(resumeData.experiences) ? resumeData.experiences : [];
@@ -210,6 +267,16 @@
             </article>
           `).join("")
         : '<div class="empty">Опыт работы не указан</div>';
+
+      const contactsRows = [
+        ["Телефон", contacts.phone || "—"],
+        ["Telegram", contacts.telegram || "—"],
+        ["GitHub", contacts.github || "—"],
+      ];
+      const contactsEl = document.getElementById("resume-contacts");
+      if (contactsEl) {
+        contactsEl.innerHTML = contactsRows.map((f) => `<div class="field"><b>${esc(f[0])}:</b>${esc(f[1])}</div>`).join("");
+      }
     }
 
     loadResume();

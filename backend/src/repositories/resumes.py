@@ -1,11 +1,45 @@
-from sqlalchemy import or_, select
+from datetime import date
 
-from src.enums import EmploymentIntent, ResumeStatus
+from sqlalchemy import func, or_, select, update
+
+from src.enums import (
+    CommitmentLevel,
+    EmploymentIntent,
+    ProjectVacancyExperience,
+    ResumeStatus,
+)
+from src.models.applications import VacancyAssignmentsOrm
+from src.models.projects import ProjectVacancyOrm
 from src.models.profiles import ProfilesOrm
 from src.models.resumes import ResumesOrm, ResumeSkillOrm, ResumeExperienceOrm
 from src.repositories.base import BaseRepository
-from src.schemas.resumes import Resume
+from src.schemas.resumes import Resume, ResumeExperienceLevelPatch
 from src.schemas.search_public import ResumeSearchItem
+
+
+def _compute_experience_level(
+    experiences: list[ResumeExperienceOrm],
+) -> ProjectVacancyExperience:
+    total_months = 0
+    today = date.today()
+    for exp in experiences:
+        end = exp.end_date if exp.end_date else today
+        months = (end.year - exp.start_date.year) * 12 + (
+            end.month - exp.start_date.month
+        )
+        total_months += max(0, months)
+
+    years = total_months / 12
+    if years == 0:
+        return ProjectVacancyExperience.NONE
+    elif years < 1:
+        return ProjectVacancyExperience.LESS_THAN_ONE
+    elif years < 3:
+        return ProjectVacancyExperience.ONE_TO_THREE
+    elif years < 6:
+        return ProjectVacancyExperience.THREE_TO_SIX
+    else:
+        return ProjectVacancyExperience.SIX_PLUS
 
 
 class ResumesRepository(BaseRepository):
@@ -13,23 +47,36 @@ class ResumesRepository(BaseRepository):
     schema = Resume
 
     async def search_public(
-            self,
-            *,
-            q: str | None = None,
-            city_id: int | None = None,
-            employment_intent: EmploymentIntent | None = None,
-            skill_id: int | None = None,
-            limit: int = 10,
-            offset: int = 0,
+        self,
+        *,
+        q: str | None = None,
+        city_id: int | None = None,
+        employment_intent: EmploymentIntent | None = None,
+        skill_id: int | None = None,
+        commitment_level: CommitmentLevel | None = None,
+        salary_min: int | None = None,
+        salary_max: int | None = None,
+        computed_experience_level: ProjectVacancyExperience | None = None,
+        limit: int = 10,
+        offset: int = 0,
     ) -> list[ResumeSearchItem]:
-        filters = [ResumesOrm.status == ResumeStatus.LOOKING_FOR_JOB]
+        active_resume_ids_sq = (
+            select(VacancyAssignmentsOrm.resume_id)
+            .where(VacancyAssignmentsOrm.released_at.is_(None))
+            .scalar_subquery()
+        )
+
+        filters = [
+            ResumesOrm.status == ResumeStatus.LOOKING_FOR_JOB,
+            ResumesOrm.id.not_in(active_resume_ids_sq),
+        ]
 
         if city_id is not None:
             filters.append(ProfilesOrm.city_id == city_id)
-
         if employment_intent is not None:
             filters.append(ResumesOrm.employment_intent == employment_intent)
-
+        if commitment_level is not None:
+            filters.append(ResumesOrm.commitment_level == commitment_level)
         if skill_id is not None:
             filters.append(
                 select(ResumeSkillOrm.id)
@@ -39,7 +86,14 @@ class ResumesRepository(BaseRepository):
                 )
                 .exists()
             )
-
+        if salary_min is not None:
+            filters.append(ResumesOrm.salary_amount >= salary_min)
+        if salary_max is not None:
+            filters.append(ResumesOrm.salary_amount <= salary_max)
+        if computed_experience_level is not None:
+            filters.append(
+                ResumesOrm.computed_experience_level == computed_experience_level
+            )
         if q:
             pattern = f"%{q}%"
             filters.append(
@@ -59,8 +113,14 @@ class ResumesRepository(BaseRepository):
                 )
             )
 
+        skills_count_sq = (
+            select(func.count(ResumeSkillOrm.id))
+            .where(ResumeSkillOrm.resume_id == ResumesOrm.id)
+            .scalar_subquery()
+        )
+
         query = (
-            select(ResumesOrm, ProfilesOrm.user_id, ProfilesOrm.city_id)
+            select(ResumesOrm, ProfilesOrm.user_id, ProfilesOrm.city_id, skills_count_sq)
             .join(ProfilesOrm, ProfilesOrm.id == ResumesOrm.profile_id)
             .where(*filters)
             .order_by(ResumesOrm.created_at.desc(), ResumesOrm.id.desc())
@@ -69,7 +129,7 @@ class ResumesRepository(BaseRepository):
         )
         result = await self.session.execute(query)
 
-        items = [
+        return [
             ResumeSearchItem(
                 id=resume.id,
                 user_id=user_id,
@@ -78,12 +138,41 @@ class ResumesRepository(BaseRepository):
                 desired_position=resume.desired_position,
                 employment_intent=resume.employment_intent,
                 commitment_level=resume.commitment_level,
+                work_format=resume.work_format,
+                schedule=resume.schedule,
                 salary_amount=resume.salary_amount,
+                salary_type=resume.salary_type,
+                contract_type=resume.contract_type,
+                computed_experience_level=resume.computed_experience_level,
                 about_me=resume.about_me,
+                skills_count=int(skills_count or 0),
                 status=resume.status,
                 created_at=resume.created_at,
             )
-            for resume, user_id, profile_city_id in result.all()
+            for resume, user_id, profile_city_id, skills_count in result.all()
         ]
 
-        return items
+    async def recompute_experience_level(self, resume_id: int) -> None:
+        query = select(ResumeExperienceOrm).where(
+            ResumeExperienceOrm.resume_id == resume_id
+        )
+        result = await self.session.execute(query)
+        experiences = result.scalars().all()
+        level = _compute_experience_level(list(experiences))
+        await self.session.execute(
+            update(ResumesOrm)
+            .where(ResumesOrm.id == resume_id)
+            .values(computed_experience_level=level.value)
+        )
+
+    async def has_active_assignment(self, resume_id: int) -> bool:
+        sq = (
+            select(VacancyAssignmentsOrm.id)
+            .where(
+                VacancyAssignmentsOrm.resume_id == resume_id,
+                VacancyAssignmentsOrm.released_at.is_(None),
+            )
+            .exists()
+        )
+        result = await self.session.execute(select(sq))
+        return result.scalar()

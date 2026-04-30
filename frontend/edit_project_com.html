@@ -161,11 +161,6 @@
       .form-actions__right { justify-content:flex-end; }
     }
   </style>
-<script>
-  const EDIT_PAGE_BLOCKED = true;
-  alert('Редактирование на этой странице отключено');
-  window.location.replace('./account_manager.html');
-</script>
 </head>
 <body>
 
@@ -360,9 +355,9 @@
       + '</select></div>'
       + '<div class="exp-field"><label for="vac-' + k + '-employment">Занятость</label><select id="vac-' + k + '-employment">'
       +   '<option value="">— Занятость —</option>'
-      +   '<option value="full_time"' + optSelected('full_time', v.employment) + '>Полная занятость</option>'
-      +   '<option value="part_time"' + optSelected('part_time', v.employment) + '>Частичная занятость</option>'
-      +   '<option value="side_project"' + optSelected('side_project', v.employment) + '>Подработка</option>'
+      +   '<option value="full_time"' + optSelected('full_time', v.employment) + '>Полный день</option>'
+      +   '<option value="part_time"' + optSelected('part_time', v.employment) + '>Неполный день</option>'
+      +   '<option value="side_project"' + optSelected('side_project', v.employment) + '>Подработка / гибкий формат</option>'
       + '</select></div>'
       + '<div class="exp-field"><label for="vac-' + k + '-schedule">График</label><select id="vac-' + k + '-schedule">'
       +   '<option value="">— График —</option>'
@@ -381,7 +376,7 @@
       + '<div class="exp-field exp-field-full"><label for="vac-' + k + '-contract">Тип договора</label><select id="vac-' + k + '-contract">'
       +   '<option value="">— Тип договора —</option>'
       +   '<option value="gph"' + optSelected('gph', v.contract_type) + '>ГПХ</option>'
-      +   '<option value="tk"' + optSelected('tk', v.contract_type) + '>ТК</option>'
+      +   '<option value="tk"' + optSelected('tk', v.contract_type) + '>ТК РФ</option>'
       +   '<option value="internship"' + optSelected('internship', v.contract_type) + '>Стажировка</option>'
       + '</select></div>'
       + '</div>';
@@ -666,7 +661,7 @@
           _original: {
             role_type_id: v.role_type_id,
             work_format:  v.work_format,
-            employment:   v.employment,
+            employment:   v.commitment_level != null ? v.commitment_level : v.employment,
             experience:   v.experience,
             salary_amount:    salN,
             salary_type:      v.salary_type,
@@ -677,7 +672,7 @@
           },
           role_type_id: v.role_type_id,
           work_format:  v.work_format,
-          employment:   v.employment,
+          employment:   v.commitment_level != null ? v.commitment_level : v.employment,
           experience:   v.experience,
           salary_amount:    salN,
           salary_type:      v.salary_type,
@@ -871,7 +866,7 @@
     return {
       role_type_id:     vals.role_type_id,
       work_format:      vals.work_format      || null,
-      employment:       vals.employment       || null,
+      commitment_level: vals.employment       || null,
       experience:       vals.experience       || null,
       salary_amount:    vals.salary_amount    != null ? vals.salary_amount : null,
       salary_type:      vals.salary_type      || null,

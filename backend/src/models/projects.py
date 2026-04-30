@@ -2,6 +2,7 @@ from datetime import datetime
 
 from sqlalchemy import ForeignKey, String, Text, func
 from sqlalchemy import Enum as SQLEnum
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.database import Base
@@ -15,7 +16,6 @@ from src.enums import (
     Schedule,
     WorkFormat,
 )
-
 from src.models.enum_helpers import enum_values
 
 
@@ -55,6 +55,8 @@ class ProjectsOrm(Base):
         nullable=False,
         default=ProjectsStatus.ACTIVE,
     )
+    last_seen_applications_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    close_member_ids: Mapped[list | None] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         server_default=func.now(),
         nullable=False,
@@ -97,7 +99,7 @@ class ProjectVacancyOrm(Base):
         ),
         nullable=True,
     )
-    employment: Mapped[CommitmentLevel | None] = mapped_column(
+    commitment_level: Mapped[CommitmentLevel | None] = mapped_column(
         SQLEnum(
             CommitmentLevel,
             name="commitment_level_enum",

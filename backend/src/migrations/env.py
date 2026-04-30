@@ -10,17 +10,20 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from src.config import settings
 from src.database import Base
-from src.models.users import UsersOrm # noqa: F401
-from src.models.cities import CitiesOrm # noqa: F401
-from src.models.profiles import ProfilesOrm # noqa: F401
-from src.models.resumes import ResumesOrm # noqa: F401
-from src.models.resumes import ResumeExperienceOrm # noqa: F401
-from src.models.resumes import ResumeSkillOrm # noqa: F401
-from src.models.skills import SkillsOrm # noqa: F401
-from src.models.skills import SkillAliasOrm # noqa: F401
-from src.models.projects import ProjectsOrm # noqa: F401
-from src.models.projects import ProjectVacancyOrm # noqa: F401
-from src.models.roles_dictionary import RolesDictionaryOrm # noqa: F401
+from src.models.users import UsersOrm  # noqa: F401
+from src.models.cities import CitiesOrm  # noqa: F401
+from src.models.profiles import ProfilesOrm  # noqa: F401
+from src.models.resumes import ResumesOrm  # noqa: F401
+from src.models.resumes import ResumeExperienceOrm  # noqa: F401
+from src.models.resumes import ResumeSkillOrm  # noqa: F401
+from src.models.skills import SkillsOrm  # noqa: F401
+from src.models.skills import SkillAliasOrm  # noqa: F401
+from src.models.projects import ProjectsOrm  # noqa: F401
+from src.models.projects import ProjectVacancyOrm  # noqa: F401
+from src.models.roles_dictionary import RolesDictionaryOrm  # noqa: F401
+from src.models.applications import ApplicationsOrm  # noqa: F401
+from src.models.applications import VacancyAssignmentsOrm  # noqa: F401
+from src.models.applications import NotificationsOrm  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -84,9 +87,7 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()

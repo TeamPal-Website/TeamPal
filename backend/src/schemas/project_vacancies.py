@@ -34,7 +34,7 @@ class ProjectVacancy(BaseModel):
     experience: ProjectVacancyExperience | None
     work_format: WorkFormat | None
     schedule: Schedule | None
-    employment: CommitmentLevel | None
+    commitment_level: CommitmentLevel | None
     responsibilities: str | None
     requirements: str | None
     salary_amount: int | None
@@ -45,12 +45,37 @@ class ProjectVacancy(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class VacancyOccupant(BaseModel):
+    user_id: int
+    profile_id: int
+    resume_id: int
+    desired_position: str | None
+    first_name: str | None
+    last_name: str | None
+    salary_amount: int | None = None
+    salary_type: SalaryType | None = None
+    work_format: WorkFormat | None = None
+    schedule: Schedule | None = None
+    commitment_level: CommitmentLevel | None = None
+    contract_type: ContractType | None = None
+    computed_experience_level: ProjectVacancyExperience | None = None
+    about_me: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ProjectVacancyWithOccupant(ProjectVacancy):
+    role_name: str | None = None
+    occupant: VacancyOccupant | None = None
+    is_filled: bool = False
+
+
 class ProjectVacancyRequestAdd(BaseModel):
     role_type_id: int = Field(gt=0)
     experience: ProjectVacancyExperience | None = None
     work_format: WorkFormat | None = None
     schedule: Schedule | None = None
-    employment: CommitmentLevel | None = None
+    commitment_level: CommitmentLevel | None = None
     responsibilities: str | None = None
     requirements: str | None = None
     salary_amount: int | None = Field(default=None)
@@ -72,7 +97,7 @@ class ProjectVacancyPatch(BaseModel):
     experience: ProjectVacancyExperience | None = None
     work_format: WorkFormat | None = None
     schedule: Schedule | None = None
-    employment: CommitmentLevel | None = None
+    commitment_level: CommitmentLevel | None = None
     responsibilities: str | None = None
     requirements: str | None = None
     salary_amount: int | None = Field(default=None)

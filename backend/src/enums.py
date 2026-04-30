@@ -25,6 +25,8 @@ class CommitmentLevel(str, Enum):
 class ProjectsStatus(str, Enum):
     ACTIVE = "active"
     PAUSED = "paused"
+    CLOSE = "close"
+    DELETED = "deleted"
 
 
 class ProjectVacancyExperience(str, Enum):
@@ -57,3 +59,29 @@ class ContractType(str, Enum):
     GPH = "gph"
     TK = "tk"
     INTERNSHIP = "internship"
+
+
+class ApplicationStatus(str, Enum):
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    REJECTED = "rejected"
+    CANCELLED = "cancelled"
+
+
+class CancelReason(str, Enum):
+    USER_WITHDRAWN = "user_withdrawn"
+    USER_LEFT = "user_left"
+    REMOVED_BY_OWNER = "removed_by_owner"
+    RESUME_UPDATED = "resume_updated"
+    ANOTHER_ACCEPTED = "another_accepted"
+    PROJECT_PAUSED = "project_paused"
+    PROJECT_DELETED = "project_deleted"
+    PROJECT_CLOSED = "project_closed"
+
+
+class NotificationEvent(str, Enum):
+    APPLICATION_RECEIVED = "application_received"
+    APPLICATION_ACCEPTED = "application_accepted"
+    APPLICATION_REJECTED = "application_rejected"
+    APPLICATION_CANCELLED = "application_cancelled"
+    EMPLOYER_INVITED = "employer_invited"

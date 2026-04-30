@@ -155,6 +155,7 @@
       justify-content: center;
       cursor: pointer;
       transition: all 0.2s ease;
+      position: relative;
     }
     .notify-btn:hover {
       background: linear-gradient(135deg, #fff5e8, #ffffff);
@@ -500,6 +501,37 @@
     }
     .modal__actions { margin-top: 12px; display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
     .modal__actions .action-btn { border-radius: 12px; height: auto; }
+
+    .modal__card--premium {
+      width: min(92vw, 480px);
+      border-radius: 22px;
+      padding: 0;
+      overflow: hidden;
+      border: none;
+      box-shadow: 0 28px 56px rgba(0, 0, 0, 0.18);
+    }
+    .modal__accent-strip {
+      height: 5px;
+      background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
+    }
+    .modal__body { padding: 20px 22px 16px; }
+    .modal__title-lg { font-size: 22px; font-weight: 700; margin: 0; color: var(--ink); letter-spacing: -0.02em; }
+    .modal__subtitle { margin: 8px 0 0; font-size: 14px; color: #666; line-height: 1.45; }
+    .modal__footer-bar {
+      padding: 14px 22px 18px;
+      background: linear-gradient(180deg, #faf9f7, #fff);
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .filters-modal__hint {
+      margin-top: 12px;
+      font-size: 12px;
+      color: #888;
+      line-height: 1.45;
+    }
   </style>
 </head>
 <body>
@@ -514,7 +546,7 @@
       </div>
     </div>
     <div class="header__actions">
-      <button class="notify-btn" type="button" aria-label="Уведомления" onclick="window.location.href='./notifications.html'">
+      <button class="notify-btn" type="button" aria-label="Отклики" onclick="window.location.href='./applications.html'">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M12 4a5 5 0 0 0-5 5v2.6c0 .7-.24 1.38-.68 1.9L5 15h14l-1.32-1.5a3 3 0 0 1-.68-1.9V9a5 5 0 0 0-5-5Z" stroke="#f85a0b" stroke-width="1.8" stroke-linejoin="round"/>
           <path d="M10 18a2 2 0 0 0 4 0" stroke="#f85a0b" stroke-width="1.8" stroke-linecap="round"/>
@@ -568,33 +600,119 @@
 </footer>
 
 <div class="modal" id="filters-modal" aria-hidden="true">
-  <div class="modal__card" role="dialog" aria-modal="true" aria-label="Фильтры вакансий">
-    <h2 class="modal__title">Фильтры</h2>
-    <div class="modal__grid">
-      <div class="field">
-        <label for="f-exp">Опыт</label>
-        <select id="f-exp">
-          <option value="any">Любой</option>
-          <option value="need">Опыт нужен</option>
-          <option value="no">Без опыта</option>
-        </select>
+  <div class="modal__card modal__card--premium" role="dialog" aria-modal="true" aria-label="Фильтры вакансий">
+    <div class="modal__accent-strip"></div>
+    <div class="modal__body">
+      <h2 class="modal__title-lg">Фильтры</h2>
+      <p class="modal__subtitle">Сузьте выдачу по типу проекта, городу, роли и условиям работы.</p>
+      <div class="modal__grid" style="margin-top:14px;">
+        <div class="field">
+          <label for="f-intent">Тип проекта</label>
+          <select id="f-intent">
+            <option value="">Любой</option>
+            <option value="commercial">Коммерческий</option>
+            <option value="noncommercial">Некоммерческий</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-city">Город проекта</label>
+          <select id="f-city">
+            <option value="">Любой</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-role">Роль</label>
+          <select id="f-role">
+            <option value="">Любая</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-format">Формат работы</label>
+          <select id="f-format">
+            <option value="">Любой</option>
+            <option value="remote">Только удалённо</option>
+            <option value="office">Только офис</option>
+            <option value="hybrid">Гибрид</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-commitment">Занятость</label>
+          <select id="f-commitment">
+            <option value="">Любая</option>
+            <option value="full_time">Полная</option>
+            <option value="part_time">Частичная</option>
+            <option value="side_project">Подработка</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-salary-min">Зарплата от (₽ в месяц)</label>
+          <input id="f-salary-min" type="number" inputmode="numeric" min="0" step="1000" placeholder="не задано">
+        </div>
+        <div class="field">
+          <label for="f-salary-max">Зарплата до (₽ в месяц)</label>
+          <input id="f-salary-max" type="number" inputmode="numeric" min="0" step="1000" placeholder="не задано">
+        </div>
+        <div class="field">
+          <label for="f-exp-vacancy">Требуемый опыт</label>
+          <select id="f-exp-vacancy">
+            <option value="">Любой</option>
+            <option value="none">Без опыта</option>
+            <option value="<1">До 1 года</option>
+            <option value="1-3">1–3 года</option>
+            <option value="3-6">3–6 лет</option>
+            <option value="6+">6+ лет</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-contract">Тип договора</label>
+          <select id="f-contract">
+            <option value="">Любой</option>
+            <option value="tk">ТК РФ</option>
+            <option value="gph">ГПХ</option>
+            <option value="internship">Стажировка</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-posted">Дата публикации вакансии</label>
+          <select id="f-posted">
+            <option value="">За всё время</option>
+            <option value="7">За последние 7 дней</option>
+            <option value="14">За последние 14 дней</option>
+            <option value="30">За последние 30 дней</option>
+          </select>
+        </div>
       </div>
-      <div class="field">
-        <label for="f-type">Коммерческий проект или нет</label>
-        <select id="f-type">
-          <option value="any">Любой</option>
-          <option value="commercial">Коммерческий проект</option>
-          <option value="noncommercial">Некоммерческий проект</option>
-        </select>
-      </div>
+      <p class="filters-modal__hint">Подсказка: поиск по названию учитывает и название роли вакансии (например, «frontend» найдёт «Frontend-разработчик»).</p>
     </div>
-    <div class="modal__actions">
+    <div class="modal__footer-bar">
       <button class="action-btn" id="filters-reset" type="button">Сбросить</button>
       <button class="action-btn action-btn--accent" id="filters-apply" type="button">Применить</button>
     </div>
   </div>
 </div>
 
+<div class="modal" id="apply-modal" aria-hidden="true">
+  <div class="modal__card modal__card--premium" role="dialog" aria-modal="true" aria-label="Отклик на вакансию">
+    <div class="modal__accent-strip"></div>
+    <div class="modal__body">
+      <h2 class="modal__title-lg">Откликнуться</h2>
+      <p id="apply-vacancy-label" class="modal__subtitle"></p>
+      <div class="field">
+        <label for="apply-resume-select">Выберите резюме</label>
+        <select id="apply-resume-select"></select>
+      </div>
+      <div id="apply-no-resumes" style="display:none;margin-top:12px;padding:12px 14px;border-radius:14px;background:#fff5f5;border:1px solid #ffcdd2;color:#b71c1c;font-size:13px;line-height:1.45;">
+        У вас нет активных резюме. <a href="./create_resume_com.html" style="color:#f85a0b;font-weight:700;">Создайте резюме</a>.
+      </div>
+    </div>
+    <div class="modal__footer-bar">
+      <button class="action-btn" id="apply-cancel" type="button">Отмена</button>
+      <button class="action-btn action-btn--accent" id="apply-confirm" type="button">Откликнуться</button>
+    </div>
+  </div>
+</div>
+
+<script src="./config.js"></script>
 <script>
   (function () {
     const notificationContainer = document.getElementById("notificationContainer");
@@ -603,26 +721,11 @@
       if (!notificationContainer) return;
       const notification = document.createElement("div");
       notification.className = `notification ${type}`;
-      notification.innerHTML = `
-        <div class="notification-content">${message}</div>
-        <div class="notification-close">×</div>
-      `;
-
+      notification.innerHTML = `<div class="notification-content">${message}</div><div class="notification-close">×</div>`;
       notificationContainer.appendChild(notification);
       const closeBtn = notification.querySelector(".notification-close");
-      if (closeBtn) {
-        closeBtn.addEventListener("click", () => {
-          notification.style.animation = "fadeOutUp 0.25s ease-out forwards";
-          setTimeout(() => notification.remove(), 250);
-        });
-      }
-
-      setTimeout(() => {
-        if (notification.parentElement) {
-          notification.style.animation = "fadeOutUp 0.25s ease-out forwards";
-          setTimeout(() => notification.remove(), 250);
-        }
-      }, duration);
+      if (closeBtn) closeBtn.addEventListener("click", () => { notification.style.animation = "fadeOutUp 0.25s ease-out forwards"; setTimeout(() => notification.remove(), 250); });
+      setTimeout(() => { if (notification.parentElement) { notification.style.animation = "fadeOutUp 0.25s ease-out forwards"; setTimeout(() => notification.remove(), 250); } }, duration);
     }
 
     const yearSpan = document.getElementById("year");
@@ -632,11 +735,7 @@
     const burgerBtn = document.getElementById("burger-btn");
     const headerMenu = document.getElementById("header-menu");
 
-    function closeMenus() {
-      if (headerMenu) headerMenu.classList.remove("open");
-      if (burgerBtn) burgerBtn.classList.remove("open");
-    }
-
+    function closeMenus() { if (headerMenu) headerMenu.classList.remove("open"); if (burgerBtn) burgerBtn.classList.remove("open"); }
     if (roleToggle) {
       roleToggle.addEventListener("click", function (event) {
         const btn = event.target.closest(".role-toggle__btn");
@@ -648,223 +747,368 @@
         if (role === "Ищу сотрудника") window.location.href = "./search_resume.html";
       });
     }
-
-    if (burgerBtn && headerMenu) {
-      burgerBtn.addEventListener("click", function (event) {
-        event.stopPropagation();
-        this.classList.toggle("open");
-        headerMenu.classList.toggle("open");
-      });
-    }
-
-    document.addEventListener("click", function (event) {
-      if (!event.target.closest(".header__actions")) closeMenus();
-    });
-
-    document.querySelectorAll("[data-nav]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const href = btn.getAttribute("data-nav");
-        if (href) window.location.href = href;
-      });
-    });
+    if (burgerBtn && headerMenu) burgerBtn.addEventListener("click", function (event) { event.stopPropagation(); this.classList.toggle("open"); headerMenu.classList.toggle("open"); });
+    document.addEventListener("click", function (event) { if (!event.target.closest(".header__actions")) closeMenus(); });
+    document.querySelectorAll("[data-nav]").forEach((btn) => btn.addEventListener("click", () => { const href = btn.getAttribute("data-nav"); if (href) window.location.href = href; }));
 
     try {
       const savedRole = localStorage.getItem("tp_role");
-      if (savedRole && roleToggle) {
-        roleToggle.querySelectorAll(".role-toggle__btn").forEach((btn) => {
-          btn.classList.toggle("active", btn.dataset.role === savedRole);
-        });
-      }
-      if (savedRole === "Ищу сотрудника") {
-        window.location.replace("./search_resume.html");
-        return;
-      }
+      if (savedRole && roleToggle) roleToggle.querySelectorAll(".role-toggle__btn").forEach((b) => b.classList.toggle("active", b.dataset.role === savedRole));
+      if (savedRole === "Ищу сотрудника") { window.location.replace("./search_resume.html"); return; }
     } catch (_) {}
 
-    const SHOW_DEMO_CARD = true;
-    const demoVacancy = {
-      id: "demo-vacancy-1",
-      title: "Frontend разработчик",
-      employmentIntent: "commercial",
-      salaryAmount: 140000,
-      city: "Санкт-Петербург",
-      experienceRequired: true,
-      isRemote: true,
+    function esc(str) { return String(str ?? "").replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m])); }
+
+    const EXP_LABELS = { none: "Без опыта", "<1": "До 1 года", "1-3": "1–3 года", "3-6": "3–6 лет", "6+": "6+ лет" };
+    const WORK_LABELS = { remote: "Удалённо", office: "Офис", hybrid: "Гибрид" };
+    const COMMIT_LABELS = { full_time: "Полная занятость", part_time: "Частичная", side_project: "Подработка" };
+    const SALARY_TYPE_LABELS = { monthly: "в мес.", per_project: "за проект" };
+    const INTENT_LABELS = { commercial: "Коммерческий", noncommercial: "Некоммерческий" };
+    const CONTRACT_LABELS = { tk: "ТК РФ", gph: "ГПХ", internship: "Стажировка" };
+    const POSTED_LABELS = { "7": "за 7 дн.", "14": "за 14 дн.", "30": "за 30 дн." };
+
+    function formatSalary(amount, type) {
+      if (amount == null || !Number.isFinite(Number(amount))) return null;
+      const n = Number(amount);
+      return n.toLocaleString("ru-RU") + " ₽" + (type ? " " + (SALARY_TYPE_LABELS[type] || "") : "");
+    }
+
+    let _citiesMap = {};
+    let _rolesMap = {};
+    let _vacancies = [];
+
+    const state = {
+      q: "",
+      intent: "",
+      city_id: "",
+      role_type_id: "",
+      work_format: "",
+      commitment_level: "",
+      salary_min: "",
+      salary_max: "",
+      experience_vacancy: "",
+      contract_type: "",
+      posted_within_days: "",
     };
-    const vacanciesFromBackend = [];
-    const vacancies = vacanciesFromBackend.length > 0
-      ? vacanciesFromBackend
-      : (SHOW_DEMO_CARD ? [demoVacancy] : []);
 
     const qInput = document.getElementById("q");
     const findBtn = document.getElementById("find");
     const listEl = document.getElementById("vacancies");
     const countEl = document.getElementById("results-count");
     const activeFiltersEl = document.getElementById("active-filters");
-
     const filtersModal = document.getElementById("filters-modal");
     const openFiltersBtn = document.getElementById("open-filters");
     const applyFiltersBtn = document.getElementById("filters-apply");
     const resetFiltersBtn = document.getElementById("filters-reset");
-    const expSelect = document.getElementById("f-exp");
-    const typeSelect = document.getElementById("f-type");
 
-    const state = {
-      q: "",
-      exp: "any",
-      type: "any",
-    };
-
-    function escapeHtml(str) {
-      return String(str ?? "").replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+    async function loadDictionaries() {
+      try {
+        const [citiesResp, rolesResp] = await Promise.all([
+          fetch(API_BASE_URL + "/cities", { credentials: "include" }),
+          fetch(API_BASE_URL + "/roles_dictionary", { credentials: "include" }),
+        ]);
+        if (citiesResp.ok) {
+          const cities = await citiesResp.json();
+          _citiesMap = {};
+          const citySelect = document.getElementById("f-city");
+          if (Array.isArray(cities)) cities.forEach((c) => {
+            if (c && c.id != null) {
+              _citiesMap[String(c.id)] = c.title || String(c.id);
+              if (citySelect) { const opt = document.createElement("option"); opt.value = String(c.id); opt.textContent = c.title || String(c.id); citySelect.appendChild(opt); }
+            }
+          });
+        }
+        if (rolesResp.ok) {
+          const roles = await rolesResp.json();
+          _rolesMap = {};
+          const roleSelect = document.getElementById("f-role");
+          if (Array.isArray(roles)) roles.forEach((r) => {
+            if (r && r.id != null) {
+              _rolesMap[String(r.id)] = r.name || String(r.id);
+              if (roleSelect) { const opt = document.createElement("option"); opt.value = String(r.id); opt.textContent = r.name || String(r.id); roleSelect.appendChild(opt); }
+            }
+          });
+        }
+      } catch (_) {}
     }
 
-    function formatSalary(value) {
-      if (value === null || value === undefined || value === "") return "—";
-      const n = Number(value);
-      if (!Number.isFinite(n)) return "—";
-      return n.toLocaleString("ru-RU") + " ₽";
-    }
-
-    function intentLabel(intent) {
-      return intent === "commercial" ? "Коммерческий" : "Некоммерческий";
+    async function fetchVacancies() {
+      if (listEl) listEl.innerHTML = '<div class="empty-state" style="color:#aaa;">Загрузка…</div>';
+      const params = new URLSearchParams();
+      if (state.q) params.set("q", state.q);
+      if (state.intent) params.set("employment_intent", state.intent);
+      if (state.city_id) params.set("city_id", state.city_id);
+      if (state.role_type_id) params.set("role_type_id", state.role_type_id);
+      if (state.work_format) params.set("work_format", state.work_format);
+      if (state.commitment_level) params.set("commitment_level", state.commitment_level);
+      if (state.experience_vacancy) params.set("experience", state.experience_vacancy);
+      if (state.contract_type) params.set("contract_type", state.contract_type);
+      if (state.posted_within_days) params.set("posted_within_days", state.posted_within_days);
+      const sminRaw = state.salary_min != null ? String(state.salary_min).trim().replace(/\s/g, "") : "";
+      const smaxRaw = state.salary_max != null ? String(state.salary_max).trim().replace(/\s/g, "") : "";
+      const smin = sminRaw === "" ? NaN : parseInt(sminRaw, 10);
+      const smax = smaxRaw === "" ? NaN : parseInt(smaxRaw, 10);
+      if (Number.isFinite(smin) && smin >= 0) params.set("salary_min", String(smin));
+      if (Number.isFinite(smax) && smax >= 0) params.set("salary_max", String(smax));
+      params.set("per_page", "50");
+      try {
+        const resp = await fetch(API_BASE_URL + "/vacancies?" + params.toString(), { credentials: "include" });
+        if (resp.ok) {
+          _vacancies = await resp.json();
+        } else {
+          _vacancies = [];
+        }
+      } catch (_) { _vacancies = []; }
+      render(_vacancies);
     }
 
     function render(list) {
       if (!listEl) return;
       if (!Array.isArray(list) || list.length === 0) {
-        listEl.innerHTML = `<div class="empty-state">Ничего не найдено. Попробуйте изменить запрос или фильтры.</div>`;
+        listEl.innerHTML = '<div class="empty-state">Ничего не найдено. Попробуйте изменить запрос или фильтры.</div>';
         if (countEl) countEl.textContent = "Найдено: 0";
         return;
       }
-
+      if (countEl) countEl.textContent = "Найдено: " + list.length;
       listEl.innerHTML = list.map((v) => {
+        const roleName = _rolesMap[String(v.role_type_id)] || "Роль #" + v.role_type_id;
+        const cityName = _citiesMap[String(v.project_city_id)] || "";
+        const salaryStr = v.project_employment_intent === "commercial" ? (formatSalary(v.salary_amount, v.salary_type) || "—") : "—";
+        const metaItems = [
+          ["Зарплата", salaryStr],
+          ["Город", cityName || "—"],
+          ["Опыт", EXP_LABELS[v.experience] || "—"],
+          ["Формат", WORK_LABELS[v.work_format] || "—"],
+          ["Занятость", COMMIT_LABELS[v.commitment_level] || "—"],
+        ];
         return `
           <article class="card vacancy-card">
             <div class="vacancy-head">
               <div>
-                <div class="vacancy-title">${escapeHtml(v.title)}</div>
+                <div class="vacancy-title">${esc(roleName)}</div>
+                <div style="font-size:13px;color:#6a5a4a;margin-top:3px;">${esc(v.project_title)}${v.project_company_name ? " · " + esc(v.project_company_name) : ""}</div>
               </div>
-              <div style="display:flex; justify-content:flex-end;">
-                <span class="type-badge">${escapeHtml(intentLabel(v.employmentIntent))}</span>
+              <div style="display:flex;justify-content:flex-end;">
+                <span class="type-badge">${esc(INTENT_LABELS[v.project_employment_intent] || v.project_employment_intent)}</span>
               </div>
             </div>
             <div class="vacancy-meta">
-              <div class="meta-item"><b>Заработная плата:</b>${v.employmentIntent === "commercial" ? formatSalary(v.salaryAmount) : "—"}</div>
-              <div class="meta-item"><b>Город:</b>${escapeHtml(v.city || "—")}</div>
-              <div class="meta-item"><b>Опыт:</b>${v.experienceRequired ? "Нужен" : "Не обязателен"}</div>
-              <div class="meta-item"><b>Формат:</b>${v.isRemote ? "Удаленно" : "Офис"}</div>
+              ${metaItems.map(([k, val]) => `<div class="meta-item"><b>${esc(k)}:</b>${esc(val)}</div>`).join("")}
             </div>
             <div class="vacancy-actions">
-              <button class="action-btn" type="button" data-view="${escapeHtml(v.id)}">Просмотреть проект</button>
-              <button class="action-btn action-btn--accent" type="button" data-apply="${escapeHtml(v.id)}">Откликнуться</button>
+              <button class="action-btn" type="button" data-view-vacancy="${esc(String(v.vacancy_id))}" data-view-project="${esc(String(v.project_id))}">Просмотреть проект</button>
+              <button class="action-btn action-btn--accent" type="button" data-apply-vacancy="${esc(String(v.vacancy_id))}" data-apply-role="${esc(roleName)}" data-apply-project="${esc(v.project_title)}">Откликнуться</button>
             </div>
-          </article>
-        `;
+          </article>`;
       }).join("");
 
-      if (countEl) countEl.textContent = "Найдено: " + list.length;
-
-      listEl.querySelectorAll("[data-apply]").forEach((btn) => {
+      listEl.querySelectorAll("[data-view-vacancy]").forEach((btn) => {
         btn.addEventListener("click", () => {
-          const id = btn.getAttribute("data-apply");
-          const item = vacancies.find((x) => x.id === id);
-          showNotification(item ? `Отклик отправлен: ${escapeHtml(item.title)}` : "Отклик отправлен", "success", 2500);
+          const vacancyId = btn.getAttribute("data-view-vacancy");
+          const projectId = btn.getAttribute("data-view-project");
+          const vacancyData = list.find((v) => String(v.vacancy_id) === vacancyId);
+          if (vacancyData) {
+            try { sessionStorage.setItem("tp_vacancy_view_" + vacancyId, JSON.stringify(vacancyData)); } catch (_) {}
+          }
+          window.location.href = "./card_project.html?vacancy=" + encodeURIComponent(vacancyId) + "&project=" + encodeURIComponent(projectId);
         });
       });
 
-      listEl.querySelectorAll("[data-view]").forEach((btn) => {
+      listEl.querySelectorAll("[data-apply-vacancy]").forEach((btn) => {
         btn.addEventListener("click", () => {
-          const id = btn.getAttribute("data-view");
-          if (id) window.location.href = "./card_project.html?id=" + encodeURIComponent(id);
+          const vacancyId = btn.getAttribute("data-apply-vacancy");
+          const roleName = btn.getAttribute("data-apply-role");
+          const projectTitle = btn.getAttribute("data-apply-project");
+          openApplyModal(vacancyId, roleName, projectTitle);
         });
-      });
-    }
-
-    function computeFiltered() {
-      const q = (state.q || "").trim().toLowerCase();
-      return vacancies.filter((v) => {
-        const matchesQ = !q || String(v.title).toLowerCase().includes(q);
-        const matchesExp =
-          state.exp === "any" ||
-          (state.exp === "need" && v.experienceRequired) ||
-          (state.exp === "no" && !v.experienceRequired);
-        const matchesType = state.type === "any" || v.employmentIntent === state.type;
-        return matchesQ && matchesExp && matchesType;
       });
     }
 
     function updateActiveFiltersChip() {
       const parts = [];
-      if (state.exp === "need") parts.push("опыт нужен");
-      if (state.exp === "no") parts.push("без опыта");
-      if (state.type === "commercial") parts.push("коммерческий");
-      if (state.type === "noncommercial") parts.push("некоммерческий");
+      if (state.intent) parts.push(INTENT_LABELS[state.intent] || state.intent);
+      if (state.city_id && _citiesMap[state.city_id]) parts.push(_citiesMap[state.city_id]);
+      if (state.role_type_id && _rolesMap[state.role_type_id]) parts.push(_rolesMap[state.role_type_id]);
+      if (state.work_format) parts.push(WORK_LABELS[state.work_format] || state.work_format);
+      if (state.commitment_level) parts.push(COMMIT_LABELS[state.commitment_level] || state.commitment_level);
+      const smin = state.salary_min != null ? String(state.salary_min).trim() : "";
+      const smax = state.salary_max != null ? String(state.salary_max).trim() : "";
+      if (smin || smax) {
+        const a = smin ? Number(smin.replace(/\s/g, "")).toLocaleString("ru-RU") : "…";
+        const b = smax ? Number(smax.replace(/\s/g, "")).toLocaleString("ru-RU") : "…";
+        if ((smin && Number.isFinite(Number(smin.replace(/\s/g, "")))) || (smax && Number.isFinite(Number(smax.replace(/\s/g, "")))))
+          parts.push("зарплата " + a + "–" + b + " ₽");
+      }
+      if (state.experience_vacancy) parts.push("опыт: " + (EXP_LABELS[state.experience_vacancy] || state.experience_vacancy));
+      if (state.contract_type) parts.push(CONTRACT_LABELS[state.contract_type] || state.contract_type);
+      if (state.posted_within_days && POSTED_LABELS[state.posted_within_days])
+        parts.push(POSTED_LABELS[state.posted_within_days]);
       if (activeFiltersEl) activeFiltersEl.textContent = "Фильтры: " + (parts.length ? parts.join(", ") : "нет");
     }
 
-    function applySearch() {
-      state.q = qInput ? qInput.value : "";
+    function doSearch() {
+      state.q = qInput ? qInput.value.trim() : "";
       updateActiveFiltersChip();
-      render(computeFiltered());
+      fetchVacancies();
     }
 
     function openFilters() {
       if (!filtersModal) return;
-      if (expSelect) expSelect.value = state.exp;
-      if (typeSelect) typeSelect.value = state.type;
+      const sync = (id, val) => { const el = document.getElementById(id); if (el) el.value = val != null ? String(val) : ""; };
+      sync("f-intent", state.intent);
+      sync("f-city", state.city_id);
+      sync("f-role", state.role_type_id);
+      sync("f-format", state.work_format);
+      sync("f-commitment", state.commitment_level);
+      sync("f-salary-min", state.salary_min);
+      sync("f-salary-max", state.salary_max);
+      sync("f-exp-vacancy", state.experience_vacancy);
+      sync("f-contract", state.contract_type);
+      sync("f-posted", state.posted_within_days);
       filtersModal.classList.add("open");
     }
-
-    function closeFilters() {
-      if (!filtersModal) return;
-      filtersModal.classList.remove("open");
-    }
+    function closeFilters() { if (filtersModal) filtersModal.classList.remove("open"); }
 
     if (openFiltersBtn) openFiltersBtn.addEventListener("click", openFilters);
-    if (filtersModal) {
-      filtersModal.addEventListener("click", (event) => {
-        if (event.target === filtersModal) closeFilters();
-      });
-      document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") closeFilters();
-      });
-    }
-
+    if (filtersModal) { filtersModal.addEventListener("click", (e) => { if (e.target === filtersModal) closeFilters(); }); document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeFilters(); }); }
     if (applyFiltersBtn) {
       applyFiltersBtn.addEventListener("click", () => {
-        state.exp = expSelect ? expSelect.value : "any";
-        state.type = typeSelect ? typeSelect.value : "any";
+        state.intent = document.getElementById("f-intent").value;
+        state.city_id = document.getElementById("f-city").value;
+        state.role_type_id = document.getElementById("f-role").value;
+        state.work_format = document.getElementById("f-format").value;
+        state.commitment_level = document.getElementById("f-commitment").value;
+        state.salary_min = document.getElementById("f-salary-min") ? document.getElementById("f-salary-min").value : "";
+        state.salary_max = document.getElementById("f-salary-max") ? document.getElementById("f-salary-max").value : "";
+        state.experience_vacancy = document.getElementById("f-exp-vacancy") ? document.getElementById("f-exp-vacancy").value : "";
+        state.contract_type = document.getElementById("f-contract") ? document.getElementById("f-contract").value : "";
+        state.posted_within_days = document.getElementById("f-posted") ? document.getElementById("f-posted").value : "";
         closeFilters();
-        applySearch();
+        doSearch();
       });
     }
-
     if (resetFiltersBtn) {
       resetFiltersBtn.addEventListener("click", () => {
-        state.exp = "any";
-        state.type = "any";
-        if (expSelect) expSelect.value = "any";
-        if (typeSelect) typeSelect.value = "any";
+        state.intent = "";
+        state.city_id = "";
+        state.role_type_id = "";
+        state.work_format = "";
+        state.commitment_level = "";
+        state.salary_min = "";
+        state.salary_max = "";
+        state.experience_vacancy = "";
+        state.contract_type = "";
+        state.posted_within_days = "";
+        ["f-intent", "f-city", "f-role", "f-format", "f-commitment", "f-salary-min", "f-salary-max", "f-exp-vacancy", "f-contract", "f-posted"].forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) el.value = "";
+        });
         closeFilters();
-        applySearch();
+        doSearch();
       });
     }
+    if (findBtn) findBtn.addEventListener("click", doSearch);
+    if (qInput) qInput.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); doSearch(); } });
 
-    if (findBtn) findBtn.addEventListener("click", applySearch);
-    if (qInput) {
-      qInput.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
-          event.preventDefault();
-          applySearch();
+    let _applyVacancyId = null;
+    const applyModal = document.getElementById("apply-modal");
+    const applyResumeSelect = document.getElementById("apply-resume-select");
+    const applyNoResumes = document.getElementById("apply-no-resumes");
+    const applyCancelBtn = document.getElementById("apply-cancel");
+    const applyConfirmBtn = document.getElementById("apply-confirm");
+    const applyVacancyLabel = document.getElementById("apply-vacancy-label");
+
+    async function openApplyModal(vacancyId, roleName, projectTitle) {
+      _applyVacancyId = vacancyId;
+      if (applyVacancyLabel) applyVacancyLabel.textContent = roleName + " · " + projectTitle;
+      if (applyResumeSelect) applyResumeSelect.innerHTML = '<option value="">Загрузка…</option>';
+      if (applyNoResumes) applyNoResumes.style.display = "none";
+      if (applyConfirmBtn) applyConfirmBtn.disabled = true;
+      if (applyModal) applyModal.classList.add("open");
+
+      try {
+        const resp = await fetch(API_BASE_URL + "/my_resumes", { credentials: "include" });
+        if (resp.status === 401) { window.location.href = "./authorization_page.html"; return; }
+        const resumes = resp.ok ? await resp.json() : [];
+        const active = Array.isArray(resumes) ? resumes.filter((r) => r.status === "looking_for_job") : [];
+        if (applyResumeSelect) {
+          applyResumeSelect.innerHTML = "";
+          if (active.length === 0) {
+            applyResumeSelect.innerHTML = '<option value="">— нет активных резюме —</option>';
+            if (applyNoResumes) applyNoResumes.style.display = "block";
+            if (applyConfirmBtn) applyConfirmBtn.disabled = true;
+          } else {
+            active.forEach((r) => { const opt = document.createElement("option"); opt.value = String(r.id); opt.textContent = r.desired_position || "Резюме #" + r.id; applyResumeSelect.appendChild(opt); });
+            if (applyConfirmBtn) applyConfirmBtn.disabled = false;
+          }
+        }
+      } catch (_) {
+        if (applyResumeSelect) applyResumeSelect.innerHTML = '<option value="">Ошибка загрузки</option>';
+      }
+    }
+
+    function closeApplyModal() { if (applyModal) applyModal.classList.remove("open"); _applyVacancyId = null; }
+    if (applyCancelBtn) applyCancelBtn.addEventListener("click", closeApplyModal);
+    if (applyModal) applyModal.addEventListener("click", (e) => { if (e.target === applyModal) closeApplyModal(); });
+
+    if (applyConfirmBtn) {
+      applyConfirmBtn.addEventListener("click", async () => {
+        const resumeId = applyResumeSelect ? applyResumeSelect.value : "";
+        if (!resumeId || !_applyVacancyId) return;
+        applyConfirmBtn.disabled = true;
+        try {
+          const resp = await fetch(API_BASE_URL + "/applications", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ resume_id: Number(resumeId), vacancy_id: Number(_applyVacancyId) }),
+          });
+          if (resp.ok) {
+            closeApplyModal();
+            showNotification("Отклик отправлен!", "success", 3000);
+            pollApplicationsBellBadge();
+          } else {
+            const err = await resp.json().catch(() => ({}));
+            showNotification("Ошибка: " + (err.detail || "Не удалось отправить отклик"), "error", 4000);
+            applyConfirmBtn.disabled = false;
+          }
+        } catch (_) {
+          showNotification("Ошибка соединения с сервером", "error", 4000);
+          applyConfirmBtn.disabled = false;
         }
       });
     }
 
+    async function pollApplicationsBellBadge() {
+      try {
+        const resp = await fetch(API_BASE_URL + "/applications/badge_counts", { credentials: "include" });
+        if (!resp.ok) return;
+        const data = await resp.json();
+        const count = Number(data.outgoing_pending || 0);
+        const notifyBtn = document.querySelector(".notify-btn");
+        if (!notifyBtn) return;
+        let badge = notifyBtn.querySelector(".notif-badge");
+        if (count > 0) {
+          if (!badge) {
+            badge = document.createElement("span");
+            badge.className = "notif-badge";
+            badge.style.cssText = "position:absolute;top:-4px;right:-4px;background:#f85a0b;color:#fff;border-radius:50%;font-size:10px;font-weight:700;min-width:18px;height:18px;padding:0 4px;display:flex;align-items:center;justify-content:center;pointer-events:none;";
+            notifyBtn.appendChild(badge);
+          }
+          badge.textContent = count > 99 ? "99+" : String(count);
+        } else if (badge) {
+          badge.remove();
+        }
+      } catch (_) {}
+    }
+
     updateActiveFiltersChip();
-    render(vacancies);
+    loadDictionaries().then(() => {
+      fetchVacancies();
+      pollApplicationsBellBadge();
+      setInterval(pollApplicationsBellBadge, 60000);
+    });
   })();
 </script>
 </body>
 </html>
-

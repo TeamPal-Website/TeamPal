@@ -47,5 +47,19 @@ class ProfileAdd(ProfileBase):
 
 class Profile(ProfileRequestPatch):
     id: int
+    user_id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PublicProfile(BaseModel):
+    id: int
+    user_id: int
+    avatar: str | None
+    first_name: str | None
+    last_name: str | None
+    age: int | None
+    gender: Gender | None
+    city_id: int | None
 
     model_config = ConfigDict(from_attributes=True)

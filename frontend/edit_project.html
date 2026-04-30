@@ -161,11 +161,6 @@
       .form-actions__right { justify-content:flex-end; }
     }
   </style>
-<script>
-  const EDIT_PAGE_BLOCKED = true;
-  alert('Редактирование на этой странице отключено');
-  window.location.replace('./account_manager.html');
-</script>
 </head>
 <body>
 
@@ -666,7 +661,7 @@
           _original: {
             role_type_id: v.role_type_id,
             work_format:  v.work_format,
-            employment:   v.employment,
+            employment:   v.commitment_level != null ? v.commitment_level : v.employment,
             experience:   v.experience,
             salary_amount:    salN,
             salary_type:      v.salary_type,
@@ -677,7 +672,7 @@
           },
           role_type_id: v.role_type_id,
           work_format:  v.work_format,
-          employment:   v.employment,
+          employment:   v.commitment_level != null ? v.commitment_level : v.employment,
           experience:   v.experience,
           salary_amount:    salN,
           salary_type:      v.salary_type,
@@ -871,7 +866,7 @@
     return {
       role_type_id:     vals.role_type_id,
       work_format:      vals.work_format      || null,
-      employment:       vals.employment       || null,
+      commitment_level: vals.employment       || null,
       experience:       vals.experience       || null,
       salary_amount:    vals.salary_amount    != null ? vals.salary_amount : null,
       salary_type:      vals.salary_type      || null,

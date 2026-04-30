@@ -375,6 +375,12 @@
       text-overflow: ellipsis;
       white-space: nowrap;
     }
+    .project-title-link {
+      display: block;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .project-title-link:hover { color: var(--accent-1); }
     .project-info { font-size: 13px; color: #666; margin: 4px 0; }
     .project-roles { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
     .role-badge { background: #fff0e0; padding: 3px 10px; border-radius: 12px; font-size: 11px; }
@@ -481,6 +487,36 @@
     .modal__field input:focus,.modal__field select:focus,.modal__field textarea:focus { outline:2px solid rgba(248,90,11,.2); border-color:#f85a0b; }
     .modal__field textarea { resize:vertical; min-height:90px; }
     .modal__split { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:14px; }
+
+    .cabinet-item-title-btn {
+      display: inline-block;
+      font-weight: 700;
+      color: var(--accent-2, #f85a0b);
+      background: none;
+      border: none;
+      padding: 0;
+      margin: 0;
+      font-family: inherit;
+      font-size: inherit;
+      cursor: pointer;
+      text-align: left;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .cabinet-item-title-btn:hover { color: var(--accent-3, #eb6424); }
+    .cabinet-detail-body {
+      max-height: min(70vh, 560px);
+      overflow: auto;
+      text-align: left;
+      font-size: 14px;
+      line-height: 1.55;
+      color: #333;
+    }
+    .cabinet-detail-body h4 { margin: 14px 0 8px; font-size: 15px; color: var(--ink); }
+    .cabinet-detail-body p { margin: 0 0 10px; white-space: pre-wrap; }
+    .cabinet-detail-team-list { margin: 0; padding-left: 18px; }
+    .cabinet-detail-team-list li { margin-bottom: 6px; }
+
   </style>
 </head>
 <body>
@@ -494,7 +530,7 @@
       </div>
     </div>
     <div class="header__actions">
-      <button class="notify-btn" type="button" aria-label="Уведомления" onclick="window.location.href='./notifications.html'">
+      <button class="notify-btn" type="button" aria-label="Отклики" onclick="window.location.href='./applications.html'">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M12 4a5 5 0 0 0-5 5v2.6c0 .7-.24 1.38-.68 1.9L5 15h14l-1.32-1.5a3 3 0 0 1-.68-1.9V9a5 5 0 0 0-5-5Z" stroke="#f85a0b" stroke-width="1.8" stroke-linejoin="round"/>
           <path d="M10 18a2 2 0 0 0 4 0" stroke="#f85a0b" stroke-width="1.8" stroke-linecap="round"/>
@@ -505,8 +541,8 @@
       </button>
       <nav class="header-menu" id="header-menu">
         <div class="header-menu__title">Меню</div>
-        <button class="header-menu__item" type="button">Личный кабинет</button>
-        <button class="header-menu__item" type="button">Поиск</button>
+        <button class="header-menu__item" type="button" data-nav="./account_employee.html">Личный кабинет</button>
+        <button class="header-menu__item" type="button" data-nav="./search_project.html">Поиск</button>
         <button class="header-menu__item" type="button">Поддержать проект</button>
         <button class="header-menu__exit" type="button">Выйти</button>
       </nav>
@@ -653,31 +689,12 @@
   </div>
 </div>
 
-
-<div class="modal" id="resume-edit-modal" aria-hidden="true">
-  <div class="modal__card" style="width:min(92vw,540px);">
-    <h2 class="modal__title">Редактирование резюме</h2>
-    <div class="modal__field">
-      <label for="edit-resume-position">Желаемая должность</label>
-      <input id="edit-resume-position" type="text" placeholder="Backend Developer" maxlength="255" />
-    </div>
-    <div class="modal__field">
-      <label for="edit-resume-about">О себе</label>
-      <textarea id="edit-resume-about" placeholder="Расскажите о вашем опыте и навыках..."></textarea>
-    </div>
-    <div class="modal__field">
-      <label for="edit-resume-status">Статус поиска</label>
-      <select id="edit-resume-status">
-        <option value="looking_for_job">Ищу работу</option>
-        <option value="not_looking_for_job">Не ищу работу</option>
-      </select>
-    </div>
-    <div class="modal__split">
-      <button class="action-btn action-btn--danger" id="resume-edit-delete" type="button">Удалить резюме</button>
-      <div style="display:flex;gap:8px;">
-        <button class="action-btn" id="resume-edit-cancel" type="button">Отмена</button>
-        <button class="action-btn action-btn--accent" id="resume-edit-save" type="button">Сохранить</button>
-      </div>
+<div class="modal" id="cabinet-detail-modal" aria-hidden="true">
+  <div class="modal__card" style="max-width:560px;width:92vw;">
+    <h2 class="modal__title" id="cabinet-detail-title">Просмотр</h2>
+    <div class="cabinet-detail-body" id="cabinet-detail-body"></div>
+    <div class="modal__actions">
+      <button class="action-btn action-btn--accent" id="cabinet-detail-close" type="button">Закрыть</button>
     </div>
   </div>
 </div>
@@ -739,6 +756,36 @@
       if (e.target === document.getElementById("confirm-modal")) _closeConfirmModal();
     });
 
+    function escCabinet(s) {
+      return String(s ?? "").replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+    }
+    function openCabinetDetailModal(title, html) {
+      const modal = document.getElementById("cabinet-detail-modal");
+      const tEl = document.getElementById("cabinet-detail-title");
+      const bEl = document.getElementById("cabinet-detail-body");
+      if (!modal || !tEl || !bEl) return;
+      tEl.textContent = title;
+      bEl.innerHTML = html;
+      modal.classList.add("open");
+    }
+    function closeCabinetDetailModal() {
+      document.getElementById("cabinet-detail-modal")?.classList.remove("open");
+    }
+    document.getElementById("cabinet-detail-close")?.addEventListener("click", closeCabinetDetailModal);
+    document.getElementById("cabinet-detail-modal")?.addEventListener("click", (e) => {
+      if (e.target.id === "cabinet-detail-modal") closeCabinetDetailModal();
+    });
+
+    let skillsDictPromise = null;
+    function loadSkillsTitleMap() {
+      if (!skillsDictPromise) {
+        skillsDictPromise = fetch(API_BASE_URL + "/skills", { credentials: "include" })
+          .then((r) => (r.ok ? r.json() : []))
+          .catch(() => []);
+      }
+      return skillsDictPromise;
+    }
+
 
 
 
@@ -756,110 +803,6 @@
 
 
 
-
-    let _editingResumeId = null;
-
-    async function openResumeEdit(resumeId) {
-      _editingResumeId = String(resumeId);
-      const modal = document.getElementById("resume-edit-modal");
-      if (!modal) return;
-
-      const posCache = _getPosCache();
-      document.getElementById("edit-resume-position").value = posCache[_editingResumeId] || "";
-      document.getElementById("edit-resume-about").value = "";
-      document.getElementById("edit-resume-status").value = "looking_for_job";
-
-      try {
-        const resp = await fetch(API_BASE_URL + "/my_resume/" + resumeId, { credentials: "include" });
-        if (resp.ok) {
-          const data = await resp.json();
-          const r = data.resume || data;
-          const listTitle = posCache[_editingResumeId] || "";
-          const posEl = document.getElementById("edit-resume-position");
-          if (posEl) {
-            posEl.value = (r.desired_position || "").trim() || listTitle;
-          }
-          document.getElementById("edit-resume-about").value = r.about_me || "";
-          document.getElementById("edit-resume-status").value = r.status || "looking_for_job";
-        }
-      } catch {}
-
-      modal.classList.add("open");
-    }
-
-    function _closeResumeEditModal() {
-      const modal = document.getElementById("resume-edit-modal");
-      if (modal) modal.classList.remove("open");
-      _editingResumeId = null;
-    }
-
-    async function _saveResumeEdit() {
-      const id = _editingResumeId;
-      if (!id) return;
-      const position = document.getElementById("edit-resume-position").value.trim();
-      const aboutMe = document.getElementById("edit-resume-about").value.trim();
-      const status = document.getElementById("edit-resume-status").value;
-
-      const payload = {};
-      if (position) payload.desired_position = position;
-      payload.about_me = aboutMe || null;
-      if (status) payload.status = status;
-
-      try {
-        const resp = await fetch(API_BASE_URL + "/resumes/" + id, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(payload),
-        });
-        if (resp.ok) {
-          if (position) _setPosCache(id, position);
-          _closeResumeEditModal();
-          showToast("Резюме успешно обновлено", "success");
-          loadMyProjects();
-        } else {
-          const err = await resp.json().catch(() => ({}));
-          showToast("Ошибка: " + (err.detail || "Не удалось сохранить"), "error");
-        }
-      } catch {
-        showToast("Ошибка соединения с сервером", "error");
-      }
-    }
-
-    async function _deleteResume(resumeId) {
-      try {
-        const resp = await fetch(API_BASE_URL + "/resumes/" + resumeId, {
-          method: "DELETE",
-          credentials: "include",
-        });
-        if (resp.ok || resp.status === 204) {
-          _setPosCache(resumeId, null);
-          _closeResumeEditModal();
-          showToast("Резюме удалено", "success");
-          loadMyProjects();
-        } else {
-          const err = await resp.json().catch(() => ({}));
-          showToast("Ошибка: " + (err.detail || "Не удалось удалить"), "error");
-        }
-      } catch {
-        showToast("Ошибка соединения с сервером", "error");
-      }
-    }
-
-    document.getElementById("resume-edit-cancel")?.addEventListener("click", _closeResumeEditModal);
-    document.getElementById("resume-edit-save")?.addEventListener("click", _saveResumeEdit);
-    document.getElementById("resume-edit-delete")?.addEventListener("click", () => {
-      const id = _editingResumeId;
-      if (!id) return;
-      showConfirm(
-        "Удалить резюме?",
-        "Это действие необратимо. Резюме будет удалено навсегда.",
-        () => _deleteResume(id)
-      );
-    });
-    document.getElementById("resume-edit-modal")?.addEventListener("click", (e) => {
-      if (e.target === document.getElementById("resume-edit-modal")) _closeResumeEditModal();
-    });
 
     const tabPersonal = document.getElementById("tab-personal");
     const tabMyProjects = document.getElementById("tab-myprojects");
@@ -908,19 +851,22 @@
       }
     }
 
+    function hideAllPanels() {
+      [panelPersonal, panelMyProjects].forEach((p) => p && p.classList.add("hidden"));
+      [tabPersonal, tabMyProjects].forEach((t) => t && t.classList.remove("active"));
+    }
+
     function showPersonal() {
-      tabPersonal.classList.add("active");
-      tabMyProjects.classList.remove("active");
-      panelPersonal.classList.remove("hidden");
-      panelMyProjects.classList.add("hidden");
+      hideAllPanels();
+      tabPersonal && tabPersonal.classList.add("active");
+      panelPersonal && panelPersonal.classList.remove("hidden");
       loadPersonalData();
     }
 
     function showMyProjects() {
-      tabMyProjects.classList.add("active");
-      tabPersonal.classList.remove("active");
-      panelMyProjects.classList.remove("hidden");
-      panelPersonal.classList.add("hidden");
+      hideAllPanels();
+      tabMyProjects && tabMyProjects.classList.add("active");
+      panelMyProjects && panelMyProjects.classList.remove("hidden");
       loadMyProjects();
     }
 
@@ -1071,6 +1017,10 @@
         const safe = (v) => (v === null || v === undefined) ? "" : String(v);
         const esc = (s) => safe(s).replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
         const statusLabel = { looking_for_job: "Ищу работу", not_looking_for_job: "Не ищу работу" };
+        function resumeEditUrl(id, intent) {
+          const page = intent === "noncommercial" ? "./edit_resume_study.html" : "./edit_resume_com.html";
+          return page + "?id=" + encodeURIComponent(id);
+        }
 
         const resumeDetails = await Promise.all(
           resumes.map(async (resume) => {
@@ -1105,19 +1055,22 @@
           const displayTitle = resume._displayTitle || (id ? `Резюме #${id}` : "Резюме");
           const currentStatus = resume?.status || "looking_for_job";
           const isLooking = currentStatus === "looking_for_job";
-          const statusText = statusLabel[currentStatus] || currentStatus;
+          const editLocked = isLooking;
           const createdAt = resume?.created_at ? new Date(resume.created_at).toLocaleDateString("ru-RU") : "—";
           const rType = resume?.employment_intent || typeCache[id] || "";
           const rTypeLabel = intentLabel[rType] || "";
+          const editHref = resumeEditUrl(id, rType);
+
+          const titleBlock = `<button type="button" class="cabinet-item-title-btn" data-preview-resume="${esc(id)}" title="Подробнее о резюме">${esc(displayTitle)}</button>`;
 
           return `
             <div class="project-card" style="display:flex;justify-content:space-between;gap:12px;align-items:center;">
               <div style="flex:1;min-width:0;">
-                <div class="project-title" title="${esc(displayTitle)}">${esc(displayTitle)}</div>
+                ${titleBlock}
                 ${rTypeLabel ? `<div class="project-info"><b>Тип:</b> ${esc(rTypeLabel)}</div>` : ""}
                 <div class="project-info"><b>Создано:</b> ${esc(createdAt)}</div>
               </div>
-              <div style="display:flex;align-items:center;gap:14px;flex-shrink:0;">
+              <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;">
                 <label style="display:flex;align-items:center;gap:8px;user-select:none;cursor:pointer;">
                   <span style="font-size:12px;color:#666;">${isLooking ? "Ищу работу" : "Не ищу"}</span>
                   <span class="status-toggle">
@@ -1127,10 +1080,85 @@
                     <span class="status-toggle__track"></span>
                   </span>
                 </label>
+                <button class="action-btn" type="button" data-edit-resume-page="${esc(id)}" data-resume-intent="${esc(rType)}"
+                  ${editLocked ? 'disabled style="opacity:.55;cursor:not-allowed;" title="Снимите резюме с поиска («Не ищу»), чтобы редактировать"' : ""}>Редактировать</button>
               </div>
             </div>
           `;
         }).join("");
+
+        projectsList.querySelectorAll("[data-preview-resume]").forEach((btn) => {
+          btn.addEventListener("click", async () => {
+            const rid = btn.getAttribute("data-preview-resume");
+            if (!rid) return;
+            openCabinetDetailModal("Загрузка…", '<p style="color:#888;">Загрузка…</p>');
+            try {
+              const [detResp, skillsList] = await Promise.all([
+                fetch(API_BASE_URL + "/my_resume/" + encodeURIComponent(rid), { credentials: "include" }),
+                loadSkillsTitleMap(),
+              ]);
+              if (!detResp.ok) {
+                openCabinetDetailModal("Ошибка", "<p>Не удалось загрузить резюме.</p>");
+                return;
+              }
+              const pack = await detResp.json();
+              const resume = pack.resume || pack;
+              const skills = Array.isArray(pack.skills) ? pack.skills : [];
+              const experiences = Array.isArray(pack.experiences) ? pack.experiences : [];
+              const skillMap = new Map(
+                (Array.isArray(skillsList) ? skillsList : []).map((s) => [String(s.id), s.name || ("#" + s.id)]),
+              );
+              const intentLab = { commercial: "Коммерческий", noncommercial: "Учебный" };
+              const statusLab = { looking_for_job: "Ищу работу", not_looking_for_job: "Не ищу работу" };
+
+              let html = "";
+              html += `<p><b>Желаемая должность:</b> ${escCabinet(resume.desired_position || "—")}</p>`;
+              html += `<p><b>Тип:</b> ${escCabinet(intentLab[resume.employment_intent] || resume.employment_intent || "—")}</p>`;
+              html += `<p><b>Статус:</b> ${escCabinet(statusLab[resume.status] || resume.status || "—")}</p>`;
+              if (resume.about_me) {
+                html += "<h4>О себе</h4>";
+                html += `<p>${escCabinet(resume.about_me)}</p>`;
+              }
+              if (skills.length) {
+                html += "<h4>Навыки</h4>";
+                html += `<ul class="cabinet-detail-team-list">`;
+                for (const sk of skills) {
+                  const sid = sk.skill_id != null ? String(sk.skill_id) : "";
+                  const label = sid ? skillMap.get(sid) || ("Навык #" + sid) : "Навык";
+                  html += `<li>${escCabinet(label)}</li>`;
+                }
+                html += "</ul>";
+              }
+              if (experiences.length) {
+                html += "<h4>Опыт</h4>";
+                html += `<ul class="cabinet-detail-team-list">`;
+                for (const ex of experiences) {
+                  const period =
+                    ex.start_date && ex.end_date
+                      ? `${ex.start_date} — ${ex.end_date}`
+                      : ex.start_date
+                        ? `${ex.start_date} — н.в.`
+                        : "";
+                  html += `<li><b>${escCabinet(ex.position || "")}</b> — ${escCabinet(ex.company_name || "")}${period ? ` (${escCabinet(period)})` : ""}${ex.description ? `<br><span style="color:#555;">${escCabinet(ex.description)}</span>` : ""}</li>`;
+                }
+                html += "</ul>";
+              }
+
+              openCabinetDetailModal(resume.desired_position || "Резюме", html);
+            } catch {
+              openCabinetDetailModal("Ошибка", "<p>Ошибка соединения с сервером.</p>");
+            }
+          });
+        });
+
+        projectsList.querySelectorAll("[data-edit-resume-page]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            if (btn.disabled) return;
+            const id = btn.getAttribute("data-edit-resume-page");
+            const intent = btn.getAttribute("data-resume-intent");
+            if (id) window.location.href = resumeEditUrl(id, intent);
+          });
+        });
 
 
         projectsList.querySelectorAll(".proj-status-check").forEach((checkbox) => {
@@ -1331,6 +1359,13 @@
 
     document.addEventListener("click", function (event) { 
       if (!event.target.closest(".header__actions")) closeMenus(); 
+    });
+
+    document.querySelectorAll("[data-nav]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const href = btn.getAttribute("data-nav");
+        if (href) window.location.href = href;
+      });
     });
 
     const changePasswordBtn = document.getElementById("change-password-btn");

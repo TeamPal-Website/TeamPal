@@ -11,7 +11,16 @@ from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column
 
 from src.database import Base
-from src.enums import CommitmentLevel, EmploymentIntent, ResumeStatus
+from src.enums import (
+    CommitmentLevel,
+    ContractType,
+    EmploymentIntent,
+    ProjectVacancyExperience,
+    ResumeStatus,
+    SalaryType,
+    Schedule,
+    WorkFormat,
+)
 from src.models.enum_helpers import enum_values
 
 
@@ -39,7 +48,52 @@ class ResumesOrm(Base):
         ),
         nullable=True,
     )
+    work_format: Mapped[WorkFormat | None] = mapped_column(
+        SQLEnum(
+            WorkFormat,
+            name="work_format_enum",
+            values_callable=enum_values,
+            create_type=False,
+        ),
+        nullable=True,
+    )
+    schedule: Mapped[Schedule | None] = mapped_column(
+        SQLEnum(
+            Schedule,
+            name="schedule_enum",
+            values_callable=enum_values,
+            create_type=False,
+        ),
+        nullable=True,
+    )
     salary_amount: Mapped[int | None] = mapped_column(nullable=True)
+    salary_type: Mapped[SalaryType | None] = mapped_column(
+        SQLEnum(
+            SalaryType,
+            name="salary_type_enum",
+            values_callable=enum_values,
+            create_type=False,
+        ),
+        nullable=True,
+    )
+    contract_type: Mapped[ContractType | None] = mapped_column(
+        SQLEnum(
+            ContractType,
+            name="contract_type_enum",
+            values_callable=enum_values,
+            create_type=False,
+        ),
+        nullable=True,
+    )
+    computed_experience_level: Mapped[ProjectVacancyExperience | None] = mapped_column(
+        SQLEnum(
+            ProjectVacancyExperience,
+            name="projects_vacancies_enum",
+            values_callable=enum_values,
+            create_type=False,
+        ),
+        nullable=True,
+    )
     about_me: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[ResumeStatus] = mapped_column(
         SQLEnum(ResumeStatus, name="resume_status_enum", values_callable=enum_values),

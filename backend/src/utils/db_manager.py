@@ -1,5 +1,7 @@
 from src.repositories.admins import AdminsRepository
+from src.repositories.applications import ApplicationsRepository
 from src.repositories.cities import CitiesRepository
+from src.repositories.notifications import NotificationsRepository
 from src.repositories.profiles import ProfilesRepository
 from src.repositories.project_vacancies import ProjectVacanciesRepository
 from src.repositories.projects import ProjectsRepository
@@ -9,6 +11,7 @@ from src.repositories.resumes import ResumesRepository
 from src.repositories.roles_dictionary import RolesDictionaryRepository
 from src.repositories.skills import SkillsRepository
 from src.repositories.users import UsersRepository
+from src.repositories.vacancy_assignments import VacancyAssignmentsRepository
 
 
 class DBManager:
@@ -29,6 +32,9 @@ class DBManager:
         self.projects = ProjectsRepository(self.session)
         self.project_vacancies = ProjectVacanciesRepository(self.session)
         self.roles_dictionary = RolesDictionaryRepository(self.session)
+        self.applications = ApplicationsRepository(self.session)
+        self.vacancy_assignments = VacancyAssignmentsRepository(self.session)
+        self.notifications = NotificationsRepository(self.session)
 
         return self
 
@@ -38,7 +44,3 @@ class DBManager:
 
     async def commit(self):
         await self.session.commit()
-
-
-
-

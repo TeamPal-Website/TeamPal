@@ -2,7 +2,16 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from src.enums import CommitmentLevel, EmploymentIntent, ResumeStatus
+from src.enums import (
+    CommitmentLevel,
+    ContractType,
+    EmploymentIntent,
+    ProjectVacancyExperience,
+    ResumeStatus,
+    SalaryType,
+    Schedule,
+    WorkFormat,
+)
 from src.schemas.resume_experiences import ResumeExperienceRequestAdd
 
 MAX_SALARY_AMOUNT_RUB = 50_000_000
@@ -27,7 +36,12 @@ class Resume(BaseModel):
     desired_position: str
     employment_intent: EmploymentIntent
     commitment_level: CommitmentLevel | None
+    work_format: WorkFormat | None
+    schedule: Schedule | None
     salary_amount: int | None
+    salary_type: SalaryType | None
+    contract_type: ContractType | None
+    computed_experience_level: ProjectVacancyExperience | None
     about_me: str | None
     status: ResumeStatus
     created_at: datetime
@@ -41,7 +55,11 @@ class ResumeRequestAdd(BaseModel):
     status: ResumeStatus = ResumeStatus.LOOKING_FOR_JOB
     employment_intent: EmploymentIntent = EmploymentIntent.COMMERCIAL
     commitment_level: CommitmentLevel | None = None
+    work_format: WorkFormat | None = None
+    schedule: Schedule | None = None
     salary_amount: int | None = Field(default=None)
+    salary_type: SalaryType | None = None
+    contract_type: ContractType | None = None
     experiences: list[ResumeExperienceRequestAdd] = Field(default_factory=list)
     skill_ids: list[int] = Field(..., min_length=1)
 
@@ -64,7 +82,12 @@ class ResumeAdd(BaseModel):
     desired_position: str = Field(min_length=1, max_length=255)
     employment_intent: EmploymentIntent = EmploymentIntent.COMMERCIAL
     commitment_level: CommitmentLevel | None = None
+    work_format: WorkFormat | None = None
+    schedule: Schedule | None = None
     salary_amount: int | None = None
+    salary_type: SalaryType | None = None
+    contract_type: ContractType | None = None
+    computed_experience_level: ProjectVacancyExperience | None = None
     about_me: str | None = None
     status: ResumeStatus = ResumeStatus.LOOKING_FOR_JOB
 
@@ -78,7 +101,11 @@ class ResumePatch(BaseModel):
     desired_position: str | None = Field(None, min_length=1, max_length=255)
     employment_intent: EmploymentIntent | None = None
     commitment_level: CommitmentLevel | None = None
+    work_format: WorkFormat | None = None
+    schedule: Schedule | None = None
     salary_amount: int | None = Field(None)
+    salary_type: SalaryType | None = None
+    contract_type: ContractType | None = None
     about_me: str | None = None
     status: ResumeStatus | None = None
 
@@ -96,3 +123,7 @@ class ResumePatch(BaseModel):
         if not v:
             raise ValueError("Желаемая должность не должна быть пустой")
         return v
+
+
+class ResumeExperienceLevelPatch(BaseModel):
+    computed_experience_level: ProjectVacancyExperience | None

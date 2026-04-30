@@ -618,7 +618,7 @@
       </div>
     </div>
     <div class="header__actions">
-      <button class="notify-btn" type="button" aria-label="Уведомления" onclick="window.location.href='./notifications.html'">
+      <button class="notify-btn" type="button" aria-label="Отклики" onclick="window.location.href='./applications.html'">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M12 4a5 5 0 0 0-5 5v2.6c0 .7-.24 1.38-.68 1.9L5 15h14l-1.32-1.5a3 3 0 0 1-.68-1.9V9a5 5 0 0 0-5-5Z" stroke="#f85a0b" stroke-width="1.8" stroke-linejoin="round"/>
           <path d="M10 18a2 2 0 0 0 4 0" stroke="#f85a0b" stroke-width="1.8" stroke-linecap="round"/>
@@ -657,7 +657,16 @@
             <input id="desiredPosition" type="text" maxlength="255" placeholder="Frontend-разработчик" />
           </div>
           <div class="field">
-            <label>График работы</label>
+            <label>Формат работы</label>
+            <select id="workFormat">
+              <option value="">Не указывать</option>
+              <option value="remote">Удалённо</option>
+              <option value="office">В офисе</option>
+              <option value="hybrid">Гибрид</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Занятость</label>
             <select id="workSchedule">
               <option value="">Не указывать</option>
               <option value="full_time">Полный день</option>
@@ -665,7 +674,34 @@
               <option value="side_project">Подработка / гибкий формат</option>
             </select>
           </div>
-          <div class="field exp-field-full">
+          <div class="field">
+            <label>График</label>
+            <select id="schedule">
+              <option value="">Не указывать</option>
+              <option value="5/2">5/2</option>
+              <option value="2/2">2/2</option>
+              <option value="4/2">4/2</option>
+              <option value="3/3">3/3</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Тип зарплаты</label>
+            <select id="salaryType">
+              <option value="">Не указывать</option>
+              <option value="monthly">В месяц</option>
+              <option value="per_project">За проект</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Тип договора</label>
+            <select id="contractType">
+              <option value="">Не указывать</option>
+              <option value="gph">ГПХ</option>
+              <option value="tk">ТК РФ</option>
+              <option value="internship">Стажировка</option>
+            </select>
+          </div>
+          <div class="field">
             <label>Заработная плата (в рублях)</label>
             <input id="salary" type="text" class="tp-salary-input" inputmode="numeric" autocomplete="off" placeholder="Например: 1 200 000" />
           </div>
@@ -967,6 +1003,10 @@
     const resumeTitleInput = document.getElementById("resumeTitle");
     const desiredPositionInput = document.getElementById("desiredPosition");
     const workScheduleSelect = document.getElementById("workSchedule");
+    const workFormatSelect = document.getElementById("workFormat");
+    const scheduleSelect = document.getElementById("schedule");
+    const salaryTypeSelect = document.getElementById("salaryType");
+    const contractTypeSelect = document.getElementById("contractType");
     const salaryInput = document.getElementById("salary");
     if (salaryInput) {
       salaryInput.addEventListener("input", () => salaryInput.classList.remove("inp-invalid"));
@@ -987,6 +1027,10 @@
       if (resumeTitleInput) resumeTitleInput.value = "";
       if (desiredPositionInput) desiredPositionInput.value = "";
       if (workScheduleSelect) workScheduleSelect.value = "";
+      if (workFormatSelect) workFormatSelect.value = "";
+      if (scheduleSelect) scheduleSelect.value = "";
+      if (salaryTypeSelect) salaryTypeSelect.value = "";
+      if (contractTypeSelect) contractTypeSelect.value = "";
       if (salaryInput) salaryInput.value = "";
       if (aboutMeTextarea) aboutMeTextarea.value = "";
       selectedSkillIds = [];
@@ -1105,7 +1149,11 @@
       }
       desiredPositionInput?.classList.remove("inp-invalid");
 
-      const schedule = (workScheduleSelect?.value || "").trim();
+      const commitmentLevel = (workScheduleSelect?.value || "").trim();
+      const workFormat = (workFormatSelect?.value || "").trim();
+      const schedule = (scheduleSelect?.value || "").trim();
+      const salaryType = (salaryTypeSelect?.value || "").trim();
+      const contractType = (contractTypeSelect?.value || "").trim();
 
       const salaryRaw = salaryInput ? salaryInput.value : "";
       const salParseFn = window.tpParseAndValidateSalaryRaw;
@@ -1242,7 +1290,11 @@
           description: exp.description || null,
         })),
       };
-      if (schedule) resumeData.commitment_level = schedule;
+      if (commitmentLevel) resumeData.commitment_level = commitmentLevel;
+      if (workFormat) resumeData.work_format = workFormat;
+      if (schedule) resumeData.schedule = schedule;
+      if (salaryType) resumeData.salary_type = salaryType;
+      if (contractType) resumeData.contract_type = contractType;
       if (salaryAmount != null && salaryAmount !== undefined) resumeData.salary_amount = salaryAmount;
 
       try {

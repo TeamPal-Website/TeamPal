@@ -510,7 +510,7 @@
       </div>
     </div>
     <div class="header__actions">
-      <button class="notify-btn" type="button" aria-label="Уведомления" onclick="window.location.href='./notifications.html'">
+      <button class="notify-btn" type="button" aria-label="Отклики" onclick="window.location.href='./applications.html'">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M12 4a5 5 0 0 0-5 5v2.6c0 .7-.24 1.38-.68 1.9L5 15h14l-1.32-1.5a3 3 0 0 1-.68-1.9V9a5 5 0 0 0-5-5Z" stroke="#f85a0b" stroke-width="1.8" stroke-linejoin="round"/>
           <path d="M10 18a2 2 0 0 0 4 0" stroke="#f85a0b" stroke-width="1.8" stroke-linecap="round"/>
@@ -755,9 +755,9 @@
               <label for="${p}employment">Занятость</label>
               <select id="${p}employment">
                 <option value="">— Занятость —</option>
-                <option value="full_time"${optSel('full_time', role.employment)}>Полная занятость</option>
-                <option value="part_time"${optSel('part_time', role.employment)}>Частичная занятость</option>
-                <option value="side_project"${optSel('side_project', role.employment)}>Подработка</option>
+                <option value="full_time"${optSel('full_time', role.employment)}>Полный день</option>
+                <option value="part_time"${optSel('part_time', role.employment)}>Неполный день</option>
+                <option value="side_project"${optSel('side_project', role.employment)}>Подработка / гибкий формат</option>
               </select>
             </div>
             <div class="exp-field">
@@ -787,7 +787,7 @@
               <select id="${p}contract">
                 <option value="">— Тип договора —</option>
                 <option value="gph"${optSel('gph', role.contract_type)}>ГПХ</option>
-                <option value="tk"${optSel('tk', role.contract_type)}>ТК</option>
+                <option value="tk"${optSel('tk', role.contract_type)}>ТК РФ</option>
                 <option value="internship"${optSel('internship', role.contract_type)}>Стажировка</option>
               </select>
             </div>
@@ -1006,7 +1006,7 @@
             requirements:     r.requirements      || null,
             experience:       r.experience        || null,
             work_format:      r.work_format       || null,
-            employment:       r.employment        || null,
+            commitment_level: r.employment        || null,
             schedule:         r.schedule          || null,
             salary_amount:    r.salary_amount     != null ? r.salary_amount : null,
             salary_type:      r.salary_type       || null,
