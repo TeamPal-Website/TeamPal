@@ -1,6 +1,7 @@
-from datetime import UTC, datetime, timedelta
+from datetime import timedelta
 
 from sqlalchemy import and_, or_, select
+from sqlalchemy.sql import func as sa_func
 
 from src.enums import (
     CommitmentLevel,
@@ -75,8 +76,10 @@ class ProjectVacanciesRepository(BaseRepository):
         if contract_type is not None:
             filters.append(ProjectVacancyOrm.contract_type == contract_type)
         if posted_within_days is not None:
-            since = datetime.now(UTC) - timedelta(days=posted_within_days)
-            filters.append(ProjectVacancyOrm.created_at >= since)
+            filters.append(
+                ProjectVacancyOrm.created_at
+                >= sa_func.now() - timedelta(days=posted_within_days)
+            )
         if q:
             pattern = f"%{q}%"
             filters.append(

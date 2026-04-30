@@ -534,6 +534,25 @@
       max-height: 4.6em;
       overflow: hidden;
     }
+    .invite-preview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: #faf9f7;
+      font-size: 13px;
+    }
+    .invite-preview-grid div b {
+      color: #6a625b;
+      display: block;
+      margin-bottom: 2px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+    }
   </style>
 </head>
 <body>
@@ -621,12 +640,12 @@
           </select>
         </div>
         <div class="field">
-          <label for="f-salary-min">Ожидания от (₽ в месяц)</label>
-          <input id="f-salary-min" type="number" inputmode="numeric" min="0" step="1000" placeholder="не задано">
+          <label for="f-salary-min">Заработная плата от (в рублях)</label>
+          <input id="f-salary-min" type="text" inputmode="numeric" autocomplete="off" placeholder="например 150 000">
         </div>
         <div class="field">
-          <label for="f-salary-max">Ожидания до (₽ в месяц)</label>
-          <input id="f-salary-max" type="number" inputmode="numeric" min="0" step="1000" placeholder="не задано">
+          <label for="f-salary-max">Заработная плата до (в рублях)</label>
+          <input id="f-salary-max" type="text" inputmode="numeric" autocomplete="off" placeholder="не задано">
         </div>
         <div class="field">
           <label for="f-computed-exp">Уровень опыта (по резюме)</label>
@@ -651,8 +670,26 @@
           <label for="f-type">Тип резюме</label>
           <select id="f-type">
             <option value="any">Любой</option>
-            <option value="commercial">Коммерческий</option>
-            <option value="noncommercial">Некоммерческий</option>
+            <option value="commercial">Коммерческий проект</option>
+            <option value="noncommercial">Учебный проект</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-commitment-level">Занятость</label>
+          <select id="f-commitment-level">
+            <option value="">Любая</option>
+            <option value="full_time">Полный день</option>
+            <option value="part_time">Неполный день</option>
+            <option value="side_project">Подработка / гибкий формат</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-created-within">Дата создания резюме</label>
+          <select id="f-created-within">
+            <option value="">За всё время</option>
+            <option value="7">За последние 7 дней</option>
+            <option value="14">За последние 14 дней</option>
+            <option value="30">За последние 30 дней</option>
           </select>
         </div>
       </div>
@@ -668,8 +705,9 @@
   <div class="modal__card modal__card--premium" role="dialog" aria-modal="true" aria-label="Пригласить кандидата">
     <div class="modal__accent-strip"></div>
     <div class="modal__body">
-      <h2 class="modal__title-lg">Откликнуться</h2>
+      <h2 class="modal__title-lg">Пригласить кандидата</h2>
       <p id="invite-resume-label" class="modal__subtitle"></p>
+      <div id="invite-resume-preview" class="invite-preview-grid"></div>
       <div class="field">
         <label for="invite-vacancy-select">Выберите свою вакансию</label>
         <select id="invite-vacancy-select"></select>
@@ -807,17 +845,12 @@
       salary_min: "",
       salary_max: "",
       computed_exp: "",
+      commitment_level: "",
+      created_within_days: "",
     };
 
     function escapeHtml(str) {
       return String(str ?? "").replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
-    }
-
-    function formatSalary(value) {
-      if (value === null || value === undefined || value === "") return "—";
-      const n = Number(value);
-      if (!Number.isFinite(n)) return "—";
-      return n.toLocaleString("ru-RU") + " ₽";
     }
 
     function formatSchedule(v) {
@@ -825,7 +858,11 @@
     }
 
     function intentLabel(intent) {
-      return intent === "commercial" ? "Коммерческий" : "Некоммерческий";
+      return intent === "commercial" ? "Коммерческий проект" : intent === "noncommercial" ? "Учебный проект" : "—";
+    }
+
+    function resumeStatusLabel(st) {
+      return st === "looking_for_job" ? "Ищу работу" : st === "not_looking_for_job" ? "Не ищу работу" : "—";
     }
 
     const EXP_BUCKET_LABELS = {
@@ -835,6 +872,65 @@
       "3-6": "3–6 лет",
       "6+": "6+ лет",
     };
+
+    const COMMIT_LABELS_SR = { full_time: "Полный день", part_time: "Неполный день", side_project: "Подработка / гибкий формат" };
+    const WORK_FMT_SR = { remote: "Удалённо", office: "В офисе", hybrid: "Гибрид" };
+    const CONTRACT_LABELS_SR = { gph: "ГПХ", tk: "ТК РФ", internship: "Стажировка" };
+    const CREATED_WITHIN_LABELS = { "7": "за 7 дн.", "14": "за 14 дн.", "30": "за 30 дн." };
+
+    function salaryAmountPlain(value) {
+      if (value === null || value === undefined || value === "") return "—";
+      const n = Number(value);
+      if (!Number.isFinite(n)) return "—";
+      return n.toLocaleString("ru-RU") + " ₽";
+    }
+    function salaryTypePlain(t) {
+      return t === "per_project" ? "За проект" : (t === "monthly" ? "В месяц" : "—");
+    }
+
+    function skillsStackSummary(count) {
+      const n = Number(count);
+      if (!Number.isFinite(n) || n <= 0) return "—";
+      return String(n);
+    }
+
+    function resumeFieldsHtml(item, layout) {
+      const rows = [
+        ["Желаемая должность", item.desiredPosition || "—"],
+        ["Тип резюме", intentLabel(item.employmentIntent)],
+        ["Статус поиска работы", resumeStatusLabel(item.status)],
+        ["Опыт работы", EXP_BUCKET_LABELS[item.computedExp] || "—"],
+        ["Формат работы", WORK_FMT_SR[item.workFormat] || "—"],
+        ["Занятость", COMMIT_LABELS_SR[item.commitmentLevel] || "—"],
+        ["График", formatSchedule(item.schedule)],
+        ["Заработная плата (в рублях)", item.employmentIntent === "commercial" ? salaryAmountPlain(item.salaryAmount) : "—"],
+        ["Тип зарплаты", item.employmentIntent === "commercial" ? salaryTypePlain(item.salaryType) : "—"],
+        ["Тип договора", CONTRACT_LABELS_SR[item.contractType] || "—"],
+        ["Стек технологий / Скиллы", skillsStackSummary(item.skillsCount)],
+      ];
+      if (layout === "modal") {
+        return rows.map(([k, val]) => `<div><b>${escapeHtml(k)}</b>${escapeHtml(val)}</div>`).join("");
+      }
+      return rows.map(([k, val]) => `<div class="meta-item"><b>${escapeHtml(k)}:</b>${escapeHtml(val)}</div>`).join("");
+    }
+
+    function digitsGrouped(raw) {
+      const d = String(raw || "").replace(/\D/g, "");
+      if (!d) return "";
+      return d.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    }
+    function bindGroupedSalary(id) {
+      const el = document.getElementById(id);
+      if (!el || el.dataset.tpGroupedBound) return;
+      el.dataset.tpGroupedBound = "1";
+      el.addEventListener("input", () => {
+        const plain = el.value.replace(/\D/g, "");
+        el.value = digitsGrouped(plain);
+      });
+      el.addEventListener("blur", () => {
+        el.value = digitsGrouped(el.value.replace(/\D/g, ""));
+      });
+    }
 
     async function loadResumeFilterDicts() {
       try {
@@ -895,6 +991,8 @@
         if (state.city_id) params.set("city_id", state.city_id);
         if (state.skill_id) params.set("skill_id", state.skill_id);
         if (state.computed_exp) params.set("computed_experience_level", state.computed_exp);
+        if (state.commitment_level) params.set("commitment_level", state.commitment_level);
+        if (state.created_within_days) params.set("created_within_days", state.created_within_days);
         const sminRaw = state.salary_min != null ? String(state.salary_min).trim().replace(/\s/g, "") : "";
         const smaxRaw = state.salary_max != null ? String(state.salary_max).trim().replace(/\s/g, "") : "";
         const smin = sminRaw === "" ? NaN : parseInt(sminRaw, 10);
@@ -911,9 +1009,14 @@
           userId: String(row.user_id),
           desiredPosition: row.desired_position || "",
           employmentIntent: row.employment_intent || "commercial",
+          status: row.status || "",
           salaryAmount: row.salary_amount,
           salaryType: row.salary_type,
           schedule: row.schedule,
+          commitmentLevel: row.commitment_level || "",
+          workFormat: row.work_format || "",
+          contractType: row.contract_type || "",
+          computedExp: row.computed_experience_level || "",
           hasExperience: !!(row.computed_experience_level && row.computed_experience_level !== "none"),
           skillsCount: Number(row.skills_count) || 0,
           aboutSnippet: row.about_me ? String(row.about_me).replace(/\s+/g, " ").trim().slice(0, 220) : "",
@@ -947,11 +1050,15 @@
     function closeInviteModal() {
       if (inviteModal) inviteModal.classList.remove("open");
       inviteResumeNumericId = null;
+      const prevEl = document.getElementById("invite-resume-preview");
+      if (prevEl) prevEl.innerHTML = "";
     }
 
-    async function openInviteModal(resumeIdNum, titleText) {
+    async function openInviteModal(resumeIdNum, item) {
       inviteResumeNumericId = resumeIdNum;
-      if (inviteResumeLabel) inviteResumeLabel.textContent = titleText || "";
+      const prevEl = document.getElementById("invite-resume-preview");
+      if (inviteResumeLabel) inviteResumeLabel.textContent = item && item.desiredPosition ? item.desiredPosition : "";
+      if (prevEl) prevEl.innerHTML = item ? resumeFieldsHtml(item, "modal") : "";
       if (inviteModal) inviteModal.classList.add("open");
       if (inviteVacancySelect) inviteVacancySelect.innerHTML = '<option value="">Загрузка…</option>';
       if (inviteNoVacancies) inviteNoVacancies.style.display = "none";
@@ -1044,10 +1151,7 @@
               </div>
             </div>
             <div class="vacancy-meta">
-              <div class="meta-item"><b>Заработная плата:</b>${v.employmentIntent === "commercial" ? formatSalary(v.salaryAmount) : "—"}</div>
-              <div class="meta-item"><b>График:</b>${escapeHtml(formatSchedule(v.schedule))}</div>
-              <div class="meta-item"><b>Опыт:</b>${v.hasExperience ? "Есть" : "Нет"}</div>
-              <div class="meta-item"><b>Навыков:</b>${Number.isFinite(Number(v.skillsCount)) ? Number(v.skillsCount) : 0}</div>
+              ${resumeFieldsHtml(v, "card")}
             </div>
             ${aboutBlock}
             <div class="vacancy-actions">
@@ -1066,7 +1170,7 @@
           const item = vacanciesList.find((x) => x.id === id);
           const numId = id ? parseInt(id, 10) : NaN;
           if (!Number.isFinite(numId)) return;
-          openInviteModal(numId, item ? item.desiredPosition : "");
+          openInviteModal(numId, item || null);
         });
       });
 
@@ -1112,6 +1216,10 @@
       if (state.exp === "no") parts.push("без опыта работы");
       if (state.type === "commercial") parts.push("коммерческий");
       if (state.type === "noncommercial") parts.push("некоммерческий");
+      if (state.commitment_level && COMMIT_LABELS_SR[state.commitment_level])
+        parts.push("занятость: " + COMMIT_LABELS_SR[state.commitment_level]);
+      if (state.created_within_days && CREATED_WITHIN_LABELS[state.created_within_days])
+        parts.push("дата: " + CREATED_WITHIN_LABELS[state.created_within_days]);
       if (activeFiltersEl) activeFiltersEl.textContent = "Фильтры: " + (parts.length ? parts.join(", ") : "нет");
     }
 
@@ -1133,8 +1241,12 @@
       sync("f-salary-min", state.salary_min);
       sync("f-salary-max", state.salary_max);
       sync("f-computed-exp", state.computed_exp);
+      sync("f-commitment-level", state.commitment_level);
+      sync("f-created-within", state.created_within_days);
       if (expSelect) expSelect.value = state.exp;
       if (typeSelect) typeSelect.value = state.type;
+      bindGroupedSalary("f-salary-min");
+      bindGroupedSalary("f-salary-max");
       filtersModal.classList.add("open");
     }
 
@@ -1160,6 +1272,8 @@
         state.salary_min = document.getElementById("f-salary-min") ? document.getElementById("f-salary-min").value : "";
         state.salary_max = document.getElementById("f-salary-max") ? document.getElementById("f-salary-max").value : "";
         state.computed_exp = document.getElementById("f-computed-exp") ? document.getElementById("f-computed-exp").value : "";
+        state.commitment_level = document.getElementById("f-commitment-level") ? document.getElementById("f-commitment-level").value : "";
+        state.created_within_days = document.getElementById("f-created-within") ? document.getElementById("f-created-within").value : "";
         state.exp = expSelect ? expSelect.value : "any";
         state.type = typeSelect ? typeSelect.value : "any";
         closeFilters();
@@ -1175,10 +1289,12 @@
         state.skill_id = "";
         state.salary_min = "";
         state.salary_max = "";
+        state.commitment_level = "";
+        state.created_within_days = "";
         state.computed_exp = "";
         if (expSelect) expSelect.value = "any";
         if (typeSelect) typeSelect.value = "any";
-        ["f-city", "f-skill", "f-salary-min", "f-salary-max", "f-computed-exp"].forEach((id) => {
+        ["f-city", "f-skill", "f-salary-min", "f-salary-max", "f-computed-exp", "f-commitment-level", "f-created-within"].forEach((id) => {
           const el = document.getElementById(id);
           if (el) el.value = "";
         });
@@ -1200,6 +1316,8 @@
     updateActiveFiltersChip();
     void (async () => {
       await loadResumeFilterDicts();
+      bindGroupedSalary("f-salary-min");
+      bindGroupedSalary("f-salary-max");
       await fetchResumesFromApi();
       render(computeFiltered());
       pollApplicationsBellBadge();

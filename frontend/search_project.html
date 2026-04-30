@@ -611,7 +611,7 @@
           <select id="f-intent">
             <option value="">Любой</option>
             <option value="commercial">Коммерческий</option>
-            <option value="noncommercial">Некоммерческий</option>
+            <option value="noncommercial">Учебный</option>
           </select>
         </div>
         <div class="field">
@@ -645,12 +645,12 @@
           </select>
         </div>
         <div class="field">
-          <label for="f-salary-min">Зарплата от (₽ в месяц)</label>
-          <input id="f-salary-min" type="number" inputmode="numeric" min="0" step="1000" placeholder="не задано">
+          <label for="f-salary-min">Заработная плата от (в рублях)</label>
+          <input id="f-salary-min" type="text" inputmode="numeric" autocomplete="off" placeholder="например 120 000">
         </div>
         <div class="field">
-          <label for="f-salary-max">Зарплата до (₽ в месяц)</label>
-          <input id="f-salary-max" type="number" inputmode="numeric" min="0" step="1000" placeholder="не задано">
+          <label for="f-salary-max">Заработная плата до (в рублях)</label>
+          <input id="f-salary-max" type="text" inputmode="numeric" autocomplete="off" placeholder="не задано">
         </div>
         <div class="field">
           <label for="f-exp-vacancy">Требуемый опыт</label>
@@ -759,18 +759,43 @@
 
     function esc(str) { return String(str ?? "").replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m])); }
 
+    function digitsGroupedSP(raw) {
+      const d = String(raw || "").replace(/\D/g, "");
+      if (!d) return "";
+      return d.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    }
+    function bindGroupedSalarySP(id) {
+      const el = document.getElementById(id);
+      if (!el || el.dataset.tpGroupedBound) return;
+      el.dataset.tpGroupedBound = "1";
+      el.addEventListener("input", () => {
+        el.value = digitsGroupedSP(el.value.replace(/\D/g, ""));
+      });
+      el.addEventListener("blur", () => {
+        el.value = digitsGroupedSP(el.value.replace(/\D/g, ""));
+      });
+    }
+
     const EXP_LABELS = { none: "Без опыта", "<1": "До 1 года", "1-3": "1–3 года", "3-6": "3–6 лет", "6+": "6+ лет" };
-    const WORK_LABELS = { remote: "Удалённо", office: "Офис", hybrid: "Гибрид" };
-    const COMMIT_LABELS = { full_time: "Полная занятость", part_time: "Частичная", side_project: "Подработка" };
-    const SALARY_TYPE_LABELS = { monthly: "в мес.", per_project: "за проект" };
-    const INTENT_LABELS = { commercial: "Коммерческий", noncommercial: "Некоммерческий" };
-    const CONTRACT_LABELS = { tk: "ТК РФ", gph: "ГПХ", internship: "Стажировка" };
+    const WORK_LABELS = { remote: "Удалённо", office: "В офисе", hybrid: "Гибрид" };
+    const COMMIT_LABELS = {
+      full_time: "Полный день",
+      part_time: "Неполный день",
+      side_project: "Подработка / гибкий формат",
+    };
+    const INTENT_LABELS = { commercial: "Коммерческий", noncommercial: "Учебный" };
+    const CONTRACT_LABELS = { gph: "ГПХ", tk: "ТК РФ", internship: "Стажировка" };
     const POSTED_LABELS = { "7": "за 7 дн.", "14": "за 14 дн.", "30": "за 30 дн." };
 
-    function formatSalary(amount, type) {
-      if (amount == null || !Number.isFinite(Number(amount))) return null;
-      const n = Number(amount);
-      return n.toLocaleString("ru-RU") + " ₽" + (type ? " " + (SALARY_TYPE_LABELS[type] || "") : "");
+    function vacancySalaryRub(amount) {
+      if (amount == null || !Number.isFinite(Number(amount))) return "—";
+      return Number(amount).toLocaleString("ru-RU") + " ₽";
+    }
+    function vacancySalaryType(t) {
+      return t === "per_project" ? "За проект" : t === "monthly" ? "В месяц" : "—";
+    }
+    function vacancyScheduleLabel(sch) {
+      return ({ "5/2": "5/2", "2/2": "2/2", "4/2": "4/2", "3/3": "3/3" })[sch] || "—";
     }
 
     let _citiesMap = {};
@@ -873,13 +898,18 @@
       listEl.innerHTML = list.map((v) => {
         const roleName = _rolesMap[String(v.role_type_id)] || "Роль #" + v.role_type_id;
         const cityName = _citiesMap[String(v.project_city_id)] || "";
-        const salaryStr = v.project_employment_intent === "commercial" ? (formatSalary(v.salary_amount, v.salary_type) || "—") : "—";
+        const commProj = v.project_employment_intent === "commercial";
+        const salaryRub = commProj ? vacancySalaryRub(v.salary_amount) : "—";
+        const salaryTypeStr = commProj ? vacancySalaryType(v.salary_type) : "—";
         const metaItems = [
-          ["Зарплата", salaryStr],
+          ["Заработная плата (в рублях)", salaryRub],
+          ["Тип зарплаты", salaryTypeStr],
           ["Город", cityName || "—"],
-          ["Опыт", EXP_LABELS[v.experience] || "—"],
-          ["Формат", WORK_LABELS[v.work_format] || "—"],
+          ["Опыт работы", EXP_LABELS[v.experience] || "—"],
+          ["Формат работы", WORK_LABELS[v.work_format] || "—"],
           ["Занятость", COMMIT_LABELS[v.commitment_level] || "—"],
+          ["График", vacancyScheduleLabel(v.schedule)],
+          ["Тип договора", CONTRACT_LABELS[v.contract_type] || "—"],
         ];
         return `
           <article class="card vacancy-card">
@@ -965,6 +995,8 @@
       sync("f-exp-vacancy", state.experience_vacancy);
       sync("f-contract", state.contract_type);
       sync("f-posted", state.posted_within_days);
+      bindGroupedSalarySP("f-salary-min");
+      bindGroupedSalarySP("f-salary-max");
       filtersModal.classList.add("open");
     }
     function closeFilters() { if (filtersModal) filtersModal.classList.remove("open"); }
@@ -1104,6 +1136,8 @@
 
     updateActiveFiltersChip();
     loadDictionaries().then(() => {
+      bindGroupedSalarySP("f-salary-min");
+      bindGroupedSalarySP("f-salary-max");
       fetchVacancies();
       pollApplicationsBellBadge();
       setInterval(pollApplicationsBellBadge, 60000);

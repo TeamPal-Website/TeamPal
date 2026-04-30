@@ -514,6 +514,29 @@
     }
     .cabinet-detail-body h4 { margin: 14px 0 8px; font-size: 15px; color: var(--ink); }
     .cabinet-detail-body p { margin: 0 0 10px; white-space: pre-wrap; }
+    .cabinet-detail-meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 14px;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 520px) {
+      .cabinet-detail-meta-grid { grid-template-columns: 1fr; }
+    }
+    .cabinet-detail-meta-cell {
+      background: #fff;
+      border: 1px solid #ece8e3;
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+    .cabinet-detail-meta-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #666;
+      margin-bottom: 4px;
+    }
+    .cabinet-detail-meta-val { font-size: 14px; color: #222; line-height: 1.35; }
     .cabinet-detail-team-list { margin: 0; padding-left: 18px; }
     .cabinet-detail-team-list li { margin-bottom: 6px; }
 
@@ -690,7 +713,7 @@
 </div>
 
 <div class="modal" id="cabinet-detail-modal" aria-hidden="true">
-  <div class="modal__card" style="max-width:560px;width:92vw;">
+  <div class="modal__card" style="max-width:640px;width:92vw;">
     <h2 class="modal__title" id="cabinet-detail-title">Просмотр</h2>
     <div class="cabinet-detail-body" id="cabinet-detail-body"></div>
     <div class="modal__actions">
@@ -758,6 +781,42 @@
 
     function escCabinet(s) {
       return String(s ?? "").replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+    }
+    function cabinetRubSalary(v) {
+      if (v == null || v === "") return "—";
+      const n = Number(v);
+      if (!Number.isFinite(n)) return "—";
+      return n.toLocaleString("ru-RU") + " ₽";
+    }
+    function cabinetSalType(t) {
+      return t === "per_project" ? "За проект" : t === "monthly" ? "В месяц" : "—";
+    }
+    function cabinetResumeType(i) {
+      return i === "commercial" ? "Коммерческий проект" : i === "noncommercial" ? "Учебный проект" : "—";
+    }
+    function cabinetWorkFmt(w) {
+      return ({ remote: "Удалённо", office: "В офисе", hybrid: "Гибрид" })[w] || "—";
+    }
+    function cabinetCommit(c) {
+      return ({ full_time: "Полный день", part_time: "Неполный день", side_project: "Подработка / гибкий формат" })[c] || "—";
+    }
+    function cabinetContract(ct) {
+      return ({ gph: "ГПХ", tk: "ТК РФ", internship: "Стажировка" })[ct] || "—";
+    }
+    function cabinetSchedule(sch) {
+      return ({ "5/2": "5/2", "2/2": "2/2", "4/2": "4/2", "3/3": "3/3" })[sch] || "—";
+    }
+    const CABINET_EXP_LABELS = {
+      none: "Без опыта",
+      "<1": "До 1 года",
+      "1-3": "1–3 года",
+      "3-6": "3–6 лет",
+      "6+": "6+ лет",
+    };
+    function cabinetFmtDate(iso) {
+      if (!iso) return "—";
+      const d = new Date(iso);
+      return Number.isNaN(d.getTime()) ? String(iso) : d.toLocaleDateString("ru-RU");
     }
     function openCabinetDetailModal(title, html) {
       const modal = document.getElementById("cabinet-detail-modal");
@@ -1108,19 +1167,34 @@
               const skillMap = new Map(
                 (Array.isArray(skillsList) ? skillsList : []).map((s) => [String(s.id), s.name || ("#" + s.id)]),
               );
-              const intentLab = { commercial: "Коммерческий", noncommercial: "Учебный" };
               const statusLab = { looking_for_job: "Ищу работу", not_looking_for_job: "Не ищу работу" };
 
+              const metaRows = [
+                ["Желаемая должность", resume.desired_position || "—"],
+                ["Тип резюме", cabinetResumeType(resume.employment_intent)],
+                ["Статус поиска работы", statusLab[resume.status] || resume.status || "—"],
+                ["Опыт работы", CABINET_EXP_LABELS[resume.computed_experience_level] || "—"],
+                ["Формат работы", cabinetWorkFmt(resume.work_format)],
+                ["Занятость", cabinetCommit(resume.commitment_level)],
+                ["График", cabinetSchedule(resume.schedule)],
+                ["Заработная плата (в рублях)", resume.employment_intent === "commercial" ? cabinetRubSalary(resume.salary_amount) : "—"],
+                ["Тип зарплаты", resume.employment_intent === "commercial" ? cabinetSalType(resume.salary_type) : "—"],
+                ["Тип договора", cabinetContract(resume.contract_type)],
+              ];
+
               let html = "";
-              html += `<p><b>Желаемая должность:</b> ${escCabinet(resume.desired_position || "—")}</p>`;
-              html += `<p><b>Тип:</b> ${escCabinet(intentLab[resume.employment_intent] || resume.employment_intent || "—")}</p>`;
-              html += `<p><b>Статус:</b> ${escCabinet(statusLab[resume.status] || resume.status || "—")}</p>`;
+              html += `<div class="cabinet-detail-meta-grid">${metaRows
+                .map(
+                  ([k, v]) =>
+                    `<div class="cabinet-detail-meta-cell"><span class="cabinet-detail-meta-label">${escCabinet(k)}</span><span class="cabinet-detail-meta-val">${escCabinet(v)}</span></div>`,
+                )
+                .join("")}</div>`;
               if (resume.about_me) {
                 html += "<h4>О себе</h4>";
                 html += `<p>${escCabinet(resume.about_me)}</p>`;
               }
               if (skills.length) {
-                html += "<h4>Навыки</h4>";
+                html += "<h4>Стек технологий / Скиллы</h4>";
                 html += `<ul class="cabinet-detail-team-list">`;
                 for (const sk of skills) {
                   const sid = sk.skill_id != null ? String(sk.skill_id) : "";
@@ -1128,20 +1202,23 @@
                   html += `<li>${escCabinet(label)}</li>`;
                 }
                 html += "</ul>";
+              } else {
+                html += "<h4>Стек технологий / Скиллы</h4>";
+                html += `<p style="color:#777;font-size:14px;margin:0;">Не указано</p>`;
               }
               if (experiences.length) {
-                html += "<h4>Опыт</h4>";
-                html += `<ul class="cabinet-detail-team-list">`;
+                html += "<h4>Опыт работы</h4>";
                 for (const ex of experiences) {
-                  const period =
-                    ex.start_date && ex.end_date
-                      ? `${ex.start_date} — ${ex.end_date}`
-                      : ex.start_date
-                        ? `${ex.start_date} — н.в.`
-                        : "";
-                  html += `<li><b>${escCabinet(ex.position || "")}</b> — ${escCabinet(ex.company_name || "")}${period ? ` (${escCabinet(period)})` : ""}${ex.description ? `<br><span style="color:#555;">${escCabinet(ex.description)}</span>` : ""}</li>`;
+                  html += `<article style="margin-bottom:12px;padding:12px;border:1px solid #ece8e3;border-radius:10px;background:#fff;">`;
+                  html += `<div style="font-size:13px;margin-bottom:4px;"><b>Компания:</b> ${escCabinet(ex.company_name || "—")}</div>`;
+                  html += `<div style="font-size:13px;margin-bottom:4px;"><b>Должность:</b> ${escCabinet(ex.position || "—")}</div>`;
+                  html += `<div style="font-size:13px;margin-bottom:4px;"><b>Период:</b> ${escCabinet(cabinetFmtDate(ex.start_date))} — ${escCabinet(ex.end_date ? cabinetFmtDate(ex.end_date) : "по настоящее время")}</div>`;
+                  html += `<div style="font-size:13px;color:#444;"><b>Описание обязанностей:</b> ${escCabinet(ex.description || "—")}</div>`;
+                  html += `</article>`;
                 }
-                html += "</ul>";
+              } else {
+                html += "<h4>Опыт работы</h4>";
+                html += `<p style="color:#777;font-size:14px;margin:0;">Опыт работы не указан</p>`;
               }
 
               openCabinetDetailModal(resume.desired_position || "Резюме", html);

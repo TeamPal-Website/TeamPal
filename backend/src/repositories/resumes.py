@@ -1,6 +1,7 @@
-from datetime import date
+from datetime import date, timedelta
 
 from sqlalchemy import func, or_, select, update
+from sqlalchemy.sql import func as sa_func
 
 from src.enums import (
     CommitmentLevel,
@@ -57,6 +58,7 @@ class ResumesRepository(BaseRepository):
         salary_min: int | None = None,
         salary_max: int | None = None,
         computed_experience_level: ProjectVacancyExperience | None = None,
+        created_within_days: int | None = None,
         limit: int = 10,
         offset: int = 0,
     ) -> list[ResumeSearchItem]:
@@ -93,6 +95,11 @@ class ResumesRepository(BaseRepository):
         if computed_experience_level is not None:
             filters.append(
                 ResumesOrm.computed_experience_level == computed_experience_level
+            )
+        if created_within_days is not None:
+            filters.append(
+                ResumesOrm.created_at
+                >= sa_func.now() - timedelta(days=created_within_days)
             )
         if q:
             pattern = f"%{q}%"

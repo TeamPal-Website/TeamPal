@@ -106,6 +106,7 @@ async def search_resumes(
     salary_min: int | None = Query(default=None, ge=0),
     salary_max: int | None = Query(default=None, ge=0),
     computed_experience_level: ProjectVacancyExperience | None = None,
+    created_within_days: int | None = Query(default=None, ge=1, le=366),
 ):
     if salary_min is not None and salary_max is not None and salary_min > salary_max:
         raise HTTPException(
@@ -121,6 +122,7 @@ async def search_resumes(
         salary_min=salary_min,
         salary_max=salary_max,
         computed_experience_level=computed_experience_level,
+        created_within_days=created_within_days,
         limit=per_page,
         offset=per_page * (page - 1),
     )

@@ -534,15 +534,47 @@
     .cabinet-team-row {
       display: flex;
       flex-wrap: wrap;
-      align-items: center;
-      gap: 10px;
+      align-items: flex-start;
+      gap: 12px;
       justify-content: space-between;
-      margin-bottom: 10px;
-      padding: 10px 12px;
+      margin-bottom: 12px;
+      padding: 12px 14px;
       border: 1px solid #ece9e5;
       border-radius: 12px;
       background: #fff;
     }
+    .cabinet-member-main { flex: 1; min-width: 0; }
+    .cabinet-member-head { font-size: 14px; color: var(--ink); line-height: 1.35; }
+    .cabinet-member-meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 8px 14px;
+      margin-top: 10px;
+      font-size: 13px;
+      color: #3a3a3a;
+    }
+    .cabinet-member-meta span { display: block; line-height: 1.4; }
+    .cabinet-member-meta span b { color: #6a625b; font-weight: 600; margin-right: 4px; }
+    .cabinet-member-about {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed #ece5de;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #4a4540;
+    }
+    .cabinet-member-about b { color: #6a625b; }
+    .cabinet-member-actions { margin-top: 10px; }
+    .cabinet-member-link {
+      display: inline-flex;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent-2, #f85a0b);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(248, 90, 11, 0.35);
+    }
+    .cabinet-member-link:hover { border-bottom-color: var(--accent-2, #f85a0b); }
     .cabinet-remove-member {
       flex-shrink: 0;
       padding: 8px 12px;
@@ -1173,6 +1205,27 @@
             const vacs = Array.isArray(data.vacancies) ? data.vacancies : [];
             const intentLab = { commercial: "Коммерческий", noncommercial: "Некоммерческий" };
             const statusLab = { active: "Активен", paused: "Приостановлен", close: "Закрыт", deleted: "Удалён" };
+            const mapExpCab = (x) =>
+              ({ none: "Без опыта", "<1": "До 1 года", "1-3": "1–3 года", "3-6": "3–6 лет", "6+": "6+ лет" })[x] || "—";
+            const mapWorkCab = (x) =>
+              ({ remote: "Удалённо", office: "В офисе", hybrid: "Гибрид" })[x] || "—";
+            const mapCommitCab = (x) =>
+              ({
+                full_time: "Полный день",
+                part_time: "Неполный день",
+                side_project: "Подработка / гибкий формат",
+              })[x] || "—";
+            const mapSchedCab = (x) =>
+              ({ "5/2": "5/2", "2/2": "2/2", "4/2": "4/2", "3/3": "3/3" })[x] || "—";
+            const mapContractCab = (x) =>
+              ({ gph: "ГПХ", tk: "ТК РФ", internship: "Стажировка" })[x] || "—";
+            const salTypeCab = (t) =>
+              t === "per_project" ? "За проект" : (t === "monthly" ? "В месяц" : "—");
+            function rubCab(v) {
+              if (v == null || v === "") return "—";
+              const n = Number(v);
+              return Number.isFinite(n) ? n.toLocaleString("ru-RU") + " ₽" : "—";
+            }
             const cityTitle =
               proj.city_id != null && proj.city_id !== ""
                 ? cityMap[String(proj.city_id)] || `Город #${proj.city_id}`
@@ -1198,8 +1251,34 @@
                 const name = [o.first_name, o.last_name].filter(Boolean).join(" ").trim();
                 const who = name || o.desired_position || ("Участник #" + o.user_id);
                 const rid = o.resume_id != null ? String(o.resume_id) : "";
+                const aboutRaw = o.about_me != null ? String(o.about_me).trim() : "";
+                const aboutSnip = aboutRaw.length > 300 ? aboutRaw.slice(0, 300) + "…" : aboutRaw;
+                const cardHref =
+                  rid && o.user_id != null
+                    ? "./card_resume.html?id=" + encodeURIComponent(rid) + "&user_id=" + encodeURIComponent(String(o.user_id))
+                    : rid
+                      ? "./card_resume.html?id=" + encodeURIComponent(rid)
+                      : "";
                 html += '<div class="cabinet-team-row">';
-                html += `<div><b>${escCabinet(v.role_name || "Роль")}</b> — ${escCabinet(who)}</div>`;
+                html += '<div class="cabinet-member-main">';
+                html += `<div class="cabinet-member-head"><b>${escCabinet(v.role_name || "Название роли")}</b> — ${escCabinet(who)}</div>`;
+                html += '<div class="cabinet-member-meta">';
+                html += `<span><b>Желаемая должность:</b> ${escCabinet(o.desired_position || "—")}</span>`;
+                html += `<span><b>Опыт работы:</b> ${escCabinet(mapExpCab(o.computed_experience_level))}</span>`;
+                html += `<span><b>Формат работы:</b> ${escCabinet(mapWorkCab(o.work_format))}</span>`;
+                html += `<span><b>Занятость:</b> ${escCabinet(mapCommitCab(o.commitment_level))}</span>`;
+                html += `<span><b>График:</b> ${escCabinet(mapSchedCab(o.schedule))}</span>`;
+                html += `<span><b>Заработная плата (в рублях):</b> ${escCabinet(rubCab(o.salary_amount))}</span>`;
+                html += `<span><b>Тип зарплаты:</b> ${escCabinet(salTypeCab(o.salary_type))}</span>`;
+                html += `<span><b>Тип договора:</b> ${escCabinet(mapContractCab(o.contract_type))}</span>`;
+                html += "</div>";
+                if (aboutSnip) {
+                  html += `<div class="cabinet-member-about"><b>О себе:</b> ${escCabinet(aboutSnip)}</div>`;
+                }
+                if (cardHref) {
+                  html += `<div class="cabinet-member-actions"><a class="cabinet-member-link" href="${cardHref}">Открыть полное резюме</a></div>`;
+                }
+                html += "</div>";
                 if (rid) {
                   html +=
                     `<button type="button" class="cabinet-remove-member" data-project-id="${escCabinet(pid)}" data-remove-resume-id="${escCabinet(rid)}" data-member-label="${escCabinet(who)}">Исключить из проекта</button>`;

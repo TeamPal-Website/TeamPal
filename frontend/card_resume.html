@@ -67,6 +67,106 @@
     .exp-meta { margin-top: 6px; color: #5c5c5c; font-size: 13px; }
     .footer { width: 100%; background: var(--footer); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; font-size: 14px; color: var(--ink2); min-height: 52px; flex-wrap: wrap; }
     .empty { border: 1px solid var(--line); border-radius: 14px; background: var(--panel-soft); padding: 18px; color: #7a7a7a; text-align: center; }
+    .page-back-row { margin-bottom: 12px; }
+    .page-back-btn {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      padding: 10px 18px;
+      font-family: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--ink2);
+      transition: border-color .2s, color .2s;
+    }
+    .page-back-btn:hover { border-color: var(--accent-2); color: var(--accent-2); }
+    .invite-action-bar { margin-bottom: 14px; }
+    .invite-action-bar .action-btn {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 20px;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(248, 90, 11, 0.28);
+    }
+    .invite-action-bar .action-btn:hover { filter: brightness(1.03); }
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2500;
+      padding: 16px;
+    }
+    .modal.open { display: flex; }
+    .modal__card--premium {
+      width: min(92vw, 480px);
+      border-radius: 22px;
+      background: #fff;
+      overflow: hidden;
+      box-shadow: 0 28px 56px rgba(0, 0, 0, 0.18);
+    }
+    .modal__accent-strip { height: 5px; background: linear-gradient(90deg, var(--accent-1), var(--accent-2)); }
+    .modal__body { padding: 20px 22px 16px; }
+    .modal__title-lg { font-size: 22px; font-weight: 700; margin: 0; color: var(--ink); }
+    .modal__subtitle { margin: 8px 0 0; font-size: 14px; color: #666; line-height: 1.45; }
+    .modal__footer-bar {
+      padding: 14px 22px 18px;
+      background: linear-gradient(180deg, #faf9f7, #fff);
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .invite-preview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: #faf9f7;
+      font-size: 13px;
+    }
+    .invite-preview-grid div b { color: #6a625b; display: block; margin-bottom: 2px; font-size: 11px; text-transform: uppercase; letter-spacing: .03em; }
+    .invite-preview-about {
+      grid-column: 1 / -1;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .modal .field label { font-size: 13px; color: #4c4c4c; font-weight: 500; display: block; margin-bottom: 6px; }
+    .modal .field select {
+      width: 100%;
+      border: 2px solid #dfdfdf;
+      border-radius: 10px;
+      padding: 10px 11px;
+      font-family: inherit;
+      font-size: 14px;
+    }
+    .modal .action-btn {
+      border-radius: 12px;
+      padding: 10px 18px;
+      font-family: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--line);
+      background: #fff;
+      font-size: 14px;
+    }
+    .modal .action-btn--accent {
+      border: none;
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      color: #fff;
+    }
     @media (max-width: 700px) { .header__inner { padding: 0 16px; } .page { padding: 92px 14px 24px; } .role-toggle__btn { padding: 7px 14px; font-size: 12px; } }
   </style>
 </head>
@@ -100,6 +200,10 @@
 </header>
 
 <main class="page">
+  <p class="page-back-row"><button type="button" class="page-back-btn" id="page-back">← Назад к поиску</button></p>
+  <div class="invite-action-bar" id="resume-invite-bar" hidden>
+    <button type="button" class="action-btn action-btn--accent" id="resume-invite-open">Пригласить кандидата</button>
+  </div>
   <section class="card top">
     <h1 class="title" id="resume-title">Карточка резюме</h1>
     <div class="sub" id="resume-sub">Загрузка...</div>
@@ -112,7 +216,7 @@
   </section>
 
   <section class="card section">
-    <h2>Навыки</h2>
+    <h2>Стек технологий / Скиллы</h2>
     <div class="chips" id="resume-skills"></div>
   </section>
 
@@ -126,6 +230,28 @@
     <div class="grid" id="resume-contacts"></div>
   </section>
 </main>
+
+<div class="modal" id="invite-modal-card" aria-hidden="true">
+  <div class="modal__card modal__card--premium" role="dialog" aria-modal="true" aria-label="Пригласить кандидата">
+    <div class="modal__accent-strip"></div>
+    <div class="modal__body">
+      <h2 class="modal__title-lg">Пригласить кандидата</h2>
+      <p id="invite-resume-label-card" class="modal__subtitle"></p>
+      <div id="invite-resume-preview-card" class="invite-preview-grid"></div>
+      <div class="field" style="margin-top:14px;">
+        <label for="invite-vacancy-select-card">Выберите свою вакансию</label>
+        <select id="invite-vacancy-select-card"></select>
+      </div>
+      <div id="invite-no-vacancies-card" style="display:none;margin-top:10px;padding:12px 14px;border-radius:14px;background:#fff8e6;border:1px solid #ffe082;color:#6d4c41;font-size:13px;line-height:1.45;">
+        Нет свободных слотов в активных проектах. Создайте вакансию в проекте или верните проект со статуса паузы.
+      </div>
+    </div>
+    <div class="modal__footer-bar">
+      <button class="action-btn" id="invite-cancel-card" type="button">Отмена</button>
+      <button class="action-btn action-btn--accent" id="invite-confirm-card" type="button">Отправить приглашение</button>
+    </div>
+  </div>
+</div>
 
 <footer class="footer">
   <span>TeamPal <span id="year"></span></span>
@@ -154,15 +280,153 @@
     document.addEventListener("click", (e) => { if (!e.target.closest(".header__actions")) closeMenus(); });
     document.querySelectorAll("[data-nav]").forEach((btn) => btn.addEventListener("click", () => { const href = btn.getAttribute("data-nav"); if (href) window.location.href = href; }));
 
+    document.getElementById("page-back")?.addEventListener("click", () => {
+      if (document.referrer && document.referrer.includes("search_resume.html")) history.back();
+      else window.location.href = "./search_resume.html";
+    });
+
     function esc(v) { return String(v == null ? "" : v).replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m])); }
-    function mapIntent(v) { return v === "commercial" ? "Коммерческий проект" : (v === "noncommercial" ? "Некоммерческий проект" : "—"); }
+    function mapResumeTypeCard(v) {
+      return v === "commercial" ? "Коммерческий проект" : (v === "noncommercial" ? "Учебный проект" : "—");
+    }
     function mapStatus(v) { return v === "looking_for_job" ? "Ищу работу" : (v === "not_looking_for_job" ? "Не ищу работу" : "—"); }
     function mapCommit(v) { return ({ full_time: "Полный день", part_time: "Неполный день", side_project: "Подработка / гибкий формат" })[v] || "—"; }
     function mapWork(v) { return ({ remote: "Удалённо", office: "В офисе", hybrid: "Гибрид" })[v] || "—"; }
     function mapSchedule(v) { return ({ "5/2": "5/2", "2/2": "2/2", "4/2": "4/2", "3/3": "3/3" })[v] || "—"; }
     function mapContract(v) { return ({ gph: "ГПХ", tk: "ТК РФ", internship: "Стажировка" })[v] || "—"; }
-    function salary(v, t) { if (v == null || v === "") return "—"; const n = Number(v); if (!Number.isFinite(n)) return "—"; const unit = t === "per_project" ? " за проект" : (t === "monthly" ? " в месяц" : ""); return n.toLocaleString("ru-RU") + " ₽" + unit; }
+    function mapExpBucket(v) {
+      return ({ none: "Без опыта", "<1": "До 1 года", "1-3": "1–3 года", "3-6": "3–6 лет", "6+": "6+ лет" })[v] || "—";
+    }
+    function mapSalaryTypeLabel(t) {
+      return t === "per_project" ? "За проект" : (t === "monthly" ? "В месяц" : "—");
+    }
+    function salaryAmountOnly(v) {
+      if (v == null || v === "") return "—";
+      const n = Number(v);
+      if (!Number.isFinite(n)) return "—";
+      return n.toLocaleString("ru-RU") + " ₽";
+    }
+    function aboutMePlain(rd) {
+      const raw = rd && rd.about_me != null ? String(rd.about_me).trim() : "";
+      return raw || "Не указано";
+    }
     function fmtDate(v) { if (!v) return "—"; const d = new Date(v); return isNaN(d.getTime()) ? String(v) : d.toLocaleDateString("ru-RU"); }
+
+    function resumePreviewCells(rd, skillMap) {
+      const skillLabels = (Array.isArray(rd.skills) ? rd.skills : []).slice(0, 12).map((s) => {
+        if (typeof s === "string") return s;
+        if (s && typeof s === "object") {
+          let lab = (s.name || s.title || "").trim();
+          if (!lab && s.skill_id != null) lab = skillMap[String(s.skill_id)] || ("#" + s.skill_id);
+          return lab || "";
+        }
+        return "";
+      }).filter(Boolean);
+      const rows = [
+        ["Желаемая должность", rd.desired_position || "—"],
+        ["Тип резюме", mapResumeTypeCard(rd.employment_intent)],
+        ["Статус поиска работы", mapStatus(rd.status)],
+        ["Опыт работы", mapExpBucket(rd.computed_experience_level)],
+        ["Формат работы", mapWork(rd.work_format)],
+        ["Занятость", mapCommit(rd.commitment_level)],
+        ["График", mapSchedule(rd.schedule)],
+        ["Заработная плата (в рублях)", rd.employment_intent === "commercial" ? salaryAmountOnly(rd.salary_amount) : "—"],
+        ["Тип зарплаты", rd.employment_intent === "commercial" ? mapSalaryTypeLabel(rd.salary_type) : "—"],
+        ["Тип договора", mapContract(rd.contract_type)],
+        ["Стек технологий / Скиллы", skillLabels.length ? skillLabels.join(", ") : "—"],
+      ];
+      const cells = rows.map(([k, val]) => `<div><b>${esc(k)}</b>${esc(val)}</div>`).join("");
+      const aboutVal = aboutMePlain(rd);
+      const aboutBlock = `<div class="invite-preview-about"><b>${esc("О себе")}</b>${esc(aboutVal)}</div>`;
+      return cells + aboutBlock;
+    }
+
+    let inviteResumeNumericId = null;
+
+    async function openInviteModalCard(resumeIdNum, rd, skillMap) {
+      inviteResumeNumericId = resumeIdNum;
+      const modal = document.getElementById("invite-modal-card");
+      const labelEl = document.getElementById("invite-resume-label-card");
+      const prevEl = document.getElementById("invite-resume-preview-card");
+      const sel = document.getElementById("invite-vacancy-select-card");
+      const noVac = document.getElementById("invite-no-vacancies-card");
+      if (labelEl) labelEl.textContent = rd.desired_position || "Резюме";
+      if (prevEl) prevEl.innerHTML = resumePreviewCells(rd, skillMap);
+      if (noVac) noVac.style.display = "none";
+      if (modal) modal.classList.add("open");
+      if (sel) sel.innerHTML = '<option value="">Загрузка…</option>';
+      try {
+        const r = await fetch(API_BASE_URL + "/my_recruiting_vacancies", { credentials: "include" });
+        if (r.status === 401) {
+          window.alert("Войдите в аккаунт работодателя.");
+          modal?.classList.remove("open");
+          return;
+        }
+        if (!r.ok) {
+          if (sel) sel.innerHTML = '<option value="">Ошибка загрузки</option>';
+          return;
+        }
+        const opts = await r.json();
+        if (!Array.isArray(opts) || opts.length === 0) {
+          if (sel) sel.innerHTML = '<option value="">— нет —</option>';
+          if (noVac) noVac.style.display = "block";
+          return;
+        }
+        if (sel) {
+          sel.innerHTML = '<option value="">— выберите вакансию —</option>' +
+            opts.map((o) => {
+              const vid = Number(o.vacancy_id);
+              const label = (o.project_title || "Проект") + " · " + (o.role_name || "Роль");
+              return `<option value="${vid}">${esc(label)}</option>`;
+            }).join("");
+        }
+      } catch {
+        if (sel) sel.innerHTML = '<option value="">Ошибка соединения</option>';
+      }
+    }
+
+    function closeInviteModalCard() {
+      document.getElementById("invite-modal-card")?.classList.remove("open");
+      inviteResumeNumericId = null;
+    }
+
+    document.getElementById("invite-cancel-card")?.addEventListener("click", closeInviteModalCard);
+    document.getElementById("invite-modal-card")?.addEventListener("click", (e) => { if (e.target.id === "invite-modal-card") closeInviteModalCard(); });
+    document.addEventListener("keydown", (ev) => {
+      if (ev.key === "Escape") closeInviteModalCard();
+    });
+    document.getElementById("invite-confirm-card")?.addEventListener("click", async () => {
+      const sel = document.getElementById("invite-vacancy-select-card");
+      const vacancyId = sel ? sel.value : "";
+      if (!vacancyId || inviteResumeNumericId == null) return;
+      const btn = document.getElementById("invite-confirm-card");
+      if (btn) btn.disabled = true;
+      try {
+        const r = await fetch(API_BASE_URL + "/vacancies/" + encodeURIComponent(vacancyId) + "/invite_resume", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ resume_id: inviteResumeNumericId }),
+        });
+        if (r.ok) {
+          closeInviteModalCard();
+          window.alert("Приглашение отправлено.");
+        } else {
+          const err = await r.json().catch(() => ({}));
+          window.alert("Ошибка: " + (typeof err.detail === "string" ? err.detail : "Не удалось отправить"));
+        }
+      } catch {
+        window.alert("Ошибка соединения с сервером");
+      }
+      if (btn) btn.disabled = false;
+    });
+
+    document.getElementById("resume-invite-open")?.addEventListener("click", () => {
+      const pid = new URLSearchParams(window.location.search).get("id");
+      if (!pid || !window._tpCardResumePayload) return;
+      const { resumeData: rd, skillMap: sm } = window._tpCardResumePayload;
+      openInviteModalCard(parseInt(pid, 10), rd, sm);
+    });
 
     let skillsCatalogCache = null;
     async function loadSkillsCatalogMap() {
@@ -218,27 +482,40 @@
 
       const displayTitle = resumeData.title || resumeData.desired_position || "Резюме";
       document.getElementById("resume-title").textContent = displayTitle;
-      const subLine = (resumeData.desired_position ? String(resumeData.desired_position) + " · " : "") + mapIntent(resumeData.employment_intent);
+      const subLine = (resumeData.desired_position ? String(resumeData.desired_position) + " · " : "") + mapResumeTypeCard(resumeData.employment_intent);
       document.getElementById("resume-sub").textContent = subLine;
+
+      const bar = document.getElementById("resume-invite-bar");
+      if (bar) {
+        bar.hidden = true;
+        if (userId) {
+          try {
+            const meR = await fetch(API_BASE_URL + "/profiles/me", { credentials: "include" });
+            if (meR.ok) {
+              const me = await meR.json();
+              if (Number(me.user_id) !== Number(userId)) bar.hidden = false;
+            }
+          } catch (_) {}
+        }
+      }
+      window._tpCardResumePayload = { resumeData, skillMap };
 
       const aboutSection = document.getElementById("resume-about-section");
       const aboutRaw = resumeData.about_me != null ? String(resumeData.about_me).trim() : "";
-      if (aboutRaw) {
-        document.getElementById("resume-about").textContent = aboutRaw;
-        if (aboutSection) aboutSection.style.display = "";
-      } else if (aboutSection) {
-        aboutSection.style.display = "none";
-      }
+      document.getElementById("resume-about").textContent = aboutRaw || "Не указано";
+      if (aboutSection) aboutSection.style.display = "";
 
       const contacts = resumeData.contacts || resumeData.profile?.contacts || {};
       const mainFields = [
-        ["Должность", resumeData.desired_position || "—"],
-        ["Тип резюме", mapIntent(resumeData.employment_intent)],
-        ["Статус поиска", mapStatus(resumeData.status)],
-        ["Занятость", mapCommit(resumeData.commitment_level)],
+        ["Желаемая должность", resumeData.desired_position || "—"],
+        ["Тип резюме", mapResumeTypeCard(resumeData.employment_intent)],
+        ["Статус поиска работы", mapStatus(resumeData.status)],
+        ["Опыт работы", mapExpBucket(resumeData.computed_experience_level)],
         ["Формат работы", mapWork(resumeData.work_format)],
+        ["Занятость", mapCommit(resumeData.commitment_level)],
         ["График", mapSchedule(resumeData.schedule)],
-        ["Желаемая зарплата", salary(resumeData.salary_amount, resumeData.salary_type)],
+        ["Заработная плата (в рублях)", resumeData.employment_intent === "commercial" ? salaryAmountOnly(resumeData.salary_amount) : "—"],
+        ["Тип зарплаты", resumeData.employment_intent === "commercial" ? mapSalaryTypeLabel(resumeData.salary_type) : "—"],
         ["Тип договора", mapContract(resumeData.contract_type)],
       ];
       document.getElementById("resume-main-fields").innerHTML = mainFields.map((f) => `<div class="field"><b>${esc(f[0])}:</b>${esc(f[1])}</div>`).join("");
@@ -254,16 +531,16 @@
           }
           return `<span class="chip">${esc(label || "—")}</span>`;
         }).join("")
-        : '<div class="empty" style="width:100%;">Навыки не указаны</div>';
+        : '<div class="empty" style="width:100%;">Стек не указан — отметьте навыки при редактировании резюме</div>';
 
       const experiences = Array.isArray(resumeData.experiences) ? resumeData.experiences : [];
       document.getElementById("resume-experiences").innerHTML = experiences.length
         ? experiences.map((e) => `
             <article class="exp">
-              <div class="exp-title">${esc(e.position || "Должность не указана")}</div>
               <div class="exp-meta"><b>Компания:</b> ${esc(e.company_name || "—")}</div>
-              <div class="exp-meta"><b>Период:</b> ${esc(fmtDate(e.start_date))} - ${esc(e.end_date ? fmtDate(e.end_date) : "по настоящее время")}</div>
-              <div class="text" style="margin-top:8px;">${esc(e.description || "Описание не указано")}</div>
+              <div class="exp-meta"><b>Должность:</b> ${esc(e.position || "—")}</div>
+              <div class="exp-meta"><b>Период:</b> ${esc(fmtDate(e.start_date))} — ${esc(e.end_date ? fmtDate(e.end_date) : "по настоящее время")}</div>
+              <div class="text" style="margin-top:8px;"><b>Описание обязанностей:</b> ${esc(e.description || "—")}</div>
             </article>
           `).join("")
         : '<div class="empty">Опыт работы не указан</div>';
