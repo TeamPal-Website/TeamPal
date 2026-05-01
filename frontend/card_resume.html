@@ -289,7 +289,6 @@
     function mapResumeTypeCard(v) {
       return v === "commercial" ? "Коммерческий проект" : (v === "noncommercial" ? "Учебный проект" : "—");
     }
-    function mapStatus(v) { return v === "looking_for_job" ? "Ищу работу" : (v === "not_looking_for_job" ? "Не ищу работу" : "—"); }
     function mapCommit(v) { return ({ full_time: "Полный день", part_time: "Неполный день", side_project: "Подработка / гибкий формат" })[v] || "—"; }
     function mapWork(v) { return ({ remote: "Удалённо", office: "В офисе", hybrid: "Гибрид" })[v] || "—"; }
     function mapSchedule(v) { return ({ "5/2": "5/2", "2/2": "2/2", "4/2": "4/2", "3/3": "3/3" })[v] || "—"; }
@@ -312,6 +311,24 @@
     }
     function fmtDate(v) { if (!v) return "—"; const d = new Date(v); return isNaN(d.getTime()) ? String(v) : d.toLocaleDateString("ru-RU"); }
 
+    function buildResumeMainPreviewRows(rd) {
+      const rows = [
+        ["Желаемая должность", rd.desired_position || "—"],
+        ["Опыт работы", mapExpBucket(rd.computed_experience_level)],
+      ];
+      if (rd.employment_intent === "commercial") {
+        rows.push(
+          ["Формат работы", mapWork(rd.work_format)],
+          ["Занятость", mapCommit(rd.commitment_level)],
+          ["График", mapSchedule(rd.schedule)],
+          ["Заработная плата (в рублях)", salaryAmountOnly(rd.salary_amount)],
+          ["Тип зарплаты", mapSalaryTypeLabel(rd.salary_type)],
+          ["Тип договора", mapContract(rd.contract_type)],
+        );
+      }
+      return rows;
+    }
+
     function resumePreviewCells(rd, skillMap) {
       const skillLabels = (Array.isArray(rd.skills) ? rd.skills : []).slice(0, 12).map((s) => {
         if (typeof s === "string") return s;
@@ -322,19 +339,9 @@
         }
         return "";
       }).filter(Boolean);
-      const rows = [
-        ["Желаемая должность", rd.desired_position || "—"],
-        ["Тип резюме", mapResumeTypeCard(rd.employment_intent)],
-        ["Статус поиска работы", mapStatus(rd.status)],
-        ["Опыт работы", mapExpBucket(rd.computed_experience_level)],
-        ["Формат работы", mapWork(rd.work_format)],
-        ["Занятость", mapCommit(rd.commitment_level)],
-        ["График", mapSchedule(rd.schedule)],
-        ["Заработная плата (в рублях)", rd.employment_intent === "commercial" ? salaryAmountOnly(rd.salary_amount) : "—"],
-        ["Тип зарплаты", rd.employment_intent === "commercial" ? mapSalaryTypeLabel(rd.salary_type) : "—"],
-        ["Тип договора", mapContract(rd.contract_type)],
+      const rows = buildResumeMainPreviewRows(rd).concat([
         ["Стек технологий / Скиллы", skillLabels.length ? skillLabels.join(", ") : "—"],
-      ];
+      ]);
       const cells = rows.map(([k, val]) => `<div><b>${esc(k)}</b>${esc(val)}</div>`).join("");
       const aboutVal = aboutMePlain(rd);
       const aboutBlock = `<div class="invite-preview-about"><b>${esc("О себе")}</b>${esc(aboutVal)}</div>`;
@@ -376,7 +383,7 @@
           sel.innerHTML = '<option value="">— выберите вакансию —</option>' +
             opts.map((o) => {
               const vid = Number(o.vacancy_id);
-              const label = (o.project_title || "Проект") + " · " + (o.role_name || "Роль");
+              const label = (o.project_title || "Проект") + " · " + (o.role_name || "Должность");
               return `<option value="${vid}">${esc(label)}</option>`;
             }).join("");
         }
@@ -506,18 +513,7 @@
       if (aboutSection) aboutSection.style.display = "";
 
       const contacts = resumeData.contacts || resumeData.profile?.contacts || {};
-      const mainFields = [
-        ["Желаемая должность", resumeData.desired_position || "—"],
-        ["Тип резюме", mapResumeTypeCard(resumeData.employment_intent)],
-        ["Статус поиска работы", mapStatus(resumeData.status)],
-        ["Опыт работы", mapExpBucket(resumeData.computed_experience_level)],
-        ["Формат работы", mapWork(resumeData.work_format)],
-        ["Занятость", mapCommit(resumeData.commitment_level)],
-        ["График", mapSchedule(resumeData.schedule)],
-        ["Заработная плата (в рублях)", resumeData.employment_intent === "commercial" ? salaryAmountOnly(resumeData.salary_amount) : "—"],
-        ["Тип зарплаты", resumeData.employment_intent === "commercial" ? mapSalaryTypeLabel(resumeData.salary_type) : "—"],
-        ["Тип договора", mapContract(resumeData.contract_type)],
-      ];
+      const mainFields = buildResumeMainPreviewRows(resumeData);
       document.getElementById("resume-main-fields").innerHTML = mainFields.map((f) => `<div class="field"><b>${esc(f[0])}:</b>${esc(f[1])}</div>`).join("");
 
       const skills = Array.isArray(resumeData.skills) ? resumeData.skills : [];

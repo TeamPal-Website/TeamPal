@@ -50,7 +50,7 @@ class TestProjectRequestAdd:
             title="New Project",
             company_name="Company",
             employment_intent=EmploymentIntent.COMMERCIAL,
-            vacancies=[ProjectVacancyRequestAdd(role_type_id=1, responsibilities="Dev")],
+            vacancies=[ProjectVacancyRequestAdd(role_type_id=1, description="Dev")],
         )
         assert project.title == "New Project"
         assert len(project.vacancies) == 1
@@ -87,7 +87,7 @@ class TestProjectRequestAdd:
         with pytest.raises(ValidationError):
             ProjectRequestAdd(
                 title="A" * 256,
-                vacancies=[ProjectVacancyRequestAdd(role_type_id=1, responsibilities="Dev")],
+                vacancies=[ProjectVacancyRequestAdd(role_type_id=1, description="Dev")],
             )
 
     def test_vacancies_min_length(self):
@@ -101,7 +101,7 @@ class TestProjectRequestAdd:
         with pytest.raises(ValidationError):
             ProjectRequestAdd(
                 title="Project",
-                vacancies=[ProjectVacancyRequestAdd(role_type_id=i, responsibilities=f"Dev {i}") for i in range(11)],
+                vacancies=[ProjectVacancyRequestAdd(role_type_id=i, description=f"Dev {i}") for i in range(11)],
             )
 
     def test_duplicate_role_type_ids_fails(self):
@@ -109,15 +109,15 @@ class TestProjectRequestAdd:
             ProjectRequestAdd(
                 title="Project",
                 vacancies=[
-                    ProjectVacancyRequestAdd(role_type_id=1, responsibilities="Dev1"),
-                    ProjectVacancyRequestAdd(role_type_id=1, responsibilities="Dev2"),
+                    ProjectVacancyRequestAdd(role_type_id=1, description="Dev1"),
+                    ProjectVacancyRequestAdd(role_type_id=1, description="Dev2"),
                 ],
             )
 
     def test_default_values(self):
         project = ProjectRequestAdd(
             title="Project",
-            vacancies=[ProjectVacancyRequestAdd(role_type_id=1, responsibilities="Dev")],
+            vacancies=[ProjectVacancyRequestAdd(role_type_id=1, description="Dev")],
         )
         assert project.employment_intent == EmploymentIntent.COMMERCIAL
         assert project.status == ProjectsStatus.ACTIVE

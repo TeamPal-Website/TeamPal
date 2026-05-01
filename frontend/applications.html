@@ -180,10 +180,12 @@
       cursor: pointer; text-decoration: underline; text-underline-offset: 3px; text-align: left;
     }
     .app-inline-btn:hover { color: var(--accent-2); }
-    @media (max-width: 700px) {
-      .header__inner { padding: 0 16px; }
-      .role-toggle__btn { padding: 7px 12px; font-size: 12px; }
+    .apps-msg-item {
+      background: #fff; border-radius: 12px; padding: 12px 14px; margin-bottom: 10px;
+      border: 1px solid var(--line); font-size: 14px; line-height: 1.45;
     }
+    .apps-msg-item.unread { border-color: rgba(248, 90, 11, 0.45); background: #fffbf7; }
+    .apps-msg-date { font-size: 12px; color: #999; margin-top: 6px; }
   </style>
 </head>
 <body>
@@ -224,9 +226,9 @@
 
     <div id="view-manager" class="hidden">
       <div class="field" style="margin-bottom: 8px;">
-        <label for="apps-project-select">Выберите проект</label>
+        <label for="apps-project-select">Проект</label>
         <select id="apps-project-select">
-          <option value="">— выберите проект —</option>
+          <option value="">Все проекты</option>
         </select>
       </div>
 
@@ -237,7 +239,7 @@
       </div>
 
       <div id="apps-panel-mgr-in" class="apps-tab-panel">
-        <p class="section-hint" style="margin-top:0;">Новые отклики по выбранному проекту (ожидают решения).</p>
+        <p class="section-hint" style="margin-top:0;">Новые отклики по всем вашим проектам или по выбранному (ожидают решения).</p>
         <div id="applications-list-manager-incoming"></div>
       </div>
       <div id="apps-panel-mgr-out" class="apps-tab-panel hidden">
@@ -245,7 +247,7 @@
         <div id="applications-list-manager-outgoing-active"></div>
       </div>
       <div id="apps-panel-mgr-hist" class="apps-tab-panel hidden">
-        <p class="section-hint" style="margin-top:0;">Завершённые отклики по проекту и архив ваших откликов как соискателя.</p>
+        <p class="section-hint" style="margin-top:0;">Завершённые отклики по выбранным проектам и архив ваших откликов как соискателя.</p>
         <div class="section-head">По выбранному проекту</div>
         <div id="applications-list-manager-history-project"></div>
         <div class="section-head">Мои отклики (архив)</div>
@@ -254,9 +256,16 @@
     </div>
 
     <div id="view-employee" class="hidden">
+      <div class="field" style="margin-bottom: 10px;">
+        <label for="apps-resume-select">Резюме</label>
+        <select id="apps-resume-select">
+          <option value="">Все резюме</option>
+        </select>
+      </div>
       <div class="apps-tabs" id="apps-tabs-employee" role="tablist">
         <button type="button" class="apps-tab active" data-tab="in" role="tab">Входящие отклики</button>
         <button type="button" class="apps-tab" data-tab="out" role="tab">Исходящие отклики</button>
+        <button type="button" class="apps-tab" data-tab="msg" role="tab">Сообщения</button>
         <button type="button" class="apps-tab" data-tab="hist" role="tab">История</button>
       </div>
 
@@ -267,6 +276,10 @@
       <div id="apps-panel-emp-out" class="apps-tab-panel hidden">
         <p class="section-hint" style="margin-top:0;">Ваши отклики на вакансии (ожидают решения работодателя).</p>
         <div id="applications-list-emp-outgoing"></div>
+      </div>
+      <div id="apps-panel-emp-msg" class="apps-tab-panel hidden">
+        <p class="section-hint" style="margin-top:0;">Уведомления по откликам: приглашения, принятие, отказ, отмена.</p>
+        <div id="applications-list-emp-messages"></div>
       </div>
       <div id="apps-panel-emp-hist" class="apps-tab-panel hidden">
         <p class="section-hint" style="margin-top:0;">Принятые, отклонённые и отозванные отклики.</p>
@@ -312,14 +325,7 @@
 
   function apiErrDetail(body) {
     if (!body || body.detail == null) return "";
-    const d = body.detail;
-    if (typeof d === "string") return d;
-    if (Array.isArray(d)) {
-      return d
-        .map((x) => (x && typeof x === "object" && x.msg ? String(x.msg) : JSON.stringify(x)))
-        .join("; ");
-    }
-    return String(d);
+    return typeof window.tpFormatApiDetail === "function" ? window.tpFormatApiDetail(body.detail) : "";
   }
 
   function showToast(message, type = "success", duration = 5000) {
@@ -366,7 +372,7 @@
   }
 
   function mapIntent(v) { return v === "commercial" ? "Коммерческий" : (v === "noncommercial" ? "Учебный" : (v || "—")); }
-  function mapProjStatus(v) { return ({ active: "Активен", paused: "Приостановлен", close: "Закрыт", deleted: "Удалён" })[v] || (v || "—"); }
+  function mapProjStatus(v) { return ({ active: "Активен", paused: "Не активен", close: "Закрыт", deleted: "Удалён" })[v] || (v || "Не выбрано"); }
   function mapExp(v) { return ({ none: "Без опыта", "<1": "До 1 года", "1-3": "1–3 года", "3-6": "3–6 лет", "6+": "6+ лет" })[v] || (v || "—"); }
   function mapWork(v) { return ({ remote: "Удалённо", office: "Офис", hybrid: "Гибрид" })[v] || (v || "—"); }
   function mapEmployment(v) { return ({ full_time: "Полная", part_time: "Частичная", side_project: "Подработка" })[v] || (v || "—"); }
@@ -495,9 +501,12 @@
           const occ = v.occupant;
           const filled = !!(occ || v.is_filled);
           html += `<div style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:#faf9f7;">`;
-          html += `<p style="margin:0 0 6px;"><b>${esc2(v.role_name || "Роль")}</b> · ${filled ? "занята" : "свободна"}</p>`;
-          if (!filled && v.requirements) html += `<p style="margin:0;font-size:13px;"><b>Требования:</b> ${esc2(v.requirements)}</p>`;
-          if (!filled && v.responsibilities) html += `<p style="margin:8px 0 0;font-size:13px;"><b>Обязанности:</b> ${esc2(v.responsibilities)}</p>`;
+          html += `<p style="margin:0 0 6px;"><b>${esc2(v.role_name || "Должность")}</b> · ${filled ? "занята" : "свободна"}</p>`;
+          if (!filled && ((v.description && String(v.description).trim()) || (v.responsibilities && String(v.responsibilities).trim()) || (v.requirements && String(v.requirements).trim()))) {
+            var _d = (v.description && String(v.description).trim())
+              || [v.responsibilities, v.requirements].map(function(x){ return x && String(x).trim() ? String(x).trim() : ''; }).filter(Boolean).join('\n\n');
+            html += `<p style="margin:0;font-size:13px;"><b>Описание вакансии:</b> ${esc2(_d)}</p>`;
+          }
           if (occ) {
             const name = [occ.first_name, occ.last_name].filter(Boolean).join(" ").trim();
             html += `<p style="margin:8px 0 0;font-size:13px;color:#555;">Участник: ${esc2(name || occ.desired_position || ("#" + occ.user_id))}</p>`;
@@ -587,13 +596,15 @@
     });
     document.getElementById("apps-panel-emp-in").classList.toggle("hidden", tab !== "in");
     document.getElementById("apps-panel-emp-out").classList.toggle("hidden", tab !== "out");
+    document.getElementById("apps-panel-emp-msg").classList.toggle("hidden", tab !== "msg");
     document.getElementById("apps-panel-emp-hist").classList.toggle("hidden", tab !== "hist");
+    if (tab === "msg") void loadEmployeeMessages();
   }
 
   function reloadOutgoingApplicantLists() {
     if (viewMode === "manager") {
       loadManagerOutgoingApplications();
-      loadProjectsForAppsSelect();
+      loadEmployerManagerPanels();
     } else loadMyApplications();
   }
 
@@ -668,19 +679,21 @@
     });
   }
 
-  function bindManagerIncomingActions(listRoot, projectId) {
+  function bindManagerIncomingActions(listRoot) {
     if (!listRoot) return;
     listRoot.querySelectorAll("[data-app-detail]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const aid = btn.getAttribute("data-app-detail");
-        if (aid) void openEmployerApplicationModal(projectId, aid);
+        const pid = btn.getAttribute("data-project-id");
+        if (aid && pid) void openEmployerApplicationModal(pid, aid);
       });
     });
     listRoot.querySelectorAll("[data-contacts]").forEach((btn) => {
       btn.addEventListener("click", async () => {
         const id = btn.getAttribute("data-contacts");
+        const projectId = btn.getAttribute("data-project-id");
         const panel = document.getElementById("app-contacts-" + id);
-        if (!panel) return;
+        if (!panel || !projectId) return;
 
         listRoot.querySelectorAll(".app-contacts-panel").forEach((p) => {
           if (p.id !== panel.id) p.hidden = true;
@@ -739,7 +752,7 @@
             const r = await fetch(API_BASE_URL + "/applications/" + id + "/accept", { method: "POST", credentials: "include" });
             if (r.ok) {
               showToast("Кандидат принят в проект", "success");
-              loadProjectApplications(projectId);
+              loadEmployerManagerPanels();
             } else {
               const err = await r.json().catch(() => ({}));
               showToast("Ошибка: " + (apiErrDetail(err) || "Не удалось принять"), "error");
@@ -759,7 +772,7 @@
             const r = await fetch(API_BASE_URL + "/applications/" + id + "/reject", { method: "POST", credentials: "include" });
             if (r.ok) {
               showToast("Отклик отклонён", "success");
-              loadProjectApplications(projectId);
+              loadEmployerManagerPanels();
             } else {
               const err = await r.json().catch(() => ({}));
               showToast("Ошибка: " + (apiErrDetail(err) || "Не удалось отклонить"), "error");
@@ -779,29 +792,33 @@
     const createdAt = app.created_at ? new Date(app.created_at).toLocaleDateString("ru-RU") : "";
     const applicantLine = esc2(app.desired_position || (app.resume_id ? "Резюме #" + app.resume_id : "Соискатель"));
 
+    const pidAttr = app.project_id != null ? esc2(String(app.project_id)) : "";
+    const projectLine = app.project_title ? `<div class="app-project">${esc2(app.project_title)}</div>` : "";
+
     let actions = "";
     if (app.status === "pending") {
       actions = `
-              <button class="action-btn" type="button" data-contacts="${esc2(String(app.id))}">Контакты</button>
-              <button class="action-btn action-btn--success" type="button" data-accept="${esc2(String(app.id))}">Принять</button>
-              <button class="action-btn action-btn--danger" type="button" data-reject="${esc2(String(app.id))}">Отклонить</button>`;
+              <button class="action-btn" type="button" data-contacts="${esc2(String(app.id))}" data-project-id="${pidAttr}">Контакты</button>
+              <button class="action-btn action-btn--success" type="button" data-accept="${esc2(String(app.id))}" data-project-id="${pidAttr}">Принять</button>
+              <button class="action-btn action-btn--danger" type="button" data-reject="${esc2(String(app.id))}" data-project-id="${pidAttr}">Отклонить</button>`;
     } else {
-      actions = `<button class="action-btn" type="button" data-contacts="${esc2(String(app.id))}">Контакты</button>`;
+      actions = `<button class="action-btn" type="button" data-contacts="${esc2(String(app.id))}" data-project-id="${pidAttr}">Контакты</button>`;
     }
 
     return `
             <div class="app-card">
               <div class="app-card-head">
-                <button type="button" class="app-card-summary-btn" data-app-detail="${esc2(String(app.id))}" title="Резюме, контакты и опыт кандидата">
+                <button type="button" class="app-card-summary-btn" data-app-detail="${esc2(String(app.id))}" data-project-id="${pidAttr}" title="Резюме, контакты и опыт кандидата">
                   <div class="app-role">${roleName}</div>
                   <div class="app-applicant">${applicantLine}</div>
+                  ${projectLine}
                 </button>
                 <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
                   <span class="app-status-badge ${statusClass}">${statusLabel}</span>
                   ${createdAt ? `<span class="app-date">${esc2(createdAt)}</span>` : ""}
                 </div>
               </div>
-              <p style="font-size:11px;color:#9a9088;margin:-4px 0 8px;">Нажмите на блок с именем и ролью выше — откроются контакты и полное резюме.</p>
+              <p style="font-size:11px;color:#9a9088;margin:-4px 0 8px;">Нажмите на блок с именем и должностью выше — откроются контакты и полное резюме.</p>
               ${actions ? `<div class="app-actions">${actions}</div>` : ""}
               <div class="app-contacts-panel is-empty" id="app-contacts-${esc2(String(app.id))}" hidden></div>
             </div>`;
@@ -894,7 +911,81 @@
       loadManagerOutgoingApplications();
     } else {
       switchEmployeeAppsTab("in");
-      loadMyApplications();
+      void loadResumesForAppsFilter().then(() => loadMyApplications());
+    }
+  }
+
+  async function loadResumesForAppsFilter() {
+    const sel = document.getElementById("apps-resume-select");
+    if (!sel) return;
+    if (!sel.dataset.tpAppsResumeBound) {
+      sel.dataset.tpAppsResumeBound = "1";
+      sel.addEventListener("change", () => loadMyApplications());
+    }
+    const prev = sel.value;
+    try {
+      const resp = await fetch(API_BASE_URL + "/my_resumes", { credentials: "include" });
+      if (!resp.ok) return;
+      const rows = await resp.json();
+      sel.innerHTML = '<option value="">Все резюме</option>';
+      if (Array.isArray(rows)) {
+        rows.forEach((r) => {
+          if (!r || r.id == null) return;
+          const opt = document.createElement("option");
+          opt.value = String(r.id);
+          const pos = r.desired_position || "Резюме #" + r.id;
+          opt.textContent = pos;
+          sel.appendChild(opt);
+        });
+      }
+      if (prev && Array.from(sel.options).some((o) => o.value === prev)) sel.value = prev;
+    } catch (_) {}
+  }
+
+  function notificationMessageLine(n) {
+    const p = n.payload || {};
+    const project = p.project_title || (p.project_id != null ? "Проект #" + p.project_id : "Проект");
+    switch (n.event) {
+      case "application_accepted":
+        return "Вас приняли в проект: " + project;
+      case "application_rejected":
+        return "Отклонили отклик по проекту: " + project;
+      case "application_cancelled":
+        if (p.reason === "project_closed") return "Проект закрыт: " + project;
+        return "Отклик отменён: " + project;
+      case "employer_invited":
+        return "Приглашение в проект: " + project;
+      default:
+        return String(n.event || "Событие");
+    }
+  }
+
+  async function loadEmployeeMessages() {
+    const el = document.getElementById("applications-list-emp-messages");
+    if (!el) return;
+    el.innerHTML = '<div class="empty-state" style="color:#aaa;">Загрузка…</div>';
+    try {
+      const r = await fetch(API_BASE_URL + "/notifications?per_page=50", { credentials: "include" });
+      if (!r.ok) {
+        el.innerHTML = '<div class="empty-state">Не удалось загрузить уведомления</div>';
+        return;
+      }
+      const arr = await r.json();
+      const allowed = new Set(["application_accepted", "application_rejected", "application_cancelled", "employer_invited"]);
+      const filtered = Array.isArray(arr) ? arr.filter((n) => allowed.has(n.event)) : [];
+      if (!filtered.length) {
+        el.innerHTML = '<div class="empty-state">Пока нет сообщений по откликам</div>';
+        return;
+      }
+      el.innerHTML = filtered
+        .map((n) => {
+          const dt = n.created_at ? new Date(n.created_at).toLocaleString("ru-RU") : "";
+          const unread = n.is_read === false ? " unread" : "";
+          return `<div class="apps-msg-item${unread}">${esc2(notificationMessageLine(n))}<div class="apps-msg-date">${esc2(dt)}</div></div>`;
+        })
+        .join("");
+    } catch {
+      el.innerHTML = '<div class="empty-state">Ошибка соединения</div>';
     }
   }
 
@@ -906,7 +997,7 @@
       if (!resp.ok) return;
       const projects = await resp.json();
       const prev = sel.value;
-      sel.innerHTML = '<option value="">— выберите проект —</option>';
+      sel.innerHTML = '<option value="">Все проекты</option>';
       if (Array.isArray(projects)) {
         projects.forEach((p) => {
           const opt = document.createElement("option");
@@ -915,20 +1006,13 @@
           sel.appendChild(opt);
         });
         if (prev && Array.from(sel.options).some((o) => o.value === prev)) sel.value = prev;
-        else if (projects.length === 1) sel.value = String(projects[0].id);
       }
-      if (sel.value) loadProjectApplications(sel.value);
-      else {
-        const msg = '<div class="empty-state">Выберите проект</div>';
-        const incomingEl = document.getElementById("applications-list-manager-incoming");
-        const histProjEl = document.getElementById("applications-list-manager-history-project");
-        if (incomingEl) incomingEl.innerHTML = msg;
-        if (histProjEl) histProjEl.innerHTML = msg;
-      }
+      loadEmployerManagerPanels();
     } catch (_) {}
   }
 
-  async function loadProjectApplications(projectId) {
+  async function loadEmployerManagerPanels() {
+    const sel = document.getElementById("apps-project-select");
     const incomingEl = document.getElementById("applications-list-manager-incoming");
     const histProjEl = document.getElementById("applications-list-manager-history-project");
     if (!incomingEl || !histProjEl) return;
@@ -936,8 +1020,11 @@
     const loading = '<div class="empty-state" style="color:#aaa;">Загрузка…</div>';
     incomingEl.innerHTML = loading;
     histProjEl.innerHTML = loading;
+    const projectId = sel && sel.value ? sel.value : null;
+    const qs = new URLSearchParams({ per_page: "50" });
+    if (projectId) qs.set("project_id", projectId);
     try {
-      const resp = await fetch(API_BASE_URL + "/projects/" + projectId + "/applications?per_page=50", { credentials: "include" });
+      const resp = await fetch(API_BASE_URL + "/employer/applications?" + qs.toString(), { credentials: "include" });
       if (!resp.ok) {
         incomingEl.innerHTML = '<div class="empty-state">Ошибка загрузки откликов</div>';
         histProjEl.innerHTML = "";
@@ -953,10 +1040,10 @@
         : '<div class="empty-state">Нет входящих откликов на рассмотрении</div>';
       histProjEl.innerHTML = hist.length
         ? hist.map((app) => managerIncomingCardHtml(app)).join("")
-        : '<div class="empty-state">Завершённых откликов по проекту пока нет</div>';
+        : '<div class="empty-state">Завершённых откликов по выбранным проектам пока нет</div>';
 
-      bindManagerIncomingActions(incomingEl, projectId);
-      bindManagerIncomingActions(histProjEl, projectId);
+      bindManagerIncomingActions(incomingEl);
+      bindManagerIncomingActions(histProjEl);
     } catch {
       incomingEl.innerHTML = '<div class="empty-state">Ошибка загрузки данных</div>';
       histProjEl.innerHTML = "";
@@ -1011,7 +1098,11 @@
     histEl.innerHTML = loading;
 
     try {
-      const resp = await fetch(API_BASE_URL + "/my_applications?per_page=50", { credentials: "include" });
+      const resumeSel = document.getElementById("apps-resume-select");
+      const rid = resumeSel && resumeSel.value ? resumeSel.value : "";
+      const qs = new URLSearchParams({ per_page: "50" });
+      if (rid) qs.set("resume_id", rid);
+      const resp = await fetch(API_BASE_URL + "/my_applications?" + qs.toString(), { credentials: "include" });
       if (!resp.ok) {
         incEl.innerHTML = '<div class="empty-state">Ошибка загрузки откликов</div>';
         outEl.innerHTML = "";
@@ -1058,15 +1149,8 @@
     btn.addEventListener("click", () => switchEmployeeAppsTab(btn.getAttribute("data-tab")));
   });
 
-  document.getElementById("apps-project-select").addEventListener("change", function () {
-    if (this.value) loadProjectApplications(this.value);
-    else {
-      const msg = '<div class="empty-state">Выберите проект</div>';
-      const incomingEl = document.getElementById("applications-list-manager-incoming");
-      const histProjEl = document.getElementById("applications-list-manager-history-project");
-      if (incomingEl) incomingEl.innerHTML = msg;
-      if (histProjEl) histProjEl.innerHTML = msg;
-    }
+  document.getElementById("apps-project-select")?.addEventListener("change", function () {
+    void loadEmployerManagerPanels();
   });
 
   const roleToggle = document.getElementById("role-toggle");

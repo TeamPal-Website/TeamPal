@@ -612,15 +612,21 @@
         <div class="section-title">Основное</div>
         <div class="exp-fields">
           <div class="field exp-field-full">
-            <label>Желаемая должность <span class="req-star" aria-hidden="true">*</span></label>
-            <input type="text" id="desiredPosition" placeholder="Например: Junior Backend Developer"
-              maxlength="255"
-              style="width:100%;border:1.5px solid #e0d8cf;border-radius:12px;padding:12px 14px;font-size:15px;font-family:inherit;background:#fff;outline:none;transition:border-color .2s;" />
+            <label for="desiredPosition">Желаемая должность <span class="req-star" aria-hidden="true">*</span></label>
+            <select id="desiredPosition">
+              <option value="">Не выбрано</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="resumeCity">Город</label>
+            <select id="resumeCity">
+              <option value="">Не выбрано</option>
+            </select>
           </div>
           <div class="field">
             <label>Занятость</label>
             <select id="workSchedule">
-              <option value="">Не указывать</option>
+              <option value="">Не выбрано</option>
               <option value="full_time">Полный день</option>
               <option value="part_time">Неполный день</option>
               <option value="side_project">Подработка / гибкий формат</option>
@@ -629,7 +635,7 @@
           <div class="field">
             <label>Формат работы</label>
             <select id="workFormat">
-              <option value="">Не указывать</option>
+              <option value="">Не выбрано</option>
               <option value="remote">Удалённо</option>
               <option value="office">В офисе</option>
               <option value="hybrid">Гибрид</option>
@@ -638,7 +644,7 @@
           <div class="field">
             <label>График</label>
             <select id="schedule">
-              <option value="">Не указывать</option>
+              <option value="">Не выбрано</option>
               <option value="5/2">5/2</option>
               <option value="2/2">2/2</option>
               <option value="4/2">4/2</option>
@@ -648,7 +654,7 @@
           <div class="field">
             <label>Тип зарплаты</label>
             <select id="salaryType">
-              <option value="">Не указывать</option>
+              <option value="">Не выбрано</option>
               <option value="monthly">В месяц</option>
               <option value="per_project">За проект</option>
             </select>
@@ -656,7 +662,7 @@
           <div class="field">
             <label>Тип договора</label>
             <select id="contractType">
-              <option value="">Не указывать</option>
+              <option value="">Не выбрано</option>
               <option value="gph">ГПХ</option>
               <option value="tk">ТК РФ</option>
               <option value="internship">Стажировка</option>
@@ -749,9 +755,58 @@
 
 
     let allSkillsList = [];
+    let allRolesFromApi = [];
+    let allCitiesFromApi = [];
     let selectedSkillIds = [];
     const skillsGrid = document.getElementById("skillsGrid");
     const selectedTagsContainer = document.getElementById("selectedSkillsTags");
+
+    function refreshDesiredPositionSelect() {
+      var sel = document.getElementById("desiredPosition");
+      if (!sel) return;
+      var prev = sel.value;
+      sel.innerHTML = '<option value="">Не выбрано</option>' + allRolesFromApi.map(function (r) {
+        return '<option value="' + r.id + '">' + escapeHtml(r.name) + '</option>';
+      }).join("");
+      if (prev && allRolesFromApi.some(function (r) { return String(r.id) === String(prev); })) {
+        sel.value = prev;
+      }
+      sel.disabled = allRolesFromApi.length === 0;
+    }
+
+    async function loadRolesFromApi() {
+      try {
+        const resp = await fetch(API_BASE_URL + "/roles_dictionary", { credentials: "include" });
+        if (resp.ok) {
+          const data = await resp.json();
+          allRolesFromApi = Array.isArray(data) ? data.filter(function (r) { return r.is_active !== false; }) : [];
+        }
+      } catch (_) {}
+      refreshDesiredPositionSelect();
+    }
+
+    function refreshResumeCitySelect() {
+      var sel = document.getElementById("resumeCity");
+      if (!sel) return;
+      var prev = sel.value;
+      sel.innerHTML = '<option value="">Не выбрано</option>' + allCitiesFromApi.map(function (c) {
+        return '<option value="' + c.id + '">' + escapeHtml(c.title || '') + '</option>';
+      }).join("");
+      if (prev && allCitiesFromApi.some(function (x) { return String(x.id) === String(prev); })) {
+        sel.value = prev;
+      }
+    }
+
+    async function loadCitiesFromApi() {
+      try {
+        const resp = await fetch(API_BASE_URL + "/cities", { credentials: "include" });
+        if (resp.ok) {
+          const data = await resp.json();
+          allCitiesFromApi = Array.isArray(data) ? data : [];
+        }
+      } catch (_) {}
+      refreshResumeCitySelect();
+    }
 
     async function loadSkillsFromApi() {
       if (!skillsGrid) return;
@@ -950,7 +1005,8 @@
       renderExperiences();
     });
 
-    const desiredPositionInput = document.getElementById("desiredPosition");
+    const desiredPositionSelect = document.getElementById("desiredPosition");
+    const resumeCitySelect = document.getElementById("resumeCity");
     const workScheduleSelect = document.getElementById("workSchedule");
     const workFormatSelect = document.getElementById("workFormat");
     const scheduleSelect = document.getElementById("schedule");
@@ -963,12 +1019,18 @@
         window.tpBindSalaryGroupedInput(salaryInput);
       }
     }
+    if (desiredPositionSelect) {
+      desiredPositionSelect.addEventListener("change", function () {
+        desiredPositionSelect.classList.remove("inp-invalid");
+      });
+    }
     const aboutMeTextarea = document.getElementById("aboutMe");
     const cancelBtn = document.getElementById("cancelBtn");
     const publishBtn = document.getElementById("publishBtn");
 
     function resetForm() {
-      if (desiredPositionInput) desiredPositionInput.value = "";
+      if (desiredPositionSelect) desiredPositionSelect.value = "";
+      if (resumeCitySelect) resumeCitySelect.value = "";
       if (workScheduleSelect) workScheduleSelect.value = "";
       if (workFormatSelect) workFormatSelect.value = "";
       if (scheduleSelect) scheduleSelect.value = "";
@@ -1037,10 +1099,16 @@
     });
 
     publishBtn.addEventListener("click", async () => {
-      const position = (desiredPositionInput?.value || "").trim();
-      if (!position) {
-        showNotification('Пожалуйста, заполните поле "Желаемая должность"', 'error');
-        if (desiredPositionInput) desiredPositionInput.focus();
+      const roleIdRaw = desiredPositionSelect && desiredPositionSelect.value ? parseInt(desiredPositionSelect.value, 10) : NaN;
+      const roleMatch = Number.isFinite(roleIdRaw) && roleIdRaw > 0
+        ? allRolesFromApi.find(function (x) { return x.id === roleIdRaw; })
+        : null;
+      if (!roleMatch) {
+        showNotification('Выберите желаемую должность из списка', 'error');
+        if (desiredPositionSelect) {
+          desiredPositionSelect.classList.add('inp-invalid');
+          desiredPositionSelect.focus();
+        }
         return;
       }
       const commitmentLevel = (workScheduleSelect?.value || "").trim();
@@ -1130,7 +1198,7 @@
       }
 
       const resumeData = {
-        desired_position: position,
+        role_type_id: roleMatch.id,
         about_me: aboutText || null,
         skill_ids: selectedSkillIds,
         experiences: validatedExperiences.map(exp => ({
@@ -1148,6 +1216,9 @@
       if (contractType) resumeData.contract_type = contractType;
       if (salaryAmount != null && salaryAmount !== undefined) resumeData.salary_amount = salaryAmount;
 
+      var cityNum = resumeCitySelect && resumeCitySelect.value ? parseInt(resumeCitySelect.value, 10) : NaN;
+      resumeData.city_id = Number.isFinite(cityNum) && cityNum > 0 ? cityNum : null;
+
       try {
         const response = await fetch(API_BASE_URL + "/resumes", {
           method: "POST",
@@ -1164,7 +1235,7 @@
             const rid = created?.data?.resume?.id ?? created?.id;
             if (rid) {
               const posCache = JSON.parse(localStorage.getItem("tp_resume_positions") || "{}");
-              posCache[String(rid)] = position;
+              posCache[String(rid)] = roleMatch.name;
               localStorage.setItem("tp_resume_positions", JSON.stringify(posCache));
             }
           } catch {}
@@ -1233,9 +1304,10 @@
 
     function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
 
-    loadSkillsFromApi();
-    renderSelectedTags();
-    renderExperiences();
+    Promise.all([loadSkillsFromApi(), loadRolesFromApi(), loadCitiesFromApi()]).then(function () {
+      renderSelectedTags();
+      renderExperiences();
+    });
   })();
 </script>
 </body>

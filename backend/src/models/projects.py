@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import ForeignKey, String, Text, func
+from sqlalchemy import ForeignKey, String, Text, UniqueConstraint, func
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
@@ -108,8 +108,7 @@ class ProjectVacancyOrm(Base):
         ),
         nullable=True,
     )
-    responsibilities: Mapped[str | None] = mapped_column(Text, nullable=True)
-    requirements: Mapped[str | None] = mapped_column(Text, nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
     salary_amount: Mapped[int | None] = mapped_column(nullable=True)
     salary_type: Mapped[SalaryType | None] = mapped_column(
         SQLEnum(
@@ -129,5 +128,22 @@ class ProjectVacancyOrm(Base):
     )
     created_at: Mapped[datetime] = mapped_column(
         server_default=func.now(),
+        nullable=False,
+    )
+
+
+class ProjectVacancySkillOrm(Base):
+    __tablename__ = "project_vacancy_skills"
+    __table_args__ = (
+        UniqueConstraint("vacancy_id", "skill_id", name="uq_project_vacancy_skill"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    vacancy_id: Mapped[int] = mapped_column(
+        ForeignKey("project_vacancies.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    skill_id: Mapped[int] = mapped_column(
+        ForeignKey("skills.id", ondelete="RESTRICT"),
         nullable=False,
     )

@@ -34,6 +34,7 @@ class Resume(BaseModel):
     id: int
     profile_id: int
     desired_position: str
+    role_type_id: int | None = None
     employment_intent: EmploymentIntent
     commitment_level: CommitmentLevel | None
     work_format: WorkFormat | None
@@ -44,13 +45,15 @@ class Resume(BaseModel):
     computed_experience_level: ProjectVacancyExperience | None
     about_me: str | None
     status: ResumeStatus
+    city_id: int | None = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class ResumeRequestAdd(BaseModel):
-    desired_position: str = Field(default="Не указано", max_length=255)
+    role_type_id: int = Field(gt=0)
+    city_id: int | None = Field(default=None, gt=0)
     about_me: str | None = None
     status: ResumeStatus = ResumeStatus.LOOKING_FOR_JOB
     employment_intent: EmploymentIntent = EmploymentIntent.COMMERCIAL
@@ -80,6 +83,8 @@ class ResumeRequestAdd(BaseModel):
 class ResumeAdd(BaseModel):
     profile_id: int
     desired_position: str = Field(min_length=1, max_length=255)
+    role_type_id: int | None = None
+    city_id: int | None = Field(default=None, gt=0)
     employment_intent: EmploymentIntent = EmploymentIntent.COMMERCIAL
     commitment_level: CommitmentLevel | None = None
     work_format: WorkFormat | None = None
@@ -99,6 +104,8 @@ class ResumeAdd(BaseModel):
 
 class ResumePatch(BaseModel):
     desired_position: str | None = Field(None, min_length=1, max_length=255)
+    role_type_id: int | None = Field(None, gt=0)
+    city_id: int | None = Field(default=None, gt=0)
     employment_intent: EmploymentIntent | None = None
     commitment_level: CommitmentLevel | None = None
     work_format: WorkFormat | None = None

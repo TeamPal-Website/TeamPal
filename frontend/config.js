@@ -148,26 +148,52 @@ function tpParseAndValidateSalaryRaw(raw) {
   return tpValidateSalaryAmount(n);
 }
 
-/** Сообщение об ошибке из ответа FastAPI (422 и др.) */
+function tpUserFacingValidationMsg(msg) {
+  if (typeof msg !== "string") return "";
+  let s = msg;
+  const prefixes = ["Value error, ", "Assertion failed, "];
+  for (let i = 0; i < prefixes.length; i++) {
+    const p = prefixes[i];
+    if (s.startsWith(p)) {
+      s = s.slice(p.length).trimStart();
+      break;
+    }
+  }
+  return s;
+}
+
 function tpFormatApiDetail(detail) {
   if (detail == null || detail === "") return "";
   if (typeof detail === "string") return detail;
   if (Array.isArray(detail)) {
-    return detail
+    const sorted = [...detail].sort((a, b) => {
+      const locA = a && typeof a === "object" && Array.isArray(a.loc) ? a.loc.join(".") : "";
+      const locB = b && typeof b === "object" && Array.isArray(b.loc) ? b.loc.join(".") : "";
+      const rank = (s) => (s.endsWith("first_name") ? 0 : s.endsWith("last_name") ? 1 : 50);
+      return rank(locA) - rank(locB);
+    });
+    const parts = sorted
       .map((item) => {
         if (item == null) return "";
-        if (typeof item === "string") return item;
-        if (typeof item === "object" && item.msg) return String(item.msg);
+        if (typeof item === "string") return tpUserFacingValidationMsg(item);
+        if (typeof item === "object" && item.msg) return tpUserFacingValidationMsg(String(item.msg));
+        if (typeof item === "object" && item.message) return tpUserFacingValidationMsg(String(item.message));
         try {
           return JSON.stringify(item);
         } catch {
           return String(item);
         }
       })
-      .filter(Boolean)
-      .join(" ");
+      .filter(Boolean);
+    const uniq = [...new Set(parts)];
+    const onlyNameHints = uniq.every((p) => p === "Укажите имя" || p === "Укажите фамилию");
+    if (onlyNameHints && uniq.includes("Укажите имя")) {
+      return "Укажите имя";
+    }
+    return uniq.join("; ");
   }
-  if (typeof detail === "object" && detail.msg) return String(detail.msg);
+  if (typeof detail === "object" && detail.msg) return tpUserFacingValidationMsg(String(detail.msg));
+  if (typeof detail === "object" && detail.message) return tpUserFacingValidationMsg(String(detail.message));
   try {
     return JSON.stringify(detail);
   } catch {

@@ -14,7 +14,7 @@
       --bg: #f7f5f2;
       --header: #eae8e4;
       --panel: #ffffff;
-      --panel-soft: #fffaf3;
+      --panel-soft: #fcf9f4;
       --ink: #1a1a1a;
       --ink2: #3a3a3a;
       --line: rgba(0, 0, 0, 0.09);
@@ -261,6 +261,20 @@
       font-family: "Space Grotesk", system-ui, sans-serif;
     }
     .constructor-body { padding: 28px; }
+    .resume-section {
+      background: var(--panel-soft);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+    }
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #2d2a24;
+      margin-bottom: 18px;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+    }
     .project-form {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -283,21 +297,14 @@
       padding: 13px 16px;
       font-family: "Space Grotesk", system-ui, sans-serif;
       font-size: 15px;
-      background: white;
+      background: #fff;
       transition: 0.2s;
       min-height: 48px;
     }
     .form-field select {
       appearance: none;
       -webkit-appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 14px center;
-      padding-right: 40px;
-    }
-    .form-field select {
-      appearance: none;
-      -webkit-appearance: none;
+      background-color: #fff;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
       background-position: right 14px center;
@@ -354,14 +361,8 @@
       padding: 20px 12px;
       line-height: 1.55;
     }
-    .exp-entry {
-      border: 1px solid var(--line);
-      border-radius: 20px;
-      padding: 18px;
-      margin-bottom: 16px;
-      background: #fff;
-    }
-    .exp-entry.is-new { border-color: rgba(250, 149, 0, 0.55); background: #fffbf5; }
+      background: #fffbf5;
+    .exp-entry.is-new { border-color: rgba(250, 149, 0, 0.55); }
     .exp-entry-header {
       display: flex;
       justify-content: space-between;
@@ -415,6 +416,7 @@
       -webkit-appearance: none;
       cursor: pointer;
       padding-right: 40px;
+      background-color: #fff;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
       background-position: right 12px center;
@@ -426,6 +428,79 @@
       border-color: var(--accent-2);
       box-shadow: 0 0 0 3px rgba(248, 90, 11, 0.12);
     }
+    .skills-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px 16px;
+      margin-bottom: 8px;
+      max-height: 280px;
+      overflow-y: auto;
+      padding: 4px 2px;
+    }
+    .skill-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #fff;
+      padding: 8px 14px;
+      border-radius: 40px;
+      border: 1px solid #e8e0d5;
+      cursor: pointer;
+      transition: 0.2s;
+      font-size: 14px;
+      font-weight: 500;
+      color: #3a2e24;
+    }
+    .skill-checkbox:hover { background: #fff7ef; border-color: var(--accent-1); }
+    .skill-checkbox input {
+      width: 18px;
+      height: 18px;
+      min-height: 18px !important;
+      margin: 0;
+      accent-color: var(--accent-2);
+      cursor: pointer;
+      flex-shrink: 0;
+      padding: 0;
+      border: none;
+    }
+    .skill-checkbox span { flex: 1; cursor: pointer; }
+    .skill-checkbox.checked {
+      border-color: var(--accent-2);
+      background: #fff6f0;
+      font-weight: 600;
+    }
+    .selected-skills-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px dashed #e2d8ce;
+      min-height: 32px;
+    }
+    .selected-skill-tag {
+      background: linear-gradient(115deg, #fff0e0, #fff7ef);
+      border-radius: 30px;
+      padding: 5px 12px;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 500;
+      color: var(--accent-2);
+    }
+    .selected-skill-tag button {
+      background: none;
+      border: none;
+      font-size: 14px;
+      cursor: pointer;
+      color: #b78f64;
+      line-height: 1;
+      padding: 0 2px;
+    }
+    .selected-skill-tag button:hover { color: var(--accent-2); }
+    .skills-hint { display: block; margin-top: 8px; color: #8f7e68; font-size: 13px; }
     .btn-add-exp {
       width: 100%;
       padding: 12px;
@@ -494,6 +569,8 @@
       .header__inner { padding: 0 16px; }
       .exp-grid { grid-template-columns: 1fr; }
       .exp-field-full { grid-column: 1; }
+      .skills-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+      .resume-section { padding: 16px; }
     }
   </style>
 </head>
@@ -537,12 +614,15 @@
       <span class="constructor-title">Конструктор нового проекта</span>
     </div>
     <div class="constructor-body">
-      <form class="project-form" id="create-project-form" novalidate onsubmit="return false;">
+      <form id="create-project-form" novalidate onsubmit="return false;">
+        <div class="resume-section">
+          <div class="section-title">Проект</div>
+          <div class="project-form">
         <div class="form-field form-field--full">
           <label for="proj-name">Название проекта <span class="req-star" aria-hidden="true">*</span></label>
           <div class="name-with-kind">
             <input type="text" id="proj-name" placeholder="Например: AI-ассистент для бизнеса" autocomplete="off">
-            <span class="project-kind-hint">Коммерческий проект</span>
+            <span class="project-kind-hint">Коммерческий</span>
           </div>
         </div>
         <div class="form-field">
@@ -552,7 +632,7 @@
         <div class="form-field">
           <label for="proj-city">Город</label>
           <select id="proj-city">
-            <option value="">Не указан</option>
+            <option value="">Не выбрано</option>
           </select>
         </div>
         <div class="form-field form-field--full">
@@ -563,11 +643,13 @@
           <label for="proj-tasks">Задачи / что предстоит делать</label>
           <textarea id="proj-tasks" placeholder="Кратко опишите задачи проекта…"></textarea>
         </div>
+          </div>
+        </div>
 
         <div class="form-field form-field--full roles-block">
-          <div class="roles-title"><span>Требуемые роли <span class="req-star" aria-hidden="true">*</span></span></div>
+          <div class="roles-title"><span>Вакансии <span class="req-star" aria-hidden="true">*</span></span></div>
           <div class="roles-list" id="roles-list-container"></div>
-          <button type="button" id="add-role-btn" class="btn-add-exp">+ Добавить роль</button>
+          <button type="button" id="add-role-btn" class="btn-add-exp">+ Добавить вакансию</button>
         </div>
 
       </form>
@@ -635,6 +717,7 @@
 
     let allRolesFromApi = [];
     let allCities = [];
+    let allSkillsList = [];
 
     let rolesArray = [];
     const rolesContainer = document.getElementById("roles-list-container");
@@ -654,7 +737,7 @@
           else {
             const o0 = document.createElement("option");
             o0.value = "";
-            o0.textContent = "Не указан";
+            o0.textContent = "Не выбрано";
             sel.appendChild(o0);
           }
           allCities.forEach((c) => {
@@ -675,14 +758,83 @@
           allRolesFromApi = Array.isArray(data) ? data.filter(r => r.is_active !== false) : [];
         }
       } catch (_) {}
-      let dl = document.getElementById("roles-datalist");
-      if (!dl) {
-        dl = document.createElement("datalist");
-        dl.id = "roles-datalist";
-        document.body.appendChild(dl);
-      }
-      dl.innerHTML = allRolesFromApi.map(r => `<option value="${escapeHtml(r.name)}"></option>`).join('');
       refreshRoleInputsState();
+    }
+
+    async function loadSkillsFromApi() {
+      try {
+        const resp = await fetch(API_BASE_URL + "/skills", { credentials: "include" });
+        if (resp.ok) {
+          const data = await resp.json();
+          allSkillsList = Array.isArray(data) ? data : [];
+        }
+      } catch (_) {}
+    }
+
+    function wireAllRoleSkills() {
+      if (!rolesContainer) return;
+      rolesArray.forEach((role, idx) => {
+        if (!Array.isArray(role.skill_ids)) role.skill_ids = [];
+        const p = 'rp-' + idx + '-';
+        const grid = document.getElementById(p + 'skills-grid');
+        const tags = document.getElementById(p + 'skill-tags');
+        if (!grid || !tags) return;
+
+        function paintRoleSkills() {
+          const ids = role.skill_ids;
+          if (ids.length === 0) {
+            tags.innerHTML = '<div class="skills-empty" style="margin:0;">Выберите навыки в списке ниже</div>';
+          } else {
+            const objs = allSkillsList.filter(s => ids.includes(s.id));
+            tags.innerHTML = objs.map(skill => `
+            <div class="selected-skill-tag">
+              ${escapeHtml(skill.name)}
+              <button type="button" data-skill-remove="${skill.id}" aria-label="Удалить">✕</button>
+            </div>`).join('');
+            tags.querySelectorAll('[data-skill-remove]').forEach(btn => {
+              btn.addEventListener('click', () => {
+                const sid = parseInt(btn.getAttribute('data-skill-remove'), 10);
+                role.skill_ids = role.skill_ids.filter(x => x !== sid);
+                const cb = grid.querySelector('.skill-check[data-sid="' + sid + '"]');
+                if (cb) {
+                  cb.checked = false;
+                  const lab = cb.closest('.skill-checkbox');
+                  if (lab) lab.classList.remove('checked');
+                }
+                paintRoleSkills();
+              });
+            });
+          }
+        }
+
+        if (allSkillsList.length === 0) {
+          grid.innerHTML = '<div class="skills-empty">Навыки не загружены</div>';
+          tags.innerHTML = '<div class="skills-empty" style="margin:0;">Выберите навыки в списке ниже</div>';
+          return;
+        }
+
+        grid.innerHTML = allSkillsList.map(skill => {
+          const c = role.skill_ids.includes(skill.id);
+          return `<label class="skill-checkbox${c ? ' checked' : ''}">
+            <input type="checkbox" class="skill-check" data-sid="${skill.id}" ${c ? 'checked' : ''}>
+            <span>${escapeHtml(skill.name)}</span></label>`;
+        }).join('');
+
+        grid.querySelectorAll('.skill-check').forEach(cb => {
+          cb.addEventListener('change', () => {
+            const sid = parseInt(cb.getAttribute('data-sid'), 10);
+            if (cb.checked) {
+              if (!role.skill_ids.includes(sid)) role.skill_ids.push(sid);
+            } else {
+              role.skill_ids = role.skill_ids.filter(x => x !== sid);
+            }
+            const lab = cb.closest('.skill-checkbox');
+            if (lab) lab.classList.toggle('checked', cb.checked);
+            paintRoleSkills();
+          });
+        });
+        paintRoleSkills();
+      });
     }
 
     function escapeHtml(str) {
@@ -699,10 +851,10 @@
       return String(val || '') === String(cur == null ? '' : cur) ? ' selected' : '';
     }
 
-    function roleInputDisplay(role) {
-      if (!role.role_type_id) return '';
-      const r = allRolesFromApi.find(x => x.id === role.role_type_id);
-      return r ? r.name : '';
+    function vacancyRoleSelectOptions(selectedId) {
+      return '<option value="">Не выбрано</option>' + allRolesFromApi.map(r =>
+        `<option value="${r.id}"${optSel(r.id, selectedId)}>${escapeHtml(r.name)}</option>`
+      ).join('');
     }
 
     function roleCardHtml(role, idx) {
@@ -715,26 +867,22 @@
       return `
         <div class="exp-entry${!role.role_type_id ? ' is-new' : ''}" data-role-idx="${idx}">
           <div class="exp-entry-header">
-            <span class="exp-entry-num">Роль ${idx + 1}</span>
+            <span class="exp-entry-num">Вакансия ${idx + 1}</span>
             <button type="button" class="btn-remove-exp" data-remove-idx="${idx}" title="Удалить">✕</button>
           </div>
           <div class="exp-grid">
             <div class="exp-field exp-field-full">
-              <label for="${p}role">Название роли <span class="req-star" aria-hidden="true">*</span></label>
-              <input type="text" id="${p}role" class="vac-role-input" placeholder="Из подсказок справочника" autocomplete="off" value="${escapeHtml(roleInputDisplay(role))}">
+              <label for="${p}role">Должность <span class="req-star" aria-hidden="true">*</span></label>
+              <select id="${p}role" class="vac-role-select">${vacancyRoleSelectOptions(role.role_type_id)}</select>
             </div>
             <div class="exp-field exp-field-full">
-              <label for="${p}resp">Обязанности / зона ответственности</label>
-              <textarea id="${p}resp" placeholder="Обязанности / зона ответственности">${escapeHtml(role.responsibilities || '')}</textarea>
-            </div>
-            <div class="exp-field exp-field-full">
-              <label for="${p}req">Требования (навыки, опыт)</label>
-              <textarea id="${p}req" placeholder="Требования (навыки, опыт)">${escapeHtml(role.requirements || '')}</textarea>
+              <label for="${p}desc">Описание вакансии</label>
+              <textarea id="${p}desc" placeholder="Описание вакансии">${escapeHtml(role.description || '')}</textarea>
             </div>
             <div class="exp-field">
               <label for="${p}experience">Опыт работы</label>
               <select id="${p}experience">
-                <option value="">— Опыт работы —</option>
+                <option value="">Не выбрано</option>
                 <option value="none"${optSel('none', role.experience)}>Без опыта</option>
                 <option value="<1"${optSel('<1', role.experience)}>До 1 года</option>
                 <option value="1-3"${optSel('1-3', role.experience)}>1–3 года</option>
@@ -745,7 +893,7 @@
             <div class="exp-field">
               <label for="${p}format">Формат работы</label>
               <select id="${p}format">
-                <option value="">— Формат работы —</option>
+                <option value="">Не выбрано</option>
                 <option value="remote"${optSel('remote', role.work_format)}>Удалённо</option>
                 <option value="office"${optSel('office', role.work_format)}>В офисе</option>
                 <option value="hybrid"${optSel('hybrid', role.work_format)}>Гибрид</option>
@@ -754,7 +902,7 @@
             <div class="exp-field">
               <label for="${p}employment">Занятость</label>
               <select id="${p}employment">
-                <option value="">— Занятость —</option>
+                <option value="">Не выбрано</option>
                 <option value="full_time"${optSel('full_time', role.employment)}>Полный день</option>
                 <option value="part_time"${optSel('part_time', role.employment)}>Неполный день</option>
                 <option value="side_project"${optSel('side_project', role.employment)}>Подработка / гибкий формат</option>
@@ -763,7 +911,7 @@
             <div class="exp-field">
               <label for="${p}schedule">График</label>
               <select id="${p}schedule">
-                <option value="">— График —</option>
+                <option value="">Не выбрано</option>
                 <option value="5/2"${optSel('5/2', role.schedule)}>5/2</option>
                 <option value="2/2"${optSel('2/2', role.schedule)}>2/2</option>
                 <option value="4/2"${optSel('4/2', role.schedule)}>4/2</option>
@@ -777,7 +925,7 @@
             <div class="exp-field">
               <label for="${p}salary-type">Тип зарплаты</label>
               <select id="${p}salary-type">
-                <option value="">— Тип зарплаты —</option>
+                <option value="">Не выбрано</option>
                 <option value="monthly"${optSel('monthly', role.salary_type)}>В месяц</option>
                 <option value="per_project"${optSel('per_project', role.salary_type)}>За проект</option>
               </select>
@@ -785,11 +933,17 @@
             <div class="exp-field exp-field-full">
               <label for="${p}contract">Тип договора</label>
               <select id="${p}contract">
-                <option value="">— Тип договора —</option>
+                <option value="">Не выбрано</option>
                 <option value="gph"${optSel('gph', role.contract_type)}>ГПХ</option>
                 <option value="tk"${optSel('tk', role.contract_type)}>ТК РФ</option>
                 <option value="internship"${optSel('internship', role.contract_type)}>Стажировка</option>
               </select>
+            </div>
+            <div class="exp-field exp-field-full">
+              <label>Стек технологий / Скиллы <span class="req-star" aria-hidden="true">*</span></label>
+              <div class="selected-skills-tags" id="${p}skill-tags"></div>
+              <div class="skills-grid" id="${p}skills-grid"></div>
+              <small class="skills-hint">✓ Отметьте навыки в списке ниже. Выбранные отображаются выше — снять можно крестиком.</small>
             </div>
           </div>
         </div>`;
@@ -799,11 +953,12 @@
       const role = rolesArray[idx];
       if (!role) return;
       const p = 'rp-' + idx + '-';
-      const roleText = (document.getElementById(p + 'role') || {}).value.trim();
-      const found = roleText ? allRolesFromApi.find(r => r.name.toLowerCase() === roleText.toLowerCase()) : null;
-      if (roleText && found) {
-        role.role_type_id = found.id;
-        role.name_label = found.name;
+      const roleSel = document.getElementById(p + 'role');
+      const rid = roleSel && roleSel.value ? parseInt(roleSel.value, 10) : NaN;
+      if (Number.isFinite(rid) && rid > 0) {
+        const found = allRolesFromApi.find(r => r.id === rid);
+        role.role_type_id = found ? found.id : null;
+        role.name_label = found ? found.name : '';
       } else {
         role.role_type_id = null;
         role.name_label = '';
@@ -812,8 +967,7 @@
         const el = document.getElementById(id);
         return el && el.value ? el.value : '';
       };
-      role.responsibilities = (document.getElementById(p + 'resp') || {}).value.trim() || null;
-      role.requirements = (document.getElementById(p + 'req') || {}).value.trim() || null;
+      role.description = (document.getElementById(p + 'desc') || {}).value.trim() || null;
       role.experience = gv(p + 'experience') || null;
       role.work_format = gv(p + 'format') || null;
       role.employment = gv(p + 'employment') || null;
@@ -834,10 +988,20 @@
     }
 
     function refreshRoleInputsState() {
-      document.querySelectorAll('.vac-role-input').forEach(inp => {
-        inp.setAttribute('list', 'roles-datalist');
-        inp.disabled = allRolesFromApi.length === 0;
-        if (allRolesFromApi.length === 0) inp.placeholder = 'Справочник ролей недоступен';
+      rolesArray.forEach((role, idx) => {
+        const sel = document.getElementById('rp-' + idx + '-role');
+        if (!sel || sel.tagName !== 'SELECT') return;
+        syncRoleFromDom(idx);
+        sel.innerHTML = vacancyRoleSelectOptions(role.role_type_id);
+        if (role.role_type_id != null) {
+          sel.value = String(role.role_type_id);
+          if (sel.value !== String(role.role_type_id)) {
+            role.role_type_id = null;
+            role.name_label = '';
+            sel.innerHTML = vacancyRoleSelectOptions(null);
+          }
+        }
+        sel.disabled = allRolesFromApi.length === 0;
       });
       if (addRoleBtn) {
         addRoleBtn.disabled = allRolesFromApi.length === 0 || rolesArray.length >= 10;
@@ -847,7 +1011,7 @@
     function renderRolesList() {
       if (!rolesContainer) return;
       if (rolesArray.length === 0) {
-        rolesContainer.innerHTML = '<div class="skills-empty">Нет добавленных ролей</div>';
+        rolesContainer.innerHTML = '<div class="skills-empty">Нет добавленных вакансий</div>';
         refreshRoleInputsState();
         return;
       }
@@ -866,20 +1030,20 @@
           }
         });
       });
+      wireAllRoleSkills();
       refreshRoleInputsState();
     }
 
     function addEmptyRoleSlot() {
       if (rolesArray.length >= 10) {
-        showNotification('В проекте не больше 10 ролей', 'warning', 3000);
+        showNotification('В проекте не больше 10 вакансий', 'warning', 3000);
         return;
       }
       syncAllRolesFromDom();
       rolesArray.push({
         role_type_id: null,
         name_label: '',
-        responsibilities: null,
-        requirements: null,
+        description: null,
         experience: null,
         work_format: null,
         employment: null,
@@ -887,6 +1051,7 @@
         salary_amount: null,
         salary_type: null,
         contract_type: null,
+        skill_ids: [],
       });
       renderRolesList();
     }
@@ -947,14 +1112,21 @@
           return;
         }
         if (rolesArray.length === 0) {
-          showNotification('Добавьте хотя бы одну требуемую роль', 'warning', 3000);
+          showNotification('Добавьте хотя бы одну вакансию', 'warning', 3000);
           return;
         }
 
         syncAllRolesFromDom();
         for (let i = 0; i < rolesArray.length; i++) {
           if (!rolesArray[i].role_type_id) {
-            showNotification('Укажите название роли из справочника для каждой вакансии', 'warning', 4500);
+            showNotification('Укажите должность из справочника для каждой вакансии', 'warning', 4500);
+            return;
+          }
+        }
+        for (let i = 0; i < rolesArray.length; i++) {
+          const sk = rolesArray[i].skill_ids;
+          if (!Array.isArray(sk) || sk.length === 0) {
+            showNotification('В вакансии должен быть хотя бы один навык', 'warning');
             return;
           }
         }
@@ -1002,8 +1174,7 @@
           tasks: (tasksTextarea ? tasksTextarea.value.trim() : "") || null,
           vacancies: rolesArray.map(r => ({
             role_type_id:     r.role_type_id,
-            responsibilities: r.responsibilities  || null,
-            requirements:     r.requirements      || null,
+            description: r.description || null,
             experience:       r.experience        || null,
             work_format:      r.work_format       || null,
             commitment_level: r.employment        || null,
@@ -1011,6 +1182,7 @@
             salary_amount:    r.salary_amount     != null ? r.salary_amount : null,
             salary_type:      r.salary_type       || null,
             contract_type:    r.contract_type     || null,
+            skill_ids:         Array.isArray(r.skill_ids) ? r.skill_ids : [],
           })),
         };
 
@@ -1099,9 +1271,10 @@
       });
     }
 
-    loadRolesFromApi();
-    loadCitiesFromApi();
-    renderRolesList();
+    (async function boot() {
+      await Promise.all([loadRolesFromApi(), loadCitiesFromApi(), loadSkillsFromApi()]);
+      renderRolesList();
+    })();
   })();
 </script>
 </body>

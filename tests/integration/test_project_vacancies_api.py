@@ -20,7 +20,7 @@ async def setup_project_with_vacancy(client: AsyncClient):
         "tasks": "Tasks",
         "status": "active",
         "employment_intent": "commercial",
-        "vacancies": [{"role_type_id": role_id, "responsibilities": "Need developer"}],
+        "vacancies": [{"role_type_id": role_id, "description": "Need developer"}],
     })
     project_id = project_resp.json()["data"]["project"]["id"]
     vacancy_id = project_resp.json()["data"]["vacancies"][0]["id"]
@@ -41,7 +41,7 @@ class TestListProjectVacancies:
             "tasks": "Tasks",
             "status": "active",
             "employment_intent": "commercial",
-            "vacancies": [{"role_type_id": role_id, "responsibilities": "Test"}],
+            "vacancies": [{"role_type_id": role_id, "description": "Test"}],
         })
         project_id = project_resp.json()["data"]["project"]["id"]
         vacancy_id = project_resp.json()["data"]["vacancies"][0]["id"]
@@ -83,13 +83,13 @@ class TestCreateProjectVacancy:
             "tasks": "Tasks",
             "status": "active",
             "employment_intent": "commercial",
-            "vacancies": [{"role_type_id": role_id, "responsibilities": "Initial"}],
+            "vacancies": [{"role_type_id": role_id, "description": "Initial"}],
         })
         project_id = project_resp.json()["data"]["project"]["id"]
         
         response = await authenticated_client.post(f"/projects/{project_id}/vacancies", json={
             "role_type_id": role_id,
-            "responsibilities": "Looking for frontend developer",
+            "description": "Looking for frontend developer",
         })
         assert response.status_code == 200
 
@@ -104,20 +104,20 @@ class TestCreateProjectVacancy:
             "tasks": "Tasks",
             "status": "active",
             "employment_intent": "commercial",
-            "vacancies": [{"role_type_id": role_id, "responsibilities": "Test"}],
+            "vacancies": [{"role_type_id": role_id, "description": "Test"}],
         })
         project_id = project_resp.json()["data"]["project"]["id"]
         
         response = await authenticated_client.post(f"/projects/{project_id}/vacancies", json={
             "role_type_id": 99999,
-            "responsibilities": "Invalid role",
+            "description": "Invalid role",
         })
         assert response.status_code == 404
 
     async def test_create_vacancy_project_not_found(self, authenticated_client: AsyncClient):
         response = await authenticated_client.post("/projects/99999/vacancies", json={
             "role_type_id": 1,
-            "responsibilities": "Test",
+            "description": "Test",
         })
         assert response.status_code == 404
 
@@ -132,26 +132,26 @@ class TestCreateProjectVacancy:
             "tasks": "Tasks",
             "status": "active",
             "employment_intent": "commercial",
-            "vacancies": [{"role_type_id": role_id, "responsibilities": "Initial"}],
+            "vacancies": [{"role_type_id": role_id, "description": "Initial"}],
         })
         project_id = project_resp.json()["data"]["project"]["id"]
         
         for i in range(10):
             await authenticated_client.post(f"/projects/{project_id}/vacancies", json={
                 "role_type_id": role_id,
-                "responsibilities": f"Vacancy {i}",
+                "description": f"Vacancy {i}",
             })
         
         response = await authenticated_client.post(f"/projects/{project_id}/vacancies", json={
             "role_type_id": role_id,
-            "responsibilities": "Extra vacancy",
+            "description": "Extra vacancy",
         })
         assert response.status_code == 409
 
     async def test_create_vacancy_no_auth_returns_401(self, client: AsyncClient):
         response = await client.post("/projects/1/vacancies", json={
             "role_type_id": 1,
-            "responsibilities": "Test",
+            "description": "Test",
         })
         assert response.status_code == 401
 
@@ -163,7 +163,7 @@ class TestUpdateProjectVacancy:
         
         response = await authenticated_client.patch(
             f"/projects/{project_id}/vacancies/{vacancy_id}",
-            json={"responsibilities": "Updated description"}
+            json={"description": "Updated description"}
         )
         assert response.status_code == 200
 
@@ -172,20 +172,20 @@ class TestUpdateProjectVacancy:
         
         response = await authenticated_client.patch(
             f"/projects/{project_id}/vacancies/99999",
-            json={"responsibilities": "Updated"}
+            json={"description": "Updated"}
         )
         assert response.status_code == 404
 
     async def test_update_vacancy_project_not_found(self, authenticated_client: AsyncClient):
         response = await authenticated_client.patch(
             "/projects/99999/vacancies/1",
-            json={"responsibilities": "Updated"}
+            json={"description": "Updated"}
         )
         assert response.status_code == 404
 
     async def test_update_vacancy_no_auth_returns_401(self, client: AsyncClient):
         response = await client.patch("/projects/1/vacancies/1", json={
-            "responsibilities": "Updated"
+            "description": "Updated"
         })
         assert response.status_code == 401
 

@@ -27,7 +27,10 @@ async def list_project_vacancies(
     if project is None or project.status == ProjectsStatus.DELETED:
         raise HTTPException(status_code=404, detail="Проект не найден")
 
-    return await db.project_vacancies.get_filtered(project_id=project.id)
+    vacancies = await db.project_vacancies.get_filtered(project_id=project.id)
+    vids = [v.id for v in vacancies]
+    smap = await db.project_vacancy_skills.map_for_vacancies(vids)
+    return [{**v.model_dump(), "skill_ids": smap.get(v.id, [])} for v in vacancies]
 
 
 @router.post("/{project_id}/vacancies")
@@ -57,9 +60,17 @@ async def create_project_vacancy(
     if role is None:
         raise HTTPException(status_code=404, detail="Роль не найдена")
 
+    for sid in data.skill_ids:
+        if await db.skills.get_one_or_none(id=sid) is None:
+            raise HTTPException(status_code=404, detail="Навык не найден")
+
     res = await db.project_vacancies.add(
-        ProjectVacancyAdd(project_id=project.id, **data.model_dump())
+        ProjectVacancyAdd(
+            project_id=project.id,
+            **data.model_dump(exclude={"skill_ids"}),
+        )
     )
+    await db.project_vacancy_skills.replace_for_vacancy(res.id, data.skill_ids)
     await db.commit()
 
     return {"status": "OK", "data": res}
@@ -100,16 +111,27 @@ async def update_project_vacancy(
             raise HTTPException(status_code=404, detail="Роль не найдена")
 
     payload = data.model_dump(exclude_unset=True)
-    if not payload:
+    skill_ids = payload.pop("skill_ids", None)
+
+    if skill_ids is not None:
+        for sid in skill_ids:
+            if await db.skills.get_one_or_none(id=sid) is None:
+                raise HTTPException(status_code=404, detail="Навык не найден")
+
+    if payload:
+        rows = await db.project_vacancies.edit(
+            ProjectVacancyPatch(**payload),
+            exclude_unset=True,
+            id=vacancy_id,
+        )
+        if rows == 0:
+            raise HTTPException(status_code=404, detail="Вакансия не найдена")
+    elif skill_ids is None:
         return {"status": "OK"}
 
-    rows = await db.project_vacancies.edit(
-        data,
-        exclude_unset=True,
-        id=vacancy_id,
-    )
-    if rows == 0:
-        raise HTTPException(status_code=404, detail="Вакансия не найдена")
+    if skill_ids is not None:
+        await db.project_vacancy_skills.replace_for_vacancy(vacancy_id, skill_ids)
+
     await db.commit()
 
     return {"status": "OK"}

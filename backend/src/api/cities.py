@@ -50,7 +50,7 @@ async def delete_city(
     except IntegrityError:
         raise HTTPException(
             status_code=409,
-            detail="Город указан в профилях и не может быть удалён",
+            detail="Город указан в резюме или проекте и не может быть удалён",
         )
 
     return {"status": "OK"}

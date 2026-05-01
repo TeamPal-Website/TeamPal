@@ -236,16 +236,7 @@
 
 
   function formatApiDetail(detail) {
-    if (detail == null) return '';
-    if (typeof detail === 'string') return detail;
-    if (Array.isArray(detail)) {
-      return detail.map(function(item) {
-        if (!item || typeof item !== 'object') return String(item);
-        return item.msg || item.message || JSON.stringify(item);
-      }).join(' ');
-    }
-    if (typeof detail === 'object' && detail.msg) return String(detail.msg);
-    try { return JSON.stringify(detail); } catch { return String(detail); }
+    return typeof window.tpFormatApiDetail === 'function' ? window.tpFormatApiDetail(detail) : '';
   }
 
   const TP_MAX_SAL_SAFE = (typeof window.TP_MAX_SALARY_RUB !== 'undefined' && window.TP_MAX_SALARY_RUB != null) ? window.TP_MAX_SALARY_RUB : 50000000;
@@ -357,12 +348,15 @@
   }
 
   let allSkills = [];
+  let allRolesFromApi = [];
+  let allCities = [];
   let initialSkillMap = {};
   let currentSkillIds = new Set();
   let initialExpIds = new Set();
 
   let experiences = [];
   let expKeyCounter = 0;
+  const frozenResumeMeta = { status: '', employment_intent: 'commercial' };
 
 
   document.getElementById('confirm-cancel').onclick = () => document.getElementById('confirm-modal').classList.remove('open');
@@ -376,10 +370,30 @@
     if (!authResp.ok) { window.location.href = './authorization_page.html'; return; }
 
 
-    const [resumeResp, skillsResp] = await Promise.all([
+    const [resumeResp, skillsResp, rolesResp, citiesResp] = await Promise.all([
       api('/my_resume/' + resumeId),
       api('/skills'),
+      api('/roles_dictionary'),
+      api('/cities'),
     ]);
+
+    if (citiesResp.ok) {
+      try {
+        const arr = await citiesResp.json();
+        allCities = Array.isArray(arr) ? arr : [];
+      } catch {
+        allCities = [];
+      }
+    }
+
+    if (rolesResp.ok) {
+      try {
+        const arr = await rolesResp.json();
+        allRolesFromApi = Array.isArray(arr) ? arr.filter(function (r) { return r.is_active !== false; }) : [];
+      } catch {
+        allRolesFromApi = [];
+      }
+    }
 
     if (!resumeResp.ok) {
       document.getElementById('main-page').innerHTML = `<div class="loading-state">${resumeResp.status === 404 ? 'Резюме не найдено.' : 'Ошибка загрузки.'} <a href="./account_employee.html">← Назад</a></div>`;
@@ -443,7 +457,18 @@
   function renderPage(resume) {
     const posCache = getPosCache();
     const cachedListTitle = posCache[String(resumeId)] || '';
-    const dp = (resume.desired_position != null && String(resume.desired_position)) ? String(resume.desired_position) : '';
+    const dpFromRole =
+      resume.role_type_id != null && allRolesFromApi.length
+        ? (function () {
+            const found = allRolesFromApi.find(function (r) { return r.id === resume.role_type_id; });
+            return found ? found.name : '';
+          })()
+        : '';
+    const dp = dpFromRole || ((resume.desired_position != null && String(resume.desired_position)) ? String(resume.desired_position) : '');
+    const intent = resume.employment_intent != null ? String(resume.employment_intent) : 'commercial';
+    frozenResumeMeta.status = resume.status || 'not_looking_for_job';
+    frozenResumeMeta.employment_intent = intent;
+    const isStudyResume = intent === 'noncommercial';
     const commitmentRaw = resume.commitment_level != null && resume.commitment_level !== '' ? String(resume.commitment_level).trim() : '';
     const commitmentLegacy = { flexible: 'side_project', remote: 'side_project', hybrid: 'side_project' };
     const commitment = commitmentLegacy[commitmentRaw] || commitmentRaw;
@@ -456,7 +481,72 @@
       salaryVal && typeof window.tpFormatSalaryGroupedForDisplay === 'function'
         ? window.tpFormatSalaryGroupedForDisplay(salaryVal)
         : salaryVal;
-    const intent = resume.employment_intent != null ? String(resume.employment_intent) : 'commercial';
+
+    var roleTypeIdForSelect = resume.role_type_id;
+    if ((roleTypeIdForSelect == null || roleTypeIdForSelect === '') && dp && allRolesFromApi.length) {
+      var matchName = allRolesFromApi.find(function (r) { return r.name.toLowerCase() === String(dp).toLowerCase(); });
+      if (matchName) roleTypeIdForSelect = matchName.id;
+    }
+    const roleSelectOptionsHtml = '<option value="">Не выбрано</option>' + allRolesFromApi.map(function (r) {
+      var sel = roleTypeIdForSelect != null && String(roleTypeIdForSelect) === String(r.id) ? ' selected' : '';
+      return '<option value="' + r.id + '"' + sel + '>' + esc(r.name) + '</option>';
+    }).join('');
+    const citySelId = resume.city_id != null && resume.city_id !== '' ? String(resume.city_id) : '';
+    const cityOptionsHtml = '<option value="">Не выбрано</option>' + allCities.map(function (c) {
+      var s = citySelId === String(c.id) ? ' selected' : '';
+      return '<option value="' + c.id + '"' + s + '>' + esc(c.title || '') + '</option>';
+    }).join('');
+
+    const commercialFieldsHtml = isStudyResume ? '' : `
+          <div class="field">
+            <label for="f-commitment">График / занятость</label>
+            <select id="f-commitment">
+              <option value=""${!commitment ? ' selected' : ''}>Не выбрано</option>
+              <option value="full_time"${commitment === 'full_time' ? ' selected' : ''}>Полный день</option>
+              <option value="part_time"${commitment === 'part_time' ? ' selected' : ''}>Неполный день</option>
+              <option value="side_project"${commitment === 'side_project' ? ' selected' : ''}>Подработка / гибкий формат</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-work-format">Формат работы</label>
+            <select id="f-work-format">
+              <option value=""${!workFormat ? ' selected' : ''}>Не выбрано</option>
+              <option value="remote"${workFormat === 'remote' ? ' selected' : ''}>Удалённо</option>
+              <option value="office"${workFormat === 'office' ? ' selected' : ''}>В офисе</option>
+              <option value="hybrid"${workFormat === 'hybrid' ? ' selected' : ''}>Гибрид</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-schedule">График</label>
+            <select id="f-schedule">
+              <option value=""${!scheduleValue ? ' selected' : ''}>Не выбрано</option>
+              <option value="5/2"${scheduleValue === '5/2' ? ' selected' : ''}>5/2</option>
+              <option value="2/2"${scheduleValue === '2/2' ? ' selected' : ''}>2/2</option>
+              <option value="4/2"${scheduleValue === '4/2' ? ' selected' : ''}>4/2</option>
+              <option value="3/3"${scheduleValue === '3/3' ? ' selected' : ''}>3/3</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-salary-type">Тип зарплаты</label>
+            <select id="f-salary-type">
+              <option value=""${!salaryType ? ' selected' : ''}>Не выбрано</option>
+              <option value="monthly"${salaryType === 'monthly' ? ' selected' : ''}>В месяц</option>
+              <option value="per_project"${salaryType === 'per_project' ? ' selected' : ''}>За проект</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-contract-type">Тип договора</label>
+            <select id="f-contract-type">
+              <option value=""${!contractType ? ' selected' : ''}>Не выбрано</option>
+              <option value="gph"${contractType === 'gph' ? ' selected' : ''}>ГПХ</option>
+              <option value="tk"${contractType === 'tk' ? ' selected' : ''}>ТК РФ</option>
+              <option value="internship"${contractType === 'internship' ? ' selected' : ''}>Стажировка</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-salary">Заработная плата (в рублях)</label>
+            <input id="f-salary" type="text" class="tp-salary-input" inputmode="numeric" autocomplete="off" placeholder="Например: 1 200 000" value="${esc(salaryDisplay)}" />
+          </div>`;
 
     document.getElementById('main-page').innerHTML = `
       <div class="resume-section" id="card-basic">
@@ -468,71 +558,13 @@
           </div>
           <div class="field">
             <label for="f-desired-position">Желаемая должность <span class="req-star" aria-hidden="true">*</span></label>
-            <input id="f-desired-position" type="text" placeholder="Frontend-разработчик" maxlength="255" value="${esc(dp)}" />
+            <select id="f-desired-position">${roleSelectOptionsHtml}</select>
           </div>
           <div class="field">
-            <label for="f-commitment">График / занятость</label>
-            <select id="f-commitment">
-              <option value=""${!commitment ? ' selected' : ''}>Не указывать</option>
-              <option value="full_time"${commitment === 'full_time' ? ' selected' : ''}>Полный день</option>
-              <option value="part_time"${commitment === 'part_time' ? ' selected' : ''}>Неполный день</option>
-              <option value="side_project"${commitment === 'side_project' ? ' selected' : ''}>Подработка / гибкий формат</option>
-            </select>
+            <label for="f-city">Город</label>
+            <select id="f-city">${cityOptionsHtml}</select>
           </div>
-          <div class="field">
-            <label for="f-work-format">Формат работы</label>
-            <select id="f-work-format">
-              <option value=""${!workFormat ? ' selected' : ''}>Не указывать</option>
-              <option value="remote"${workFormat === 'remote' ? ' selected' : ''}>Удалённо</option>
-              <option value="office"${workFormat === 'office' ? ' selected' : ''}>В офисе</option>
-              <option value="hybrid"${workFormat === 'hybrid' ? ' selected' : ''}>Гибрид</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="f-schedule">График</label>
-            <select id="f-schedule">
-              <option value=""${!scheduleValue ? ' selected' : ''}>Не указывать</option>
-              <option value="5/2"${scheduleValue === '5/2' ? ' selected' : ''}>5/2</option>
-              <option value="2/2"${scheduleValue === '2/2' ? ' selected' : ''}>2/2</option>
-              <option value="4/2"${scheduleValue === '4/2' ? ' selected' : ''}>4/2</option>
-              <option value="3/3"${scheduleValue === '3/3' ? ' selected' : ''}>3/3</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="f-salary-type">Тип зарплаты</label>
-            <select id="f-salary-type">
-              <option value=""${!salaryType ? ' selected' : ''}>Не указывать</option>
-              <option value="monthly"${salaryType === 'monthly' ? ' selected' : ''}>В месяц</option>
-              <option value="per_project"${salaryType === 'per_project' ? ' selected' : ''}>За проект</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="f-contract-type">Тип договора</label>
-            <select id="f-contract-type">
-              <option value=""${!contractType ? ' selected' : ''}>Не указывать</option>
-              <option value="gph"${contractType === 'gph' ? ' selected' : ''}>ГПХ</option>
-              <option value="tk"${contractType === 'tk' ? ' selected' : ''}>ТК РФ</option>
-              <option value="internship"${contractType === 'internship' ? ' selected' : ''}>Стажировка</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="f-salary">Заработная плата (в рублях)</label>
-            <input id="f-salary" type="text" class="tp-salary-input" inputmode="numeric" autocomplete="off" placeholder="Например: 1 200 000" value="${esc(salaryDisplay)}" />
-          </div>
-          <div class="field">
-            <label for="f-employment-intent">Тип резюме <span class="req-star" aria-hidden="true">*</span></label>
-            <select id="f-employment-intent">
-              <option value="commercial"${intent === 'commercial' ? ' selected' : ''}>Коммерческий проект</option>
-              <option value="noncommercial"${intent === 'noncommercial' ? ' selected' : ''}>Учебный проект</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="f-status">Статус поиска работы <span class="req-star" aria-hidden="true">*</span></label>
-            <select id="f-status">
-              <option value="looking_for_job"${resume.status === 'looking_for_job' ? ' selected' : ''}>Ищу работу</option>
-              <option value="not_looking_for_job"${resume.status === 'not_looking_for_job' ? ' selected' : ''}>Не ищу работу</option>
-            </select>
-          </div>
+          ${commercialFieldsHtml}
         </div>
       </div>
 
@@ -672,9 +704,7 @@
 
     const desiredEl = document.getElementById('f-desired-position');
     if (desiredEl) {
-      desiredEl.addEventListener('input', () => {
-        desiredEl.classList.remove('inp-invalid');
-      });
+      desiredEl.addEventListener('change', () => desiredEl.classList.remove('inp-invalid'));
     }
     const salaryEl = document.getElementById('f-salary');
     if (salaryEl) {
@@ -837,16 +867,12 @@
     }
 
     const listTitle = document.getElementById('f-resume-list-title').value.trim();
-    const jobTitle = document.getElementById('f-desired-position').value.trim();
+    const posSel = document.getElementById('f-desired-position');
+    const roleTypeIdVal = posSel && posSel.value ? parseInt(posSel.value, 10) : NaN;
     const aboutMe = document.getElementById('f-about').value.trim();
-    const status = document.getElementById('f-status').value;
-    const commitmentRaw = document.getElementById('f-commitment').value;
-    const workFormatRaw = document.getElementById('f-work-format').value;
-    const scheduleRaw = document.getElementById('f-schedule').value;
-    const salaryTypeRaw = document.getElementById('f-salary-type').value;
-    const contractTypeRaw = document.getElementById('f-contract-type').value;
-    const salaryEl = document.getElementById('f-salary');
-    const intent = document.getElementById('f-employment-intent').value;
+    const status = frozenResumeMeta.status;
+    const intent = frozenResumeMeta.employment_intent;
+    const isStudySave = intent === 'noncommercial';
 
     if (!listTitle) {
       showToast('Укажите название резюме — это обязательное поле.', 'error', 5500);
@@ -856,34 +882,37 @@
       return;
     }
 
-    if (!jobTitle) {
-      showToast('Укажите желаемую должность — это обязательное поле.', 'error', 5500);
-      const posInp = document.getElementById('f-desired-position');
-      posInp?.classList.add('inp-invalid');
-      posInp?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (!Number.isFinite(roleTypeIdVal) || roleTypeIdVal <= 0) {
+      showToast('Выберите желаемую должность из списка.', 'error', 5500);
+      posSel?.classList.add('inp-invalid');
+      posSel?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
 
-    var salParseFn = window.tpParseAndValidateSalaryRaw;
-    const salChk =
-      typeof salParseFn === 'function'
-        ? salParseFn(salaryEl ? salaryEl.value : '')
-        : tpValidateSalarySafe(
-            salaryEl && String(salaryEl.value).trim() !== ''
-              ? Math.trunc(Number(String(salaryEl.value).replace(/[\s\u00a0]/g, '')))
-              : null,
-          );
-    if (!salChk || salChk.ok !== true) {
-      showToast(
-        (salChk && salChk.message) || 'Укажите корректную сумму заработной платы или оставьте поле пустым.',
-        'error',
-        7000,
-      );
-      salaryEl?.classList.add('inp-invalid');
-      salaryEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      return;
+    let validatedSalary = null;
+    if (!isStudySave) {
+      const salaryEl = document.getElementById('f-salary');
+      var salParseFn = window.tpParseAndValidateSalaryRaw;
+      const salChk =
+        typeof salParseFn === 'function'
+          ? salParseFn(salaryEl ? salaryEl.value : '')
+          : tpValidateSalarySafe(
+              salaryEl && String(salaryEl.value).trim() !== ''
+                ? Math.trunc(Number(String(salaryEl.value).replace(/[\s\u00a0]/g, '')))
+                : null,
+            );
+      if (!salChk || salChk.ok !== true) {
+        showToast(
+          (salChk && salChk.message) || 'Укажите корректную сумму заработной платы или оставьте поле пустым.',
+          'error',
+          7000,
+        );
+        salaryEl?.classList.add('inp-invalid');
+        salaryEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+      validatedSalary = salChk.value;
     }
-    const validatedSalary = salChk.value;
 
     saveBtn.disabled = true;
     saveBtn.textContent = 'Сохранение…';
@@ -893,18 +922,35 @@
     const basicPayload = {
       about_me: aboutMe || null,
       status,
-      desired_position: jobTitle,
+      role_type_id: roleTypeIdVal,
       employment_intent: intent,
     };
-    if (commitmentRaw) basicPayload.commitment_level = commitmentRaw;
-    else basicPayload.commitment_level = null;
-    basicPayload.work_format = workFormatRaw || null;
-    basicPayload.schedule = scheduleRaw || null;
-    basicPayload.salary_type = salaryTypeRaw || null;
-    basicPayload.contract_type = contractTypeRaw || null;
+    if (isStudySave) {
+      basicPayload.commitment_level = null;
+      basicPayload.work_format = null;
+      basicPayload.schedule = null;
+      basicPayload.salary_type = null;
+      basicPayload.contract_type = null;
+      basicPayload.salary_amount = null;
+    } else {
+      const commitmentRaw = document.getElementById('f-commitment').value;
+      const workFormatRaw = document.getElementById('f-work-format').value;
+      const scheduleRaw = document.getElementById('f-schedule').value;
+      const salaryTypeRaw = document.getElementById('f-salary-type').value;
+      const contractTypeRaw = document.getElementById('f-contract-type').value;
+      if (commitmentRaw) basicPayload.commitment_level = commitmentRaw;
+      else basicPayload.commitment_level = null;
+      basicPayload.work_format = workFormatRaw || null;
+      basicPayload.schedule = scheduleRaw || null;
+      basicPayload.salary_type = salaryTypeRaw || null;
+      basicPayload.contract_type = contractTypeRaw || null;
+      if (validatedSalary == null) basicPayload.salary_amount = null;
+      else basicPayload.salary_amount = validatedSalary;
+    }
 
-    if (validatedSalary == null) basicPayload.salary_amount = null;
-    else basicPayload.salary_amount = validatedSalary;
+    var cityEl = document.getElementById('f-city');
+    var cityNum = cityEl && cityEl.value ? parseInt(cityEl.value, 10) : NaN;
+    basicPayload.city_id = Number.isFinite(cityNum) && cityNum > 0 ? cityNum : null;
 
     try {
       const r = await api('/resumes/' + resumeId, { method:'PATCH', body:JSON.stringify(basicPayload) });

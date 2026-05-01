@@ -327,21 +327,20 @@
       margin-top: 10px;
       font-size: 13px;
       color: #6a6a6a;
+    }
+    .search-pager {
       display: flex;
-      justify-content: space-between;
-      gap: 10px;
+      justify-content: center;
+      align-items: center;
+      gap: 14px;
+      margin-top: 18px;
       flex-wrap: wrap;
     }
-    .chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: #fff0e0;
-      border: 1px solid rgba(248, 90, 11, 0.15);
-      padding: 6px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      color: #6a4a2a;
+    .search-pager__stat {
+      font-size: 13px;
+      color: #666;
+      min-width: 88px;
+      text-align: center;
     }
 
     .vacancies {
@@ -351,34 +350,34 @@
     }
 
     .vacancy-card {
-      padding: 16px;
+      padding: 12px 14px;
       background: #fff;
     }
     .vacancy-head {
       display: grid;
       grid-template-columns: 1fr auto;
-      gap: 10px;
+      gap: 8px;
       align-items: start;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
     .vacancy-title {
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 700;
       color: var(--accent-2);
       line-height: 1.2;
     }
     .vacancy-meta {
-      margin-top: 12px;
+      margin-top: 8px;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      gap: 8px 12px;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 6px 10px;
     }
     .meta-item {
       background: #faf9f7;
       border: 1px solid #ece9e5;
-      border-radius: 12px;
-      padding: 8px 10px;
-      font-size: 13px;
+      border-radius: 10px;
+      padding: 6px 8px;
+      font-size: 12px;
       color: #3a3a3a;
     }
     .meta-item b {
@@ -393,9 +392,9 @@
       background: #efefef;
       color: #444;
       border: 1px solid #dfdfdf;
-      border-radius: 10px;
-      padding: 6px 10px;
-      font-size: 12px;
+      border-radius: 8px;
+      padding: 4px 8px;
+      font-size: 11px;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.3px;
@@ -407,7 +406,7 @@
       justify-content: flex-end;
       gap: 8px;
       flex-wrap: wrap;
-      margin-top: 12px;
+      margin-top: 10px;
     }
     .vacancy-actions .action-btn {
       border-radius: 12px;
@@ -586,12 +585,16 @@
       <button class="action-btn action-btn--accent" id="find" type="button">Найти</button>
     </div>
     <div class="hint">
-      <span class="chip" id="active-filters">Фильтры: нет</span>
       <span id="results-count">Найдено: 0</span>
     </div>
   </section>
 
   <section class="vacancies" id="vacancies" aria-label="Список вакансий"></section>
+  <div class="search-pager" id="search-pager" role="navigation" aria-label="Страницы результатов">
+    <button type="button" class="action-btn" id="pager-prev">Назад</button>
+    <span class="search-pager__stat" id="pager-status"></span>
+    <button type="button" class="action-btn action-btn--accent" id="pager-next">Дальше</button>
+  </div>
 </main>
 
 <footer class="footer">
@@ -604,7 +607,7 @@
     <div class="modal__accent-strip"></div>
     <div class="modal__body">
       <h2 class="modal__title-lg">Фильтры</h2>
-      <p class="modal__subtitle">Сузьте выдачу по типу проекта, городу, роли и условиям работы.</p>
+      <p class="modal__subtitle">Сузьте выдачу по типу проекта, городу, должности и условиям работы.</p>
       <div class="modal__grid" style="margin-top:14px;">
         <div class="field">
           <label for="f-intent">Тип проекта</label>
@@ -621,7 +624,7 @@
           </select>
         </div>
         <div class="field">
-          <label for="f-role">Роль</label>
+          <label for="f-role">Должность</label>
           <select id="f-role">
             <option value="">Любая</option>
           </select>
@@ -682,7 +685,7 @@
           </select>
         </div>
       </div>
-      <p class="filters-modal__hint">Подсказка: поиск по названию учитывает и название роли вакансии (например, «frontend» найдёт «Frontend-разработчик»).</p>
+      <p class="filters-modal__hint">Подсказка: поиск по названию учитывает и должность в вакансии (например, «frontend» найдёт «Frontend-разработчик»).</p>
     </div>
     <div class="modal__footer-bar">
       <button class="action-btn" id="filters-reset" type="button">Сбросить</button>
@@ -814,13 +817,16 @@
       experience_vacancy: "",
       contract_type: "",
       posted_within_days: "",
+      page: 1,
     };
+
+    const VACANCY_PAGE_SIZE = 15;
+    let lastVacancyPageCount = 0;
 
     const qInput = document.getElementById("q");
     const findBtn = document.getElementById("find");
     const listEl = document.getElementById("vacancies");
     const countEl = document.getElementById("results-count");
-    const activeFiltersEl = document.getElementById("active-filters");
     const filtersModal = document.getElementById("filters-modal");
     const openFiltersBtn = document.getElementById("open-filters");
     const applyFiltersBtn = document.getElementById("filters-apply");
@@ -875,7 +881,8 @@
       const smax = smaxRaw === "" ? NaN : parseInt(smaxRaw, 10);
       if (Number.isFinite(smin) && smin >= 0) params.set("salary_min", String(smin));
       if (Number.isFinite(smax) && smax >= 0) params.set("salary_max", String(smax));
-      params.set("per_page", "50");
+      params.set("per_page", String(VACANCY_PAGE_SIZE));
+      params.set("page", String(state.page));
       try {
         const resp = await fetch(API_BASE_URL + "/vacancies?" + params.toString(), { credentials: "include" });
         if (resp.ok) {
@@ -884,19 +891,35 @@
           _vacancies = [];
         }
       } catch (_) { _vacancies = []; }
+      lastVacancyPageCount = Array.isArray(_vacancies) ? _vacancies.length : 0;
       render(_vacancies);
+      updateVacancyPager();
+    }
+
+    function updateVacancyPager() {
+      const wrap = document.getElementById("search-pager");
+      const prev = document.getElementById("pager-prev");
+      const next = document.getElementById("pager-next");
+      const stat = document.getElementById("pager-status");
+      if (!wrap || !prev || !next || !stat) return;
+      stat.textContent = "Страница " + state.page;
+      prev.disabled = state.page <= 1;
+      next.disabled = lastVacancyPageCount < VACANCY_PAGE_SIZE;
     }
 
     function render(list) {
       if (!listEl) return;
       if (!Array.isArray(list) || list.length === 0) {
         listEl.innerHTML = '<div class="empty-state">Ничего не найдено. Попробуйте изменить запрос или фильтры.</div>';
-        if (countEl) countEl.textContent = "Найдено: 0";
+        if (countEl) countEl.textContent = state.page > 1 ? "На этой странице пусто — вернитесь назад" : "Найдено: 0";
         return;
       }
-      if (countEl) countEl.textContent = "Найдено: " + list.length;
+      if (countEl) {
+        const hasMore = lastVacancyPageCount >= VACANCY_PAGE_SIZE;
+        countEl.textContent = "Стр. " + state.page + " · карточек: " + list.length + (hasMore ? "" : " (конец)");
+      }
       listEl.innerHTML = list.map((v) => {
-        const roleName = _rolesMap[String(v.role_type_id)] || "Роль #" + v.role_type_id;
+        const roleName = _rolesMap[String(v.role_type_id)] || "Должность #" + v.role_type_id;
         const cityName = _citiesMap[String(v.project_city_id)] || "";
         const commProj = v.project_employment_intent === "commercial";
         const salaryRub = commProj ? vacancySalaryRub(v.salary_amount) : "—";
@@ -954,31 +977,9 @@
       });
     }
 
-    function updateActiveFiltersChip() {
-      const parts = [];
-      if (state.intent) parts.push(INTENT_LABELS[state.intent] || state.intent);
-      if (state.city_id && _citiesMap[state.city_id]) parts.push(_citiesMap[state.city_id]);
-      if (state.role_type_id && _rolesMap[state.role_type_id]) parts.push(_rolesMap[state.role_type_id]);
-      if (state.work_format) parts.push(WORK_LABELS[state.work_format] || state.work_format);
-      if (state.commitment_level) parts.push(COMMIT_LABELS[state.commitment_level] || state.commitment_level);
-      const smin = state.salary_min != null ? String(state.salary_min).trim() : "";
-      const smax = state.salary_max != null ? String(state.salary_max).trim() : "";
-      if (smin || smax) {
-        const a = smin ? Number(smin.replace(/\s/g, "")).toLocaleString("ru-RU") : "…";
-        const b = smax ? Number(smax.replace(/\s/g, "")).toLocaleString("ru-RU") : "…";
-        if ((smin && Number.isFinite(Number(smin.replace(/\s/g, "")))) || (smax && Number.isFinite(Number(smax.replace(/\s/g, "")))))
-          parts.push("зарплата " + a + "–" + b + " ₽");
-      }
-      if (state.experience_vacancy) parts.push("опыт: " + (EXP_LABELS[state.experience_vacancy] || state.experience_vacancy));
-      if (state.contract_type) parts.push(CONTRACT_LABELS[state.contract_type] || state.contract_type);
-      if (state.posted_within_days && POSTED_LABELS[state.posted_within_days])
-        parts.push(POSTED_LABELS[state.posted_within_days]);
-      if (activeFiltersEl) activeFiltersEl.textContent = "Фильтры: " + (parts.length ? parts.join(", ") : "нет");
-    }
-
     function doSearch() {
       state.q = qInput ? qInput.value.trim() : "";
-      updateActiveFiltersChip();
+      state.page = 1;
       fetchVacancies();
     }
 
@@ -1041,6 +1042,17 @@
     }
     if (findBtn) findBtn.addEventListener("click", doSearch);
     if (qInput) qInput.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); doSearch(); } });
+
+    document.getElementById("pager-prev")?.addEventListener("click", () => {
+      if (state.page <= 1) return;
+      state.page -= 1;
+      fetchVacancies();
+    });
+    document.getElementById("pager-next")?.addEventListener("click", () => {
+      if (lastVacancyPageCount < VACANCY_PAGE_SIZE) return;
+      state.page += 1;
+      fetchVacancies();
+    });
 
     let _applyVacancyId = null;
     const applyModal = document.getElementById("apply-modal");
@@ -1134,7 +1146,6 @@
       } catch (_) {}
     }
 
-    updateActiveFiltersChip();
     loadDictionaries().then(() => {
       bindGroupedSalarySP("f-salary-min");
       bindGroupedSalarySP("f-salary-max");

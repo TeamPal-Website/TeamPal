@@ -17,6 +17,7 @@ from src.models.projects import ProjectsOrm, ProjectVacancyOrm
 from src.models.resumes import ResumesOrm
 from src.models.roles_dictionary import RolesDictionaryOrm
 from src.repositories.base import BaseRepository
+from src.repositories.project_vacancy_skills import ProjectVacancySkillsRepository
 from src.schemas.project_vacancies import (
     ProjectVacancy,
     ProjectVacancyWithOccupant,
@@ -86,8 +87,7 @@ class ProjectVacanciesRepository(BaseRepository):
                 or_(
                     ProjectsOrm.title.ilike(pattern),
                     ProjectsOrm.company_name.ilike(pattern),
-                    ProjectVacancyOrm.responsibilities.ilike(pattern),
-                    ProjectVacancyOrm.requirements.ilike(pattern),
+                    ProjectVacancyOrm.description.ilike(pattern),
                     RolesDictionaryOrm.name.ilike(pattern),
                 )
             )
@@ -117,8 +117,7 @@ class ProjectVacanciesRepository(BaseRepository):
                 salary_amount=v.salary_amount,
                 salary_type=v.salary_type,
                 contract_type=v.contract_type,
-                responsibilities=v.responsibilities,
-                requirements=v.requirements,
+                description=v.description,
                 project_id=p.id,
                 project_title=p.title,
                 project_company_name=p.company_name,
@@ -237,9 +236,12 @@ class ProjectVacanciesRepository(BaseRepository):
                     role_name=role_name,
                     occupant=occupant,
                     is_filled=occupant is not None,
+                    skill_ids=[],
                 )
             )
-        return vacancies
+        vids = [v.id for v in vacancies]
+        smap = await ProjectVacancySkillsRepository(self.session).map_for_vacancies(vids)
+        return [v.model_copy(update={"skill_ids": smap.get(v.id, [])}) for v in vacancies]
 
     async def get_vacancy_ids_for_project(self, project_id: int) -> list[int]:
         query = select(ProjectVacancyOrm.id).where(

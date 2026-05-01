@@ -106,8 +106,25 @@ class TestDeleteCity:
         assert response.status_code == 404
 
     async def test_delete_city_in_use_returns_409(
-        self, client: AsyncClient, authenticated_client: AsyncClient, city: dict
+        self,
+        client: AsyncClient,
+        authenticated_client: AsyncClient,
+        city: dict,
+        role_id: int,
+        skill_id: int,
     ):
-        await authenticated_client.patch("/profiles", json={"city_id": city["id"]})
+        r = await authenticated_client.post(
+            "/resumes",
+            json={
+                "role_type_id": role_id,
+                "city_id": city["id"],
+                "about_me": "Test",
+                "employment_intent": "commercial",
+                "status": "looking_for_job",
+                "skill_ids": [skill_id],
+                "experiences": [],
+            },
+        )
+        assert r.status_code == 200, r.text
         response = await client.delete(f"/cities/{city['id']}")
         assert response.status_code == 409

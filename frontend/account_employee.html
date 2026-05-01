@@ -608,15 +608,9 @@
           <div class="field">
             <label for="gender">Пол</label>
             <select id="gender">
-              <option value="">Не выбран</option>
+              <option value="">Не выбрано</option>
               <option value="male">Мужчина</option>
               <option value="female">Женщина</option>
-            </select>
-          </div>
-          <div class="field field--full">
-            <label for="city">Город</label>
-            <select id="city">
-              <option value="">Выберите город</option>
             </select>
           </div>
           
@@ -937,7 +931,6 @@
       lastName: "",
       age: "",
       gender: "",
-      city: "",
       phone: "",
       telegram: "",
       github: "",
@@ -963,28 +956,6 @@
       return str ? str.trim() : "";
     }
 
-    async function loadCities() {
-      const sel = document.getElementById("city");
-      if (!sel) return;
-      try {
-        const resp = await fetch(API_BASE_URL + "/cities", { credentials: "include" });
-        if (!resp.ok) return;
-        const list = await resp.json();
-        if (!Array.isArray(list)) return;
-        const currentVal = sel.value;
-        sel.innerHTML = '<option value="">Выберите город</option>';
-        for (const c of list) {
-          if (c && c.id != null && c.title != null) {
-            const opt = document.createElement("option");
-            opt.value = String(c.id);
-            opt.textContent = c.title;
-            sel.appendChild(opt);
-          }
-        }
-        if (currentVal) sel.value = currentVal;
-      } catch (_) {}
-    }
-
     async function loadPersonalData() {
       try {
         const response = await fetch(API_BASE_URL + "/profiles/me", {
@@ -999,7 +970,6 @@
             lastName: data.last_name || "",
             age: data.age || "",
             gender: data.gender || "",
-            cityId: data.city_id || "",
             phone: (data.contacts && data.contacts.phone) || "",
             telegram: (data.contacts && data.contacts.telegram) || "",
             github: (data.contacts && data.contacts.github) || "",
@@ -1010,7 +980,6 @@
           document.getElementById("last-name").value = personalData.lastName;
           document.getElementById("age").value = personalData.age;
           document.getElementById("gender").value = personalData.gender;
-          document.getElementById("city").value = personalData.cityId ? String(personalData.cityId) : "";
           document.getElementById("phone").value = personalData.phone;
           document.getElementById("telegram").value = personalData.telegram;
           document.getElementById("github").value = personalData.github;
@@ -1287,7 +1256,6 @@
         last_name: strip(document.getElementById("last-name").value),
         age: document.getElementById("age").value ? parseInt(document.getElementById("age").value, 10) : null,
         gender: genderRaw || null,
-        city_id: document.getElementById("city").value ? parseInt(document.getElementById("city").value, 10) : null,
         contacts: {
           phone: strip(document.getElementById("phone").value) || null,
           telegram: strip(document.getElementById("telegram").value) || null,
@@ -1296,8 +1264,11 @@
       };
 
       const errors = [];
-      if (newData.first_name && !newData.last_name) errors.push("Укажите фамилию");
-      if (!newData.first_name && newData.last_name) errors.push("Укажите имя");
+      if (!newData.first_name) {
+        errors.push("Укажите имя");
+      } else if (!newData.last_name) {
+        errors.push("Укажите фамилию");
+      }
 
       const collapseWs = (s) => (s || "").replace(/\s+/g, " ").trim();
       if (newData.first_name) {
@@ -1357,7 +1328,6 @@
             lastName: newData.last_name,
             age: newData.age,
             gender: newData.gender || "",
-            cityId: newData.city_id,
             phone: (newData.contacts && newData.contacts.phone) || "",
             telegram: (newData.contacts && newData.contacts.telegram) || "",
             github: (newData.contacts && newData.contacts.github) || "",
@@ -1366,10 +1336,12 @@
           showToast("Личная информация сохранена", "success");
         } else {
           const error = await response.json().catch(() => ({}));
-          const detail = error.detail;
-          const msg = Array.isArray(detail)
-            ? detail.map((d) => d.msg || JSON.stringify(d)).join("; ")
-            : (detail || "Не удалось сохранить");
+          const formatted =
+            typeof window.tpFormatApiDetail === "function" ? window.tpFormatApiDetail(error.detail) : "";
+          const msg =
+            formatted ||
+            (typeof error.detail === "string" ? error.detail : "") ||
+            "Не удалось сохранить";
           showToast("Ошибка: " + msg, "error");
         }
       } catch (error) {
@@ -1597,7 +1569,7 @@
     } catch (_) {}
 
     loadCurrentUser();
-    loadCities().then(() => loadPersonalData());
+    loadPersonalData();
   })();
 </script>
 </body>

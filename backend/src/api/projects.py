@@ -7,6 +7,7 @@ from src.enums import (
     EmploymentIntent,
     NotificationEvent,
     ProjectsStatus,
+    ResumeStatus,
 )
 from src.schemas.notifications import NotificationAdd
 from src.schemas.project_vacancies import ProjectVacancyAdd
@@ -172,6 +173,9 @@ async def create_project(
         role = await db.roles_dictionary.get_one_or_none(id=vacancy.role_type_id)
         if role is None:
             raise HTTPException(status_code=404, detail="Роль не найдена")
+        for sid in vacancy.skill_ids:
+            if await db.skills.get_one_or_none(id=sid) is None:
+                raise HTTPException(status_code=404, detail="Навык не найден")
 
     project = await db.projects.add(
         ProjectAdd(
@@ -188,9 +192,14 @@ async def create_project(
 
     vacancies = []
     for vacancy_data in project_data.vacancies:
+        skill_ids = list(vacancy_data.skill_ids)
         vacancy = await db.project_vacancies.add(
-            ProjectVacancyAdd(project_id=project.id, **vacancy_data.model_dump())
+            ProjectVacancyAdd(
+                project_id=project.id,
+                **vacancy_data.model_dump(exclude={"skill_ids"}),
+            )
         )
+        await db.project_vacancy_skills.replace_for_vacancy(vacancy.id, skill_ids)
         vacancies.append(vacancy)
 
     await db.commit()
@@ -295,28 +304,16 @@ async def close_project(
 
     await db.vacancy_assignments.release_all_for_project(project_id)
 
-    cancelled = await db.applications.cancel_pending_for_project(
+    cancelled_rows = await db.applications.cancel_open_for_project(
         project_id, CancelReason.PROJECT_CLOSED
     )
-    for app_id, resume_id in cancelled:
+    notify_uids = set(member_user_ids)
+    for app_id, resume_id in cancelled_rows:
         applicant_uid = await db.applications.get_applicant_user_id_for_application(
             app_id
         )
         if applicant_uid is not None:
-            await db.notifications.create_notification(
-                NotificationAdd(
-                    user_id=applicant_uid,
-                    event=NotificationEvent.APPLICATION_CANCELLED,
-                    application_id=app_id,
-                    project_id=project_id,
-                    payload={
-                        "project_id": project_id,
-                        "project_title": project.title,
-                        "resume_id": resume_id,
-                        "reason": "project_closed",
-                    },
-                )
-            )
+            notify_uids.add(applicant_uid)
 
     await db.projects.set_close(
         project_id=project_id,
@@ -324,10 +321,10 @@ async def close_project(
         close_member_ids=member_user_ids,
     )
 
-    for member_uid in member_user_ids:
+    for uid in notify_uids:
         await db.notifications.create_notification(
             NotificationAdd(
-                user_id=member_uid,
+                user_id=uid,
                 event=NotificationEvent.APPLICATION_CANCELLED,
                 project_id=project_id,
                 payload={
@@ -415,6 +412,7 @@ async def remove_member(
         raise HTTPException(status_code=404, detail="Участник не найден в этом проекте")
 
     await db.vacancy_assignments.release_by_resume(resume_id)
+    await db.resumes.set_status(resume_id, ResumeStatus.LOOKING_FOR_JOB)
 
     application = await db.applications.get_one_or_none(id=assignment.application_id)
     if application is not None:

@@ -382,6 +382,13 @@
     }
     .project-title-link:hover { color: var(--accent-1); }
     .project-info { font-size: 13px; color: #666; margin: 4px 0; }
+    .project-desc-clamp {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.45;
+    }
     .project-roles { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
     .role-badge { background: #fff0e0; padding: 3px 10px; border-radius: 12px; font-size: 11px; }
     .empty-state { text-align: center; padding: 40px; color: #888; }
@@ -657,18 +664,9 @@
           <div class="field">
             <label for="gender">Пол</label>
             <select id="gender">
-              <option value="">Не выбран</option>
+              <option value="">Не выбрано</option>
               <option value="male">Мужчина</option>
               <option value="female">Женщина</option>
-            </select>
-          </div>
-          <div class="field field--full">
-            <label for="city">Город</label>
-            <select id="city">
-              <option value="">Выберите город</option>
-              <option value="Москва">Москва</option>
-              <option value="Санкт-Петербург">Санкт-Петербург</option>
-              <option value="Новосибирск">Пенза - столица мира</option>
             </select>
           </div>
           
@@ -973,7 +971,6 @@
       lastName: "",
       age: "",
       gender: "",
-      cityId: "",
       phone: "",
       telegram: "",
       github: "",
@@ -999,28 +996,6 @@
       return str ? str.trim() : "";
     }
 
-    async function loadCitiesSelect() {
-      const sel = document.getElementById("city");
-      if (!sel) return;
-      try {
-        const response = await fetch(API_BASE_URL + "/cities", {
-          method: "GET",
-          credentials: "include",
-        });
-        if (!response.ok) return;
-        const list = await response.json();
-        if (!Array.isArray(list)) return;
-        sel.innerHTML = '<option value="">Выберите город</option>';
-        for (const c of list) {
-          if (c && c.id != null && c.title != null) {
-            const opt = document.createElement("option");
-            opt.value = String(c.id);
-            opt.textContent = c.title;
-            sel.appendChild(opt);
-          }
-        }
-      } catch (_) {}
-    }
 
     async function loadPersonalData() {
       try {
@@ -1036,7 +1011,6 @@
             lastName: data.last_name || "",
             age: data.age || "",
             gender: data.gender || "",
-            cityId: data.city_id || "",
             phone: (data.contacts && data.contacts.phone) || "",
             telegram: (data.contacts && data.contacts.telegram) || "",
             github: (data.contacts && data.contacts.github) || "",
@@ -1047,7 +1021,6 @@
           document.getElementById("last-name").value = personalData.lastName;
           document.getElementById("age").value = personalData.age;
           document.getElementById("gender").value = personalData.gender;
-          document.getElementById("city").value = personalData.cityId ? String(personalData.cityId) : "";
           document.getElementById("phone").value = personalData.phone;
           document.getElementById("telegram").value = personalData.telegram;
           document.getElementById("github").value = personalData.github;
@@ -1061,7 +1034,6 @@
           document.getElementById("last-name").value = "";
           document.getElementById("age").value = "";
           document.getElementById("gender").value = "";
-          document.getElementById("city").value = "";
           document.getElementById("phone").value = "";
           document.getElementById("telegram").value = "";
           document.getElementById("github").value = "";
@@ -1116,8 +1088,12 @@
       const safe = (v) => (v === null || v === undefined) ? "" : String(v);
       const esc = (s) => safe(s).replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
 
-      const intentLabel = { commercial: "Коммерческий", noncommercial: "Некоммерческий" };
-      const statusLabel = { active: "Активен", paused: "Приостановлен" };
+      const intentLabel = { commercial: "Коммерческий", noncommercial: "Учебный" };
+      const statusLabel = { active: "Активен", paused: "Не активен" };
+      function allVacanciesFilled(vacs) {
+        if (!Array.isArray(vacs) || vacs.length === 0) return false;
+        return vacs.every((v) => v && (v.occupant || v.is_filled === true || v.status === "filled"));
+      }
       function projectEditUrl(id, intent) {
         const page = intent === "noncommercial" ? "./edit_project_study.html" : "./edit_project_com.html";
         return page + "?id=" + encodeURIComponent(id);
@@ -1141,20 +1117,23 @@
         const title = p?.title || (id ? `Проект #${id}` : "Проект");
         const intent = intentLabel[p?.employment_intent] || p?.employment_intent || "—";
         const createdAt = p?.created_at ? new Date(p.created_at).toLocaleDateString("ru-RU") : "—";
-        const description = p?.description
-          ? (p.description.length > 80 ? p.description.slice(0, 80) + "…" : p.description)
-          : null;
+        const descRaw = p?.description ? String(p.description).trim() : "";
+        const descriptionBlock = descRaw
+          ? `<div class="project-info project-desc-clamp" style="margin-top:6px;color:#555;">${esc(descRaw)}</div>`
+          : "";
 
         const isActive = p?.status === "active";
         const editHref = projectEditUrl(id, p?.employment_intent);
         const editLocked = isActive;
+
+        const canCloseProject = isActive && allVacanciesFilled(vacs || []);
 
         const occupantParts = (vacs || [])
           .filter((v) => v && v.occupant)
           .map((v) => {
             const o = v.occupant;
             const name = [o.first_name, o.last_name].filter(Boolean).join(" ").trim();
-            const bits = [v.role_name || "Роль", name || o.desired_position || ("Пользователь #" + o.user_id)].filter(Boolean);
+            const bits = [v.role_name || "Должность", name || o.desired_position || ("Пользователь #" + o.user_id)].filter(Boolean);
             return esc(bits.join(" — "));
           });
         const teamBlock = occupantParts.length
@@ -1167,12 +1146,12 @@
               <button type="button" class="cabinet-item-title-btn" data-preview-project="${esc(id)}" title="Подробнее о проекте">${esc(title)}</button>
               <div class="project-info"><b>Тип:</b> ${esc(intent)}</div>
               <div class="project-info"><b>Создан:</b> ${esc(createdAt)}</div>
-              ${description ? `<div class="project-info" style="margin-top:6px;color:#555;">${esc(description)}</div>` : ""}
+              ${descriptionBlock}
               ${teamBlock}
             </div>
             <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;">
               <label style="display:flex;align-items:center;gap:8px;user-select:none;cursor:pointer;">
-                <span style="font-size:12px;color:#666;">${isActive ? "Активен" : "Пауза"}</span>
+                <span style="font-size:12px;color:#666;">${isActive ? "Активен" : "Не активен"}</span>
                 <span class="status-toggle">
                   <input type="checkbox" class="proj-status-check" data-project-id="${esc(id)}"
                     data-project-title="${esc(title)}" data-current-status="${esc(p?.status || "")}"
@@ -1183,10 +1162,48 @@
               <button class="action-btn" type="button" data-edit-project-page="${esc(id)}" data-project-intent="${esc(p?.employment_intent || "")}"
                 ${editLocked ? "disabled title=\"Поставьте проект на паузу, чтобы редактировать\"" : ""}
                 style="${editLocked ? "opacity:.55;cursor:not-allowed;" : ""}">Редактировать</button>
+              ${
+                canCloseProject
+                  ? `<button class="action-btn action-btn--danger" type="button" data-close-project="${esc(id)}" data-project-title="${esc(title)}">Закрыть проект</button>`
+                  : ""
+              }
             </div>
           </div>
         `;
       }).join("");
+
+      projectsList.querySelectorAll("[data-close-project]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const pid = btn.getAttribute("data-close-project");
+          const ptitle = btn.getAttribute("data-project-title") || "";
+          if (!pid) return;
+          showConfirm(
+            "Закрыть проект?",
+            (ptitle ? "«" + ptitle + "». " : "") +
+              "Все вакансии заняты: проект можно закрыть. Участники будут сняты с вакансий, открытые отклики отменены.",
+            () => {
+              void (async () => {
+                try {
+                  const r = await fetch(API_BASE_URL + "/projects/" + encodeURIComponent(pid) + "/close", {
+                    method: "POST",
+                    credentials: "include",
+                  });
+                  if (r.ok) {
+                    showToast("Проект закрыт", "success");
+                    await loadMyProjects();
+                  } else {
+                    const err = await r.json().catch(() => ({}));
+                    showToast("Ошибка: " + (err.detail || "Не удалось закрыть проект"), "error");
+                  }
+                } catch {
+                  showToast("Ошибка соединения с сервером", "error");
+                }
+              })();
+            },
+            { danger: true, okLabel: "Закрыть" },
+          );
+        });
+      });
 
       projectsList.querySelectorAll("[data-preview-project]").forEach((btn) => {
         btn.addEventListener("click", async () => {
@@ -1203,8 +1220,8 @@
             const data = await r.json();
             const proj = data.project || {};
             const vacs = Array.isArray(data.vacancies) ? data.vacancies : [];
-            const intentLab = { commercial: "Коммерческий", noncommercial: "Некоммерческий" };
-            const statusLab = { active: "Активен", paused: "Приостановлен", close: "Закрыт", deleted: "Удалён" };
+            const intentLab = { commercial: "Коммерческий", noncommercial: "Учебный" };
+            const statusLab = { active: "Активен", paused: "Не активен", close: "Закрыт", deleted: "Удалён" };
             const mapExpCab = (x) =>
               ({ none: "Без опыта", "<1": "До 1 года", "1-3": "1–3 года", "3-6": "3–6 лет", "6+": "6+ лет" })[x] || "—";
             const mapWorkCab = (x) =>
@@ -1261,7 +1278,7 @@
                       : "";
                 html += '<div class="cabinet-team-row">';
                 html += '<div class="cabinet-member-main">';
-                html += `<div class="cabinet-member-head"><b>${escCabinet(v.role_name || "Название роли")}</b> — ${escCabinet(who)}</div>`;
+                html += `<div class="cabinet-member-head"><b>${escCabinet(v.role_name || "Должность")}</b> — ${escCabinet(who)}</div>`;
                 html += '<div class="cabinet-member-meta">';
                 html += `<span><b>Желаемая должность:</b> ${escCabinet(o.desired_position || "—")}</span>`;
                 html += `<span><b>Опыт работы:</b> ${escCabinet(mapExpCab(o.computed_experience_level))}</span>`;
@@ -1346,7 +1363,6 @@
         last_name: strip(document.getElementById("last-name").value),
         age: document.getElementById("age").value ? parseInt(document.getElementById("age").value, 10) : null,
         gender: genderRaw || null,
-        city_id: document.getElementById("city").value ? parseInt(document.getElementById("city").value, 10) : null,
         contacts: {
           phone: strip(document.getElementById("phone").value) || null,
           telegram: strip(document.getElementById("telegram").value) || null,
@@ -1356,8 +1372,11 @@
 
       const errors = [];
 
-      if (newData.first_name && !newData.last_name) errors.push("Укажите фамилию");
-      if (!newData.first_name && newData.last_name) errors.push("Укажите имя");
+      if (!newData.first_name) {
+        errors.push("Укажите имя");
+      } else if (!newData.last_name) {
+        errors.push("Укажите фамилию");
+      }
 
       const collapseWs = (s) => (s || "").replace(/\s+/g, " ").trim();
       if (newData.first_name) {
@@ -1417,7 +1436,6 @@
             lastName: newData.last_name,
             age: newData.age,
             gender: newData.gender || "",
-            cityId: newData.city_id,
             phone: (newData.contacts && newData.contacts.phone) || "",
             telegram: (newData.contacts && newData.contacts.telegram) || "",
             github: (newData.contacts && newData.contacts.github) || "",
@@ -1426,10 +1444,12 @@
           showToast("Личная информация сохранена", "success");
         } else {
           const error = await response.json().catch(() => ({}));
-          const detail = error.detail;
-          const msg = Array.isArray(detail)
-            ? detail.map((d) => d.msg || JSON.stringify(d)).join("; ")
-            : (detail || "Не удалось сохранить");
+          const formatted =
+            typeof window.tpFormatApiDetail === "function" ? window.tpFormatApiDetail(error.detail) : "";
+          const msg =
+            formatted ||
+            (typeof error.detail === "string" ? error.detail : "") ||
+            "Не удалось сохранить";
           showToast("Ошибка: " + msg, "error");
         }
       } catch (error) {
@@ -1667,7 +1687,6 @@
     } catch (_) {}
 
     void (async function initAccount() {
-      await loadCitiesSelect();
       await loadCurrentUser();
       await loadPersonalData();
     })();

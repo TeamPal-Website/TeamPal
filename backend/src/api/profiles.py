@@ -34,7 +34,6 @@ async def get_profile(
         last_name=res.last_name,
         age=res.age,
         gender=res.gender,
-        city_id=res.city_id,
     )
 
 
@@ -44,11 +43,6 @@ async def edit_profile(
     profile_data: ProfileRequestPatch,
     user_id: UserIdDep,
 ):
-    if profile_data.city_id is not None:
-        city = await db.cities.get_one_or_none(id=profile_data.city_id)
-        if city is None:
-            raise HTTPException(status_code=404, detail="Город не найден")
-
     try:
         res = await db.profiles.edit(profile_data, exclude_unset=True, user_id=user_id)
         if res == 0:

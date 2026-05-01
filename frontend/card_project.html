@@ -500,7 +500,7 @@
       }, 4200);
     }
     function mapIntent(v) { return v === "commercial" ? "Коммерческий" : (v === "noncommercial" ? "Некоммерческий" : "—"); }
-    function mapStatus(v) { return ({ active: "Активен", paused: "Пауза", close: "Закрыт", deleted: "Удалён" })[v] || (v || "—"); }
+    function mapStatus(v) { return ({ active: "Активен", paused: "Не активен", close: "Закрыт", deleted: "Удалён" })[v] || (v || "—"); }
     function mapExp(v) { return ({ none: "Без опыта", "<1": "До 1 года", "1-3": "1-3 года", "3-6": "3-6 лет", "6+": "6+ лет" })[v] || "—"; }
     function mapWork(v) { return ({ remote: "Удалённо", office: "В офисе", hybrid: "Гибрид" })[v] || "—"; }
     function mapEmployment(v) { return ({ full_time: "Полный день", part_time: "Неполный день", side_project: "Подработка / гибкий формат" })[v] || "—"; }
@@ -610,7 +610,7 @@
             ["Занято слотов команды", occupiedCount + " / " + totalSlots],
           ];
           if (isOwner) rows.push(["Владелец", "Вы можете исключить участника из проекта — освободится слот для новых откликов (кнопка под карточкой вакансии)."]);
-          else rows.push(["Просмотр", "Ниже — описание ролей, требования и принятые по откликам участники."]);
+          else rows.push(["Просмотр", "Ниже — описание вакансий, требования и принятые по откликам участники."]);
           extraEl.innerHTML = rows.map((f) => `<div class="field"><b>${esc(f[0])}:</b>${esc(f[1])}</div>`).join("");
         }
 
@@ -639,7 +639,7 @@
           const isTaken = users.length > 0 || v.is_filled === true || v.status === "filled" || v.status === "closed";
           if (isTaken) occupiedSlots += 1;
 
-          const slotTitle = esc(v.role_name || v.role_type?.name || "Роль");
+          const slotTitle = esc(v.role_name || v.role_type?.name || "Должность");
           const titleMain = useResume ? esc(occ.desired_position || v.role_name || "Участник") : slotTitle;
 
           const metaExp = mapExp(useResume ? occ.computed_experience_level : v.experience);
@@ -651,38 +651,45 @@
           const rubLine = commProj ? rubSalaryAmount(useResume ? occ.salary_amount : v.salary_amount) : "—";
           const typeLine = commProj ? salTypeLabelFn(useResume ? occ.salary_type : v.salary_type) : "—";
 
-          const roleOrPositionLabel = useResume ? "Желаемая должность" : "Название роли";
+          const roleOrPositionLabel = useResume ? "Желаемая должность" : "Должность";
           const roleOrPositionVal = useResume
             ? esc(occ.desired_position || "—")
             : esc(v.role_name || v.role_type?.name || "—");
 
-          const metaBlock = `
-              <div class="meta">
-                <div class="field"><b>${roleOrPositionLabel}:</b>${roleOrPositionVal}</div>
-                <div class="field"><b>Опыт работы:</b>${esc(metaExp)}</div>
-                <div class="field"><b>Формат работы:</b>${esc(metaWork)}</div>
-                <div class="field"><b>Занятость:</b>${esc(metaEmp)}</div>
-                <div class="field"><b>График:</b>${metaSched}</div>
-                <div class="field"><b>Заработная плата (в рублях):</b>${esc(rubLine)}</div>
-                <div class="field"><b>Тип зарплаты:</b>${esc(typeLine)}</div>
-                <div class="field"><b>Тип договора:</b>${esc(metaContract)}</div>
-              </div>`;
+          const metaRows = [
+            `<div class="field"><b>${roleOrPositionLabel}:</b>${roleOrPositionVal}</div>`,
+            `<div class="field"><b>Опыт работы:</b>${esc(metaExp)}</div>`,
+          ];
+          if (commProj) {
+            metaRows.push(
+              `<div class="field"><b>Формат работы:</b>${esc(metaWork)}</div>`,
+              `<div class="field"><b>Занятость:</b>${esc(metaEmp)}</div>`,
+            );
+          }
+          metaRows.push(`<div class="field"><b>График:</b>${metaSched}</div>`);
+          if (commProj) {
+            metaRows.push(
+              `<div class="field"><b>Заработная плата (в рублях):</b>${esc(rubLine)}</div>`,
+              `<div class="field"><b>Тип зарплаты:</b>${esc(typeLine)}</div>`,
+              `<div class="field"><b>Тип договора:</b>${esc(metaContract)}</div>`,
+            );
+          }
+          const metaBlock = `<div class="meta">${metaRows.join("")}</div>`;
 
           const aboutBlock =
             useResume && occ.about_me
               ? `<div class="text" style="margin-top:10px;"><b>О себе:</b> ${esc(occ.about_me)}</div>`
               : "";
 
-          const respText =
-            v.responsibilities != null && String(v.responsibilities).trim() !== ""
-              ? String(v.responsibilities).trim()
-              : "Не указано";
-          const reqText =
-            v.requirements != null && String(v.requirements).trim() !== ""
-              ? String(v.requirements).trim()
-              : "Не указано";
-          const respBlocks = `<div class="text" style="margin-top:10px;"><b>Обязанности / зона ответственности:</b> ${esc(respText)}</div>`;
-          const reqBlocks = `<div class="text" style="margin-top:10px;"><b>Требования (навыки, опыт):</b> ${esc(reqText)}</div>`;
+          const descRaw = (() => {
+            if (v.description != null && String(v.description).trim() !== "") return String(v.description).trim();
+            var a = v.responsibilities != null ? String(v.responsibilities).trim() : "";
+            var b = v.requirements != null ? String(v.requirements).trim() : "";
+            if (a && b) return a + "\n\n" + b;
+            return a || b || "";
+          })();
+          const descText = descRaw || "Не указано";
+          const descBlock = `<div class="text" style="margin-top:10px;"><b>Описание вакансии:</b> ${esc(descText)}</div>`;
 
           const memberLabel =
             useResume && occ
@@ -702,7 +709,7 @@
               <div class="vacancy-head">
                 <div>
                   <div class="vacancy-title">${titleMain}</div>
-                  ${useResume ? `<div style="font-size:13px;color:#7a7060;margin-top:4px;">Название роли: ${slotTitle}</div>` : ""}
+                  ${useResume ? `<div style="font-size:13px;color:#7a7060;margin-top:4px;">Должность: ${slotTitle}</div>` : ""}
                 </div>
                 <span class="badge ${isTaken ? "taken" : "open"}">${isTaken ? "Занята" : "Свободна"}</span>
               </div>
@@ -711,8 +718,7 @@
                 <div><b>Кто занимает вакансию:</b> ${users.length ? "" : "пока никто"}</div>
                 ${users.length ? `<div class="users-list">${users.map(renderUserChip).join("")}</div>` : ""}
               </div>
-              ${respBlocks}
-              ${reqBlocks}
+              ${descBlock}
               ${aboutBlock}
               ${removeBtn}
               ${applyBtnVac}

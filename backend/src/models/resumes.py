@@ -29,7 +29,12 @@ class ResumesOrm(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     profile_id: Mapped[int] = mapped_column(ForeignKey("profiles.id", ondelete="CASCADE"))
+    city_id: Mapped[int | None] = mapped_column(ForeignKey("cities.id"), nullable=True)
     desired_position: Mapped[str] = mapped_column(String(255), nullable=False)
+    role_type_id: Mapped[int | None] = mapped_column(
+        ForeignKey("roles_dictionary.id", ondelete="SET NULL"),
+        nullable=True,
+    )
     employment_intent: Mapped[EmploymentIntent] = mapped_column(
         SQLEnum(
             EmploymentIntent,

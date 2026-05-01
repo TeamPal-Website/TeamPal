@@ -80,6 +80,7 @@ class ApplicationsRepository(BaseRepository):
         self,
         profile_id: int,
         status: ApplicationStatus | None = None,
+        resume_id: int | None = None,
         limit: int = 20,
         offset: int = 0,
     ) -> list[ApplicationWithContext]:
@@ -90,6 +91,8 @@ class ApplicationsRepository(BaseRepository):
         ]
         if status is not None:
             filters.append(ApplicationsOrm.status == status)
+        if resume_id is not None:
+            filters.append(ResumesOrm.id == resume_id)
 
         query = (
             select(
@@ -161,6 +164,28 @@ class ApplicationsRepository(BaseRepository):
         result = await self.session.execute(query)
         return int(result.scalar_one())
 
+    def _employer_applications_base_select(self):
+        return (
+            select(
+                ApplicationsOrm,
+                ProjectsOrm.id.label("project_id"),
+                ProjectsOrm.title.label("project_title"),
+                ProfilesOrm.id.label("applicant_profile_id"),
+                ProfilesOrm.user_id.label("applicant_user_id"),
+                ResumesOrm.desired_position,
+                ProjectVacancyOrm.role_type_id,
+                RolesDictionaryOrm.name.label("role_name"),
+            )
+            .join(ResumesOrm, ResumesOrm.id == ApplicationsOrm.resume_id)
+            .join(ProfilesOrm, ProfilesOrm.id == ResumesOrm.profile_id)
+            .join(ProjectVacancyOrm, ProjectVacancyOrm.id == ApplicationsOrm.vacancy_id)
+            .join(ProjectsOrm, ProjectsOrm.id == ProjectVacancyOrm.project_id)
+            .join(
+                RolesDictionaryOrm,
+                RolesDictionaryOrm.id == ProjectVacancyOrm.role_type_id,
+            )
+        )
+
     async def get_for_project_owner(
         self,
         project_id: int,
@@ -173,21 +198,7 @@ class ApplicationsRepository(BaseRepository):
             filters.append(ApplicationsOrm.status == status)
 
         query = (
-            select(
-                ApplicationsOrm,
-                ProfilesOrm.id.label("applicant_profile_id"),
-                ProfilesOrm.user_id.label("applicant_user_id"),
-                ResumesOrm.desired_position,
-                ProjectVacancyOrm.role_type_id,
-                RolesDictionaryOrm.name.label("role_name"),
-            )
-            .join(ResumesOrm, ResumesOrm.id == ApplicationsOrm.resume_id)
-            .join(ProfilesOrm, ProfilesOrm.id == ResumesOrm.profile_id)
-            .join(ProjectVacancyOrm, ProjectVacancyOrm.id == ApplicationsOrm.vacancy_id)
-            .join(
-                RolesDictionaryOrm,
-                RolesDictionaryOrm.id == ProjectVacancyOrm.role_type_id,
-            )
+            self._employer_applications_base_select()
             .where(*filters)
             .order_by(ApplicationsOrm.created_at.desc())
             .limit(limit)
@@ -208,8 +219,70 @@ class ApplicationsRepository(BaseRepository):
                 desired_position=desired_position,
                 role_type_id=role_type_id,
                 role_name=role_name,
+                project_id=proj_id,
+                project_title=proj_title,
             )
-            for app, applicant_profile_id, applicant_user_id, desired_position, role_type_id, role_name in result.all()
+            for (
+                app,
+                proj_id,
+                proj_title,
+                applicant_profile_id,
+                applicant_user_id,
+                desired_position,
+                role_type_id,
+                role_name,
+            ) in result.all()
+        ]
+
+    async def get_for_profile_owned_projects(
+        self,
+        owner_profile_id: int,
+        project_id: int | None = None,
+        status: ApplicationStatus | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[ApplicationForOwner]:
+        filters = [ProjectsOrm.profile_id == owner_profile_id]
+        if project_id is not None:
+            filters.append(ProjectVacancyOrm.project_id == project_id)
+        if status is not None:
+            filters.append(ApplicationsOrm.status == status)
+
+        query = (
+            self._employer_applications_base_select()
+            .where(*filters)
+            .order_by(ApplicationsOrm.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+        result = await self.session.execute(query)
+        return [
+            ApplicationForOwner(
+                id=app.id,
+                resume_id=app.resume_id,
+                vacancy_id=app.vacancy_id,
+                status=app.status,
+                cancel_reason=app.cancel_reason,
+                created_at=app.created_at,
+                updated_at=app.updated_at,
+                applicant_profile_id=applicant_profile_id,
+                applicant_user_id=applicant_user_id,
+                desired_position=desired_position,
+                role_type_id=role_type_id,
+                role_name=role_name,
+                project_id=proj_id,
+                project_title=proj_title,
+            )
+            for (
+                app,
+                proj_id,
+                proj_title,
+                applicant_profile_id,
+                applicant_user_id,
+                desired_position,
+                role_type_id,
+                role_name,
+            ) in result.all()
         ]
 
     async def count_new_for_project(
@@ -249,10 +322,13 @@ class ApplicationsRepository(BaseRepository):
                 ResumesOrm.computed_experience_level,
                 ProjectVacancyOrm.role_type_id,
                 RolesDictionaryOrm.name.label("role_name"),
+                ProjectsOrm.id.label("project_id"),
+                ProjectsOrm.title.label("project_title"),
             )
             .join(ResumesOrm, ResumesOrm.id == ApplicationsOrm.resume_id)
             .join(ProfilesOrm, ProfilesOrm.id == ResumesOrm.profile_id)
             .join(ProjectVacancyOrm, ProjectVacancyOrm.id == ApplicationsOrm.vacancy_id)
+            .join(ProjectsOrm, ProjectsOrm.id == ProjectVacancyOrm.project_id)
             .join(
                 RolesDictionaryOrm,
                 RolesDictionaryOrm.id == ProjectVacancyOrm.role_type_id,
@@ -280,6 +356,8 @@ class ApplicationsRepository(BaseRepository):
             computed_experience_level,
             role_type_id,
             role_name,
+            proj_id,
+            proj_title,
         ) = row
 
         resume_id = app.resume_id
@@ -326,6 +404,8 @@ class ApplicationsRepository(BaseRepository):
             desired_position=desired_position,
             role_type_id=role_type_id,
             role_name=role_name,
+            project_id=proj_id,
+            project_title=proj_title,
             contacts=contacts,
             resume_detail=resume_detail,
         )
@@ -362,6 +442,35 @@ class ApplicationsRepository(BaseRepository):
         query = select(ApplicationsOrm.id, ApplicationsOrm.resume_id).where(
             ApplicationsOrm.vacancy_id.in_(vacancy_ids_sq),
             ApplicationsOrm.status == ApplicationStatus.PENDING,
+        )
+        result = await self.session.execute(query)
+        rows = result.all()
+        if rows:
+            ids = [r[0] for r in rows]
+            await self.session.execute(
+                update(ApplicationsOrm)
+                .where(ApplicationsOrm.id.in_(ids))
+                .values(
+                    status=ApplicationStatus.CANCELLED.value,
+                    cancel_reason=reason.value,
+                    updated_at=datetime.utcnow(),
+                )
+            )
+        return [(r[0], r[1]) for r in rows]
+
+    async def cancel_open_for_project(
+        self, project_id: int, reason: CancelReason
+    ) -> list[tuple[int, int]]:
+        vacancy_ids_sq = (
+            select(ProjectVacancyOrm.id)
+            .where(ProjectVacancyOrm.project_id == project_id)
+            .scalar_subquery()
+        )
+        query = select(ApplicationsOrm.id, ApplicationsOrm.resume_id).where(
+            ApplicationsOrm.vacancy_id.in_(vacancy_ids_sq),
+            ApplicationsOrm.status.in_(
+                (ApplicationStatus.PENDING, ApplicationStatus.ACCEPTED),
+            ),
         )
         result = await self.session.execute(query)
         rows = result.all()

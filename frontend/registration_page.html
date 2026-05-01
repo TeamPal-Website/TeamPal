@@ -505,18 +505,9 @@ button {
             }
 
             function parseDetail(detail) {
-                if (typeof detail === 'string') {
-                    return detail;
-                }
-                if (Array.isArray(detail)) {
-                    return detail
-                        .map(function(item) {
-                            return item.msg || 'Ошибка валидации';
-                        })
-                        .join('; ');
-                }
-                if (typeof detail === 'object' && detail !== null) {
-                    return detail.message || 'Ошибка запроса';
+                if (typeof window.tpFormatApiDetail === 'function') {
+                    const s = window.tpFormatApiDetail(detail);
+                    if (s) return s;
                 }
                 return 'Ошибка запроса';
             }

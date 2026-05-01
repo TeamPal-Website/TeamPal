@@ -20,7 +20,6 @@ class TestGetMyProfile:
         assert "last_name" in data
         assert "age" in data
         assert "gender" in data
-        assert "city_id" in data
 
     async def test_get_my_profile_no_hashed_password(self, authenticated_client: AsyncClient):
         response = await authenticated_client.get("/profiles/me")
@@ -33,7 +32,6 @@ class TestGetMyProfile:
         assert data["last_name"] is None
         assert data["age"] is None
         assert data["gender"] is None
-        assert data["city_id"] is None
 
     async def test_profile_created_automatically_on_register(self, client: AsyncClient):
         await client.post("/auth/register", json={
@@ -145,25 +143,6 @@ class TestPatchProfile:
     async def test_patch_profile_first_name_too_long_fails(self, authenticated_client: AsyncClient):
         response = await authenticated_client.patch("/profiles", json={"first_name": "А" * 36})
         assert response.status_code == 422
-
-    async def test_patch_profile_valid_city(
-        self, authenticated_client: AsyncClient, city: dict
-    ):
-        response = await authenticated_client.patch("/profiles", json={"city_id": city["id"]})
-        assert response.status_code == 200
-
-    async def test_patch_profile_city_persisted(
-        self, authenticated_client: AsyncClient, city: dict
-    ):
-        await authenticated_client.patch("/profiles", json={"city_id": city["id"]})
-        profile = await authenticated_client.get("/profiles/me")
-        assert profile.json()["city_id"] == city["id"]
-
-    async def test_patch_profile_nonexistent_city_returns_404(
-        self, authenticated_client: AsyncClient
-    ):
-        response = await authenticated_client.patch("/profiles", json={"city_id": 99999})
-        assert response.status_code == 404
 
     async def test_patch_profile_empty_body_succeeds(self, authenticated_client: AsyncClient):
         r1 = await authenticated_client.patch("/profiles", json={"first_name": "Патч"})

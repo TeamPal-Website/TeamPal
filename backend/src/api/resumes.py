@@ -23,6 +23,35 @@ router = APIRouter(prefix="", tags=["Резюме"])
 RESUMES_MAX_PER_PROFILE = 5
 
 
+async def _require_active_role(db: DBDep, role_type_id: int):
+    role = await db.roles_dictionary.get_one_or_none(id=role_type_id)
+    if role is None or not role.is_active:
+        raise HTTPException(status_code=404, detail="Должность не найдена")
+    return role
+
+
+async def _expand_resume_role_patch_fields(db: DBDep, payload: dict) -> dict:
+    if "role_type_id" in payload:
+        role = await _require_active_role(db, payload["role_type_id"])
+        payload = {**payload, "desired_position": role.name}
+        return payload
+    if "desired_position" in payload:
+        role = await db.roles_dictionary.get_active_by_name_ci(
+            payload["desired_position"],
+        )
+        if role is None:
+            raise HTTPException(
+                status_code=422,
+                detail="Желаемая должность должна совпадать с записью в справочнике",
+            )
+        return {
+            **payload,
+            "role_type_id": role.id,
+            "desired_position": role.name,
+        }
+    return payload
+
+
 @router.get("/profiles/{user_id}/resumes/{resume_id}")
 async def get_resume(
     db: DBDep,
@@ -148,14 +177,19 @@ async def create_resume(
         if sk is None:
             raise HTTPException(status_code=404, detail="Навык не найден")
 
+    if resume_data.city_id is not None:
+        city = await db.cities.get_one_or_none(id=resume_data.city_id)
+        if city is None:
+            raise HTTPException(status_code=404, detail="Город не найден")
+
+    role = await _require_active_role(db, resume_data.role_type_id)
+
     resume = await db.resumes.add(
         ResumeAdd(
             profile_id=profile.id,
-            desired_position=(
-                resume_data.desired_position.strip()
-                if resume_data.desired_position
-                else "Не указано"
-            ),
+            desired_position=role.name,
+            role_type_id=role.id,
+            city_id=resume_data.city_id,
             employment_intent=resume_data.employment_intent,
             commitment_level=resume_data.commitment_level,
             work_format=resume_data.work_format,
@@ -216,6 +250,18 @@ async def update_resume(
     payload = data.model_dump(exclude_unset=True)
     if not payload:
         return {"status": "OK"}
+
+    if "city_id" in payload:
+        cid = payload["city_id"]
+        if cid is not None:
+            city = await db.cities.get_one_or_none(id=cid)
+            if city is None:
+                raise HTTPException(status_code=404, detail="Город не найден")
+
+    if "role_type_id" in payload or "desired_position" in payload:
+        payload = await _expand_resume_role_patch_fields(db, payload)
+        data = ResumePatch(**payload)
+        payload = data.model_dump(exclude_unset=True)
 
     status_only_pause = set(payload.keys()) == {"status"} and payload.get(
         "status"

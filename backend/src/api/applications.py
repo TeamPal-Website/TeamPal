@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Query
 
 from src.api.dependencies import DBDep, UserIdDep, PageDep, PerPageDep
 from src.enums import (
@@ -201,6 +201,7 @@ async def get_my_applications(
     db: DBDep,
     user_id: UserIdDep,
     status: ApplicationStatus | None = None,
+    resume_id: int | None = Query(default=None, gt=0),
     page: PageDep = 1,
     per_page: PerPageDep = 20,
 ):
@@ -211,6 +212,7 @@ async def get_my_applications(
     return await db.applications.get_my_applications(
         profile_id=profile.id,
         status=status,
+        resume_id=resume_id,
         limit=per_page,
         offset=per_page * (page - 1),
     )
@@ -292,6 +294,43 @@ async def withdraw_application(
 
     await db.commit()
     return {"status": "OK"}
+
+
+@router.get("/employer/applications")
+async def list_employer_applications(
+    db: DBDep,
+    user_id: UserIdDep,
+    project_id: int | None = Query(default=None, gt=0),
+    status: ApplicationStatus | None = None,
+    page: PageDep = 1,
+    per_page: PerPageDep = 50,
+):
+    profile = await db.profiles.get_one_or_none(user_id=user_id)
+    if profile is None:
+        raise HTTPException(status_code=404, detail="Профиль не найден")
+
+    applications = await db.applications.get_for_profile_owned_projects(
+        owner_profile_id=profile.id,
+        project_id=project_id,
+        status=status,
+        limit=per_page,
+        offset=per_page * (page - 1),
+    )
+
+    if project_id is not None:
+        project = await db.projects.get_one_or_none(
+            id=project_id, profile_id=profile.id
+        )
+        if project is not None:
+            await db.projects.mark_applications_seen(
+                project_id=project_id, profile_id=profile.id
+            )
+            await db.notifications.mark_project_notifications_read(
+                user_id=user_id, project_id=project_id
+            )
+            await db.commit()
+
+    return applications
 
 
 @router.get("/projects/{project_id}/applications")

@@ -92,7 +92,6 @@ class TestProfileBase:
         assert profile.first_name is None
         assert profile.age is None
         assert profile.gender is None
-        assert profile.city_id is None
         assert profile.contacts is None
 
     def test_age_minimum_16(self):
@@ -149,14 +148,6 @@ class TestProfileBase:
         profile = ProfileBase(first_name="Анна-Мария")
         assert profile.first_name == "Анна-Мария"
 
-    def test_city_id_zero_fails(self):
-        with pytest.raises(ValidationError):
-            ProfileBase(city_id=0)
-
-    def test_city_id_negative_fails(self):
-        with pytest.raises(ValidationError):
-            ProfileBase(city_id=-1)
-
     def test_contacts_as_nested_model(self):
         profile = ProfileBase(contacts={"phone": "+7999", "telegram": None, "github": None})
         assert profile.contacts.phone == "+7999"
@@ -205,7 +196,7 @@ class TestProfileRequestPatch:
 class TestResumeRequestAddSalary:
     def test_salary_at_max_ok(self):
         r = ResumeRequestAdd(
-            desired_position="Разработчик",
+            role_type_id=1,
             salary_amount=MAX_SALARY_AMOUNT_RUB,
             skill_ids=[1],
             experiences=[],
@@ -215,7 +206,7 @@ class TestResumeRequestAddSalary:
     def test_salary_above_max_fails(self):
         with pytest.raises(ValidationError):
             ResumeRequestAdd(
-                desired_position="Разработчик",
+                role_type_id=1,
                 salary_amount=MAX_SALARY_AMOUNT_RUB + 1,
                 skill_ids=[1],
                 experiences=[],

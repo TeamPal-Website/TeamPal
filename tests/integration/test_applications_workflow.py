@@ -51,8 +51,7 @@ async def _project(
                 "work_format": "remote",
                 "schedule": "5/2",
                 "commitment_level": "full_time",
-                "responsibilities": "Делать API",
-                "requirements": "Знать FastAPI",
+                "description": "Делать API\n\nЗнать FastAPI",
                 "salary_amount": 100000 + idx,
                 "salary_type": "monthly",
                 "contract_type": "gph",
@@ -70,11 +69,11 @@ async def _resume(
     client: AsyncClient,
     token: str,
     skill_id: int,
-    title: str,
+    role_type_id: int,
 ) -> int:
     _auth(client, token)
     payload = {
-        "desired_position": title,
+        "role_type_id": role_type_id,
         "employment_intent": "commercial",
         "commitment_level": "full_time",
         "work_format": "remote",
@@ -126,7 +125,7 @@ class TestApplicationsWorkflow:
         applicant = await _register(client, "applicant-accept")
         role_id, skill_id = await _catalog(client, "accept")
         project_id, vacancies = await _project(client, owner, role_id, "Accept project")
-        resume_id = await _resume(client, applicant, skill_id, "Backend developer")
+        resume_id = await _resume(client, applicant, skill_id, role_id)
 
         application_id = await _apply(client, applicant, resume_id, vacancies[0])
 
@@ -165,8 +164,8 @@ class TestApplicationsWorkflow:
         applicant = await _register(client, "applicant-reject")
         role_id, skill_id = await _catalog(client, "reject")
         _, vacancies = await _project(client, owner, role_id, "Reject project")
-        first_resume = await _resume(client, applicant, skill_id, "First resume")
-        second_resume = await _resume(client, applicant, skill_id, "Second resume")
+        first_resume = await _resume(client, applicant, skill_id, role_id)
+        second_resume = await _resume(client, applicant, skill_id, role_id)
 
         application_id = await _apply(client, applicant, first_resume, vacancies[0])
 
@@ -189,7 +188,7 @@ class TestApplicationsWorkflow:
         applicant = await _register(client, "applicant-paused")
         role_id, skill_id = await _catalog(client, "paused")
         project_id, vacancies = await _project(client, owner, role_id, "Paused project")
-        resume_id = await _resume(client, applicant, skill_id, "Pause candidate")
+        resume_id = await _resume(client, applicant, skill_id, role_id)
         application_id = await _apply(client, applicant, resume_id, vacancies[0])
 
         _auth(client, applicant)
@@ -199,7 +198,7 @@ class TestApplicationsWorkflow:
         assert item["status"] == "cancelled"
         assert item["cancel_reason"] == "user_withdrawn"
 
-        second_resume = await _resume(client, applicant, skill_id, "Pause candidate 2")
+        second_resume = await _resume(client, applicant, skill_id, role_id)
         second_application = await _apply(client, applicant, second_resume, vacancies[0])
 
         _auth(client, owner)
@@ -231,7 +230,7 @@ class TestApplicationsWorkflow:
             role_id,
             "Delete pending project",
         )
-        pending_resume = await _resume(client, applicant, skill_id, "Delete pending")
+        pending_resume = await _resume(client, applicant, skill_id, role_id)
         pending_application = await _apply(
             client,
             applicant,
@@ -253,7 +252,7 @@ class TestApplicationsWorkflow:
             role_id,
             "Delete occupied project",
         )
-        occupied_resume = await _resume(client, applicant, skill_id, "Delete occupied")
+        occupied_resume = await _resume(client, applicant, skill_id, role_id)
         occupied_application = await _apply(
             client,
             applicant,
@@ -278,7 +277,7 @@ class TestApplicationsWorkflow:
             role_id,
             "Close first project",
         )
-        resume_id = await _resume(client, applicant, skill_id, "Close candidate")
+        resume_id = await _resume(client, applicant, skill_id, role_id)
         application_id = await _apply(client, applicant, resume_id, first_vacancies[0])
 
         _auth(client, owner)
@@ -312,7 +311,7 @@ class TestApplicationsWorkflow:
         owner = await _register(client, "owner-ownvac")
         role_id, skill_id = await _catalog(client, "ownvac")
         _, vacancies = await _project(client, owner, role_id, "Own vacancy project")
-        resume_id = await _resume(client, owner, skill_id, "Own resume")
+        resume_id = await _resume(client, owner, skill_id, role_id)
 
         _auth(client, owner)
         response = await client.post(
@@ -326,7 +325,7 @@ class TestApplicationsWorkflow:
         applicant = await _register(client, "applicant-invite")
         role_id, skill_id = await _catalog(client, "inviteflow")
         _, vacancies = await _project(client, owner, role_id, "Invite-only project")
-        resume_id = await _resume(client, applicant, skill_id, "Invite resume")
+        resume_id = await _resume(client, applicant, skill_id, role_id)
 
         _auth(client, owner)
         response = await client.post(

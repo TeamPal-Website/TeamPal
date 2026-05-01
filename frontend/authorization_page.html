@@ -445,18 +445,12 @@ button {
             async function getErrorText(response) {
                 try {
                     const payload = await response.json();
-                    if (typeof payload.detail === 'string') {
+                    if (typeof window.tpFormatApiDetail === "function") {
+                        const s = window.tpFormatApiDetail(payload.detail);
+                        if (s) return s;
+                    }
+                    if (typeof payload.detail === 'string' && payload.detail) {
                         return payload.detail;
-                    }
-                    if (Array.isArray(payload.detail)) {
-                        return payload.detail
-                            .map(function(item) {
-                                return item.msg || 'Ошибка валидации';
-                            })
-                            .join('; ');
-                    }
-                    if (typeof payload.detail === 'object' && payload.detail !== null) {
-                        return payload.detail.message || 'Ошибка запроса';
                     }
                 } catch (error) {
                     console.error(error);

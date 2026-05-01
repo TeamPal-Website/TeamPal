@@ -327,21 +327,20 @@
       margin-top: 10px;
       font-size: 13px;
       color: #6a6a6a;
+    }
+    .search-pager {
       display: flex;
-      justify-content: space-between;
-      gap: 10px;
+      justify-content: center;
+      align-items: center;
+      gap: 14px;
+      margin-top: 18px;
       flex-wrap: wrap;
     }
-    .chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: #fff0e0;
-      border: 1px solid rgba(248, 90, 11, 0.15);
-      padding: 6px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      color: #6a4a2a;
+    .search-pager__stat {
+      font-size: 13px;
+      color: #666;
+      min-width: 88px;
+      text-align: center;
     }
 
     .vacancies {
@@ -351,34 +350,34 @@
     }
 
     .vacancy-card {
-      padding: 16px;
+      padding: 12px 14px;
       background: #fff;
     }
     .vacancy-head {
       display: grid;
       grid-template-columns: 1fr auto;
-      gap: 10px;
+      gap: 8px;
       align-items: start;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
     .vacancy-title {
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 700;
       color: var(--accent-2);
       line-height: 1.2;
     }
     .vacancy-meta {
-      margin-top: 12px;
+      margin-top: 8px;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      gap: 8px 12px;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 6px 10px;
     }
     .meta-item {
       background: #faf9f7;
       border: 1px solid #ece9e5;
-      border-radius: 12px;
-      padding: 8px 10px;
-      font-size: 13px;
+      border-radius: 10px;
+      padding: 6px 8px;
+      font-size: 12px;
       color: #3a3a3a;
     }
     .meta-item b {
@@ -393,9 +392,9 @@
       background: #efefef;
       color: #444;
       border: 1px solid #dfdfdf;
-      border-radius: 10px;
-      padding: 6px 10px;
-      font-size: 12px;
+      border-radius: 8px;
+      padding: 4px 8px;
+      font-size: 11px;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.3px;
@@ -407,7 +406,7 @@
       justify-content: flex-end;
       gap: 8px;
       flex-wrap: wrap;
-      margin-top: 12px;
+      margin-top: 10px;
     }
     .vacancy-actions .action-btn {
       border-radius: 12px;
@@ -607,12 +606,16 @@
       <button class="action-btn action-btn--accent" id="find" type="button">Найти</button>
     </div>
     <div class="hint">
-      <span class="chip" id="active-filters">Фильтры: нет</span>
       <span id="results-count">Найдено: 0</span>
     </div>
   </section>
 
   <section class="vacancies" id="vacancies" aria-label="Список резюме"></section>
+  <div class="search-pager" id="search-pager" role="navigation" aria-label="Страницы результатов">
+    <button type="button" class="action-btn" id="pager-prev">Назад</button>
+    <span class="search-pager__stat" id="pager-status"></span>
+    <button type="button" class="action-btn action-btn--accent" id="pager-next">Дальше</button>
+  </div>
 </main>
 
 <footer class="footer">
@@ -819,7 +822,6 @@
     const findBtn = document.getElementById("find");
     const listEl = document.getElementById("vacancies");
     const countEl = document.getElementById("results-count");
-    const activeFiltersEl = document.getElementById("active-filters");
 
     const filtersModal = document.getElementById("filters-modal");
     const openFiltersBtn = document.getElementById("open-filters");
@@ -847,7 +849,11 @@
       computed_exp: "",
       commitment_level: "",
       created_within_days: "",
+      page: 1,
     };
+
+    const RESUME_PAGE_SIZE = 15;
+    let lastResumePageFetchCount = 0;
 
     function escapeHtml(str) {
       return String(str ?? "").replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
@@ -858,7 +864,7 @@
     }
 
     function intentLabel(intent) {
-      return intent === "commercial" ? "Коммерческий проект" : intent === "noncommercial" ? "Учебный проект" : "—";
+      return intent === "commercial" ? "Коммерческий" : intent === "noncommercial" ? "Учебный" : "—";
     }
 
     function resumeStatusLabel(st) {
@@ -981,18 +987,26 @@
 
     async function fetchResumesFromApi() {
       vacanciesList = [];
+      lastResumePageFetchCount = 0;
       try {
         const params = new URLSearchParams();
-        params.set("page", "1");
-        params.set("per_page", "50");
+        const expNeedClient = state.exp === "need";
+        const perPage = expNeedClient ? 50 : RESUME_PAGE_SIZE;
+        const pageNum = expNeedClient ? 1 : state.page;
+        params.set("page", String(pageNum));
+        params.set("per_page", String(perPage));
         const qt = (state.q || "").trim();
         if (qt) params.set("q", qt);
         if (state.type !== "any") params.set("employment_intent", state.type);
         if (state.city_id) params.set("city_id", state.city_id);
         if (state.skill_id) params.set("skill_id", state.skill_id);
-        if (state.computed_exp) params.set("computed_experience_level", state.computed_exp);
         if (state.commitment_level) params.set("commitment_level", state.commitment_level);
         if (state.created_within_days) params.set("created_within_days", state.created_within_days);
+        if (state.exp === "no") {
+          params.set("computed_experience_level", "none");
+        } else if (state.computed_exp) {
+          params.set("computed_experience_level", state.computed_exp);
+        }
         const sminRaw = state.salary_min != null ? String(state.salary_min).trim().replace(/\s/g, "") : "";
         const smaxRaw = state.salary_max != null ? String(state.salary_max).trim().replace(/\s/g, "") : "";
         const smin = sminRaw === "" ? NaN : parseInt(sminRaw, 10);
@@ -1004,7 +1018,7 @@
         if (!r.ok) return;
         const rows = await r.json();
         if (!Array.isArray(rows)) return;
-        vacanciesList = rows.map((row) => ({
+        let mapped = rows.map((row) => ({
           id: String(row.id),
           userId: String(row.user_id),
           desiredPosition: row.desired_position || "",
@@ -1021,6 +1035,11 @@
           skillsCount: Number(row.skills_count) || 0,
           aboutSnippet: row.about_me ? String(row.about_me).replace(/\s+/g, " ").trim().slice(0, 220) : "",
         }));
+        if (expNeedClient) {
+          mapped = mapped.filter((x) => x.hasExperience);
+        }
+        vacanciesList = mapped;
+        lastResumePageFetchCount = expNeedClient ? mapped.length : rows.length;
       } catch (_) {}
     }
 
@@ -1084,7 +1103,7 @@
             '<option value="">— выберите вакансию —</option>' +
             opts.map((o) => {
               const vid = Number(o.vacancy_id);
-              const label = (o.project_title || "Проект") + " · " + (o.role_name || "Роль");
+              const label = (o.project_title || "Проект") + " · " + (o.role_name || "Должность");
               return `<option value="${vid}">${escapeHtml(label)}</option>`;
             }).join("");
         }
@@ -1132,7 +1151,10 @@
       if (!listEl) return;
       if (!Array.isArray(list) || list.length === 0) {
         listEl.innerHTML = `<div class="empty-state">Ничего не найдено. Попробуйте изменить запрос или фильтры.</div>`;
-        if (countEl) countEl.textContent = "Найдено: 0";
+        if (countEl) {
+          countEl.textContent =
+            state.exp !== "need" && state.page > 1 ? "На этой странице пусто — вернитесь назад" : "Найдено: 0";
+        }
         return;
       }
 
@@ -1162,7 +1184,14 @@
         `;
       }).join("");
 
-      if (countEl) countEl.textContent = "Найдено: " + list.length;
+      if (countEl) {
+        if (state.exp === "need") {
+          countEl.textContent = "Найдено: " + list.length + " (с опытом, до 50 с сервера)";
+        } else {
+          const hasMore = lastResumePageFetchCount >= RESUME_PAGE_SIZE;
+          countEl.textContent = "Стр. " + state.page + " · карточек: " + list.length + (hasMore ? "" : " (конец)");
+        }
+      }
 
       listEl.querySelectorAll("[data-invite]").forEach((btn) => {
         btn.addEventListener("click", () => {
@@ -1186,48 +1215,28 @@
       });
     }
 
-    function computeFiltered() {
-      const q = (state.q || "").trim().toLowerCase();
-      return vacanciesList.filter((v) => {
-        const matchesQ = !q || String(v.desiredPosition).toLowerCase().includes(q);
-        const matchesExp =
-          state.exp === "any" ||
-          (state.exp === "need" && v.hasExperience) ||
-          (state.exp === "no" && !v.hasExperience);
-        const matchesType = state.type === "any" || v.employmentIntent === state.type;
-        return matchesQ && matchesExp && matchesType;
-      });
-    }
-
-    function updateActiveFiltersChip() {
-      const parts = [];
-      if (state.city_id && _citiesMap[state.city_id]) parts.push(_citiesMap[state.city_id]);
-      if (state.skill_id && _skillsMap[state.skill_id]) parts.push("навык: " + _skillsMap[state.skill_id]);
-      const smin = state.salary_min != null ? String(state.salary_min).trim() : "";
-      const smax = state.salary_max != null ? String(state.salary_max).trim() : "";
-      if (smin || smax) {
-        const a = smin ? Number(smin.replace(/\s/g, "")).toLocaleString("ru-RU") : "…";
-        const b = smax ? Number(smax.replace(/\s/g, "")).toLocaleString("ru-RU") : "…";
-        if ((smin && Number.isFinite(Number(smin.replace(/\s/g, "")))) || (smax && Number.isFinite(Number(smax.replace(/\s/g, "")))))
-          parts.push("зарплата " + a + "–" + b + " ₽");
+    function updateResumePager() {
+      const wrap = document.getElementById("search-pager");
+      const prev = document.getElementById("pager-prev");
+      const next = document.getElementById("pager-next");
+      const stat = document.getElementById("pager-status");
+      if (!wrap || !prev || !next || !stat) return;
+      if (state.exp === "need") {
+        wrap.hidden = true;
+        return;
       }
-      if (state.computed_exp) parts.push("опыт: " + (EXP_BUCKET_LABELS[state.computed_exp] || state.computed_exp));
-      if (state.exp === "need") parts.push("есть опыт работы");
-      if (state.exp === "no") parts.push("без опыта работы");
-      if (state.type === "commercial") parts.push("коммерческий");
-      if (state.type === "noncommercial") parts.push("некоммерческий");
-      if (state.commitment_level && COMMIT_LABELS_SR[state.commitment_level])
-        parts.push("занятость: " + COMMIT_LABELS_SR[state.commitment_level]);
-      if (state.created_within_days && CREATED_WITHIN_LABELS[state.created_within_days])
-        parts.push("дата: " + CREATED_WITHIN_LABELS[state.created_within_days]);
-      if (activeFiltersEl) activeFiltersEl.textContent = "Фильтры: " + (parts.length ? parts.join(", ") : "нет");
+      wrap.hidden = false;
+      stat.textContent = "Страница " + state.page;
+      prev.disabled = state.page <= 1;
+      next.disabled = lastResumePageFetchCount < RESUME_PAGE_SIZE;
     }
 
     async function applySearch() {
-      state.q = qInput ? qInput.value : "";
-      updateActiveFiltersChip();
+      state.q = qInput ? qInput.value.trim() : "";
+      state.page = 1;
       await fetchResumesFromApi();
-      render(computeFiltered());
+      render(vacanciesList);
+      updateResumePager();
     }
 
     function openFilters() {
@@ -1313,13 +1322,28 @@
       });
     }
 
-    updateActiveFiltersChip();
+    document.getElementById("pager-prev")?.addEventListener("click", async () => {
+      if (state.page <= 1 || state.exp === "need") return;
+      state.page -= 1;
+      await fetchResumesFromApi();
+      render(vacanciesList);
+      updateResumePager();
+    });
+    document.getElementById("pager-next")?.addEventListener("click", async () => {
+      if (state.exp === "need" || lastResumePageFetchCount < RESUME_PAGE_SIZE) return;
+      state.page += 1;
+      await fetchResumesFromApi();
+      render(vacanciesList);
+      updateResumePager();
+    });
+
     void (async () => {
       await loadResumeFilterDicts();
       bindGroupedSalary("f-salary-min");
       bindGroupedSalary("f-salary-max");
       await fetchResumesFromApi();
-      render(computeFiltered());
+      render(vacanciesList);
+      updateResumePager();
       pollApplicationsBellBadge();
       setInterval(pollApplicationsBellBadge, 60000);
     })();

@@ -21,5 +21,4 @@ class ProfilesOrm(Base):
         SQLEnum(Gender, name="gender_enum", values_callable=enum_values),
         nullable=True,
     )
-    city_id: Mapped[int | None] = mapped_column(ForeignKey("cities.id"), nullable=True)
     contacts: Mapped[dict | None] = mapped_column(JSONB, nullable=True, default=dict)

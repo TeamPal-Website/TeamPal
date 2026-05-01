@@ -4,6 +4,7 @@ from src.repositories.cities import CitiesRepository
 from src.repositories.notifications import NotificationsRepository
 from src.repositories.profiles import ProfilesRepository
 from src.repositories.project_vacancies import ProjectVacanciesRepository
+from src.repositories.project_vacancy_skills import ProjectVacancySkillsRepository
 from src.repositories.projects import ProjectsRepository
 from src.repositories.resume_experiences import ResumeExperienceRepository
 from src.repositories.resume_skills import ResumeSkillsRepository
@@ -31,6 +32,7 @@ class DBManager:
         self.resume_skills = ResumeSkillsRepository(self.session)
         self.projects = ProjectsRepository(self.session)
         self.project_vacancies = ProjectVacanciesRepository(self.session)
+        self.project_vacancy_skills = ProjectVacancySkillsRepository(self.session)
         self.roles_dictionary = RolesDictionaryRepository(self.session)
         self.applications = ApplicationsRepository(self.session)
         self.vacancy_assignments = VacancyAssignmentsRepository(self.session)

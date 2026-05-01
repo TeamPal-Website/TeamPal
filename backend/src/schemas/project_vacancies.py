@@ -35,8 +35,7 @@ class ProjectVacancy(BaseModel):
     work_format: WorkFormat | None
     schedule: Schedule | None
     commitment_level: CommitmentLevel | None
-    responsibilities: str | None
-    requirements: str | None
+    description: str | None
     salary_amount: int | None
     salary_type: SalaryType | None
     contract_type: ContractType | None
@@ -68,27 +67,62 @@ class ProjectVacancyWithOccupant(ProjectVacancy):
     role_name: str | None = None
     occupant: VacancyOccupant | None = None
     is_filled: bool = False
+    skill_ids: list[int] = Field(default_factory=list)
 
 
-class ProjectVacancyRequestAdd(BaseModel):
+def _normalize_skill_ids(v: list[int] | None, *, max_n: int = 40) -> list[int]:
+    if not v:
+        return []
+    seen: set[int] = set()
+    out: list[int] = []
+    for x in v:
+        if x <= 0:
+            raise ValueError("Идентификатор навыка должен быть положительным числом")
+        if x not in seen:
+            seen.add(x)
+            out.append(x)
+    if len(out) > max_n:
+        raise ValueError(f"Не более {max_n} навыков на вакансию")
+    return out
+
+
+class _ProjectVacancyBody(BaseModel):
     role_type_id: int = Field(gt=0)
     experience: ProjectVacancyExperience | None = None
     work_format: WorkFormat | None = None
     schedule: Schedule | None = None
     commitment_level: CommitmentLevel | None = None
-    responsibilities: str | None = None
-    requirements: str | None = None
+    description: str | None = None
     salary_amount: int | None = Field(default=None)
     salary_type: SalaryType | None = None
     contract_type: ContractType | None = None
 
     @field_validator("salary_amount")
     @classmethod
-    def validate_salary_request(cls, v: int | None) -> int | None:
+    def validate_salary_body(cls, v: int | None) -> int | None:
         return _validate_salary_amount(v)
 
 
-class ProjectVacancyAdd(ProjectVacancyRequestAdd):
+class ProjectVacancyRequestAdd(_ProjectVacancyBody):
+    skill_ids: list[int] = Field(default_factory=list, max_length=40)
+
+    @field_validator("skill_ids", mode="before")
+    @classmethod
+    def _skills_req(cls, v):
+        return v if v is not None else []
+
+    @field_validator("skill_ids", mode="after")
+    @classmethod
+    def _skills_norm(cls, v: list[int]) -> list[int]:
+        out = _normalize_skill_ids(v)
+        if len(out) < 1:
+            raise ValueError(
+                "В вакансии должен быть хотя бы один навык",
+            )
+        return out
+
+
+class ProjectVacancyAdd(_ProjectVacancyBody):
     project_id: int
 
 
@@ -98,11 +132,28 @@ class ProjectVacancyPatch(BaseModel):
     work_format: WorkFormat | None = None
     schedule: Schedule | None = None
     commitment_level: CommitmentLevel | None = None
-    responsibilities: str | None = None
-    requirements: str | None = None
+    description: str | None = None
     salary_amount: int | None = Field(default=None)
     salary_type: SalaryType | None = None
     contract_type: ContractType | None = None
+    skill_ids: list[int] | None = None
+
+    @field_validator("skill_ids", mode="before")
+    @classmethod
+    def _skills_patch_before(cls, v):
+        return v
+
+    @field_validator("skill_ids", mode="after")
+    @classmethod
+    def _skills_patch(cls, v: list[int] | None) -> list[int] | None:
+        if v is None:
+            return None
+        out = _normalize_skill_ids(v)
+        if len(out) < 1:
+            raise ValueError(
+                "В вакансии должен быть хотя бы один навык",
+            )
+        return out
 
     @field_validator("salary_amount")
     @classmethod

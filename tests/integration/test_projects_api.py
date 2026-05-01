@@ -104,7 +104,7 @@ class TestCreateProject:
             "tasks": "Tasks",
             "status": "active",
             "employment_intent": "commercial",
-            "vacancies": [{"role_type_id": 1, "responsibilities": "Test"}],
+            "vacancies": [{"role_type_id": 1, "description": "Test"}],
         })
         assert response.status_code == 401
 
@@ -116,7 +116,7 @@ class TestCreateProject:
             "tasks": "Tasks",
             "status": "active",
             "employment_intent": "commercial",
-            "vacancies": [{"role_type_id": role_id, "responsibilities": "Need developer"}],
+            "vacancies": [{"role_type_id": role_id, "description": "Need developer"}],
         })
         assert response.status_code == 200
 
@@ -129,7 +129,7 @@ class TestCreateProject:
             "status": "active",
             "employment_intent": "commercial",
             "vacancies": [
-                {"role_type_id": role_id, "responsibilities": "Need developer"}
+                {"role_type_id": role_id, "description": "Need developer"}
             ],
         })
         assert response.status_code == 200
@@ -143,7 +143,7 @@ class TestCreateProject:
             "status": "active",
             "employment_intent": "commercial",
             "city_id": 99999,
-            "vacancies": [{"role_type_id": 1, "responsibilities": "Test"}],
+            "vacancies": [{"role_type_id": 1, "description": "Test"}],
         })
         assert response.status_code == 404
 
@@ -156,7 +156,7 @@ class TestCreateProject:
             "status": "active",
             "employment_intent": "commercial",
             "vacancies": [
-                {"role_type_id": 99999, "responsibilities": "Need developer"}
+                {"role_type_id": 99999, "description": "Need developer"}
             ],
         })
         assert response.status_code == 404
@@ -170,7 +170,7 @@ class TestCreateProject:
                 "tasks": "Tasks",
                 "status": "active",
                 "employment_intent": "commercial",
-                "vacancies": [{"role_type_id": role_id, "responsibilities": "Test"}],
+                "vacancies": [{"role_type_id": role_id, "description": "Test"}],
             })
         
         response = await authenticated_client.post("/projects", json={
@@ -180,7 +180,7 @@ class TestCreateProject:
             "tasks": "Tasks",
             "status": "active",
             "employment_intent": "commercial",
-            "vacancies": [{"role_type_id": 1, "responsibilities": "Test"}],
+            "vacancies": [{"role_type_id": 1, "description": "Test"}],
         })
         assert response.status_code == 409
 

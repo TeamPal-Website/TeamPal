@@ -86,6 +86,8 @@ class ApplicationForOwner(BaseModel):
     desired_position: str
     role_type_id: int
     role_name: str | None
+    project_id: int
+    project_title: str
 
     model_config = ConfigDict(from_attributes=True)
 

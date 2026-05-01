@@ -24,8 +24,7 @@ class VacancySearchItem(BaseModel):
     salary_amount: int | None
     salary_type: SalaryType | None
     contract_type: ContractType | None
-    responsibilities: str | None
-    requirements: str | None
+    description: str | None
     project_id: int
     project_title: str
     project_company_name: str | None

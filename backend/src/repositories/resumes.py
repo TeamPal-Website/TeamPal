@@ -74,7 +74,7 @@ class ResumesRepository(BaseRepository):
         ]
 
         if city_id is not None:
-            filters.append(ProfilesOrm.city_id == city_id)
+            filters.append(ResumesOrm.city_id == city_id)
         if employment_intent is not None:
             filters.append(ResumesOrm.employment_intent == employment_intent)
         if commitment_level is not None:
@@ -127,7 +127,7 @@ class ResumesRepository(BaseRepository):
         )
 
         query = (
-            select(ResumesOrm, ProfilesOrm.user_id, ProfilesOrm.city_id, skills_count_sq)
+            select(ResumesOrm, ProfilesOrm.user_id, skills_count_sq)
             .join(ProfilesOrm, ProfilesOrm.id == ResumesOrm.profile_id)
             .where(*filters)
             .order_by(ResumesOrm.created_at.desc(), ResumesOrm.id.desc())
@@ -141,7 +141,7 @@ class ResumesRepository(BaseRepository):
                 id=resume.id,
                 user_id=user_id,
                 profile_id=resume.profile_id,
-                city_id=profile_city_id,
+                city_id=resume.city_id,
                 desired_position=resume.desired_position,
                 employment_intent=resume.employment_intent,
                 commitment_level=resume.commitment_level,
@@ -156,7 +156,7 @@ class ResumesRepository(BaseRepository):
                 status=resume.status,
                 created_at=resume.created_at,
             )
-            for resume, user_id, profile_city_id, skills_count in result.all()
+            for resume, user_id, skills_count in result.all()
         ]
 
     async def recompute_experience_level(self, resume_id: int) -> None:
@@ -183,3 +183,10 @@ class ResumesRepository(BaseRepository):
         )
         result = await self.session.execute(select(sq))
         return result.scalar()
+
+    async def set_status(self, resume_id: int, status: ResumeStatus) -> None:
+        await self.session.execute(
+            update(ResumesOrm)
+            .where(ResumesOrm.id == resume_id)
+            .values(status=status.value),
+        )

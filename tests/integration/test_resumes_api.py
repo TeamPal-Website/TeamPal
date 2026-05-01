@@ -98,7 +98,7 @@ class TestCreateResume:
 
     async def test_create_resume_no_auth_returns_401(self, client: AsyncClient):
         response = await client.post("/resumes", json={
-            "desired_position": "Python Developer",
+            "role_type_id": 1,
             "about_me": "Experienced developer",
             "employment_intent": "commercial",
             "status": "looking_for_job",
@@ -107,9 +107,9 @@ class TestCreateResume:
         })
         assert response.status_code == 401
 
-    async def test_create_resume_success(self, authenticated_client: AsyncClient, skill_id: int):
+    async def test_create_resume_success(self, authenticated_client: AsyncClient, skill_id: int, role_id: int):
         response = await authenticated_client.post("/resumes", json={
-            "desired_position": "Python Developer",
+            "role_type_id": role_id,
             "about_me": "Experienced developer",
             "employment_intent": "commercial",
             "status": "looking_for_job",
@@ -119,9 +119,9 @@ class TestCreateResume:
         print(f"DEBUG: {response.status_code} - {response.json()}")
         assert response.status_code == 200
 
-    async def test_create_resume_with_skills(self, authenticated_client: AsyncClient, skill_id: int):
+    async def test_create_resume_with_skills(self, authenticated_client: AsyncClient, skill_id: int, role_id: int):
         response = await authenticated_client.post("/resumes", json={
-            "desired_position": "Developer with Skills",
+            "role_type_id": role_id,
             "about_me": "Desc",
             "employment_intent": "commercial",
             "status": "looking_for_job",
@@ -130,9 +130,9 @@ class TestCreateResume:
         })
         assert response.status_code == 200
 
-    async def test_create_resume_with_experiences(self, authenticated_client: AsyncClient, skill_id: int):
+    async def test_create_resume_with_experiences(self, authenticated_client: AsyncClient, skill_id: int, role_id: int):
         response = await authenticated_client.post("/resumes", json={
-            "desired_position": "Developer with Experience",
+            "role_type_id": role_id,
             "about_me": "Desc",
             "employment_intent": "commercial",
             "status": "looking_for_job",
@@ -150,10 +150,10 @@ class TestCreateResume:
         print(f"DEBUG: {response.status_code} - {response.json()}")
         assert response.status_code == 200
 
-    async def test_create_resume_exceeds_limit(self, authenticated_client: AsyncClient, skill_id: int):
+    async def test_create_resume_exceeds_limit(self, authenticated_client: AsyncClient, skill_id: int, role_id: int):
         for i in range(5):
             await authenticated_client.post("/resumes", json={
-                "desired_position": f"Resume {i}",
+                "role_type_id": role_id,
                 "about_me": "Desc",
                 "employment_intent": "commercial",
                 "status": "looking_for_job",
@@ -162,7 +162,7 @@ class TestCreateResume:
             })
         
         response = await authenticated_client.post("/resumes", json={
-            "desired_position": "Extra Resume",
+            "role_type_id": role_id,
             "about_me": "Desc",
             "employment_intent": "commercial",
             "status": "looking_for_job",
@@ -191,4 +191,4 @@ class TestDeleteResume:
 
     async def test_delete_resume_not_found(self, authenticated_client: AsyncClient):
         response = await authenticated_client.delete("/resumes/99999")
-        assert response.status_code == 200
+        assert response.status_code == 404

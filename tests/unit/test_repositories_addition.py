@@ -82,7 +82,6 @@ class TestProfilesRepository:
         assert profile.last_name is None
         assert profile.age is None
         assert profile.gender is None
-        assert profile.city_id is None
 
     async def test_get_profile_by_user_id(self, db_session):
         _, uid = await create_test_profile(db_session)
