@@ -57,6 +57,8 @@ class ProjectsOrm(Base):
     )
     last_seen_applications_at: Mapped[datetime | None] = mapped_column(nullable=True)
     close_member_ids: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+    closed_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    close_participants: Mapped[list | None] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         server_default=func.now(),
         nullable=False,

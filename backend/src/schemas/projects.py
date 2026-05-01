@@ -6,6 +6,11 @@ from src.enums import EmploymentIntent, ProjectsStatus
 from src.schemas.project_vacancies import ProjectVacancyRequestAdd
 
 
+class CloseParticipant(BaseModel):
+    user_id: int
+    resume_id: int
+
+
 class Project(BaseModel):
     id: int
     profile_id: int
@@ -18,9 +23,18 @@ class Project(BaseModel):
     status: ProjectsStatus
     last_seen_applications_at: datetime | None
     close_member_ids: list[int] | None
+    closed_at: datetime | None = None
+    close_participants: list[CloseParticipant] | None = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ClosedProjectParticipationItem(BaseModel):
+    """Закрытый проект и id резюме текущего пользователя, задействованные в снимке при закрытии."""
+
+    project: Project
+    my_resume_ids: list[int]
 
 
 class ProjectRequestAdd(BaseModel):

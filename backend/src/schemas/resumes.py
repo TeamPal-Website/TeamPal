@@ -17,6 +17,12 @@ from src.schemas.resume_experiences import ResumeExperienceRequestAdd
 MAX_SALARY_AMOUNT_RUB = 50_000_000
 
 
+class ActiveProjectBrief(BaseModel):
+    project_id: int
+    title: str
+    employment_intent: EmploymentIntent
+
+
 def _validate_salary_amount(v: int | None) -> int | None:
     if v is None:
         return v
@@ -49,6 +55,10 @@ class Resume(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ResumeWithActiveProject(Resume):
+    active_project: ActiveProjectBrief | None = None
 
 
 class ResumeRequestAdd(BaseModel):

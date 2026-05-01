@@ -69,6 +69,27 @@ class VacancyAssignmentsRepository(BaseRepository):
             )
         return resume_ids
 
+    async def get_active_member_snapshots_for_project(
+        self, project_id: int
+    ) -> list[tuple[int, int]]:
+        """Пары (user_id, resume_id) по активным назначениям на вакансии проекта."""
+        vacancy_ids_sq = (
+            select(ProjectVacancyOrm.id)
+            .where(ProjectVacancyOrm.project_id == project_id)
+            .scalar_subquery()
+        )
+        query = (
+            select(ProfilesOrm.user_id, VacancyAssignmentsOrm.resume_id)
+            .join(ResumesOrm, ResumesOrm.id == VacancyAssignmentsOrm.resume_id)
+            .join(ProfilesOrm, ProfilesOrm.id == ResumesOrm.profile_id)
+            .where(
+                VacancyAssignmentsOrm.vacancy_id.in_(vacancy_ids_sq),
+                VacancyAssignmentsOrm.released_at.is_(None),
+            )
+        )
+        result = await self.session.execute(query)
+        return [(int(uid), int(rid)) for uid, rid in result.all()]
+
     async def get_member_user_ids_for_project(self, project_id: int) -> list[int]:
         vacancy_ids_sq = (
             select(ProjectVacancyOrm.id)

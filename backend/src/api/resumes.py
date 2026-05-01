@@ -15,8 +15,14 @@ from src.enums import (
 from src.schemas.notifications import NotificationAdd
 from src.schemas.resume_experiences import ResumeExperienceAdd
 from src.schemas.resume_skills import ResumeSkillAdd
-from src.schemas.resumes import ResumeRequestAdd, ResumeAdd, ResumePatch
+from src.schemas.resumes import (
+    ResumeAdd,
+    ResumePatch,
+    ResumeRequestAdd,
+    ResumeWithActiveProject,
+)
 from src.schemas.search_public import ResumeSearchItem
+from src.utils.profile_completeness import profile_incomplete_message
 
 router = APIRouter(prefix="", tags=["Резюме"])
 
@@ -108,10 +114,18 @@ async def get_my_resume(
     skills = await db.resume_skills.get_filtered(resume_id=resume.id)
     experiences = await db.resume_experiences.get_filtered(resume_id=resume.id)
 
-    return {"resume": resume, "skills": skills, "experiences": experiences}
+    briefs = await db.resumes.get_active_project_briefs_by_resume_ids([resume_id])
+    active_project = briefs.get(resume_id)
+
+    return {
+        "resume": resume,
+        "skills": skills,
+        "experiences": experiences,
+        "active_project": active_project,
+    }
 
 
-@router.get("/my_resumes")
+@router.get("/my_resumes", response_model=list[ResumeWithActiveProject])
 async def get_my_resumes(
     db: DBDep,
     user_id: UserIdDep,
@@ -119,7 +133,19 @@ async def get_my_resumes(
     profile = await db.profiles.get_one_or_none(user_id=user_id)
     if profile is None:
         raise HTTPException(status_code=404, detail="Профиль не найден")
-    return await db.resumes.get_filtered(profile_id=profile.id)
+    resumes = await db.resumes.get_filtered(profile_id=profile.id)
+    if not resumes:
+        return []
+    briefs = await db.resumes.get_active_project_briefs_by_resume_ids(
+        [r.id for r in resumes]
+    )
+    return [
+        ResumeWithActiveProject(
+            **r.model_dump(),
+            active_project=briefs.get(r.id),
+        )
+        for r in resumes
+    ]
 
 
 @router.get("/resumes", response_model=list[ResumeSearchItem])
@@ -166,6 +192,10 @@ async def create_resume(
     profile = await db.profiles.get_one_or_none(user_id=user_id)
     if profile is None:
         raise HTTPException(status_code=404, detail="Профиль не найден")
+
+    inc = profile_incomplete_message(profile)
+    if inc:
+        raise HTTPException(status_code=409, detail=inc)
 
     resumes_count = await db.resumes.count(profile_id=profile.id)
     if resumes_count >= RESUMES_MAX_PER_PROFILE:

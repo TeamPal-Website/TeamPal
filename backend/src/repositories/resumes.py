@@ -7,14 +7,19 @@ from src.enums import (
     CommitmentLevel,
     EmploymentIntent,
     ProjectVacancyExperience,
+    ProjectsStatus,
     ResumeStatus,
 )
 from src.models.applications import VacancyAssignmentsOrm
-from src.models.projects import ProjectVacancyOrm
+from src.models.projects import ProjectsOrm, ProjectVacancyOrm
 from src.models.profiles import ProfilesOrm
 from src.models.resumes import ResumesOrm, ResumeSkillOrm, ResumeExperienceOrm
 from src.repositories.base import BaseRepository
-from src.schemas.resumes import Resume, ResumeExperienceLevelPatch
+from src.schemas.resumes import (
+    ActiveProjectBrief,
+    Resume,
+    ResumeExperienceLevelPatch,
+)
 from src.schemas.search_public import ResumeSearchItem
 
 
@@ -190,3 +195,41 @@ class ResumesRepository(BaseRepository):
             .where(ResumesOrm.id == resume_id)
             .values(status=status.value),
         )
+
+    async def get_active_project_briefs_by_resume_ids(
+        self, resume_ids: list[int]
+    ) -> dict[int, ActiveProjectBrief]:
+        if not resume_ids:
+            return {}
+        query = (
+            select(
+                ResumesOrm.id,
+                ProjectsOrm.id,
+                ProjectsOrm.title,
+                ProjectsOrm.employment_intent,
+            )
+            .select_from(ResumesOrm)
+            .join(
+                VacancyAssignmentsOrm,
+                VacancyAssignmentsOrm.resume_id == ResumesOrm.id,
+            )
+            .join(
+                ProjectVacancyOrm,
+                ProjectVacancyOrm.id == VacancyAssignmentsOrm.vacancy_id,
+            )
+            .join(ProjectsOrm, ProjectsOrm.id == ProjectVacancyOrm.project_id)
+            .where(
+                ResumesOrm.id.in_(resume_ids),
+                VacancyAssignmentsOrm.released_at.is_(None),
+                ProjectsOrm.status != ProjectsStatus.DELETED,
+            )
+        )
+        result = await self.session.execute(query)
+        out: dict[int, ActiveProjectBrief] = {}
+        for rid, pid, title, emp in result.all():
+            out[int(rid)] = ActiveProjectBrief(
+                project_id=int(pid),
+                title=str(title),
+                employment_intent=emp,
+            )
+        return out

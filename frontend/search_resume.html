@@ -859,16 +859,8 @@
       return String(str ?? "").replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
     }
 
-    function formatSchedule(v) {
-      return ({ "5/2": "5/2", "2/2": "2/2", "4/2": "4/2", "3/3": "3/3" })[v] || "—";
-    }
-
     function intentLabel(intent) {
       return intent === "commercial" ? "Коммерческий" : intent === "noncommercial" ? "Учебный" : "—";
-    }
-
-    function resumeStatusLabel(st) {
-      return st === "looking_for_job" ? "Ищу работу" : st === "not_looking_for_job" ? "Не ищу работу" : "—";
     }
 
     const EXP_BUCKET_LABELS = {
@@ -879,9 +871,7 @@
       "6+": "6+ лет",
     };
 
-    const COMMIT_LABELS_SR = { full_time: "Полный день", part_time: "Неполный день", side_project: "Подработка / гибкий формат" };
     const WORK_FMT_SR = { remote: "Удалённо", office: "В офисе", hybrid: "Гибрид" };
-    const CONTRACT_LABELS_SR = { gph: "ГПХ", tk: "ТК РФ", internship: "Стажировка" };
     const CREATED_WITHIN_LABELS = { "7": "за 7 дн.", "14": "за 14 дн.", "30": "за 30 дн." };
 
     function salaryAmountPlain(value) {
@@ -894,30 +884,23 @@
       return t === "per_project" ? "За проект" : (t === "monthly" ? "В месяц" : "—");
     }
 
-    function skillsStackSummary(count) {
-      const n = Number(count);
-      if (!Number.isFinite(n) || n <= 0) return "—";
-      return String(n);
-    }
-
     function resumeFieldsHtml(item, layout) {
+      const cityName =
+        item.cityId != null && _citiesMap[String(item.cityId)] ? _citiesMap[String(item.cityId)] : "—";
+      const comm = item.employmentIntent === "commercial";
+      const salAmt = salaryAmountPlain(item.salaryAmount);
+      const salTyp = salaryTypePlain(item.salaryType);
+      let salaryVal = "—";
+      if (comm) {
+        if (salAmt !== "—") salaryVal = salTyp !== "—" ? salAmt + " · " + salTyp : salAmt;
+        else if (salTyp !== "—") salaryVal = salTyp;
+      }
       const rows = [
-        ["Желаемая должность", item.desiredPosition || "—"],
-        ["Тип резюме", intentLabel(item.employmentIntent)],
-        ["Статус поиска работы", resumeStatusLabel(item.status)],
+        ["Заработная плата", salaryVal],
+        ["Формат работы", WORK_FMT_SR[item.workFormat] || "—"],
+        ["Город", cityName],
         ["Опыт работы", EXP_BUCKET_LABELS[item.computedExp] || "—"],
       ];
-      if (item.employmentIntent === "commercial") {
-        rows.push(
-          ["Формат работы", WORK_FMT_SR[item.workFormat] || "—"],
-          ["Занятость", COMMIT_LABELS_SR[item.commitmentLevel] || "—"],
-          ["График", formatSchedule(item.schedule)],
-          ["Заработная плата (в рублях)", salaryAmountPlain(item.salaryAmount)],
-          ["Тип зарплаты", salaryTypePlain(item.salaryType)],
-          ["Тип договора", CONTRACT_LABELS_SR[item.contractType] || "—"],
-        );
-      }
-      rows.push(["Стек технологий / Скиллы", skillsStackSummary(item.skillsCount)]);
       if (layout === "modal") {
         return rows.map(([k, val]) => `<div><b>${escapeHtml(k)}</b>${escapeHtml(val)}</div>`).join("");
       }
@@ -1025,12 +1008,12 @@
         let mapped = rows.map((row) => ({
           id: String(row.id),
           userId: String(row.user_id),
+          cityId: row.city_id != null ? row.city_id : null,
           desiredPosition: row.desired_position || "",
           employmentIntent: row.employment_intent || "commercial",
           status: row.status || "",
           salaryAmount: row.salary_amount,
           salaryType: row.salary_type,
-          schedule: row.schedule,
           commitmentLevel: row.commitment_level || "",
           workFormat: row.work_format || "",
           contractType: row.contract_type || "",

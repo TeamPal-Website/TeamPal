@@ -645,6 +645,7 @@
       <div class="tabs">
         <button class="tab-btn active" id="tab-personal" type="button">Личная информация</button>
         <button class="tab-btn" id="tab-myprojects" type="button">Мои проекты</button>
+        <button class="tab-btn" id="tab-closed-projects" type="button">Закрытые проекты</button>
       </div>
 
       <div class="tab-panel" id="panel-personal">
@@ -697,6 +698,13 @@
           <a href="./create_project_com.html" class="create-link-btn" id="create-project-link">Создать проект</a>
         </div>
         <div id="projects-list"></div>
+      </div>
+
+      <div class="tab-panel hidden" id="panel-closed-projects">
+        <div class="projects-header">
+          <h3>Закрытые проекты</h3>
+        </div>
+        <div id="closed-projects-list"></div>
       </div>
 
     </section>
@@ -774,6 +782,7 @@
 
 
 <script src="./config.js"></script>
+<script src="./profile_complete_check.js"></script>
 <script>
   (function () {
     const yearSpan = document.getElementById("year");
@@ -904,8 +913,10 @@
 
     const tabPersonal = document.getElementById("tab-personal");
     const tabMyProjects = document.getElementById("tab-myprojects");
+    const tabClosedProjects = document.getElementById("tab-closed-projects");
     const panelPersonal = document.getElementById("panel-personal");
     const panelMyProjects = document.getElementById("panel-myprojects");
+    const panelClosedProjects = document.getElementById("panel-closed-projects");
     const userMailSpan = document.getElementById("user-mail");
     const userNameSpan = document.getElementById("user-name-display");
 
@@ -951,20 +962,41 @@
     function showPersonal() {
       tabPersonal.classList.add("active");
       tabMyProjects.classList.remove("active");
+      if (tabClosedProjects) tabClosedProjects.classList.remove("active");
       panelPersonal.classList.remove("hidden");
       panelMyProjects.classList.add("hidden");
+      if (panelClosedProjects) panelClosedProjects.classList.add("hidden");
       loadPersonalData();
     }
     function showMyProjects() {
       tabMyProjects.classList.add("active");
       tabPersonal.classList.remove("active");
+      if (tabClosedProjects) tabClosedProjects.classList.remove("active");
       panelMyProjects.classList.remove("hidden");
       panelPersonal.classList.add("hidden");
+      if (panelClosedProjects) panelClosedProjects.classList.add("hidden");
       loadMyProjects();
+    }
+    function showClosedProjectsTab() {
+      if (tabClosedProjects) tabClosedProjects.classList.add("active");
+      tabPersonal.classList.remove("active");
+      tabMyProjects.classList.remove("active");
+      if (panelClosedProjects) panelClosedProjects.classList.remove("hidden");
+      panelPersonal.classList.add("hidden");
+      panelMyProjects.classList.add("hidden");
+      loadClosedProjects();
+    }
+
+    function cabinetParamForActiveTab() {
+      if (tabPersonal && tabPersonal.classList.contains("active")) return "personal";
+      if (tabMyProjects && tabMyProjects.classList.contains("active")) return "list";
+      if (tabClosedProjects && tabClosedProjects.classList.contains("active")) return "closed";
+      return "personal";
     }
 
     if (tabPersonal) tabPersonal.addEventListener("click", showPersonal);
     if (tabMyProjects) tabMyProjects.addEventListener("click", showMyProjects);
+    if (tabClosedProjects) tabClosedProjects.addEventListener("click", showClosedProjectsTab);
 
     let personalData = {
       firstName: "",
@@ -981,11 +1013,23 @@
     let myProjectsCount = 0;
     async function refreshMyProjectsCount() {
       try {
-        const response = await fetch(API_BASE_URL + "/my_projects", { credentials: "include" });
-        if (response.ok) {
-          const data = await response.json();
-          if (Array.isArray(data)) myProjectsCount = data.length;
+        const [openResp, closedResp] = await Promise.all([
+          fetch(API_BASE_URL + "/my_projects", { credentials: "include" }),
+          fetch(API_BASE_URL + "/my_closed_projects", { credentials: "include" }),
+        ]);
+        let openN = 0;
+        let closedN = 0;
+        if (openResp.ok) {
+          const data = await openResp.json();
+          if (Array.isArray(data)) openN = data.length;
         }
+        if (closedResp.ok) {
+          const data = await closedResp.json();
+          if (Array.isArray(data)) closedN = data.length;
+        }
+        myProjectsCount = openN + closedN;
+        const countSpan = document.getElementById("project-count");
+        if (countSpan) countSpan.textContent = String(openN);
       } catch (_) {}
     }
 
@@ -1053,6 +1097,142 @@
       if (userDisplay) userDisplay.textContent = displayName;
     }
 
+    async function renderManagerProjectCabinetModal(projectId) {
+      openCabinetDetailModal("Загрузка…", '<p style="color:#888;">Загрузка…</p>');
+      try {
+        const cityMap = await loadCitiesCabinetMap();
+        const r = await fetch(API_BASE_URL + "/my_project/" + encodeURIComponent(projectId), { credentials: "include" });
+        if (!r.ok) {
+          openCabinetDetailModal("Ошибка", "<p>Не удалось загрузить проект.</p>");
+          return;
+        }
+        const data = await r.json();
+        const proj = data.project || {};
+        const vacs = Array.isArray(data.vacancies) ? data.vacancies : [];
+        const isClosed = proj.status === "close";
+        const intentLab = { commercial: "Коммерческий", noncommercial: "Учебный" };
+        const statusLab = { active: "Активен", paused: "Не активен", close: "Закрыт", deleted: "Удалён" };
+        const mapExpCab = (x) =>
+          ({ none: "Без опыта", "<1": "До 1 года", "1-3": "1–3 года", "3-6": "3–6 лет", "6+": "6+ лет" })[x] || "—";
+        const mapWorkCab = (x) =>
+          ({ remote: "Удалённо", office: "В офисе", hybrid: "Гибрид" })[x] || "—";
+        const mapCommitCab = (x) =>
+          ({
+            full_time: "Полный день",
+            part_time: "Неполный день",
+            side_project: "Подработка / гибкий формат",
+          })[x] || "—";
+        const mapSchedCab = (x) =>
+          ({ "5/2": "5/2", "2/2": "2/2", "4/2": "4/2", "3/3": "3/3" })[x] || "—";
+        const mapContractCab = (x) =>
+          ({ gph: "ГПХ", tk: "ТК РФ", internship: "Стажировка" })[x] || "—";
+        const salTypeCab = (t) =>
+          t === "per_project" ? "За проект" : (t === "monthly" ? "В месяц" : "—");
+        function rubCab(v) {
+          if (v == null || v === "") return "—";
+          const n = Number(v);
+          return Number.isFinite(n) ? n.toLocaleString("ru-RU") + " ₽" : "—";
+        }
+        const cityTitle =
+          proj.city_id != null && proj.city_id !== ""
+            ? cityMap[String(proj.city_id)] || `Город #${proj.city_id}`
+            : null;
+        const commProjCabinet = proj.employment_intent === "commercial";
+        let html = "";
+        html += '<div class="cabinet-detail-meta-grid">';
+        html += `<div class="cabinet-meta-cell"><b>Компания</b>${escCabinet(proj.company_name || "—")}</div>`;
+        html += `<div class="cabinet-meta-cell"><b>Город</b>${escCabinet(cityTitle || "—")}</div>`;
+        html += `<div class="cabinet-meta-cell"><b>Тип проекта</b>${escCabinet(intentLab[proj.employment_intent] || proj.employment_intent || "—")}</div>`;
+        html += `<div class="cabinet-meta-cell"><b>Статус</b>${escCabinet(statusLab[proj.status] || proj.status || "—")}</div>`;
+        if (proj.closed_at) {
+          html += `<div class="cabinet-meta-cell"><b>Дата закрытия</b>${escCabinet(
+            new Date(proj.closed_at).toLocaleString("ru-RU"),
+          )}</div>`;
+        }
+        html += "</div>";
+        html += "<h4>Описание</h4>";
+        html += `<p${proj.description ? "" : ' style="color:#888;"'}>${proj.description ? escCabinet(proj.description) : "Не указано"}</p>`;
+        html += "<h4>Задачи / объём работ</h4>";
+        html += `<p${proj.tasks ? "" : ' style="color:#888;"'}>${proj.tasks ? escCabinet(proj.tasks) : "Не указано"}</p>`;
+        html += "<h4>Команда (приняты по откликам)</h4>";
+        const filled = vacs.filter((v) => v && v.occupant);
+        if (!filled.length) {
+          html += '<p style="color:#777;">Пока никого не приняли на вакансии этого проекта.</p>';
+        } else {
+          for (const v of filled) {
+            const o = v.occupant;
+            const name = [o.first_name, o.last_name].filter(Boolean).join(" ").trim();
+            const who = name || o.desired_position || ("Участник #" + o.user_id);
+            const rid = o.resume_id != null ? String(o.resume_id) : "";
+            const aboutRaw = o.about_me != null ? String(o.about_me).trim() : "";
+            const aboutSnip = aboutRaw.length > 300 ? aboutRaw.slice(0, 300) + "…" : aboutRaw;
+            const cardHref =
+              rid && o.user_id != null
+                ? "./card_resume.html?id=" + encodeURIComponent(rid) + "&user_id=" + encodeURIComponent(String(o.user_id))
+                : rid
+                  ? "./card_resume.html?id=" + encodeURIComponent(rid)
+                  : "";
+            html += '<div class="cabinet-team-row">';
+            html += '<div class="cabinet-member-main">';
+            html += `<div class="cabinet-member-head"><b>${escCabinet(v.role_name || "Должность")}</b> — ${escCabinet(who)}</div>`;
+            html += '<div class="cabinet-member-meta">';
+            html += `<span><b>Желаемая должность:</b> ${escCabinet(o.desired_position || "—")}</span>`;
+            html += `<span><b>Опыт работы:</b> ${escCabinet(mapExpCab(o.computed_experience_level))}</span>`;
+            if (commProjCabinet) {
+              html += `<span><b>Формат работы:</b> ${escCabinet(mapWorkCab(o.work_format))}</span>`;
+              html += `<span><b>Занятость:</b> ${escCabinet(mapCommitCab(o.commitment_level))}</span>`;
+            }
+            html += `<span><b>График:</b> ${escCabinet(mapSchedCab(o.schedule))}</span>`;
+            if (commProjCabinet) {
+              html += `<span><b>Заработная плата (в рублях):</b> ${escCabinet(rubCab(o.salary_amount))}</span>`;
+              html += `<span><b>Тип зарплаты:</b> ${escCabinet(salTypeCab(o.salary_type))}</span>`;
+              html += `<span><b>Тип договора:</b> ${escCabinet(mapContractCab(o.contract_type))}</span>`;
+            }
+            html += "</div>";
+            if (aboutSnip) {
+              html += `<div class="cabinet-member-about"><b>О себе:</b> ${escCabinet(aboutSnip)}</div>`;
+            }
+            if (cardHref) {
+              html += `<div class="cabinet-member-actions"><a class="cabinet-member-link" href="${cardHref}">Открыть полное резюме</a></div>`;
+            }
+            html += "</div>";
+            if (rid && !isClosed) {
+              html +=
+                `<button type="button" class="cabinet-remove-member" data-project-id="${escCabinet(projectId)}" data-remove-resume-id="${escCabinet(rid)}" data-member-label="${escCabinet(who)}">Исключить из проекта</button>`;
+            }
+            html += "</div>";
+          }
+        }
+        if (isClosed && vacs.length) {
+          html += "<h4>Вакансии проекта</h4>";
+          html += '<p style="color:#666;font-size:13px;margin:-6px 0 10px;">Карточки вакансий на момент закрытия.</p>';
+          for (const v of vacs) {
+            if (!v) continue;
+            html += '<div style="margin-bottom:14px;padding:12px;border:1px solid #ece8e3;border-radius:10px;background:#faf9f7;">';
+            html += `<div style="font-weight:600;margin-bottom:6px;">${escCabinet(v.role_name || "Должность")}</div>`;
+            html += `<div style="font-size:13px;color:#444;margin-bottom:4px;"><b>Опыт:</b> ${escCabinet(mapExpCab(v.experience))}</div>`;
+            if (commProjCabinet) {
+              html += `<div style="font-size:13px;color:#444;"><b>Формат:</b> ${escCabinet(mapWorkCab(v.work_format))} · <b>Занятость:</b> ${escCabinet(
+                mapCommitCab(v.commitment_level),
+              )}</div>`;
+              html += `<div style="font-size:13px;color:#444;"><b>Зарплата:</b> ${escCabinet(rubCab(v.salary_amount))} (${escCabinet(
+                salTypeCab(v.salary_type),
+              )}) · <b>Договор:</b> ${escCabinet(mapContractCab(v.contract_type))}</div>`;
+            }
+            html += `<div style="font-size:13px;color:#444;"><b>График:</b> ${escCabinet(mapSchedCab(v.schedule))}</div>`;
+            const vd = v.description ? String(v.description).trim() : "";
+            html += `<div style="font-size:13px;margin-top:6px;color:#333;">${
+              vd ? escCabinet(vd) : '<span style="color:#888;">Описание вакансии не указано</span>'
+            }</div>`;
+            html += "</div>";
+          }
+        }
+        openCabinetDetailModal(proj.title || "Проект", html);
+      } catch {
+        openCabinetDetailModal("Ошибка", "<p>Ошибка соединения с сервером.</p>");
+      }
+    }
+
     async function loadMyProjects() {
       const projectsList = document.getElementById("projects-list");
       if (!projectsList) return;
@@ -1076,12 +1256,9 @@
         return tb - ta;
       });
 
-      myProjectsCount = projects.length;
-      const countSpan = document.getElementById("project-count");
-      if (countSpan) countSpan.textContent = String(projects.length);
-
       if (projects.length === 0) {
         projectsList.innerHTML = '<div class="empty-state">У вас пока нет проектов. Нажмите «Создать проект»</div>';
+        void refreshMyProjectsCount();
         return;
       }
 
@@ -1191,6 +1368,7 @@
                   if (r.ok) {
                     showToast("Проект закрыт", "success");
                     await loadMyProjects();
+                    void loadClosedProjects();
                   } else {
                     const err = await r.json().catch(() => ({}));
                     showToast("Ошибка: " + (err.detail || "Не удалось закрыть проект"), "error");
@@ -1206,112 +1384,10 @@
       });
 
       projectsList.querySelectorAll("[data-preview-project]").forEach((btn) => {
-        btn.addEventListener("click", async () => {
+        btn.addEventListener("click", () => {
           const pid = btn.getAttribute("data-preview-project");
           if (!pid) return;
-          openCabinetDetailModal("Загрузка…", '<p style="color:#888;">Загрузка…</p>');
-          try {
-            const cityMap = await loadCitiesCabinetMap();
-            const r = await fetch(API_BASE_URL + "/my_project/" + encodeURIComponent(pid), { credentials: "include" });
-            if (!r.ok) {
-              openCabinetDetailModal("Ошибка", "<p>Не удалось загрузить проект.</p>");
-              return;
-            }
-            const data = await r.json();
-            const proj = data.project || {};
-            const vacs = Array.isArray(data.vacancies) ? data.vacancies : [];
-            const intentLab = { commercial: "Коммерческий", noncommercial: "Учебный" };
-            const statusLab = { active: "Активен", paused: "Не активен", close: "Закрыт", deleted: "Удалён" };
-            const mapExpCab = (x) =>
-              ({ none: "Без опыта", "<1": "До 1 года", "1-3": "1–3 года", "3-6": "3–6 лет", "6+": "6+ лет" })[x] || "—";
-            const mapWorkCab = (x) =>
-              ({ remote: "Удалённо", office: "В офисе", hybrid: "Гибрид" })[x] || "—";
-            const mapCommitCab = (x) =>
-              ({
-                full_time: "Полный день",
-                part_time: "Неполный день",
-                side_project: "Подработка / гибкий формат",
-              })[x] || "—";
-            const mapSchedCab = (x) =>
-              ({ "5/2": "5/2", "2/2": "2/2", "4/2": "4/2", "3/3": "3/3" })[x] || "—";
-            const mapContractCab = (x) =>
-              ({ gph: "ГПХ", tk: "ТК РФ", internship: "Стажировка" })[x] || "—";
-            const salTypeCab = (t) =>
-              t === "per_project" ? "За проект" : (t === "monthly" ? "В месяц" : "—");
-            function rubCab(v) {
-              if (v == null || v === "") return "—";
-              const n = Number(v);
-              return Number.isFinite(n) ? n.toLocaleString("ru-RU") + " ₽" : "—";
-            }
-            const cityTitle =
-              proj.city_id != null && proj.city_id !== ""
-                ? cityMap[String(proj.city_id)] || `Город #${proj.city_id}`
-                : null;
-            const commProjCabinet = proj.employment_intent === "commercial";
-            let html = "";
-            html += '<div class="cabinet-detail-meta-grid">';
-            html += `<div class="cabinet-meta-cell"><b>Компания</b>${escCabinet(proj.company_name || "—")}</div>`;
-            html += `<div class="cabinet-meta-cell"><b>Город</b>${escCabinet(cityTitle || "—")}</div>`;
-            html += `<div class="cabinet-meta-cell"><b>Тип проекта</b>${escCabinet(intentLab[proj.employment_intent] || proj.employment_intent || "—")}</div>`;
-            html += `<div class="cabinet-meta-cell"><b>Статус</b>${escCabinet(statusLab[proj.status] || proj.status || "—")}</div>`;
-            html += "</div>";
-            html += "<h4>Описание</h4>";
-            html += `<p${proj.description ? "" : ' style="color:#888;"'}">${proj.description ? escCabinet(proj.description) : "Не указано"}</p>`;
-            html += "<h4>Задачи / объём работ</h4>";
-            html += `<p${proj.tasks ? "" : ' style="color:#888;"'}">${proj.tasks ? escCabinet(proj.tasks) : "Не указано"}</p>`;
-            html += "<h4>Команда (приняты по откликам)</h4>";
-            const filled = vacs.filter((v) => v && v.occupant);
-            if (!filled.length) {
-              html += '<p style="color:#777;">Пока никого не приняли на вакансии этого проекта.</p>';
-            } else {
-              for (const v of filled) {
-                const o = v.occupant;
-                const name = [o.first_name, o.last_name].filter(Boolean).join(" ").trim();
-                const who = name || o.desired_position || ("Участник #" + o.user_id);
-                const rid = o.resume_id != null ? String(o.resume_id) : "";
-                const aboutRaw = o.about_me != null ? String(o.about_me).trim() : "";
-                const aboutSnip = aboutRaw.length > 300 ? aboutRaw.slice(0, 300) + "…" : aboutRaw;
-                const cardHref =
-                  rid && o.user_id != null
-                    ? "./card_resume.html?id=" + encodeURIComponent(rid) + "&user_id=" + encodeURIComponent(String(o.user_id))
-                    : rid
-                      ? "./card_resume.html?id=" + encodeURIComponent(rid)
-                      : "";
-                html += '<div class="cabinet-team-row">';
-                html += '<div class="cabinet-member-main">';
-                html += `<div class="cabinet-member-head"><b>${escCabinet(v.role_name || "Должность")}</b> — ${escCabinet(who)}</div>`;
-                html += '<div class="cabinet-member-meta">';
-                html += `<span><b>Желаемая должность:</b> ${escCabinet(o.desired_position || "—")}</span>`;
-                html += `<span><b>Опыт работы:</b> ${escCabinet(mapExpCab(o.computed_experience_level))}</span>`;
-                if (commProjCabinet) {
-                  html += `<span><b>Формат работы:</b> ${escCabinet(mapWorkCab(o.work_format))}</span>`;
-                  html += `<span><b>Занятость:</b> ${escCabinet(mapCommitCab(o.commitment_level))}</span>`;
-                }
-                html += `<span><b>График:</b> ${escCabinet(mapSchedCab(o.schedule))}</span>`;
-                if (commProjCabinet) {
-                  html += `<span><b>Заработная плата (в рублях):</b> ${escCabinet(rubCab(o.salary_amount))}</span>`;
-                  html += `<span><b>Тип зарплаты:</b> ${escCabinet(salTypeCab(o.salary_type))}</span>`;
-                  html += `<span><b>Тип договора:</b> ${escCabinet(mapContractCab(o.contract_type))}</span>`;
-                }
-                html += "</div>";
-                if (aboutSnip) {
-                  html += `<div class="cabinet-member-about"><b>О себе:</b> ${escCabinet(aboutSnip)}</div>`;
-                }
-                if (cardHref) {
-                  html += `<div class="cabinet-member-actions"><a class="cabinet-member-link" href="${cardHref}">Открыть полное резюме</a></div>`;
-                }
-                html += "</div>";
-                if (rid) {
-                  html +=
-                    `<button type="button" class="cabinet-remove-member" data-project-id="${escCabinet(pid)}" data-remove-resume-id="${escCabinet(rid)}" data-member-label="${escCabinet(who)}">Исключить из проекта</button>`;
-                }
-                html += "</div>";
-              }
-            }
-            openCabinetDetailModal(proj.title || "Проект", html);
-          } catch {
-            openCabinetDetailModal("Ошибка", "<p>Ошибка соединения с сервером.</p>");
-          }
+          void renderManagerProjectCabinetModal(pid);
         });
       });
 
@@ -1359,6 +1435,56 @@
           );
         });
       });
+      void refreshMyProjectsCount();
+    }
+
+    async function loadClosedProjects() {
+      const listEl = document.getElementById("closed-projects-list");
+      if (!listEl) return;
+      listEl.innerHTML = '<div class="empty-state" style="color:#aaa;">Загрузка…</div>';
+      try {
+        const response = await fetch(API_BASE_URL + "/my_closed_projects", { credentials: "include" });
+        if (!response.ok) {
+          listEl.innerHTML = '<div class="empty-state">Не удалось загрузить закрытые проекты</div>';
+          return;
+        }
+        const projects = await response.json();
+        if (!Array.isArray(projects) || projects.length === 0) {
+          listEl.innerHTML = '<div class="empty-state">Закрытых проектов пока нет</div>';
+          return;
+        }
+        const safe = (v) => (v === null || v === undefined) ? "" : String(v);
+        const esc = (s) => safe(s).replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+        const intentLabel = { commercial: "Коммерческий", noncommercial: "Учебный" };
+        listEl.innerHTML = projects.map((p) => {
+          const id = p && p.id !== undefined ? String(p.id) : "";
+          const title = p?.title || (id ? `Проект #${id}` : "Проект");
+          const intent = intentLabel[p?.employment_intent] || p?.employment_intent || "—";
+          const closedAt = p?.closed_at ? new Date(p.closed_at).toLocaleString("ru-RU") : "—";
+          const descRaw = p?.description ? String(p.description).trim() : "";
+          const descriptionBlock = descRaw
+            ? `<div class="project-info project-desc-clamp" style="margin-top:6px;color:#555;">${esc(descRaw)}</div>`
+            : "";
+          return `
+            <div class="project-card" style="display:flex;justify-content:space-between;gap:12px;align-items:center;">
+              <div style="flex:1;min-width:0;">
+                <button type="button" class="cabinet-item-title-btn" data-preview-closed-project="${esc(id)}" title="Подробнее о проекте">${esc(title)}</button>
+                <div class="project-info"><b>Тип:</b> ${esc(intent)}</div>
+                <div class="project-info"><b>Закрыт:</b> ${esc(closedAt)}</div>
+                ${descriptionBlock}
+              </div>
+            </div>`;
+        }).join("");
+        listEl.querySelectorAll("[data-preview-closed-project]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const pid = btn.getAttribute("data-preview-closed-project");
+            if (!pid) return;
+            void renderManagerProjectCabinetModal(pid);
+          });
+        });
+      } catch {
+        listEl.innerHTML = '<div class="empty-state">Ошибка соединения с сервером</div>';
+      }
     }
 
     async function savePersonalData() {
@@ -1504,7 +1630,7 @@
         roleToggle.querySelectorAll(".role-toggle__btn").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
         if (role === "Ищу вакансию") {
-          window.location.href = "./account_employee.html";
+          window.location.href = "./account_employee.html?cabinet=" + cabinetParamForActiveTab();
         }
       });
     }
@@ -1556,6 +1682,11 @@
     if (createProjectLink) {
       createProjectLink.addEventListener("click", async (e) => {
         e.preventDefault();
+        const inc = await window.tpFetchProfileIncompleteMessage(API_BASE_URL);
+        if (inc) {
+          showToast(inc, "warning");
+          return;
+        }
         await refreshMyProjectsCount();
         if (myProjectsCount >= TP_PROJECTS_MAX) {
           showToast(
@@ -1571,7 +1702,12 @@
     }
     if (projectTypeCancel) projectTypeCancel.addEventListener("click", closeProjectTypeModal);
     if (projectTypeContinue) {
-      projectTypeContinue.addEventListener("click", () => {
+      projectTypeContinue.addEventListener("click", async () => {
+        const inc = await window.tpFetchProfileIncompleteMessage(API_BASE_URL);
+        if (inc) {
+          showToast(inc, "warning");
+          return;
+        }
         const selected = document.querySelector('input[name="project-type"]:checked');
         const value = selected ? selected.value : "com";
         try { localStorage.setItem("tp_project_target", value); } catch (_) {}
@@ -1678,7 +1814,7 @@
     try {
       const savedRole = localStorage.getItem("tp_role");
       if (savedRole === "Ищу вакансию") {
-        window.location.replace("./account_employee.html");
+        window.location.replace("./account_employee.html?cabinet=list");
         return;
       }
     } catch (_) {}
@@ -1694,6 +1830,12 @@
     void (async function initAccount() {
       await loadCurrentUser();
       await loadPersonalData();
+      try {
+        const cab = new URLSearchParams(window.location.search).get("cabinet");
+        if (cab === "list" || cab === "projects" || cab === "resumes") showMyProjects();
+        else if (cab === "closed") showClosedProjectsTab();
+        else if (cab === "personal") showPersonal();
+      } catch (_) {}
     })();
   })();
 </script>

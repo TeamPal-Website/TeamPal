@@ -6,7 +6,7 @@ from src.enums import EmploymentIntent, ProjectsStatus
 from src.models.profiles import ProfilesOrm
 from src.models.projects import ProjectsOrm, ProjectVacancyOrm
 from src.repositories.base import BaseRepository
-from src.schemas.projects import Project
+from src.schemas.projects import ClosedProjectParticipationItem, Project
 from src.schemas.search_public import ProjectSearchItem
 
 
@@ -26,14 +26,98 @@ class ProjectsRepository(BaseRepository):
             for row in result.scalars().all()
         ]
 
+    async def get_open_for_profile(self, profile_id: int) -> list[Project]:
+        query = (
+            select(self.model)
+            .where(
+                ProjectsOrm.profile_id == profile_id,
+                ProjectsOrm.status.in_(
+                    (ProjectsStatus.ACTIVE, ProjectsStatus.PAUSED),
+                ),
+            )
+            .order_by(ProjectsOrm.created_at.desc(), ProjectsOrm.id.desc())
+        )
+        result = await self.session.execute(query)
+        return [
+            Project.model_validate(row, from_attributes=True)
+            for row in result.scalars().all()
+        ]
+
+    async def get_closed_for_profile(self, profile_id: int) -> list[Project]:
+        query = (
+            select(self.model)
+            .where(
+                ProjectsOrm.profile_id == profile_id,
+                ProjectsOrm.status == ProjectsStatus.CLOSE,
+            )
+            .order_by(
+                ProjectsOrm.closed_at.desc().nullslast(),
+                ProjectsOrm.created_at.desc(),
+                ProjectsOrm.id.desc(),
+            )
+        )
+        result = await self.session.execute(query)
+        return [
+            Project.model_validate(row, from_attributes=True)
+            for row in result.scalars().all()
+        ]
+
+    async def closed_participations_for_user(
+       self, user_id: int
+    ) -> list[ClosedProjectParticipationItem]:
+        query = (
+            select(self.model)
+            .where(
+                ProjectsOrm.status == ProjectsStatus.CLOSE,
+                ProjectsOrm.close_member_ids.contains([user_id]),
+            )
+            .order_by(
+                ProjectsOrm.closed_at.desc().nullslast(),
+                ProjectsOrm.created_at.desc(),
+                ProjectsOrm.id.desc(),
+            )
+        )
+        result = await self.session.execute(query)
+        rows = result.scalars().all()
+        items: list[ClosedProjectParticipationItem] = []
+        for row in rows:
+            proj = Project.model_validate(row, from_attributes=True)
+            my_resume_ids: list[int] = []
+            raw = row.close_participants
+            if isinstance(raw, list):
+                for entry in raw:
+                    if not isinstance(entry, dict):
+                        continue
+                    try:
+                        uid = int(entry["user_id"])
+                        rid = int(entry["resume_id"])
+                    except (KeyError, TypeError, ValueError):
+                        continue
+                    if uid == user_id:
+                        my_resume_ids.append(rid)
+            items.append(
+                ClosedProjectParticipationItem(
+                    project=proj, my_resume_ids=my_resume_ids
+                )
+            )
+        return items
+
     async def set_close(
-        self, project_id: int, profile_id: int, close_member_ids: list[int]
+        self,
+        project_id: int,
+        profile_id: int,
+        close_member_ids: list[int],
+        close_participants: list[dict],
     ) -> None:
+        now = datetime.utcnow()
         await self.session.execute(
             update(ProjectsOrm)
             .where(ProjectsOrm.id == project_id, ProjectsOrm.profile_id == profile_id)
             .values(
-                status=ProjectsStatus.CLOSE.value, close_member_ids=close_member_ids
+                status=ProjectsStatus.CLOSE.value,
+                close_member_ids=close_member_ids,
+                close_participants=close_participants,
+                closed_at=now,
             )
         )
 

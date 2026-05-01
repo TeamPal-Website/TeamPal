@@ -211,7 +211,7 @@
       <button class="burger" id="burger-btn" type="button" aria-label="Меню"><span></span><span></span><span></span></button>
       <nav class="header-menu" id="header-menu">
         <div class="header-menu__title">Меню</div>
-        <button class="header-menu__item" type="button" data-nav-employee="./account_employee.html" data-nav-manager="./account_manager.html">Личный кабинет</button>
+        <button class="header-menu__item" type="button" data-nav-employee="./account_employee.html?cabinet=list" data-nav-manager="./account_manager.html?cabinet=list">Личный кабинет</button>
         <button class="header-menu__item" type="button" data-nav-employee="./search_project.html" data-nav-manager="./search_resume.html">Поиск</button>
         <button class="header-menu__item" type="button" data-nav="./notifications.html">Уведомления</button>
         <button class="header-menu__exit" type="button" id="menu-exit">Выйти</button>
@@ -235,6 +235,7 @@
       <div class="apps-tabs" id="apps-tabs-manager" role="tablist">
         <button type="button" class="apps-tab active" data-tab="in" role="tab">Входящие отклики</button>
         <button type="button" class="apps-tab" data-tab="out" role="tab">Исходящие отклики</button>
+        <button type="button" class="apps-tab" data-tab="msg" role="tab">Сообщения</button>
         <button type="button" class="apps-tab" data-tab="hist" role="tab">История</button>
       </div>
 
@@ -245,6 +246,10 @@
       <div id="apps-panel-mgr-out" class="apps-tab-panel hidden">
         <p class="section-hint" style="margin-top:0;">Вы откликались на вакансии других работодателей — активные отклики и участие.</p>
         <div id="applications-list-manager-outgoing-active"></div>
+      </div>
+      <div id="apps-panel-mgr-msg" class="apps-tab-panel hidden">
+        <p class="section-hint" style="margin-top:0;">Уведомления по откликам на ваши проекты.</p>
+        <div id="applications-list-manager-messages"></div>
       </div>
       <div id="apps-panel-mgr-hist" class="apps-tab-panel hidden">
         <p class="section-hint" style="margin-top:0;">Завершённые отклики по выбранным проектам и архив ваших откликов как соискателя.</p>
@@ -564,9 +569,9 @@
   function resolveAccountHref() {
     try {
       const r = localStorage.getItem("tp_role");
-      if (r === "Ищу сотрудника") return "./account_manager.html";
+      if (r === "Ищу сотрудника") return "./account_manager.html?cabinet=list";
     } catch (_) {}
-    return "./account_employee.html";
+    return "./account_employee.html?cabinet=list";
   }
 
   const appsNavBack = document.getElementById("apps-nav-back");
@@ -589,7 +594,9 @@
     });
     document.getElementById("apps-panel-mgr-in").classList.toggle("hidden", tab !== "in");
     document.getElementById("apps-panel-mgr-out").classList.toggle("hidden", tab !== "out");
+    document.getElementById("apps-panel-mgr-msg").classList.toggle("hidden", tab !== "msg");
     document.getElementById("apps-panel-mgr-hist").classList.toggle("hidden", tab !== "hist");
+    if (tab === "msg") void loadManagerMessages();
   }
 
   function switchEmployeeAppsTab(tab) {
@@ -959,6 +966,61 @@
         return "Приглашение в проект: " + project;
       default:
         return String(n.event || "Событие");
+    }
+  }
+
+  function notificationMessageLineManager(n) {
+    const p = n.payload || {};
+    const project = p.project_title || (p.project_id != null ? "Проект #" + p.project_id : "Проект");
+    const rolePart = p.role_name ? String(p.role_name) + " · " : "";
+    switch (n.event) {
+      case "application_received":
+        return "Новый отклик: " + rolePart + project;
+      case "application_accepted":
+        if (p.invite_accepted) return "Кандидат принял приглашение: " + project;
+        return "Событие по проекту: " + project;
+      case "application_cancelled":
+        if (p.reason === "project_closed") return "Проект закрыт, отклик отменён: " + project;
+        if (p.reason === "user_left") return "Участник покинул проект: " + project;
+        if (p.reason === "user_withdrawn") return "Кандидат отозвал отклик: " + project;
+        return "Отклик отменён: " + project;
+      default:
+        return String(n.event || "Событие");
+    }
+  }
+
+  async function loadManagerMessages() {
+    const el = document.getElementById("applications-list-manager-messages");
+    if (!el) return;
+    el.innerHTML = '<div class="empty-state" style="color:#aaa;">Загрузка…</div>';
+    try {
+      const r = await fetch(API_BASE_URL + "/notifications?per_page=50", { credentials: "include" });
+      if (!r.ok) {
+        el.innerHTML = '<div class="empty-state">Не удалось загрузить уведомления</div>';
+        return;
+      }
+      const arr = await r.json();
+      const filtered = Array.isArray(arr)
+        ? arr.filter((n) => {
+            if (n.event === "application_received") return true;
+            if (n.event === "application_cancelled") return true;
+            if (n.event === "application_accepted" && n.payload && n.payload.invite_accepted) return true;
+            return false;
+          })
+        : [];
+      if (!filtered.length) {
+        el.innerHTML = '<div class="empty-state">Пока нет сообщений по откликам</div>';
+        return;
+      }
+      el.innerHTML = filtered
+        .map((n) => {
+          const dt = n.created_at ? new Date(n.created_at).toLocaleString("ru-RU") : "";
+          const unread = n.is_read === false ? " unread" : "";
+          return `<div class="apps-msg-item${unread}">${esc2(notificationMessageLineManager(n))}<div class="apps-msg-date">${esc2(dt)}</div></div>`;
+        })
+        .join("");
+    } catch {
+      el.innerHTML = '<div class="empty-state">Ошибка соединения</div>';
     }
   }
 

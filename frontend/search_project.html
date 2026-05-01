@@ -781,13 +781,7 @@
 
     const EXP_LABELS = { none: "Без опыта", "<1": "До 1 года", "1-3": "1–3 года", "3-6": "3–6 лет", "6+": "6+ лет" };
     const WORK_LABELS = { remote: "Удалённо", office: "В офисе", hybrid: "Гибрид" };
-    const COMMIT_LABELS = {
-      full_time: "Полный день",
-      part_time: "Неполный день",
-      side_project: "Подработка / гибкий формат",
-    };
     const INTENT_LABELS = { commercial: "Коммерческий", noncommercial: "Учебный" };
-    const CONTRACT_LABELS = { gph: "ГПХ", tk: "ТК РФ", internship: "Стажировка" };
     const POSTED_LABELS = { "7": "за 7 дн.", "14": "за 14 дн.", "30": "за 30 дн." };
 
     function vacancySalaryRub(amount) {
@@ -796,9 +790,6 @@
     }
     function vacancySalaryType(t) {
       return t === "per_project" ? "За проект" : t === "monthly" ? "В месяц" : "—";
-    }
-    function vacancyScheduleLabel(sch) {
-      return ({ "5/2": "5/2", "2/2": "2/2", "4/2": "4/2", "3/3": "3/3" })[sch] || "—";
     }
 
     let _citiesMap = {};
@@ -922,26 +913,25 @@
         const roleName = _rolesMap[String(v.role_type_id)] || "Должность #" + v.role_type_id;
         const cityName = _citiesMap[String(v.project_city_id)] || "";
         const commProj = v.project_employment_intent === "commercial";
-        const metaItems = [];
+        const expLabel = EXP_LABELS[v.experience] || "—";
+        let metaItems;
         if (commProj) {
-          metaItems.push(
-            ["Заработная плата (в рублях)", vacancySalaryRub(v.salary_amount)],
-            ["Тип зарплаты", vacancySalaryType(v.salary_type)],
-          );
-        }
-        metaItems.push(
-          ["Город", cityName || "—"],
-          ["Опыт работы", EXP_LABELS[v.experience] || "—"],
-        );
-        if (commProj) {
-          metaItems.push(
+          const salaryRub = vacancySalaryRub(v.salary_amount);
+          const salaryTyp = vacancySalaryType(v.salary_type);
+          let salaryVal = "—";
+          if (salaryRub !== "—") salaryVal = salaryTyp !== "—" ? salaryRub + " · " + salaryTyp : salaryRub;
+          else if (salaryTyp !== "—") salaryVal = salaryTyp;
+          metaItems = [
+            ["Заработная плата", salaryVal],
             ["Формат работы", WORK_LABELS[v.work_format] || "—"],
-            ["Занятость", COMMIT_LABELS[v.commitment_level] || "—"],
-          );
-        }
-        metaItems.push(["График", vacancyScheduleLabel(v.schedule)]);
-        if (commProj) {
-          metaItems.push(["Тип договора", CONTRACT_LABELS[v.contract_type] || "—"]);
+            ["Город", cityName || "—"],
+            ["Опыт работы", expLabel],
+          ];
+        } else {
+          metaItems = [
+            ["Город", cityName || "—"],
+            ["Опыт работы", expLabel],
+          ];
         }
         return `
           <article class="card vacancy-card">

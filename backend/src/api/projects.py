@@ -11,8 +11,9 @@ from src.enums import (
 )
 from src.schemas.notifications import NotificationAdd
 from src.schemas.project_vacancies import ProjectVacancyAdd
-from src.schemas.projects import ProjectAdd, ProjectPatch, ProjectRequestAdd
+from src.schemas.projects import ClosedProjectParticipationItem, ProjectAdd, ProjectPatch, ProjectRequestAdd
 from src.schemas.search_public import ProjectSearchItem
+from src.utils.profile_completeness import profile_incomplete_message
 
 router = APIRouter(prefix="", tags=["Проекты"])
 
@@ -97,7 +98,32 @@ async def get_my_projects(
     profile = await db.profiles.get_one_or_none(user_id=user_id)
     if profile is None:
         raise HTTPException(status_code=404, detail="Профиль не найден")
-    return await db.projects.get_filtered_not_deleted(profile_id=profile.id)
+    return await db.projects.get_open_for_profile(profile_id=profile.id)
+
+
+@router.get("/my_closed_projects")
+async def get_my_closed_projects(
+    db: DBDep,
+    user_id: UserIdDep,
+):
+    profile = await db.profiles.get_one_or_none(user_id=user_id)
+    if profile is None:
+        raise HTTPException(status_code=404, detail="Профиль не найден")
+    return await db.projects.get_closed_for_profile(profile_id=profile.id)
+
+
+@router.get(
+    "/my_closed_projects_as_member",
+    response_model=list[ClosedProjectParticipationItem],
+)
+async def get_my_closed_projects_as_member(
+    db: DBDep,
+    user_id: UserIdDep,
+):
+    profile = await db.profiles.get_one_or_none(user_id=user_id)
+    if profile is None:
+        raise HTTPException(status_code=404, detail="Профиль не найден")
+    return await db.projects.closed_participations_for_user(user_id)
 
 
 @router.get("/projects", response_model=list[ProjectSearchItem])
@@ -159,6 +185,10 @@ async def create_project(
     profile = await db.profiles.get_one_or_none(user_id=user_id)
     if profile is None:
         raise HTTPException(status_code=404, detail="Профиль не найден")
+
+    inc = profile_incomplete_message(profile)
+    if inc:
+        raise HTTPException(status_code=409, detail=inc)
 
     projects_count = await db.projects.count(profile_id=profile.id)
     if projects_count >= PROJECTS_MAX_PER_PROFILE:
@@ -298,9 +328,13 @@ async def close_project(
             detail="Нельзя закрыть проект: не все вакансии заняты. Удалите незанятые вакансии или дождитесь набора.",
         )
 
-    member_user_ids = await db.vacancy_assignments.get_member_user_ids_for_project(
+    snapshots = await db.vacancy_assignments.get_active_member_snapshots_for_project(
         project_id
     )
+    member_user_ids = sorted({uid for uid, _ in snapshots})
+    close_participants = [
+        {"user_id": uid, "resume_id": rid} for uid, rid in snapshots
+    ]
 
     await db.vacancy_assignments.release_all_for_project(project_id)
 
@@ -319,6 +353,7 @@ async def close_project(
         project_id=project_id,
         profile_id=profile.id,
         close_member_ids=member_user_ids,
+        close_participants=close_participants,
     )
 
     for uid in notify_uids:

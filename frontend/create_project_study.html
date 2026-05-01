@@ -677,10 +677,18 @@
 <script>
 (function () {
   const TP_PROJECTS_MAX = 10;
-  fetch(API_BASE_URL + "/my_projects", { credentials: "include" })
-    .then(function (r) { return r.ok ? r.json() : []; })
-    .then(function (arr) {
-      if (!Array.isArray(arr) || arr.length < TP_PROJECTS_MAX) return;
+  Promise.all([
+    fetch(API_BASE_URL + "/my_projects", { credentials: "include" }),
+    fetch(API_BASE_URL + "/my_closed_projects", { credentials: "include" }),
+  ])
+    .then(function (responses) {
+      return Promise.all(responses.map(function (r) { return r.ok ? r.json() : []; }));
+    })
+    .then(function (pairs) {
+      const openArr = pairs[0];
+      const closedArr = pairs[1];
+      const n = (Array.isArray(openArr) ? openArr.length : 0) + (Array.isArray(closedArr) ? closedArr.length : 0);
+      if (n < TP_PROJECTS_MAX) return;
       try {
         sessionStorage.setItem(
           "tp_flash_error",
