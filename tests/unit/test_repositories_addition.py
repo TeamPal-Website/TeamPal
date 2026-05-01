@@ -132,3 +132,128 @@ class TestProfilesRepository:
             patch_data, exclude_unset=True, user_id=99999
         )
         assert rows == 0
+
+
+class TestSkillsRepository:
+
+    async def test_add_skill(self, db_session):
+        from src.repositories.skills import SkillsRepository
+        from src.schemas.skills import SkillAdd
+        
+        repo = SkillsRepository(db_session)
+        skill = await repo.add(SkillAdd(name="Python"))
+        await db_session.commit()
+        
+        assert skill.id is not None
+        assert skill.id > 0
+        assert skill.name == "Python"
+
+    async def test_get_one_or_none_existing(self, db_session):
+        from src.repositories.skills import SkillsRepository
+        from src.schemas.skills import SkillAdd
+        
+        repo = SkillsRepository(db_session)
+        created = await repo.add(SkillAdd(name="JavaScript"))
+        await db_session.commit()
+        
+        found = await repo.get_one_or_none(id=created.id)
+        assert found is not None
+        assert found.id == created.id
+
+    async def test_get_one_or_none_nonexistent(self, db_session):
+        from src.repositories.skills import SkillsRepository
+        
+        repo = SkillsRepository(db_session)
+        result = await repo.get_one_or_none(id=99999)
+        assert result is None
+
+    async def test_get_all(self, db_session):
+        from src.repositories.skills import SkillsRepository
+        from src.schemas.skills import SkillAdd
+        
+        repo = SkillsRepository(db_session)
+        await repo.add(SkillAdd(name="Python"))
+        await repo.add(SkillAdd(name="JavaScript"))
+        await db_session.commit()
+        
+        all_skills = await repo.get_all()
+        assert len(all_skills) == 2
+
+    async def test_delete_skill(self, db_session):
+        from src.repositories.skills import SkillsRepository
+        from src.schemas.skills import SkillAdd
+        
+        repo = SkillsRepository(db_session)
+        created = await repo.add(SkillAdd(name="Go"))
+        await db_session.commit()
+        
+        await repo.delete(id=created.id)
+        await db_session.commit()
+        
+        result = await repo.get_one_or_none(id=created.id)
+        assert result is None
+
+
+class TestRolesDictionaryRepository:
+
+    async def test_add_role(self, db_session):
+        from src.repositories.roles_dictionary import RolesDictionaryRepository
+        from src.schemas.roles_dictionary import RoleDictionaryAdd
+        
+        repo = RolesDictionaryRepository(db_session)
+        role = await repo.add(RoleDictionaryAdd(name="Backend Developer"))
+        await db_session.commit()
+        
+        assert role.id is not None
+        assert role.id > 0
+        assert role.name == "Backend Developer"
+
+    async def test_get_one_or_none_existing(self, db_session):
+        from src.repositories.roles_dictionary import RolesDictionaryRepository
+        from src.schemas.roles_dictionary import RoleDictionaryAdd
+        
+        repo = RolesDictionaryRepository(db_session)
+        created = await repo.add(RoleDictionaryAdd(name="Frontend Developer"))
+        await db_session.commit()
+        
+        found = await repo.get_one_or_none(id=created.id)
+        assert found is not None
+        assert found.id == created.id
+
+    async def test_get_one_or_none_by_name(self, db_session):
+        from src.repositories.roles_dictionary import RolesDictionaryRepository
+        from src.schemas.roles_dictionary import RoleDictionaryAdd
+        
+        repo = RolesDictionaryRepository(db_session)
+        await repo.add(RoleDictionaryAdd(name="Designer"))
+        await db_session.commit()
+        
+        found = await repo.get_one_or_none(name="Designer")
+        assert found is not None
+        assert found.name == "Designer"
+
+    async def test_get_all(self, db_session):
+        from src.repositories.roles_dictionary import RolesDictionaryRepository
+        from src.schemas.roles_dictionary import RoleDictionaryAdd
+        
+        repo = RolesDictionaryRepository(db_session)
+        await repo.add(RoleDictionaryAdd(name="Developer"))
+        await repo.add(RoleDictionaryAdd(name="Designer"))
+        await db_session.commit()
+        
+        all_roles = await repo.get_all()
+        assert len(all_roles) == 2
+
+    async def test_delete_role(self, db_session):
+        from src.repositories.roles_dictionary import RolesDictionaryRepository
+        from src.schemas.roles_dictionary import RoleDictionaryAdd
+        
+        repo = RolesDictionaryRepository(db_session)
+        created = await repo.add(RoleDictionaryAdd(name="Manager"))
+        await db_session.commit()
+        
+        await repo.delete(id=created.id)
+        await db_session.commit()
+        
+        result = await repo.get_one_or_none(id=created.id)
+        assert result is None

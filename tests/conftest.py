@@ -94,3 +94,17 @@ async def city(client: AsyncClient):
 async def user_id(authenticated_client: AsyncClient):
     response = await authenticated_client.get("/auth/me")
     return response.json()["id"]
+
+
+@pytest.fixture
+async def role_id(client: AsyncClient):
+    """Создает тестовую роль для вакансий проекта."""
+    response = await client.post("/roles_dictionary", json={"name": "Разработчик"})
+    return response.json()["data"]["id"]
+
+
+@pytest.fixture
+async def skill_id(client: AsyncClient):
+    """Создает тестовый навык для резюме."""
+    response = await client.post("/skills", json={"name": "Python"})
+    return response.json()["data"]["id"]
