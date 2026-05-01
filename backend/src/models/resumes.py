@@ -127,6 +127,10 @@ class ResumeExperienceOrm(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     resume_id: Mapped[int] = mapped_column(ForeignKey("resumes.id", ondelete="CASCADE"))
     company_name: Mapped[str] = mapped_column(String(255))
+    role_type_id: Mapped[int | None] = mapped_column(
+        ForeignKey("roles_dictionary.id", ondelete="RESTRICT"),
+        nullable=True,
+    )
     position: Mapped[str] = mapped_column(String(255))
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     start_date: Mapped[date] = mapped_column(nullable=False)

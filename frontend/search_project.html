@@ -922,18 +922,27 @@
         const roleName = _rolesMap[String(v.role_type_id)] || "Должность #" + v.role_type_id;
         const cityName = _citiesMap[String(v.project_city_id)] || "";
         const commProj = v.project_employment_intent === "commercial";
-        const salaryRub = commProj ? vacancySalaryRub(v.salary_amount) : "—";
-        const salaryTypeStr = commProj ? vacancySalaryType(v.salary_type) : "—";
-        const metaItems = [
-          ["Заработная плата (в рублях)", salaryRub],
-          ["Тип зарплаты", salaryTypeStr],
+        const metaItems = [];
+        if (commProj) {
+          metaItems.push(
+            ["Заработная плата (в рублях)", vacancySalaryRub(v.salary_amount)],
+            ["Тип зарплаты", vacancySalaryType(v.salary_type)],
+          );
+        }
+        metaItems.push(
           ["Город", cityName || "—"],
           ["Опыт работы", EXP_LABELS[v.experience] || "—"],
-          ["Формат работы", WORK_LABELS[v.work_format] || "—"],
-          ["Занятость", COMMIT_LABELS[v.commitment_level] || "—"],
-          ["График", vacancyScheduleLabel(v.schedule)],
-          ["Тип договора", CONTRACT_LABELS[v.contract_type] || "—"],
-        ];
+        );
+        if (commProj) {
+          metaItems.push(
+            ["Формат работы", WORK_LABELS[v.work_format] || "—"],
+            ["Занятость", COMMIT_LABELS[v.commitment_level] || "—"],
+          );
+        }
+        metaItems.push(["График", vacancyScheduleLabel(v.schedule)]);
+        if (commProj) {
+          metaItems.push(["Тип договора", CONTRACT_LABELS[v.contract_type] || "—"]);
+        }
         return `
           <article class="card vacancy-card">
             <div class="vacancy-head">

@@ -204,8 +204,17 @@ async def create_resume(
 
     experiences = []
     for experience_data in resume_data.experiences:
+        role = await _require_active_role(db, experience_data.role_type_id)
         experience = await db.resume_experiences.add(
-            ResumeExperienceAdd(resume_id=resume.id, **experience_data.model_dump())
+            ResumeExperienceAdd(
+                resume_id=resume.id,
+                company_name=experience_data.company_name,
+                role_type_id=role.id,
+                position=role.name,
+                description=experience_data.description,
+                start_date=experience_data.start_date,
+                end_date=experience_data.end_date,
+            )
         )
         experiences.append(experience)
 

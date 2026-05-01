@@ -632,6 +632,7 @@
         }
 
         let occupiedSlots = 0;
+        const projectIsCommercial = project.employment_intent === "commercial";
         list.innerHTML = vacancies.map((v) => {
           const users = extractUsers(v);
           const occ = v.occupant;
@@ -647,7 +648,7 @@
           const metaEmp = mapEmployment(useResume ? occ.commitment_level : (v.commitment_level || v.employment));
           const metaSched = esc((useResume && occ.schedule != null ? occ.schedule : v.schedule) || "—");
           const metaContract = mapContract(useResume ? occ.contract_type : v.contract_type);
-          const commProj = project.employment_intent === "commercial";
+          const commProj = projectIsCommercial;
           const rubLine = commProj ? rubSalaryAmount(useResume ? occ.salary_amount : v.salary_amount) : "—";
           const typeLine = commProj ? salTypeLabelFn(useResume ? occ.salary_type : v.salary_type) : "—";
 

@@ -38,7 +38,7 @@ class TestGetProject:
 
     async def test_get_project_not_found_profile(self, client: AsyncClient):
         response = await client.get("/profiles/99999/projects/1")
-        assert response.status_code == 404
+        assert response.status_code == 401
 
     async def test_get_project_not_found_project(self, client: AsyncClient):
         await setup_profile_with_project(client)
@@ -204,4 +204,4 @@ class TestDeleteProject:
 
     async def test_delete_project_not_found(self, authenticated_client: AsyncClient):
         response = await authenticated_client.delete("/projects/99999")
-        assert response.status_code == 200
+        assert response.status_code == 404

@@ -409,10 +409,12 @@
       html += `<p>${rd.about_me ? esc2(rd.about_me) : '<span style="color:#888;">Не заполнено</span>'}</p>`;
       html += `<p><b>Тип резюме:</b> ${esc2(mapIntent(rd.employment_intent))}</p>`;
       html += `<p><b>Опыт:</b> ${esc2(mapExp(rd.computed_experience_level))}</p>`;
-      html += `<p><b>Формат:</b> ${esc2(mapWork(rd.work_format))} · <b>Занятость:</b> ${esc2(mapEmployment(rd.commitment_level))}</p>`;
-      html += `<p><b>График:</b> ${esc2(rd.schedule || "—")}</p>`;
-      html += `<p><b>Зарплатные ожидания:</b> ${esc2(salaryLine(rd.salary_amount, rd.salary_type))}</p>`;
-      html += `<p><b>Договор:</b> ${esc2(mapContract(rd.contract_type))}</p>`;
+      if (rd.employment_intent === "commercial") {
+        html += `<p><b>Формат:</b> ${esc2(mapWork(rd.work_format))} · <b>Занятость:</b> ${esc2(mapEmployment(rd.commitment_level))}</p>`;
+        html += `<p><b>График:</b> ${esc2(rd.schedule || "—")}</p>`;
+        html += `<p><b>Зарплатные ожидания:</b> ${esc2(salaryLine(rd.salary_amount, rd.salary_type))}</p>`;
+        html += `<p><b>Договор:</b> ${esc2(mapContract(rd.contract_type))}</p>`;
+      }
 
       if (rd.skill_names && rd.skill_names.length) {
         html += `<h4>Навыки</h4><ul>${rd.skill_names.map((n) => `<li>${esc2(n)}</li>`).join("")}</ul>`;

@@ -865,11 +865,6 @@
 
     function roleCardHtml(role, idx) {
       const rid = `rp-${idx}`;
-      const salRaw = role.salary_amount != null && role.salary_amount !== "" ? String(role.salary_amount) : "";
-      const salDisplay =
-        salRaw && typeof window.tpFormatSalaryGroupedForDisplay === "function"
-          ? window.tpFormatSalaryGroupedForDisplay(salRaw)
-          : salRaw;
       return `
         <div class="exp-entry${!role.role_type_id ? " is-new" : ""}" data-role-idx="${idx}">
           <div class="exp-entry-header">
@@ -894,45 +889,6 @@
                 <option value="1-3"${role.experience === "1-3" ? " selected" : ""}>1–3 года</option>
                 <option value="3-6"${role.experience === "3-6" ? " selected" : ""}>3–6 лет</option>
                 <option value="6+"${role.experience === "6+" ? " selected" : ""}>6+ лет</option>
-              </select>
-            </div>
-            <div class="exp-field">
-              <label for="${rid}-fmt">Формат</label>
-              <select id="${rid}-fmt" data-field="work_format">
-                <option value="">Не выбрано</option>
-                <option value="remote"${role.work_format === "remote" ? " selected" : ""}>Удалённо</option>
-                <option value="office"${role.work_format === "office" ? " selected" : ""}>В офисе</option>
-                <option value="hybrid"${role.work_format === "hybrid" ? " selected" : ""}>Гибрид</option>
-              </select>
-            </div>
-            <div class="exp-field">
-              <label for="${rid}-emp">Занятость</label>
-              <select id="${rid}-emp" data-field="employment">
-                <option value="">Не выбрано</option>
-                <option value="full_time"${role.employment === "full_time" ? " selected" : ""}>Полный день</option>
-                <option value="part_time"${role.employment === "part_time" ? " selected" : ""}>Неполный день</option>
-                <option value="side_project"${role.employment === "side_project" ? " selected" : ""}>Подработка / гибкий формат</option>
-              </select>
-            </div>
-            <div class="exp-field">
-              <label for="${rid}-sal">Заработная плата (в рублях)</label>
-              <input type="text" class="tp-salary-input" id="${rid}-sal" data-field="salary_amount" inputmode="numeric" autocomplete="off" placeholder="Например: 1 200 000" value="${escapeHtml(salDisplay)}">
-            </div>
-            <div class="exp-field">
-              <label for="${rid}-st">Тип зарплаты</label>
-              <select id="${rid}-st" data-field="salary_type">
-                <option value="">Не выбрано</option>
-                <option value="monthly"${role.salary_type === "monthly" ? " selected" : ""}>В месяц</option>
-                <option value="per_project"${role.salary_type === "per_project" ? " selected" : ""}>За проект</option>
-              </select>
-            </div>
-            <div class="exp-field exp-field-full">
-              <label for="${rid}-ct">Тип договора</label>
-              <select id="${rid}-ct" data-field="contract_type">
-                <option value="">Не выбрано</option>
-                <option value="gph"${role.contract_type === "gph" ? " selected" : ""}>ГПХ</option>
-                <option value="tk"${role.contract_type === "tk" ? " selected" : ""}>ТК РФ</option>
-                <option value="internship"${role.contract_type === "internship" ? " selected" : ""}>Стажировка</option>
               </select>
             </div>
             <div class="exp-field exp-field-full">
@@ -966,19 +922,12 @@
       };
       r.description = get('[data-field="description"]') || null;
       r.experience = get('[data-field="experience"]') || null;
-      r.work_format = get('[data-field="work_format"]') || null;
-      r.employment = get('[data-field="employment"]') || null;
+      r.work_format = null;
+      r.employment = null;
       r.schedule = null;
-      const salEl = card.querySelector('[data-field="salary_amount"]');
-      const salRaw = salEl ? salEl.value : "";
-      var salFn = window.tpParseAndValidateSalaryRaw;
-      const salParsed =
-        typeof salFn === "function"
-          ? salFn(salRaw)
-          : { ok: true, value: salRaw.trim() ? parseInt(String(salRaw).replace(/[\s\u00a0]/g, ""), 10) : null };
-      r.salary_amount = salParsed && salParsed.ok === true ? salParsed.value : null;
-      r.salary_type = get('[data-field="salary_type"]') || null;
-      r.contract_type = get('[data-field="contract_type"]') || null;
+      r.salary_amount = null;
+      r.salary_type = null;
+      r.contract_type = null;
     }
 
     function syncAllRolesFromDom() {
@@ -1012,9 +961,6 @@
         return;
       }
       rolesContainer.innerHTML = rolesArray.map((role, idx) => roleCardHtml(role, idx)).join("");
-      if (typeof window.tpBindSalaryGroupedInput === "function") {
-        rolesContainer.querySelectorAll(".tp-salary-input").forEach((el) => window.tpBindSalaryGroupedInput(el));
-      }
       rolesContainer.querySelectorAll(".btn-remove-exp").forEach((btn) => {
         btn.addEventListener("click", (e) => {
           e.preventDefault();
@@ -1117,36 +1063,6 @@
           showNotification('В вакансии должен быть хотя бы один навык', 'warning');
           return;
         }
-        for (let i = 0; i < rolesArray.length; i++) {
-          const card = rolesContainer && rolesContainer.querySelector('[data-role-idx="' + i + '"]');
-          const salEl = card && card.querySelector('[data-field="salary_amount"]');
-          if (salEl && salEl.validity && salEl.validity.badInput) {
-            showNotification(
-              "Вакансия " + (i + 1) + ": укажите сумму цифрами (можно с пробелами) или оставьте поле пустым.",
-              "error",
-              6000,
-            );
-            salEl.classList.add("inp-invalid");
-            return;
-          }
-          const salRaw = salEl ? salEl.value : "";
-          var salFn2 = window.tpParseAndValidateSalaryRaw;
-          const chk =
-            typeof salFn2 === "function"
-              ? salFn2(salRaw)
-              : { ok: true, value: null };
-          if (!chk || chk.ok !== true) {
-            showNotification(
-              "Вакансия " + (i + 1) + ": " + ((chk && chk.message) || "Укажите корректную сумму зарплаты или оставьте поле пустым."),
-              "error",
-              6000,
-            );
-            if (salEl) salEl.classList.add("inp-invalid");
-            return;
-          }
-          rolesArray[i].salary_amount = chk.value;
-        }
-
         const isAuth = await checkAuth();
         if (!isAuth) return;
 
@@ -1163,12 +1079,12 @@
             role_type_id:     r.role_type_id,
             description: r.description  || null,
             experience:       r.experience        || null,
-            work_format:      r.work_format       || null,
-            commitment_level: r.employment        || null,
+            work_format:      null,
+            commitment_level: null,
             schedule:         null,
-            salary_amount:    r.salary_amount     != null ? r.salary_amount : null,
-            salary_type:      r.salary_type       || null,
-            contract_type:    r.contract_type     || null,
+            salary_amount:    null,
+            salary_type:      null,
+            contract_type:    null,
             skill_ids:         Array.isArray(r.skill_ids) ? r.skill_ids : [],
           })),
         };

@@ -140,7 +140,7 @@ class TestCreateResume:
             "experiences": [
                 {
                     "company_name": "Tech Corp",
-                    "position": "Developer",
+                    "role_type_id": role_id,
                     "start_date": "2020-01-01",
                     "end_date": "2023-01-01",
                     "description": "Worked on projects",

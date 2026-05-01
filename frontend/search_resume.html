@@ -906,14 +906,18 @@
         ["Тип резюме", intentLabel(item.employmentIntent)],
         ["Статус поиска работы", resumeStatusLabel(item.status)],
         ["Опыт работы", EXP_BUCKET_LABELS[item.computedExp] || "—"],
-        ["Формат работы", WORK_FMT_SR[item.workFormat] || "—"],
-        ["Занятость", COMMIT_LABELS_SR[item.commitmentLevel] || "—"],
-        ["График", formatSchedule(item.schedule)],
-        ["Заработная плата (в рублях)", item.employmentIntent === "commercial" ? salaryAmountPlain(item.salaryAmount) : "—"],
-        ["Тип зарплаты", item.employmentIntent === "commercial" ? salaryTypePlain(item.salaryType) : "—"],
-        ["Тип договора", CONTRACT_LABELS_SR[item.contractType] || "—"],
-        ["Стек технологий / Скиллы", skillsStackSummary(item.skillsCount)],
       ];
+      if (item.employmentIntent === "commercial") {
+        rows.push(
+          ["Формат работы", WORK_FMT_SR[item.workFormat] || "—"],
+          ["Занятость", COMMIT_LABELS_SR[item.commitmentLevel] || "—"],
+          ["График", formatSchedule(item.schedule)],
+          ["Заработная плата (в рублях)", salaryAmountPlain(item.salaryAmount)],
+          ["Тип зарплаты", salaryTypePlain(item.salaryType)],
+          ["Тип договора", CONTRACT_LABELS_SR[item.contractType] || "—"],
+        );
+      }
+      rows.push(["Стек технологий / Скиллы", skillsStackSummary(item.skillsCount)]);
       if (layout === "modal") {
         return rows.map(([k, val]) => `<div><b>${escapeHtml(k)}</b>${escapeHtml(val)}</div>`).join("");
       }

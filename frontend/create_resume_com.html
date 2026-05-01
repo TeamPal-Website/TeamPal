@@ -835,6 +835,31 @@
         }
       } catch (_) {}
       refreshDesiredPositionSelect();
+      if (experiences.length) renderExperiences();
+    }
+
+    function expPositionRoleIdFromText(positionStr) {
+      const p = String(positionStr || "").trim();
+      if (!p) return "";
+      const exact = allRolesFromApi.find(function (r) { return r.name === p; });
+      if (exact) return String(exact.id);
+      const ci = allRolesFromApi.find(function (r) { return r.name.toLowerCase() === p.toLowerCase(); });
+      return ci ? String(ci.id) : "";
+    }
+
+    function expPositionOptionsInnerHtml(storedPosition, roleTypeIdState) {
+      var selId = "";
+      if (roleTypeIdState != null && roleTypeIdState !== "" && allRolesFromApi.some(function (r) { return String(r.id) === String(roleTypeIdState); })) {
+        selId = String(roleTypeIdState);
+      } else {
+        selId = expPositionRoleIdFromText(storedPosition);
+      }
+      let html = '<option value="">Не выбрано</option>';
+      allRolesFromApi.forEach(function (r) {
+        const sel = String(r.id) === selId ? " selected" : "";
+        html += '<option value="' + r.id + '"' + sel + ">" + escapeHtml(r.name) + "</option>";
+      });
+      return html;
     }
 
     function refreshResumeCitySelect() {
@@ -985,7 +1010,7 @@
         return;
       }
       experienceListDiv.innerHTML = experiences.map((exp, idx) => {
-        const emptySlot = !(String(exp.company || '').trim()) && !(String(exp.position || '').trim()) && !(String(exp.dateStart || '').trim());
+        const emptySlot = !(String(exp.company || '').trim()) && !exp.role_type_id && !(String(exp.dateStart || '').trim());
         return `
         <div class="exp-entry${emptySlot ? ' is-new' : ''}" data-exp-idx="${idx}">
           <div class="exp-entry-header">
@@ -998,8 +1023,8 @@
               <input type="text" class="exp-company-input" maxlength="255" value="${escapeHtml(exp.company)}" placeholder="ООО Рога и Копыта">
             </div>
             <div class="exp-field">
-              <label>Должность <span class="req-star" aria-hidden="true">*</span></label>
-              <input type="text" class="exp-position-input" maxlength="255" value="${escapeHtml(exp.position)}" placeholder="Backend Developer">
+              <label for="exp-pos-idx-${idx}">Должность <span class="req-star" aria-hidden="true">*</span></label>
+              <select id="exp-pos-idx-${idx}" class="exp-position-select"${allRolesFromApi.length === 0 ? " disabled" : ""}>${expPositionOptionsInnerHtml(exp.position, exp.role_type_id)}</select>
             </div>
             <div class="exp-field exp-field--date">
               <label>Дата начала <span class="req-star" aria-hidden="true">*</span></label>
@@ -1024,14 +1049,17 @@
       });
       document.querySelectorAll('.exp-entry').forEach((item, idx) => {
         const companyInput = item.querySelector('.exp-company-input');
-        const positionInput = item.querySelector('.exp-position-input');
+        const positionSelect = item.querySelector('.exp-position-select');
         const startInput = item.querySelector('.exp-start-input');
         const endInput = item.querySelector('.exp-end-input');
         const descInput = item.querySelector('.exp-desc-input');
         function updateExpData() {
           if (experiences[idx]) {
             experiences[idx].company = companyInput.value;
-            experiences[idx].position = positionInput.value;
+            const rid = positionSelect ? positionSelect.value : "";
+            const role = allRolesFromApi.find(function (r) { return String(r.id) === String(rid); });
+            experiences[idx].position = role ? role.name : "";
+            experiences[idx].role_type_id = role ? role.id : null;
             experiences[idx].description = descInput.value;
             experiences[idx].dateStart = startInput.value;
             experiences[idx].dateEnd = endInput.value;
@@ -1039,12 +1067,12 @@
         }
         function clearExpInvalid() {
           companyInput.classList.remove('inp-invalid');
-          positionInput.classList.remove('inp-invalid');
+          if (positionSelect) positionSelect.classList.remove('inp-invalid');
           startInput.classList.remove('inp-invalid');
           endInput.classList.remove('inp-invalid');
         }
         companyInput.addEventListener('input', () => { clearExpInvalid(); updateExpData(); });
-        positionInput.addEventListener('input', () => { clearExpInvalid(); updateExpData(); });
+        if (positionSelect) positionSelect.addEventListener('change', () => { clearExpInvalid(); updateExpData(); });
         descInput.addEventListener('input', () => { clearExpInvalid(); updateExpData(); });
         startInput.addEventListener('input', () => { clearExpInvalid(); updateExpData(); });
         endInput.addEventListener('input', () => { clearExpInvalid(); updateExpData(); });
@@ -1053,7 +1081,7 @@
     }
 
     addExpBtn.addEventListener("click", () => {
-      experiences.push({ company: "", position: "", dateStart: "", dateEnd: "", description: "" });
+      experiences.push({ company: "", position: "", role_type_id: null, dateStart: "", dateEnd: "", description: "" });
       renderExperiences();
     });
 
@@ -1258,7 +1286,7 @@
 
       document
         .querySelectorAll(
-          ".exp-start-input.inp-invalid, .exp-end-input.inp-invalid, .exp-company-input.inp-invalid, .exp-position-input.inp-invalid, .exp-desc-input.inp-invalid, #salary.inp-invalid",
+          ".exp-start-input.inp-invalid, .exp-end-input.inp-invalid, .exp-company-input.inp-invalid, .exp-position-select.inp-invalid, .exp-desc-input.inp-invalid, #salary.inp-invalid",
         )
         .forEach((el) => el.classList.remove("inp-invalid"));
 
@@ -1267,21 +1295,22 @@
         const exp = experiences[idx];
         const row = {
           company: (exp.company || "").trim(),
+          role_type_id: exp.role_type_id,
           position: (exp.position || "").trim(),
           dateStart: (exp.dateStart || "").trim(),
           dateEnd: (exp.dateEnd || "").trim(),
           description: (exp.description || "").trim(),
         };
-        if (!row.company && !row.position && !row.dateStart && !row.dateEnd && !row.description) continue;
+        if (!row.company && !row.role_type_id && !row.dateStart && !row.dateEnd && !row.description) continue;
         const entry = experienceListDiv && experienceListDiv.querySelector(`.exp-entry[data-exp-idx="${idx}"]`);
         if (!row.company) {
           showNotification('Заполните "Компания" в опыте работы (или удалите пустой блок)', 'error');
           entry?.querySelector('.exp-company-input')?.classList.add('inp-invalid');
           return;
         }
-        if (!row.position) {
-          showNotification('Заполните "Должность" в опыте работы (или удалите пустой блок)', 'error');
-          entry?.querySelector('.exp-position-input')?.classList.add('inp-invalid');
+        if (!row.role_type_id || !Number.isFinite(Number(row.role_type_id)) || Number(row.role_type_id) <= 0) {
+          showNotification('Выберите должность из справочника в опыте работы (или удалите пустой блок)', 'error');
+          entry?.querySelector('.exp-position-select')?.classList.add('inp-invalid');
           return;
         }
         if (!row.dateStart) {
@@ -1303,13 +1332,6 @@
         if (!lenChk.ok) {
           showNotification(lenChk.message, "error", 7000);
           entry?.querySelector(".exp-company-input")?.classList.add("inp-invalid");
-          entry?.scrollIntoView({ behavior: "smooth", block: "center" });
-          return;
-        }
-        lenChk = maxCheck(row.position, V255, "Должность в опыте работы");
-        if (!lenChk.ok) {
-          showNotification(lenChk.message, "error", 7000);
-          entry?.querySelector(".exp-position-input")?.classList.add("inp-invalid");
           entry?.scrollIntoView({ behavior: "smooth", block: "center" });
           return;
         }
@@ -1343,7 +1365,7 @@
         skill_ids: selectedSkillIds,
         experiences: cleanedExperiences.map(exp => ({
           company_name: exp.company,
-          position: exp.position,
+          role_type_id: Number(exp.role_type_id),
           start_date: toISODate(exp.dateStart),
           end_date: isValidDateString(exp.dateEnd) ? toISODate(exp.dateEnd) : null,
           description: exp.description || null,

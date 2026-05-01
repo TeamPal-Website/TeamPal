@@ -1247,6 +1247,7 @@
               proj.city_id != null && proj.city_id !== ""
                 ? cityMap[String(proj.city_id)] || `Город #${proj.city_id}`
                 : null;
+            const commProjCabinet = proj.employment_intent === "commercial";
             let html = "";
             html += '<div class="cabinet-detail-meta-grid">';
             html += `<div class="cabinet-meta-cell"><b>Компания</b>${escCabinet(proj.company_name || "—")}</div>`;
@@ -1282,12 +1283,16 @@
                 html += '<div class="cabinet-member-meta">';
                 html += `<span><b>Желаемая должность:</b> ${escCabinet(o.desired_position || "—")}</span>`;
                 html += `<span><b>Опыт работы:</b> ${escCabinet(mapExpCab(o.computed_experience_level))}</span>`;
-                html += `<span><b>Формат работы:</b> ${escCabinet(mapWorkCab(o.work_format))}</span>`;
-                html += `<span><b>Занятость:</b> ${escCabinet(mapCommitCab(o.commitment_level))}</span>`;
+                if (commProjCabinet) {
+                  html += `<span><b>Формат работы:</b> ${escCabinet(mapWorkCab(o.work_format))}</span>`;
+                  html += `<span><b>Занятость:</b> ${escCabinet(mapCommitCab(o.commitment_level))}</span>`;
+                }
                 html += `<span><b>График:</b> ${escCabinet(mapSchedCab(o.schedule))}</span>`;
-                html += `<span><b>Заработная плата (в рублях):</b> ${escCabinet(rubCab(o.salary_amount))}</span>`;
-                html += `<span><b>Тип зарплаты:</b> ${escCabinet(salTypeCab(o.salary_type))}</span>`;
-                html += `<span><b>Тип договора:</b> ${escCabinet(mapContractCab(o.contract_type))}</span>`;
+                if (commProjCabinet) {
+                  html += `<span><b>Заработная плата (в рублях):</b> ${escCabinet(rubCab(o.salary_amount))}</span>`;
+                  html += `<span><b>Тип зарплаты:</b> ${escCabinet(salTypeCab(o.salary_type))}</span>`;
+                  html += `<span><b>Тип договора:</b> ${escCabinet(mapContractCab(o.contract_type))}</span>`;
+                }
                 html += "</div>";
                 if (aboutSnip) {
                   html += `<div class="cabinet-member-about"><b>О себе:</b> ${escCabinet(aboutSnip)}</div>`;

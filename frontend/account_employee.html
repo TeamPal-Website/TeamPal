@@ -1143,13 +1143,17 @@
                 ["Тип резюме", cabinetResumeType(resume.employment_intent)],
                 ["Статус поиска работы", statusLab[resume.status] || resume.status || "—"],
                 ["Опыт работы", CABINET_EXP_LABELS[resume.computed_experience_level] || "—"],
-                ["Формат работы", cabinetWorkFmt(resume.work_format)],
-                ["Занятость", cabinetCommit(resume.commitment_level)],
-                ["График", cabinetSchedule(resume.schedule)],
-                ["Заработная плата (в рублях)", resume.employment_intent === "commercial" ? cabinetRubSalary(resume.salary_amount) : "—"],
-                ["Тип зарплаты", resume.employment_intent === "commercial" ? cabinetSalType(resume.salary_type) : "—"],
-                ["Тип договора", cabinetContract(resume.contract_type)],
               ];
+              if (resume.employment_intent === "commercial") {
+                metaRows.push(
+                  ["Формат работы", cabinetWorkFmt(resume.work_format)],
+                  ["Занятость", cabinetCommit(resume.commitment_level)],
+                  ["График", cabinetSchedule(resume.schedule)],
+                  ["Заработная плата (в рублях)", cabinetRubSalary(resume.salary_amount)],
+                  ["Тип зарплаты", cabinetSalType(resume.salary_type)],
+                  ["Тип договора", cabinetContract(resume.contract_type)],
+                );
+              }
 
               let html = "";
               html += `<div class="cabinet-detail-meta-grid">${metaRows

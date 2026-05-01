@@ -436,6 +436,7 @@
       _key: ++expKeyCounter,
       id: e.id,
       company_name: e.company_name || '',
+      role_type_id: e.role_type_id != null ? e.role_type_id : null,
       position: e.position || '',
       start_date: e.start_date || '',
       end_date: e.end_date || '',
@@ -575,6 +576,57 @@
     });
   }
 
+  function expPositionRoleIdFromText(positionStr) {
+    const p = String(positionStr || '').trim();
+    if (!p) return '';
+    const exact = allRolesFromApi.find(function (r) { return r.name === p; });
+    if (exact) return String(exact.id);
+    const ci = allRolesFromApi.find(function (r) { return r.name.toLowerCase() === p.toLowerCase(); });
+    return ci ? String(ci.id) : '';
+  }
+
+  function expPositionSelectHtml(expKey, storedPosition, roleTypeId) {
+    var selId = "";
+    if (roleTypeId != null && roleTypeId !== "" && allRolesFromApi.some(function (r) { return String(r.id) === String(roleTypeId); })) {
+      selId = String(roleTypeId);
+    } else {
+      selId = expPositionRoleIdFromText(storedPosition);
+    }
+    let opts = '<option value="">Не выбрано</option>';
+    allRolesFromApi.forEach(function (r) {
+      const sel = String(r.id) === selId ? ' selected' : '';
+      opts += '<option value="' + r.id + '"' + sel + '>' + esc(r.name) + '</option>';
+    });
+    return '<select id="exp-pos-' + expKey + '" class="exp-position-select" data-field="position" data-exp-key="' + expKey + '"' +
+      (allRolesFromApi.length === 0 ? ' disabled' : '') + '>' + opts + '</select>';
+  }
+
+  function attachExperienceFieldListeners() {
+    document.querySelectorAll('[data-exp-key][data-field]').forEach(function (el) {
+      const handler = function () {
+        const key = parseInt(el.getAttribute('data-exp-key'), 10);
+        const field = el.getAttribute('data-field');
+        const exp = experiences.find(function (e) { return e._key === key; });
+        if (!exp) return;
+        if (field === 'position' && el.tagName === 'SELECT') {
+          const rid = el.value;
+          const role = allRolesFromApi.find(function (r) { return String(r.id) === String(rid); });
+          exp.position = role ? role.name : '';
+          exp.role_type_id = role ? role.id : null;
+        } else {
+          exp[field] = el.value;
+        }
+        el.classList.remove('inp-invalid');
+        const errEl = document.getElementById('exp-err-' + key);
+        if (errEl && !el.closest('.exp-entry').querySelector('.inp-invalid')) {
+          errEl.textContent = ''; errEl.classList.remove('show');
+        }
+      };
+      if (el.tagName === 'SELECT') el.addEventListener('change', handler);
+      else el.addEventListener('input', handler);
+    });
+  }
+
   function renderExpList() {
     const visible = experiences.filter(e => !e._deleted);
     if (visible.length === 0) {
@@ -594,9 +646,8 @@
               value="${esc(exp.company_name)}" data-exp-key="${exp._key}" data-field="company_name" />
           </div>
           <div class="exp-field">
-            <label>Должность <span class="req-star" aria-hidden="true">*</span></label>
-            <input type="text" maxlength="255" placeholder="Backend Developer"
-              value="${esc(exp.position)}" data-exp-key="${exp._key}" data-field="position" />
+            <label for="exp-pos-${exp._key}">Должность <span class="req-star" aria-hidden="true">*</span></label>
+            ${expPositionSelectHtml(exp._key, exp.position, exp.role_type_id)}
           </div>
           <div class="exp-field exp-field--date">
             <label>Дата начала <span class="req-star" aria-hidden="true">*</span></label>
@@ -646,21 +697,7 @@
     }
 
 
-    document.querySelectorAll('[data-exp-key][data-field]').forEach(input => {
-      input.addEventListener('input', () => {
-        const key = parseInt(input.getAttribute('data-exp-key'));
-        const field = input.getAttribute('data-field');
-        const exp = experiences.find(e => e._key === key);
-        if (exp) exp[field] = input.value;
-
-        input.classList.remove('inp-invalid');
-        const errEl = document.getElementById('exp-err-' + key);
-        if (errEl && !input.closest('.exp-entry').querySelector('.inp-invalid')) {
-          errEl.textContent = ''; errEl.classList.remove('show');
-        }
-      });
-    });
-
+    attachExperienceFieldListeners();
 
     document.querySelectorAll('[data-remove-exp]').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -679,7 +716,7 @@
       experiences.push({
         _key: ++expKeyCounter,
         id: null,
-        company_name: '', position: '',
+        company_name: '', position: '', role_type_id: null,
         start_date: '', end_date: '', description: '',
         _isNew: true, _deleted: false,
       });
@@ -700,20 +737,7 @@
   }
 
   function bindExpEvents() {
-    document.querySelectorAll('[data-exp-key][data-field]').forEach(input => {
-      input.addEventListener('input', () => {
-        const key = parseInt(input.getAttribute('data-exp-key'));
-        const field = input.getAttribute('data-field');
-        const exp = experiences.find(e => e._key === key);
-        if (exp) exp[field] = input.value;
-
-        input.classList.remove('inp-invalid');
-        const errEl = document.getElementById('exp-err-' + key);
-        if (errEl && !input.closest('.exp-entry').querySelector('.inp-invalid')) {
-          errEl.textContent = ''; errEl.classList.remove('show');
-        }
-      });
-    });
+    attachExperienceFieldListeners();
     document.querySelectorAll('[data-remove-exp]').forEach(btn => {
       btn.addEventListener('click', () => {
         const key = parseInt(btn.getAttribute('data-remove-exp'));
@@ -758,9 +782,9 @@
         entry?.querySelector('[data-field="company_name"]')?.classList.add('inp-invalid');
         ok = false;
       }
-      if (!exp.position.trim()) {
+      if (!exp.role_type_id) {
         missing.push('Должность');
-        entry?.querySelector('[data-field="position"]')?.classList.add('inp-invalid');
+        entry?.querySelector('.exp-position-select')?.classList.add('inp-invalid');
         ok = false;
       }
       if (!exp.start_date.trim()) {
@@ -906,7 +930,7 @@
     for (const exp of toUpdate) {
       const payload = {
         company_name: exp.company_name.trim() || null,
-        position: exp.position.trim() || null,
+        role_type_id: exp.role_type_id,
         start_date: toISO(exp.start_date) || null,
         end_date: isValidDateString(exp.end_date) ? toISO(exp.end_date) : null,
         description: exp.description.trim() || null,
@@ -926,7 +950,7 @@
     for (const exp of toCreate) {
       const payload = {
         company_name: exp.company_name.trim(),
-        position: exp.position.trim(),
+        role_type_id: exp.role_type_id,
         start_date: toISO(exp.start_date),
         end_date: isValidDateString(exp.end_date) ? toISO(exp.end_date) : null,
         description: exp.description.trim() || null,

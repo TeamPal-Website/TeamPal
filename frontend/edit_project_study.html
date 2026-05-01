@@ -379,14 +379,14 @@
   function readVacancyFromState(v) {
     return {
       role_type_id:     v.role_type_id,
-      work_format:      v.work_format      || null,
-      employment:       v.employment       || null,
+      work_format:      null,
+      employment:       null,
       experience:       v.experience       || null,
-      salary_amount:    v.salary_amount != null && v.salary_amount !== '' ? Number(v.salary_amount) : null,
-      salary_type:      v.salary_type      || null,
+      salary_amount:    null,
+      salary_type:      null,
       schedule:         v.schedule         || null,
       description:      v.description != null ? String(v.description).trim() || null : null,
-      contract_type:    v.contract_type    || null,
+      contract_type:    null,
       skill_ids:        Array.isArray(v.skill_ids) ? v.skill_ids.slice() : [],
     };
   }
@@ -431,7 +431,6 @@
 
   function vacancyEditFieldsHtml(v) {
     var k = v._key;
-    var sal = vacancySalaryDisplayFormatted(v);
     return ''
       + '<div class="exp-grid">'
       + '<div class="exp-field exp-field-full"><label for="vac-' + k + '-role-select">Должность <span class="req-star" aria-hidden="true">*</span></label>'
@@ -446,37 +445,12 @@
       +   '<option value="3-6"' + optSelected('3-6', v.experience) + '>3–6 лет</option>'
       +   '<option value="6+"' + optSelected('6+', v.experience) + '>6+ лет</option>'
       + '</select></div>'
-      + '<div class="exp-field"><label for="vac-' + k + '-format">Формат работы</label><select id="vac-' + k + '-format">'
-      +   '<option value="">Не выбрано</option>'
-      +   '<option value="remote"' + optSelected('remote', v.work_format) + '>Удалённо</option>'
-      +   '<option value="office"' + optSelected('office', v.work_format) + '>В офисе</option>'
-      +   '<option value="hybrid"' + optSelected('hybrid', v.work_format) + '>Гибрид</option>'
-      + '</select></div>'
-      + '<div class="exp-field"><label for="vac-' + k + '-employment">Занятость</label><select id="vac-' + k + '-employment">'
-      +   '<option value="">Не выбрано</option>'
-      +   '<option value="full_time"' + optSelected('full_time', v.employment) + '>Полный день</option>'
-      +   '<option value="part_time"' + optSelected('part_time', v.employment) + '>Неполный день</option>'
-      +   '<option value="side_project"' + optSelected('side_project', v.employment) + '>Подработка / гибкий формат</option>'
-      + '</select></div>'
       + '<div class="exp-field"><label for="vac-' + k + '-schedule">График</label><select id="vac-' + k + '-schedule">'
       +   '<option value="">Не выбрано</option>'
       +   '<option value="5/2"' + optSelected('5/2', v.schedule) + '>5/2</option>'
       +   '<option value="2/2"' + optSelected('2/2', v.schedule) + '>2/2</option>'
       +   '<option value="4/2"' + optSelected('4/2', v.schedule) + '>4/2</option>'
       +   '<option value="3/3"' + optSelected('3/3', v.schedule) + '>3/3</option>'
-      + '</select></div>'
-      + '<div class="exp-field"><label for="vac-' + k + '-salary">Заработная плата (в рублях)</label>'
-      + '<input type="text" class="tp-salary-input" id="vac-' + k + '-salary" inputmode="numeric" autocomplete="off" placeholder="Например: 1 200 000" value="' + esc(sal) + '"></div>'
-      + '<div class="exp-field"><label for="vac-' + k + '-salary-type">Тип зарплаты</label><select id="vac-' + k + '-salary-type">'
-      +   '<option value="">Не выбрано</option>'
-      +   '<option value="monthly"' + optSelected('monthly', v.salary_type) + '>В месяц</option>'
-      +   '<option value="per_project"' + optSelected('per_project', v.salary_type) + '>За проект</option>'
-      + '</select></div>'
-      + '<div class="exp-field exp-field-full"><label for="vac-' + k + '-contract">Тип договора</label><select id="vac-' + k + '-contract">'
-      +   '<option value="">Не выбрано</option>'
-      +   '<option value="gph"' + optSelected('gph', v.contract_type) + '>ГПХ</option>'
-      +   '<option value="tk"' + optSelected('tk', v.contract_type) + '>ТК РФ</option>'
-      +   '<option value="internship"' + optSelected('internship', v.contract_type) + '>Стажировка</option>'
       + '</select></div>'
       + '<div class="exp-field exp-field-full"><label>Стек технологий / Скиллы <span class="req-star" aria-hidden="true">*</span></label>'
       + '<div class="selected-skills-tags" id="vac-' + k + '-skill-tags"></div>'
@@ -551,19 +525,12 @@
     var descEl = document.getElementById('vac-' + k + '-desc');
     v.description = descEl && descEl.value.trim() ? descEl.value.trim() : null;
     v.experience = gv('experience') || null;
-    v.work_format = gv('format') || null;
-    v.employment = gv('employment') || null;
+    v.work_format = null;
+    v.employment = null;
     v.schedule = gv('schedule') || null;
-    v.salary_type = gv('salary-type') || null;
-    v.contract_type = gv('contract') || null;
-    var salEl = document.getElementById('vac-' + k + '-salary');
-    var salRaw = salEl && salEl.value != null ? String(salEl.value) : '';
-    var salFn = window.tpParseAndValidateSalaryRaw;
-    var salParsed =
-      typeof salFn === 'function'
-        ? salFn(salRaw)
-        : { ok: true, value: salRaw.trim() ? parseInt(salRaw.replace(/[\s\u00a0]/g, ''), 10) : null };
-    v.salary_amount = salParsed && salParsed.ok === true ? salParsed.value : null;
+    v.salary_type = null;
+    v.contract_type = null;
+    v.salary_amount = null;
   }
 
   function syncAllVacanciesFromDom() {
@@ -888,22 +855,6 @@
         showNotification('В вакансии должен быть хотя бы один навык', 'warning');
         hasErrors = true;
       }
-      var vk = active[i]._key;
-      var salElV = document.getElementById('vac-' + vk + '-salary');
-      var salRaw = salElV && salElV.value != null ? String(salElV.value) : '';
-      var salFn2 = window.tpParseAndValidateSalaryRaw;
-      var salChk =
-        typeof salFn2 === 'function'
-          ? salFn2(salRaw)
-          : { ok: true, value: null };
-      if (!salChk || salChk.ok !== true) {
-        if (salElV) salElV.classList.add('inp-invalid');
-        var salMsg = (salChk && salChk.message) ? salChk.message : 'Укажите корректную сумму зарплаты или оставьте поле пустым.';
-        showToast(salMsg, 'error', 7000);
-        hasErrors = true;
-      } else {
-        active[i].salary_amount = salChk.value;
-      }
     }
 
     if (hasErrors) {
@@ -1026,14 +977,14 @@
   function buildVacancyPayload(vals) {
     return {
       role_type_id:     vals.role_type_id,
-      work_format:      vals.work_format      || null,
-      commitment_level: vals.employment       || null,
+      work_format:      null,
+      commitment_level: null,
       experience:       vals.experience       || null,
-      salary_amount:    vals.salary_amount    != null ? vals.salary_amount : null,
-      salary_type:      vals.salary_type      || null,
+      salary_amount:    null,
+      salary_type:      null,
       schedule:         vals.schedule         || null,
       description:      vals.description      || null,
-      contract_type:    vals.contract_type    || null,
+      contract_type:    null,
       skill_ids:        Array.isArray(vals.skill_ids) ? vals.skill_ids : [],
     };
   }

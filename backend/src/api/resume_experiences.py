@@ -2,9 +2,42 @@ from fastapi import HTTPException, APIRouter
 
 from src.api.dependencies import DBDep, UserIdDep
 from src.api.resume_edit_policy import raise_if_resume_locked_for_editing
-from src.schemas.resume_experiences import ResumeExperienceAdd, ResumeExperiencePatch, ResumeExperienceRequestAdd
+from src.api.resumes import _require_active_role
+from src.schemas.resume_experiences import (
+    ResumeExperienceAdd,
+    ResumeExperiencePatch,
+    ResumeExperienceRequestAdd,
+)
 
 router = APIRouter(prefix="/resumes", tags=["Опыт в резюме"])
+
+
+async def _request_add_to_orm_add(
+    db: DBDep,
+    resume_id: int,
+    data: ResumeExperienceRequestAdd,
+) -> ResumeExperienceAdd:
+    role = await _require_active_role(db, data.role_type_id)
+    return ResumeExperienceAdd(
+        resume_id=resume_id,
+        company_name=data.company_name,
+        role_type_id=role.id,
+        position=role.name,
+        description=data.description,
+        start_date=data.start_date,
+        end_date=data.end_date,
+    )
+
+
+async def _expand_experience_patch(db: DBDep, data: ResumeExperiencePatch) -> ResumeExperiencePatch:
+    payload = data.model_dump(exclude_unset=True)
+    if not payload:
+        return data
+    if payload.get("role_type_id") is not None:
+        role = await _require_active_role(db, payload["role_type_id"])
+        payload = {**payload, "position": role.name}
+        return ResumeExperiencePatch(**payload)
+    return data
 
 
 @router.get("/{resume_id}/experiences")
@@ -46,9 +79,8 @@ async def create_resume_experience(
         )
     raise_if_resume_locked_for_editing(resume)
 
-    experience = await db.resume_experiences.add(
-        ResumeExperienceAdd(resume_id=resume.id, **data.model_dump())
-    )
+    to_add = await _request_add_to_orm_add(db, resume.id, data)
+    experience = await db.resume_experiences.add(to_add)
     await db.resumes.recompute_experience_level(resume_id)
     await db.commit()
     return {"status": "OK", "data": experience}
@@ -83,6 +115,11 @@ async def update_resume_experience(
     if experience is None:
         raise HTTPException(status_code=404, detail="Опыт работы не найден")
 
+    payload = data.model_dump(exclude_unset=True)
+    if not payload:
+        return {"status": "OK"}
+
+    data = await _expand_experience_patch(db, data)
     payload = data.model_dump(exclude_unset=True)
     if not payload:
         return {"status": "OK"}

@@ -662,55 +662,6 @@
               <option value="">Не выбрано</option>
             </select>
           </div>
-          <div class="field">
-            <label>Формат работы</label>
-            <select id="workFormat">
-              <option value="">Не выбрано</option>
-              <option value="remote">Удалённо</option>
-              <option value="office">В офисе</option>
-              <option value="hybrid">Гибрид</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Занятость</label>
-            <select id="workSchedule">
-              <option value="">Не выбрано</option>
-              <option value="full_time">Полный день</option>
-              <option value="part_time">Неполный день</option>
-              <option value="side_project">Подработка / гибкий формат</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>График</label>
-            <select id="schedule">
-              <option value="">Не выбрано</option>
-              <option value="5/2">5/2</option>
-              <option value="2/2">2/2</option>
-              <option value="4/2">4/2</option>
-              <option value="3/3">3/3</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Тип зарплаты</label>
-            <select id="salaryType">
-              <option value="">Не выбрано</option>
-              <option value="monthly">В месяц</option>
-              <option value="per_project">За проект</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Тип договора</label>
-            <select id="contractType">
-              <option value="">Не выбрано</option>
-              <option value="gph">ГПХ</option>
-              <option value="tk">ТК РФ</option>
-              <option value="internship">Стажировка</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Заработная плата (в рублях)</label>
-            <input id="salary" type="text" class="tp-salary-input" inputmode="numeric" autocomplete="off" placeholder="Например: 50 000" />
-          </div>
         </div>
       </div>
 
@@ -823,6 +774,31 @@
         }
       } catch (_) {}
       refreshDesiredPositionSelect();
+      if (experiences.length) renderExperiences();
+    }
+
+    function expPositionRoleIdFromText(positionStr) {
+      const p = String(positionStr || "").trim();
+      if (!p) return "";
+      const exact = allRolesFromApi.find(function (r) { return r.name === p; });
+      if (exact) return String(exact.id);
+      const ci = allRolesFromApi.find(function (r) { return r.name.toLowerCase() === p.toLowerCase(); });
+      return ci ? String(ci.id) : "";
+    }
+
+    function expPositionOptionsInnerHtml(storedPosition, roleTypeIdState) {
+      var selId = "";
+      if (roleTypeIdState != null && roleTypeIdState !== "" && allRolesFromApi.some(function (r) { return String(r.id) === String(roleTypeIdState); })) {
+        selId = String(roleTypeIdState);
+      } else {
+        selId = expPositionRoleIdFromText(storedPosition);
+      }
+      let html = '<option value="">Не выбрано</option>';
+      allRolesFromApi.forEach(function (r) {
+        const sel = String(r.id) === selId ? " selected" : "";
+        html += '<option value="' + r.id + '"' + sel + ">" + escapeHtml(r.name) + "</option>";
+      });
+      return html;
     }
 
     function refreshResumeCitySelect() {
@@ -973,7 +949,7 @@
         return;
       }
       experienceListDiv.innerHTML = experiences.map((exp, idx) => {
-        const emptySlot = !(String(exp.company || '').trim()) && !(String(exp.position || '').trim()) && !(String(exp.dateStart || '').trim());
+        const emptySlot = !(String(exp.company || '').trim()) && !exp.role_type_id && !(String(exp.dateStart || '').trim());
         return `
         <div class="exp-entry${emptySlot ? ' is-new' : ''}" data-exp-idx="${idx}">
           <div class="exp-entry-header">
@@ -986,8 +962,8 @@
               <input type="text" class="exp-company-input" maxlength="255" value="${escapeHtml(exp.company)}" placeholder="ООО Рога и Копыта">
             </div>
             <div class="exp-field">
-              <label>Должность <span class="req-star" aria-hidden="true">*</span></label>
-              <input type="text" class="exp-position-input" maxlength="255" value="${escapeHtml(exp.position)}" placeholder="Frontend-разработчик">
+              <label for="exp-pos-idx-${idx}">Должность <span class="req-star" aria-hidden="true">*</span></label>
+              <select id="exp-pos-idx-${idx}" class="exp-position-select"${allRolesFromApi.length === 0 ? " disabled" : ""}>${expPositionOptionsInnerHtml(exp.position, exp.role_type_id)}</select>
             </div>
             <div class="exp-field exp-field--date">
               <label>Дата прихода <span class="req-star" aria-hidden="true">*</span></label>
@@ -1012,14 +988,17 @@
       });
       document.querySelectorAll('.exp-entry').forEach((item, idx) => {
         const companyInput = item.querySelector('.exp-company-input');
-        const positionInput = item.querySelector('.exp-position-input');
+        const positionSelect = item.querySelector('.exp-position-select');
         const startInput = item.querySelector('.exp-start-input');
         const endInput = item.querySelector('.exp-end-input');
         const descInput = item.querySelector('.exp-desc-input');
         function updateExpData() {
           if (experiences[idx]) {
             experiences[idx].company = companyInput.value;
-            experiences[idx].position = positionInput.value;
+            const rid = positionSelect ? positionSelect.value : "";
+            const role = allRolesFromApi.find(function (r) { return String(r.id) === String(rid); });
+            experiences[idx].position = role ? role.name : "";
+            experiences[idx].role_type_id = role ? role.id : null;
             experiences[idx].description = descInput.value;
             experiences[idx].dateStart = startInput.value;
             experiences[idx].dateEnd = endInput.value;
@@ -1027,12 +1006,12 @@
         }
         function clearExpInvalid() {
           companyInput.classList.remove('inp-invalid');
-          positionInput.classList.remove('inp-invalid');
+          if (positionSelect) positionSelect.classList.remove('inp-invalid');
           startInput.classList.remove('inp-invalid');
           endInput.classList.remove('inp-invalid');
         }
         companyInput.addEventListener('input', () => { clearExpInvalid(); updateExpData(); });
-        positionInput.addEventListener('input', () => { clearExpInvalid(); updateExpData(); });
+        if (positionSelect) positionSelect.addEventListener('change', () => { clearExpInvalid(); updateExpData(); });
         descInput.addEventListener('input', () => { clearExpInvalid(); updateExpData(); });
         startInput.addEventListener('input', () => { clearExpInvalid(); updateExpData(); });
         endInput.addEventListener('input', () => { clearExpInvalid(); updateExpData(); });
@@ -1041,25 +1020,13 @@
     }
 
     addExpBtn.addEventListener("click", () => {
-      experiences.push({ company: "", position: "", dateStart: "", dateEnd: "", description: "" });
+      experiences.push({ company: "", position: "", role_type_id: null, dateStart: "", dateEnd: "", description: "" });
       renderExperiences();
     });
 
     const resumeTitleInput = document.getElementById("resumeTitle");
     const desiredPositionInput = document.getElementById("desiredPosition");
     const resumeCitySelect = document.getElementById("resumeCity");
-    const workScheduleSelect = document.getElementById("workSchedule");
-    const workFormatSelect = document.getElementById("workFormat");
-    const scheduleSelect = document.getElementById("schedule");
-    const salaryTypeSelect = document.getElementById("salaryType");
-    const contractTypeSelect = document.getElementById("contractType");
-    const salaryInput = document.getElementById("salary");
-    if (salaryInput) {
-      salaryInput.addEventListener("input", () => salaryInput.classList.remove("inp-invalid"));
-      if (typeof window.tpBindSalaryGroupedInput === "function") {
-        window.tpBindSalaryGroupedInput(salaryInput);
-      }
-    }
     const aboutMeTextarea = document.getElementById("aboutMe");
     const cancelBtn = document.getElementById("cancelBtn");
     const publishBtn = document.getElementById("publishBtn");
@@ -1076,12 +1043,6 @@
       if (resumeTitleInput) resumeTitleInput.value = "";
       if (desiredPositionInput) desiredPositionInput.value = "";
       if (resumeCitySelect) resumeCitySelect.value = "";
-      if (workScheduleSelect) workScheduleSelect.value = "";
-      if (workFormatSelect) workFormatSelect.value = "";
-      if (scheduleSelect) scheduleSelect.value = "";
-      if (salaryTypeSelect) salaryTypeSelect.value = "";
-      if (contractTypeSelect) contractTypeSelect.value = "";
-      if (salaryInput) salaryInput.value = "";
       aboutMeTextarea.value = "";
       selectedSkillIds = [];
       renderSkillsGrid();
@@ -1195,36 +1156,6 @@
       }
       resumeTitleInput?.classList.remove("inp-invalid");
 
-      const commitmentLevel = (workScheduleSelect?.value || "").trim();
-      const workFormat = (workFormatSelect?.value || "").trim();
-      const schedule = (scheduleSelect?.value || "").trim();
-      const salaryType = (salaryTypeSelect?.value || "").trim();
-      const contractType = (contractTypeSelect?.value || "").trim();
-      const salaryRaw = salaryInput ? salaryInput.value : "";
-      const salChk =
-        typeof window.tpParseAndValidateSalaryRaw === "function"
-          ? window.tpParseAndValidateSalaryRaw(salaryRaw)
-          : (function () {
-              const cleaned = String(salaryRaw || "").replace(/[\s\u00a0]/g, "").trim();
-              if (!cleaned) return { ok: true, value: null };
-              const value = Number(cleaned);
-              if (!Number.isFinite(value) || value < 0) return { ok: false };
-              return { ok: true, value: Math.trunc(value) };
-            })();
-      if (!salChk || salChk.ok !== true) {
-        showNotification(
-          'Зарплата введена некорректно. Укажите сумму цифрами или оставьте поле пустым.',
-          'error',
-          7000,
-        );
-        if (salaryInput) {
-          salaryInput.classList.add('inp-invalid');
-          salaryInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-        return;
-      }
-      const salaryAmount = salChk.value;
-
       const aboutText = (aboutMeTextarea && aboutMeTextarea.value ? aboutMeTextarea.value : "").trim();
       lenChk = maxCheck(aboutText, TMAX, "Поле «О себе»");
       if (!lenChk.ok) {
@@ -1241,7 +1172,7 @@
 
       document
         .querySelectorAll(
-          ".exp-start-input.inp-invalid, .exp-end-input.inp-invalid, .exp-company-input.inp-invalid, .exp-position-input.inp-invalid, .exp-desc-input.inp-invalid",
+          ".exp-start-input.inp-invalid, .exp-end-input.inp-invalid, .exp-company-input.inp-invalid, .exp-position-select.inp-invalid, .exp-desc-input.inp-invalid",
         )
         .forEach((el) => el.classList.remove("inp-invalid"));
 
@@ -1250,21 +1181,22 @@
         const exp = experiences[idx];
         const row = {
           company: (exp.company || "").trim(),
+          role_type_id: exp.role_type_id,
           position: (exp.position || "").trim(),
           dateStart: (exp.dateStart || "").trim(),
           dateEnd: (exp.dateEnd || "").trim(),
           description: (exp.description || "").trim(),
         };
-        if (!row.company && !row.position && !row.dateStart && !row.dateEnd && !row.description) continue;
+        if (!row.company && !row.role_type_id && !row.dateStart && !row.dateEnd && !row.description) continue;
         const entry = experienceListDiv && experienceListDiv.querySelector(`.exp-entry[data-exp-idx="${idx}"]`);
         if (!row.company) {
           showNotification('Заполните "Компания" в опыте работы (или удалите пустой блок)', 'error');
           entry?.querySelector('.exp-company-input')?.classList.add('inp-invalid');
           return;
         }
-        if (!row.position) {
-          showNotification('Заполните "Должность" в опыте работы (или удалите пустой блок)', 'error');
-          entry?.querySelector('.exp-position-input')?.classList.add('inp-invalid');
+        if (!row.role_type_id || !Number.isFinite(Number(row.role_type_id)) || Number(row.role_type_id) <= 0) {
+          showNotification('Выберите должность из справочника в опыте работы (или удалите пустой блок)', 'error');
+          entry?.querySelector('.exp-position-select')?.classList.add('inp-invalid');
           return;
         }
         if (!row.dateStart) {
@@ -1286,13 +1218,6 @@
         if (!lenChk.ok) {
           showNotification(lenChk.message, "error", 7000);
           entry?.querySelector(".exp-company-input")?.classList.add("inp-invalid");
-          entry?.scrollIntoView({ behavior: "smooth", block: "center" });
-          return;
-        }
-        lenChk = maxCheck(row.position, V255, "Должность в опыте работы");
-        if (!lenChk.ok) {
-          showNotification(lenChk.message, "error", 7000);
-          entry?.querySelector(".exp-position-input")?.classList.add("inp-invalid");
           entry?.scrollIntoView({ behavior: "smooth", block: "center" });
           return;
         }
@@ -1326,18 +1251,18 @@
         skill_ids: selectedSkillIds,
         experiences: cleanedExperiences.map(exp => ({
           company_name: exp.company,
-          position: exp.position,
+          role_type_id: Number(exp.role_type_id),
           start_date: toISODate(exp.dateStart),
           end_date: isValidDateString(exp.dateEnd) ? toISODate(exp.dateEnd) : null,
           description: exp.description || null,
         })),
       };
-      if (commitmentLevel) resumeData.commitment_level = commitmentLevel;
-      if (workFormat) resumeData.work_format = workFormat;
-      if (schedule) resumeData.schedule = schedule;
-      if (salaryType) resumeData.salary_type = salaryType;
-      if (contractType) resumeData.contract_type = contractType;
-      if (salaryAmount != null && salaryAmount !== undefined) resumeData.salary_amount = salaryAmount;
+      resumeData.commitment_level = null;
+      resumeData.work_format = null;
+      resumeData.schedule = null;
+      resumeData.salary_type = null;
+      resumeData.contract_type = null;
+      resumeData.salary_amount = null;
 
       var cityNum = resumeCitySelect && resumeCitySelect.value ? parseInt(resumeCitySelect.value, 10) : NaN;
       resumeData.city_id = Number.isFinite(cityNum) && cityNum > 0 ? cityNum : null;

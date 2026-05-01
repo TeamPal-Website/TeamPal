@@ -20,6 +20,8 @@ class TestProject:
             description="Description",
             tasks="Tasks",
             status=ProjectsStatus.ACTIVE,
+            last_seen_applications_at=None,
+            close_member_ids=None,
             created_at=datetime.now(),
         )
         assert project.id == 1
@@ -37,6 +39,8 @@ class TestProject:
             description="Desc",
             tasks="Tasks",
             status=ProjectsStatus.ACTIVE,
+            last_seen_applications_at=None,
+            close_member_ids=None,
             created_at=datetime.now(),
         )
         project = Project.model_validate(orm_obj)
@@ -104,15 +108,16 @@ class TestProjectRequestAdd:
                 vacancies=[ProjectVacancyRequestAdd(role_type_id=i, description=f"Dev {i}") for i in range(11)],
             )
 
-    def test_duplicate_role_type_ids_fails(self):
-        with pytest.raises(ValidationError):
-            ProjectRequestAdd(
-                title="Project",
-                vacancies=[
-                    ProjectVacancyRequestAdd(role_type_id=1, description="Dev1"),
-                    ProjectVacancyRequestAdd(role_type_id=1, description="Dev2"),
-                ],
-            )
+    def test_duplicate_role_type_ids_allowed(self):
+        project = ProjectRequestAdd(
+            title="Project",
+            vacancies=[
+                ProjectVacancyRequestAdd(role_type_id=1, description="Dev1"),
+                ProjectVacancyRequestAdd(role_type_id=1, description="Dev2"),
+            ],
+        )
+        assert len(project.vacancies) == 2
+        assert project.vacancies[0].role_type_id == project.vacancies[1].role_type_id
 
     def test_default_values(self):
         project = ProjectRequestAdd(
