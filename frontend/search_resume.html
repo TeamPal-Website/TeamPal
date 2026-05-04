@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Поиск резюме | TeamPal</title>
+  <title>Поиск сотрудников | TeamPal</title>
   <link rel="icon" type="image/png" href="./assets/logo.png">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
@@ -143,6 +143,39 @@
       background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
       color: #fff;
       box-shadow: 0 2px 8px rgba(248, 90, 11, 0.25);
+    }
+    .catalog-mode-toggle {
+      display: flex;
+      background: linear-gradient(180deg, #f5f1eb 0%, #ebe6df 100%);
+      border-radius: 999px;
+      padding: 4px;
+      border: 1px solid rgba(58, 42, 26, 0.16);
+      box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.07),
+        0 1px 0 rgba(255, 255, 255, 0.65) inset;
+      width: fit-content;
+      max-width: 100%;
+      margin-top: 10px;
+      margin-bottom: 22px;
+    }
+    .catalog-mode-toggle__btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      background: transparent;
+      color: #7a7060;
+      transition: all 0.25s ease;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    .catalog-mode-toggle__btn:hover { color: var(--ink); }
+    .catalog-mode-toggle__btn.active {
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(248, 90, 11, 0.22);
     }
     .notify-btn {
       width: 48px;
@@ -481,22 +514,62 @@
     .modal__grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px 12px;
+      gap: 14px 16px;
+      align-items: start;
     }
-    .field { display: flex; flex-direction: column; gap: 6px; }
-    .field label { font-size: 13px; color: #4c4c4c; font-weight: 500; }
+    .modal__grid-sub {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px 16px;
+      align-items: start;
+    }
+    .modal__grid-sub[hidden] {
+      display: none !important;
+    }
+    .modal__grid > .field--full-row,
+    .modal__grid-sub > .field--full-row {
+      grid-column: 1 / -1;
+    }
+    .field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+    .field label {
+      font-size: 13px;
+      line-height: 1.32;
+      color: #4c4c4c;
+      font-weight: 500;
+      min-height: 2.75em;
+      display: flex;
+      align-items: flex-end;
+    }
     .field select, .field input {
       width: 100%;
-      border: 2px solid #dfdfdf;
-      border-radius: 10px;
+      border: 1px solid #d1d1d1;
+      border-radius: 18px;
       background: #fff;
       font-size: 14px;
-      padding: 10px 11px;
+      padding: 10px 18px;
+      min-height: 42px;
       font-family: inherit;
+      color: var(--ink);
+      outline: none;
+      box-sizing: border-box;
+    }
+    .field select {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      padding-right: 40px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='8' viewBox='0 0 14 8' fill='none'%3E%3Cpath d='M1.5 1.5L7 6l5.5-4.5' stroke='%233a3a3a' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+    }
+    .field input::placeholder {
+      color: #9a9a9a;
     }
     .field select:focus, .field input:focus {
-      outline: 2px solid rgba(248, 90, 11, 0.24);
-      border-color: #f85a0b;
+      outline: none;
+      border-color: #bdbdbd;
+      box-shadow: 0 0 0 2px rgba(248, 90, 11, 0.18);
     }
     .modal__actions { margin-top: 12px; display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
     .modal__actions .action-btn { border-radius: 12px; height: auto; }
@@ -578,8 +651,7 @@
       <nav class="header-menu" id="header-menu">
         <div class="header-menu__title">Меню</div>
         <button class="header-menu__item" type="button" data-nav="./account_manager.html">Личный кабинет</button>
-        <button class="header-menu__item" type="button" data-nav="./search_resume.html">Поиск</button>
-        <button class="header-menu__item" type="button" data-nav="./support_project.html">Поддержать проект</button>
+        <button class="header-menu__item" type="button" data-nav="./search_resume.html">Поиск сотрудников</button>
         <button class="header-menu__exit" type="button" data-nav="./authorization_page.html">Выйти</button>
       </nav>
     </div>
@@ -588,8 +660,12 @@
 
 <main class="page">
   <h1 class="top-title">Поиск сотрудников</h1>
+  <div class="catalog-mode-toggle" id="catalog-mode-toggle" role="tablist" aria-label="Тип резюме в каталоге">
+    <button type="button" class="catalog-mode-toggle__btn active" data-mode="commercial" role="tab" aria-selected="true">Коммерческий</button>
+    <button type="button" class="catalog-mode-toggle__btn" data-mode="noncommercial" role="tab" aria-selected="false">Учебный</button>
+  </div>
 
-  <section class="card search-card" aria-label="Поиск резюме">
+  <section class="card search-card" aria-label="Поиск сотрудников">
     <div class="search-row">
       <input class="search-input" id="q" type="text" placeholder="Введите должность, например: Frontend" autocomplete="off">
       <button class="icon-btn" id="open-filters" type="button" aria-label="Открыть фильтры">
@@ -628,30 +704,21 @@
     <div class="modal__accent-strip"></div>
     <div class="modal__body">
       <h2 class="modal__title-lg">Фильтры</h2>
-      <p class="modal__subtitle">Уточните параметры поиска резюме.</p>
       <div class="modal__grid" style="margin-top:14px;">
         <div class="field">
-          <label for="f-city">Город кандидата</label>
+          <label for="f-role">Должность</label>
+          <select id="f-role">
+            <option value="">Любая</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-city">Город</label>
           <select id="f-city">
             <option value="">Любой</option>
           </select>
         </div>
-        <div class="field">
-          <label for="f-skill">Навык из каталога</label>
-          <select id="f-skill">
-            <option value="">Любой</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="f-salary-min">Заработная плата от (в рублях)</label>
-          <input id="f-salary-min" type="text" inputmode="numeric" autocomplete="off" placeholder="например 150 000">
-        </div>
-        <div class="field">
-          <label for="f-salary-max">Заработная плата до (в рублях)</label>
-          <input id="f-salary-max" type="text" inputmode="numeric" autocomplete="off" placeholder="не задано">
-        </div>
-        <div class="field">
-          <label for="f-computed-exp">Уровень опыта (по резюме)</label>
+        <div class="field field--full-row">
+          <label for="f-computed-exp">Опыт в резюме</label>
           <select id="f-computed-exp">
             <option value="">Любой</option>
             <option value="none">Без опыта</option>
@@ -661,33 +728,36 @@
             <option value="6+">6+ лет</option>
           </select>
         </div>
-        <div class="field">
-          <label for="f-exp">Дополнительно: наличие опыта в тексте</label>
-          <select id="f-exp">
-            <option value="any">Любой</option>
-            <option value="need">С указанным опытом работы</option>
-            <option value="no">Без опыта работы</option>
-          </select>
+        <div id="filters-resume-commercial" class="modal__grid-sub">
+          <div class="field">
+            <label for="f-work-format">Формат работы</label>
+            <select id="f-work-format">
+              <option value="">Любой</option>
+              <option value="remote">Только удалённо</option>
+              <option value="office">Только офис</option>
+              <option value="hybrid">Гибрид</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-commitment-level">Занятость</label>
+            <select id="f-commitment-level">
+              <option value="">Любая</option>
+              <option value="full_time">Полный день</option>
+              <option value="part_time">Неполный день</option>
+              <option value="side_project">Подработка / гибкий формат</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-salary-min">Заработная плата от (в рублях)</label>
+            <input id="f-salary-min" type="text" inputmode="numeric" autocomplete="off" placeholder="например 150 000">
+          </div>
+          <div class="field">
+            <label for="f-salary-max">Заработная плата до (в рублях)</label>
+            <input id="f-salary-max" type="text" inputmode="numeric" autocomplete="off" placeholder="не задано">
+          </div>
         </div>
-        <div class="field">
-          <label for="f-type">Тип резюме</label>
-          <select id="f-type">
-            <option value="any">Любой</option>
-            <option value="commercial">Коммерческий проект</option>
-            <option value="noncommercial">Учебный проект</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="f-commitment-level">Занятость</label>
-          <select id="f-commitment-level">
-            <option value="">Любая</option>
-            <option value="full_time">Полный день</option>
-            <option value="part_time">Неполный день</option>
-            <option value="side_project">Подработка / гибкий формат</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="f-created-within">Дата создания резюме</label>
+        <div class="field field--full-row">
+          <label for="f-created-within">Дата публикации</label>
           <select id="f-created-within">
             <option value="">За всё время</option>
             <option value="7">За последние 7 дней</option>
@@ -816,7 +886,7 @@
 
     let vacanciesList = [];
     let _citiesMap = {};
-    let _skillsMap = {};
+    let _rolesMap = {};
 
     const qInput = document.getElementById("q");
     const findBtn = document.getElementById("find");
@@ -827,8 +897,77 @@
     const openFiltersBtn = document.getElementById("open-filters");
     const applyFiltersBtn = document.getElementById("filters-apply");
     const resetFiltersBtn = document.getElementById("filters-reset");
-    const expSelect = document.getElementById("f-exp");
-    const typeSelect = document.getElementById("f-type");
+
+    const LS_RESUME_CATALOG_MODE = "tp_search_resume_catalog_mode";
+
+    function defaultFiltersEduResume() {
+      return { role_type_id: "", city_id: "", computed_exp: "", created_within_days: "" };
+    }
+    function defaultFiltersComResume() {
+      return {
+        role_type_id: "",
+        city_id: "",
+        computed_exp: "",
+        created_within_days: "",
+        work_format: "",
+        commitment_level: "",
+        salary_min: "",
+        salary_max: "",
+      };
+    }
+
+    const state = {
+      q: "",
+      page: 1,
+      catalogMode: "commercial",
+      filtersEdu: defaultFiltersEduResume(),
+      filtersCom: defaultFiltersComResume(),
+    };
+
+    function activeResumeFilters() {
+      return state.catalogMode === "commercial" ? state.filtersCom : state.filtersEdu;
+    }
+
+    function initResumeCatalogModeFromStorage() {
+      try {
+        const raw = localStorage.getItem(LS_RESUME_CATALOG_MODE);
+        if (raw === "commercial" || raw === "noncommercial") state.catalogMode = raw;
+      } catch (_) {}
+    }
+
+    const resumeCatalogModeToggle = document.getElementById("catalog-mode-toggle");
+
+    function syncResumeCatalogToggleUI() {
+      if (resumeCatalogModeToggle) {
+        resumeCatalogModeToggle.querySelectorAll(".catalog-mode-toggle__btn").forEach((b) => {
+          const on = (b.getAttribute("data-mode") || "") === state.catalogMode;
+          b.classList.toggle("active", on);
+          b.setAttribute("aria-selected", on ? "true" : "false");
+        });
+      }
+      const comWrap = document.getElementById("filters-resume-commercial");
+      if (comWrap) comWrap.hidden = state.catalogMode !== "commercial";
+    }
+
+    if (resumeCatalogModeToggle) {
+      resumeCatalogModeToggle.addEventListener("click", (event) => {
+        const btn = event.target.closest(".catalog-mode-toggle__btn");
+        if (!btn) return;
+        const mode = btn.getAttribute("data-mode");
+        if (mode !== "commercial" && mode !== "noncommercial") return;
+        state.catalogMode = mode;
+        try {
+          localStorage.setItem(LS_RESUME_CATALOG_MODE, mode);
+        } catch (_) {}
+        state.page = 1;
+        syncResumeCatalogToggleUI();
+        void (async () => {
+          await fetchResumesFromApi();
+          render(vacanciesList);
+          updateResumePager();
+        })();
+      });
+    }
 
     const inviteModal = document.getElementById("invite-modal");
     const inviteVacancySelect = document.getElementById("invite-vacancy-select");
@@ -837,20 +976,6 @@
     const inviteCancelBtn = document.getElementById("invite-cancel");
     const inviteConfirmBtn = document.getElementById("invite-confirm");
     let inviteResumeNumericId = null;
-
-    const state = {
-      q: "",
-      exp: "any",
-      type: "any",
-      city_id: "",
-      skill_id: "",
-      salary_min: "",
-      salary_max: "",
-      computed_exp: "",
-      commitment_level: "",
-      created_within_days: "",
-      page: 1,
-    };
 
     const RESUME_PAGE_SIZE = 15;
     let lastResumePageFetchCount = 0;
@@ -927,9 +1052,9 @@
 
     async function loadResumeFilterDicts() {
       try {
-        const [citiesResp, skillsResp] = await Promise.all([
+        const [citiesResp, rolesResp] = await Promise.all([
           fetch(API_BASE_URL + "/cities", { credentials: "include" }),
-          fetch(API_BASE_URL + "/skills", { credentials: "include" }),
+          fetch(API_BASE_URL + "/roles_dictionary", { credentials: "include" }),
         ]);
         const citySel = document.getElementById("f-city");
         if (citySel) {
@@ -950,20 +1075,20 @@
             }
           }
         }
-        const skillSel = document.getElementById("f-skill");
-        if (skillSel) {
-          skillSel.innerHTML = '<option value="">Любой</option>';
-          _skillsMap = {};
-          if (skillsResp.ok) {
-            const skills = await skillsResp.json();
-            if (Array.isArray(skills)) {
-              skills.forEach((s) => {
-                if (s && s.id != null) {
-                  _skillsMap[String(s.id)] = s.name || String(s.id);
+        const roleSel = document.getElementById("f-role");
+        if (roleSel) {
+          roleSel.innerHTML = '<option value="">Любая</option>';
+          _rolesMap = {};
+          if (rolesResp.ok) {
+            const roles = await rolesResp.json();
+            if (Array.isArray(roles)) {
+              roles.forEach((r) => {
+                if (r && r.id != null) {
+                  _rolesMap[String(r.id)] = r.name || String(r.id);
                   const opt = document.createElement("option");
-                  opt.value = String(s.id);
-                  opt.textContent = s.name || String(s.id);
-                  skillSel.appendChild(opt);
+                  opt.value = String(r.id);
+                  opt.textContent = r.name || String(r.id);
+                  roleSel.appendChild(opt);
                 }
               });
             }
@@ -977,35 +1102,34 @@
       lastResumePageFetchCount = 0;
       try {
         const params = new URLSearchParams();
-        const expNeedClient = state.exp === "need";
-        const perPage = expNeedClient ? 50 : RESUME_PAGE_SIZE;
-        const pageNum = expNeedClient ? 1 : state.page;
-        params.set("page", String(pageNum));
-        params.set("per_page", String(perPage));
+        params.set("page", String(state.page));
+        params.set("per_page", String(RESUME_PAGE_SIZE));
         const qt = (state.q || "").trim();
         if (qt) params.set("q", qt);
-        if (state.type !== "any") params.set("employment_intent", state.type);
-        if (state.city_id) params.set("city_id", state.city_id);
-        if (state.skill_id) params.set("skill_id", state.skill_id);
-        if (state.commitment_level) params.set("commitment_level", state.commitment_level);
-        if (state.created_within_days) params.set("created_within_days", state.created_within_days);
-        if (state.exp === "no") {
-          params.set("computed_experience_level", "none");
-        } else if (state.computed_exp) {
-          params.set("computed_experience_level", state.computed_exp);
+        params.set("employment_intent", state.catalogMode);
+        const f = activeResumeFilters();
+        if (f.city_id) params.set("city_id", f.city_id);
+        if (f.role_type_id) params.set("role_type_id", f.role_type_id);
+        if (f.created_within_days) params.set("created_within_days", f.created_within_days);
+        if (f.computed_exp) {
+          params.set("computed_experience_level", f.computed_exp);
         }
-        const sminRaw = state.salary_min != null ? String(state.salary_min).trim().replace(/\s/g, "") : "";
-        const smaxRaw = state.salary_max != null ? String(state.salary_max).trim().replace(/\s/g, "") : "";
-        const smin = sminRaw === "" ? NaN : parseInt(sminRaw, 10);
-        const smax = smaxRaw === "" ? NaN : parseInt(smaxRaw, 10);
-        if (Number.isFinite(smin) && smin >= 0) params.set("salary_min", String(smin));
-        if (Number.isFinite(smax) && smax >= 0) params.set("salary_max", String(smax));
+        if (state.catalogMode === "commercial") {
+          if (f.work_format) params.set("work_format", f.work_format);
+          if (f.commitment_level) params.set("commitment_level", f.commitment_level);
+          const sminRaw = f.salary_min != null ? String(f.salary_min).trim().replace(/\s/g, "") : "";
+          const smaxRaw = f.salary_max != null ? String(f.salary_max).trim().replace(/\s/g, "") : "";
+          const smin = sminRaw === "" ? NaN : parseInt(sminRaw, 10);
+          const smax = smaxRaw === "" ? NaN : parseInt(smaxRaw, 10);
+          if (Number.isFinite(smin) && smin >= 0) params.set("salary_min", String(smin));
+          if (Number.isFinite(smax) && smax >= 0) params.set("salary_max", String(smax));
+        }
 
         const r = await fetch(API_BASE_URL + "/resumes?" + params.toString(), { credentials: "include" });
         if (!r.ok) return;
         const rows = await r.json();
         if (!Array.isArray(rows)) return;
-        let mapped = rows.map((row) => ({
+        const mapped = rows.map((row) => ({
           id: String(row.id),
           userId: String(row.user_id),
           cityId: row.city_id != null ? row.city_id : null,
@@ -1022,11 +1146,8 @@
           skillsCount: Number(row.skills_count) || 0,
           aboutSnippet: row.about_me ? String(row.about_me).replace(/\s+/g, " ").trim().slice(0, 220) : "",
         }));
-        if (expNeedClient) {
-          mapped = mapped.filter((x) => x.hasExperience);
-        }
         vacanciesList = mapped;
-        lastResumePageFetchCount = expNeedClient ? mapped.length : rows.length;
+        lastResumePageFetchCount = rows.length;
       } catch (_) {}
     }
 
@@ -1140,7 +1261,7 @@
         listEl.innerHTML = `<div class="empty-state">Ничего не найдено. Попробуйте изменить запрос или фильтры.</div>`;
         if (countEl) {
           countEl.textContent =
-            state.exp !== "need" && state.page > 1 ? "На этой странице пусто — вернитесь назад" : "Найдено: 0";
+            state.page > 1 ? "На этой странице пусто — вернитесь назад" : "Найдено: 0";
         }
         return;
       }
@@ -1172,12 +1293,8 @@
       }).join("");
 
       if (countEl) {
-        if (state.exp === "need") {
-          countEl.textContent = "Найдено: " + list.length + " (с опытом, до 50 с сервера)";
-        } else {
-          const hasMore = lastResumePageFetchCount >= RESUME_PAGE_SIZE;
-          countEl.textContent = "Стр. " + state.page + " · карточек: " + list.length + (hasMore ? "" : " (конец)");
-        }
+        const hasMore = lastResumePageFetchCount >= RESUME_PAGE_SIZE;
+        countEl.textContent = "Стр. " + state.page + " · карточек: " + list.length + (hasMore ? "" : " (конец)");
       }
 
       listEl.querySelectorAll("[data-invite]").forEach((btn) => {
@@ -1208,10 +1325,6 @@
       const next = document.getElementById("pager-next");
       const stat = document.getElementById("pager-status");
       if (!wrap || !prev || !next || !stat) return;
-      if (state.exp === "need") {
-        wrap.hidden = true;
-        return;
-      }
       wrap.hidden = false;
       stat.textContent = "Страница " + state.page;
       prev.disabled = state.page <= 1;
@@ -1228,21 +1341,22 @@
 
     function openFilters() {
       if (!filtersModal) return;
+      const f = activeResumeFilters();
       const sync = (id, val) => {
         const el = document.getElementById(id);
         if (el) el.value = val != null ? String(val) : "";
       };
-      sync("f-city", state.city_id);
-      sync("f-skill", state.skill_id);
-      sync("f-salary-min", state.salary_min);
-      sync("f-salary-max", state.salary_max);
-      sync("f-computed-exp", state.computed_exp);
-      sync("f-commitment-level", state.commitment_level);
-      sync("f-created-within", state.created_within_days);
-      if (expSelect) expSelect.value = state.exp;
-      if (typeSelect) typeSelect.value = state.type;
+      sync("f-city", f.city_id);
+      sync("f-role", f.role_type_id);
+      sync("f-salary-min", f.salary_min || "");
+      sync("f-salary-max", f.salary_max || "");
+      sync("f-computed-exp", f.computed_exp);
+      sync("f-work-format", f.work_format || "");
+      sync("f-commitment-level", f.commitment_level || "");
+      sync("f-created-within", f.created_within_days);
       bindGroupedSalary("f-salary-min");
       bindGroupedSalary("f-salary-max");
+      syncResumeCatalogToggleUI();
       filtersModal.classList.add("open");
     }
 
@@ -1263,15 +1377,21 @@
 
     if (applyFiltersBtn) {
       applyFiltersBtn.addEventListener("click", () => {
-        state.city_id = document.getElementById("f-city") ? document.getElementById("f-city").value : "";
-        state.skill_id = document.getElementById("f-skill") ? document.getElementById("f-skill").value : "";
-        state.salary_min = document.getElementById("f-salary-min") ? document.getElementById("f-salary-min").value : "";
-        state.salary_max = document.getElementById("f-salary-max") ? document.getElementById("f-salary-max").value : "";
-        state.computed_exp = document.getElementById("f-computed-exp") ? document.getElementById("f-computed-exp").value : "";
-        state.commitment_level = document.getElementById("f-commitment-level") ? document.getElementById("f-commitment-level").value : "";
-        state.created_within_days = document.getElementById("f-created-within") ? document.getElementById("f-created-within").value : "";
-        state.exp = expSelect ? expSelect.value : "any";
-        state.type = typeSelect ? typeSelect.value : "any";
+        const f = activeResumeFilters();
+        f.role_type_id = document.getElementById("f-role") ? document.getElementById("f-role").value : "";
+        f.city_id = document.getElementById("f-city") ? document.getElementById("f-city").value : "";
+        f.salary_min = document.getElementById("f-salary-min") ? document.getElementById("f-salary-min").value : "";
+        f.salary_max = document.getElementById("f-salary-max") ? document.getElementById("f-salary-max").value : "";
+        f.computed_exp = document.getElementById("f-computed-exp") ? document.getElementById("f-computed-exp").value : "";
+        f.work_format = document.getElementById("f-work-format") ? document.getElementById("f-work-format").value : "";
+        f.commitment_level = document.getElementById("f-commitment-level") ? document.getElementById("f-commitment-level").value : "";
+        f.created_within_days = document.getElementById("f-created-within") ? document.getElementById("f-created-within").value : "";
+        if (state.catalogMode !== "commercial") {
+          f.work_format = "";
+          f.commitment_level = "";
+          f.salary_min = "";
+          f.salary_max = "";
+        }
         closeFilters();
         applySearch();
       });
@@ -1279,21 +1399,16 @@
 
     if (resetFiltersBtn) {
       resetFiltersBtn.addEventListener("click", () => {
-        state.exp = "any";
-        state.type = "any";
-        state.city_id = "";
-        state.skill_id = "";
-        state.salary_min = "";
-        state.salary_max = "";
-        state.commitment_level = "";
-        state.created_within_days = "";
-        state.computed_exp = "";
-        if (expSelect) expSelect.value = "any";
-        if (typeSelect) typeSelect.value = "any";
-        ["f-city", "f-skill", "f-salary-min", "f-salary-max", "f-computed-exp", "f-commitment-level", "f-created-within"].forEach((id) => {
+        if (state.catalogMode === "commercial") {
+          state.filtersCom = defaultFiltersComResume();
+        } else {
+          state.filtersEdu = defaultFiltersEduResume();
+        }
+        ["f-city", "f-role", "f-salary-min", "f-salary-max", "f-computed-exp", "f-work-format", "f-commitment-level", "f-created-within"].forEach((id) => {
           const el = document.getElementById(id);
           if (el) el.value = "";
         });
+        syncResumeCatalogToggleUI();
         closeFilters();
         applySearch();
       });
@@ -1310,14 +1425,14 @@
     }
 
     document.getElementById("pager-prev")?.addEventListener("click", async () => {
-      if (state.page <= 1 || state.exp === "need") return;
+      if (state.page <= 1) return;
       state.page -= 1;
       await fetchResumesFromApi();
       render(vacanciesList);
       updateResumePager();
     });
     document.getElementById("pager-next")?.addEventListener("click", async () => {
-      if (state.exp === "need" || lastResumePageFetchCount < RESUME_PAGE_SIZE) return;
+      if (lastResumePageFetchCount < RESUME_PAGE_SIZE) return;
       state.page += 1;
       await fetchResumesFromApi();
       render(vacanciesList);
@@ -1325,6 +1440,8 @@
     });
 
     void (async () => {
+      initResumeCatalogModeFromStorage();
+      syncResumeCatalogToggleUI();
       await loadResumeFilterDicts();
       bindGroupedSalary("f-salary-min");
       bindGroupedSalary("f-salary-max");

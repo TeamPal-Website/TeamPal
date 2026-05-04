@@ -9,6 +9,7 @@ from src.enums import (
     ProjectVacancyExperience,
     ProjectsStatus,
     ResumeStatus,
+    WorkFormat,
 )
 from src.models.applications import VacancyAssignmentsOrm
 from src.models.projects import ProjectsOrm, ProjectVacancyOrm
@@ -59,6 +60,8 @@ class ResumesRepository(BaseRepository):
         city_id: int | None = None,
         employment_intent: EmploymentIntent | None = None,
         skill_id: int | None = None,
+        role_type_id: int | None = None,
+        work_format: WorkFormat | None = None,
         commitment_level: CommitmentLevel | None = None,
         salary_min: int | None = None,
         salary_max: int | None = None,
@@ -82,6 +85,10 @@ class ResumesRepository(BaseRepository):
             filters.append(ResumesOrm.city_id == city_id)
         if employment_intent is not None:
             filters.append(ResumesOrm.employment_intent == employment_intent)
+        if role_type_id is not None:
+            filters.append(ResumesOrm.role_type_id == role_type_id)
+        if work_format is not None:
+            filters.append(ResumesOrm.work_format == work_format)
         if commitment_level is not None:
             filters.append(ResumesOrm.commitment_level == commitment_level)
         if skill_id is not None:

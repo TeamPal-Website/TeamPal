@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException
 from sqlalchemy.exc import IntegrityError
 
 from src.api.dependencies import DBDep
+from src.catalog_cache import cached_json_list, schedule_catalog_invalidate
 from src.schemas.roles_dictionary import RoleDictionaryAdd
 
 router = APIRouter(prefix="/roles_dictionary", tags=["Роли (справочник)"])
@@ -9,7 +10,7 @@ router = APIRouter(prefix="/roles_dictionary", tags=["Роли (справочн
 
 @router.get("")
 async def list_roles(db: DBDep):
-    return await db.roles_dictionary.get_all()
+    return await cached_json_list("roles", db.roles_dictionary.get_all)
 
 
 @router.get("/{role_id}")
@@ -31,6 +32,7 @@ async def create_role(
     except IntegrityError:
         raise HTTPException(status_code=409, detail="Роль с таким названием уже существует")
 
+    schedule_catalog_invalidate(["roles"])
     return {"status": "OK", "data": role}
 
 
@@ -52,4 +54,5 @@ async def delete_role(
             detail="Роль используется в проекте и не может быть удалена",
         )
 
+    schedule_catalog_invalidate(["roles"])
     return {"status": "OK"}

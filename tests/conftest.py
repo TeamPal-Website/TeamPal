@@ -41,6 +41,14 @@ def _sqlite_enable_foreign_keys(dbapi_connection, _connection_record):
 
 
 @pytest.fixture(autouse=True)
+def _stub_catalog_invalidate_schedule(monkeypatch):
+    monkeypatch.setattr(
+        "src.catalog_cache.schedule_catalog_invalidate",
+        lambda names: None,
+    )
+
+
+@pytest.fixture(autouse=True)
 async def setup_database():
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

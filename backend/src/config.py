@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
@@ -32,6 +32,22 @@ class Settings(BaseSettings):
         if isinstance(value, str):
             return [origin.strip() for origin in value.split(",") if origin.strip()]
         return value
+
+    REDIS_URL: str | None = None
+    CELERY_BROKER_URL: str | None = None
+
+    @property
+    def celery_broker(self) -> str | None:
+        return self.CELERY_BROKER_URL or self.REDIS_URL
+
+    S3_ENDPOINT_URL: str | None = None
+    S3_ACCESS_KEY_ID: str | None = None
+    S3_SECRET_ACCESS_KEY: str | None = None
+    S3_BUCKET: str | None = None
+    S3_REGION: str = "us-east-1"
+    S3_PUBLIC_BASE_URL: str | None = None
+    S3_AVATAR_PREFIX: str = "avatars/"
+    S3_ADDRESSING_STYLE: Literal["path", "virtual"] = "path"
 
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env",

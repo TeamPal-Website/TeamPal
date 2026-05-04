@@ -3,6 +3,7 @@ import re
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from src.enums import Gender
+from src.utils.avatar_url import public_avatar_url
 
 _RU_NAME_RE = re.compile(r"^[А-ЯЁа-яё]+(?:[-' ][А-ЯЁа-яё]+)*$")
 
@@ -14,7 +15,8 @@ class ProfileContacts(BaseModel):
 
 
 class ProfileBase(BaseModel):
-    avatar: str | None = Field(None, max_length=255)
+    """Поля профиля без аватара (аватар только через загрузку в object storage)."""
+
     first_name: str | None = Field(None, max_length=35)
     last_name: str | None = Field(None, max_length=35)
     age: int | None = Field(None, ge=16, le=100)
@@ -58,14 +60,49 @@ class ProfileAdd(ProfileBase):
     user_id: int = Field(gt=0)
 
 
-class Profile(ProfileRequestPatch):
+class ProfileAvatarKeyUpdate(BaseModel):
+    """Обновление только ключа аватара в бакете (без полного URL)."""
+
+    avatar: str = Field(..., max_length=255)
+
+
+class Profile(ProfileBase):
     id: int
     user_id: int
+    avatar: str | None = Field(None, max_length=255)
 
     model_config = ConfigDict(from_attributes=True)
 
 
+class ProfileRead(BaseModel):
+    """Ответ API: avatar — публичный URL (из ключа + S3_PUBLIC_BASE_URL)."""
+
+    id: int
+    user_id: int
+    avatar: str | None
+    first_name: str | None
+    last_name: str | None
+    age: int | None
+    gender: Gender | None
+    contacts: ProfileContacts | None
+
+    @classmethod
+    def from_profile(cls, p: Profile) -> "ProfileRead":
+        return cls(
+            id=p.id,
+            user_id=p.user_id,
+            avatar=public_avatar_url(p.avatar),
+            first_name=p.first_name,
+            last_name=p.last_name,
+            age=p.age,
+            gender=p.gender,
+            contacts=p.contacts,
+        )
+
+
 class PublicProfile(BaseModel):
+    model_config = ConfigDict(from_attributes=False)
+
     id: int
     user_id: int
     avatar: str | None
@@ -74,4 +111,14 @@ class PublicProfile(BaseModel):
     age: int | None
     gender: Gender | None
 
-    model_config = ConfigDict(from_attributes=True)
+    @classmethod
+    def from_profile(cls, p: Profile) -> "PublicProfile":
+        return cls(
+            id=p.id,
+            user_id=p.user_id,
+            avatar=public_avatar_url(p.avatar),
+            first_name=p.first_name,
+            last_name=p.last_name,
+            age=p.age,
+            gender=p.gender,
+        )

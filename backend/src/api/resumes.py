@@ -11,6 +11,7 @@ from src.enums import (
     NotificationEvent,
     ProjectVacancyExperience,
     ResumeStatus,
+    WorkFormat,
 )
 from src.schemas.notifications import NotificationAdd
 from src.schemas.resume_experiences import ResumeExperienceAdd
@@ -157,6 +158,8 @@ async def search_resumes(
     city_id: int | None = Query(default=None, gt=0),
     employment_intent: EmploymentIntent | None = None,
     skill_id: int | None = Query(default=None, gt=0),
+    role_type_id: int | None = Query(default=None, gt=0),
+    work_format: WorkFormat | None = None,
     commitment_level: CommitmentLevel | None = None,
     salary_min: int | None = Query(default=None, ge=0),
     salary_max: int | None = Query(default=None, ge=0),
@@ -173,6 +176,8 @@ async def search_resumes(
         city_id=city_id,
         employment_intent=employment_intent,
         skill_id=skill_id,
+        role_type_id=role_type_id,
+        work_format=work_format,
         commitment_level=commitment_level,
         salary_min=salary_min,
         salary_max=salary_max,

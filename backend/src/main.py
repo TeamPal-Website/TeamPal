@@ -1,5 +1,7 @@
 import sys
+from contextlib import asynccontextmanager
 from pathlib import Path
+
 from fastapi.staticfiles import StaticFiles
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -21,9 +23,17 @@ from src.api.roles_dictionary import router as router_roles_dictionary
 from src.api.applications import router as router_applications
 from src.api.vacancies import router as router_vacancies
 from src.api.notifications import router as router_notifications
+from src.catalog_cache import close_redis
 from src.config import settings
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+    await close_redis()
+
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

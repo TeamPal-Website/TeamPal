@@ -51,6 +51,12 @@
     .page { width: 100%; max-width: 1160px; margin: 0 auto; padding: 102px 20px 26px; flex: 1; }
     .card { border: 1px solid var(--line); border-radius: 18px; background: var(--panel); box-shadow: 0 12px 30px rgba(0,0,0,.06); }
     .top { padding: 18px 20px; margin-bottom: 14px; background: linear-gradient(180deg, rgba(255,208,102,.16), transparent 38%), #fff; }
+    .resume-head { display: flex; gap: 16px; align-items: flex-start; }
+    .resume-owner-avatar {
+      width: 72px; height: 72px; border-radius: 16px; object-fit: cover;
+      border: 1px solid var(--line); flex-shrink: 0; background: #f0ece7;
+    }
+    .resume-head-main { flex: 1; min-width: 0; }
     .title { font-size: 28px; color: var(--accent-2); line-height: 1.15; }
     .sub { margin-top: 6px; color: #6d6155; font-size: 14px; }
     .grid { margin-top: 14px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
@@ -146,11 +152,27 @@
     .modal .field label { font-size: 13px; color: #4c4c4c; font-weight: 500; display: block; margin-bottom: 6px; }
     .modal .field select {
       width: 100%;
-      border: 2px solid #dfdfdf;
-      border-radius: 10px;
-      padding: 10px 11px;
+      border: 1px solid #d1d1d1;
+      border-radius: 18px;
+      background: #fff;
+      padding: 10px 18px;
+      padding-right: 40px;
+      min-height: 42px;
       font-family: inherit;
       font-size: 14px;
+      color: var(--ink);
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='8' viewBox='0 0 14 8' fill='none'%3E%3Cpath d='M1.5 1.5L7 6l5.5-4.5' stroke='%233a3a3a' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      box-sizing: border-box;
+    }
+    .modal .field select:focus {
+      border-color: #bdbdbd;
+      box-shadow: 0 0 0 2px rgba(248, 90, 11, 0.18);
     }
     .modal .action-btn {
       border-radius: 12px;
@@ -191,8 +213,7 @@
       <nav class="header-menu" id="header-menu">
         <div class="header-menu__title">Меню</div>
         <button class="header-menu__item" type="button" data-nav="./account_employee.html">Личный кабинет</button>
-        <button class="header-menu__item" type="button" data-nav="./search_project.html">Поиск</button>
-        <button class="header-menu__item" type="button" data-nav="./support_project.html">Поддержать проект</button>
+        <button class="header-menu__item" type="button" data-nav="./search_project.html">Поиск проектов</button>
         <button class="header-menu__exit" type="button" data-nav="./authorization_page.html">Выйти</button>
       </nav>
     </div>
@@ -205,8 +226,13 @@
     <button type="button" class="action-btn action-btn--accent" id="resume-invite-open">Пригласить кандидата</button>
   </div>
   <section class="card top">
-    <h1 class="title" id="resume-title">Карточка резюме</h1>
-    <div class="sub" id="resume-sub">Загрузка...</div>
+    <div class="resume-head">
+      <img class="resume-owner-avatar" id="resume-owner-avatar" src="./assets/avatar-default.png" alt="">
+      <div class="resume-head-main">
+        <h1 class="title" id="resume-title">Карточка резюме</h1>
+        <div class="sub" id="resume-sub">Загрузка...</div>
+      </div>
+    </div>
     <div class="grid" id="resume-main-fields"></div>
   </section>
 
@@ -485,6 +511,22 @@
         document.getElementById("resume-sub").textContent = "Не удалось загрузить резюме";
         document.getElementById("resume-experiences").innerHTML = '<div class="empty">Проверьте доступ или попробуйте позже</div>';
         return;
+      }
+
+      const avatarEl = document.getElementById("resume-owner-avatar");
+      if (avatarEl && userId) {
+        try {
+          const pr = await fetch(API_BASE_URL + "/profiles/" + encodeURIComponent(userId), { credentials: "include" });
+          if (pr.ok) {
+            const pj = await pr.json();
+            if (pj.avatar) avatarEl.src = pj.avatar;
+            else avatarEl.src = "./assets/avatar-default.png";
+          }
+        } catch (_) {
+          avatarEl.src = "./assets/avatar-default.png";
+        }
+      } else if (avatarEl) {
+        avatarEl.src = "./assets/avatar-default.png";
       }
 
       const displayTitle = resumeData.title || resumeData.desired_position || "Резюме";

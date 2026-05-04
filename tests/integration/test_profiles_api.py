@@ -1,3 +1,5 @@
+from unittest.mock import AsyncMock, patch
+
 import pytest
 from httpx import AsyncClient
 
@@ -20,6 +22,7 @@ class TestGetMyProfile:
         assert "last_name" in data
         assert "age" in data
         assert "gender" in data
+        assert "avatar" in data
 
     async def test_get_my_profile_no_hashed_password(self, authenticated_client: AsyncClient):
         response = await authenticated_client.get("/profiles/me")
@@ -52,6 +55,8 @@ class TestGetProfileByUserId:
     ):
         response = await client.get(f"/profiles/{user_id}")
         assert response.status_code == 200
+        data = response.json()
+        assert "avatar" in data
 
     async def test_get_profile_no_auth_required(
         self, client: AsyncClient, authenticated_client: AsyncClient, user_id: int
@@ -162,3 +167,46 @@ class TestPatchProfile:
         saved = profile.json()["contacts"]
         assert saved["phone"] == "+79991234567"
         assert saved["telegram"] == "@ivan"
+
+
+class TestAvatarUpload:
+
+    async def test_upload_avatar_requires_auth(self, client: AsyncClient):
+        with patch("src.api.profiles.is_object_storage_configured", return_value=True):
+            response = await client.post(
+                "/profiles/me/avatar",
+                files={"file": ("t.png", b"\x89PNG\r\n\x1a\n", "image/png")},
+            )
+        assert response.status_code == 401
+
+    async def test_upload_avatar_503_when_storage_not_configured(self, authenticated_client: AsyncClient):
+        with patch("src.api.profiles.is_object_storage_configured", return_value=False):
+            response = await authenticated_client.post(
+                "/profiles/me/avatar",
+                files={"file": ("t.png", b"x", "image/png")},
+            )
+        assert response.status_code == 503
+
+    @patch("src.api.profiles.delete_avatar_key", new_callable=AsyncMock)
+    @patch("src.api.profiles.upload_avatar", new_callable=AsyncMock)
+    @patch("src.api.profiles.is_object_storage_configured", return_value=True)
+    async def test_upload_avatar_persists_key_and_returns_public_url(
+        self,
+        _configured,
+        mock_upload,
+        mock_delete,
+        authenticated_client: AsyncClient,
+    ):
+        mock_upload.return_value = "avatars/1/a1b2c3d4e5f6.jpg"
+        url_stub = "https://cdn.example/avatars/1/a1b2c3d4e5f6.jpg"
+        with patch("src.schemas.profiles.public_avatar_url", side_effect=lambda k: url_stub if k else None):
+            response = await authenticated_client.post(
+                "/profiles/me/avatar",
+                files={"file": ("t.png", b"x", "image/png")},
+            )
+            assert response.status_code == 200
+            body = response.json()
+            assert body["avatar"] == url_stub
+            mock_upload.assert_awaited_once()
+            me = await authenticated_client.get("/profiles/me")
+            assert me.json()["avatar"] == url_stub

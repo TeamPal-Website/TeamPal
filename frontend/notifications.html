@@ -82,9 +82,8 @@
       <nav class="header-menu" id="header-menu">
         <div class="header-menu__title">Меню</div>
         <button class="header-menu__item" type="button" id="menu-account">Личный кабинет</button>
-        <button class="header-menu__item" type="button" data-nav="./search_project.html">Поиск</button>
+        <button class="header-menu__item" type="button" id="menu-search">Поиск проектов</button>
         <button class="header-menu__item" type="button" data-nav="./applications.html">Отклики</button>
-        <button class="header-menu__item" type="button" data-nav="./support_project.html">Поддержать проект</button>
         <button class="header-menu__exit" type="button" data-nav="./authorization_page.html">Выйти</button>
       </nav>
     </div>
@@ -124,6 +123,19 @@
     document.addEventListener("click", function (event) {
       if (!event.target.closest(".header__actions") && headerMenu) headerMenu.classList.remove("open");
     });
+    const menuSearch = document.getElementById("menu-search");
+    if (menuSearch) {
+      let role = "Ищу вакансию";
+      try {
+        role = localStorage.getItem("tp_role") || role;
+      } catch (_) {}
+      const manager = role === "Ищу сотрудника";
+      menuSearch.textContent = manager ? "Поиск сотрудников" : "Поиск проектов";
+      menuSearch.addEventListener("click", () => {
+        window.location.href = manager ? "./search_resume.html" : "./search_project.html";
+      });
+    }
+
     document.querySelectorAll("[data-nav]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const href = btn.getAttribute("data-nav");

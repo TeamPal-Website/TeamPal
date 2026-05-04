@@ -144,6 +144,39 @@
       color: #fff;
       box-shadow: 0 2px 8px rgba(248, 90, 11, 0.25);
     }
+    .catalog-mode-toggle {
+      display: flex;
+      background: linear-gradient(180deg, #f5f1eb 0%, #ebe6df 100%);
+      border-radius: 999px;
+      padding: 4px;
+      border: 1px solid rgba(58, 42, 26, 0.16);
+      box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.07),
+        0 1px 0 rgba(255, 255, 255, 0.65) inset;
+      width: fit-content;
+      max-width: 100%;
+      margin-top: 10px;
+      margin-bottom: 22px;
+    }
+    .catalog-mode-toggle__btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      background: transparent;
+      color: #7a7060;
+      transition: all 0.25s ease;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    .catalog-mode-toggle__btn:hover { color: var(--ink); }
+    .catalog-mode-toggle__btn.active {
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(248, 90, 11, 0.22);
+    }
     .notify-btn {
       width: 48px;
       height: 48px;
@@ -481,22 +514,64 @@
     .modal__grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px 12px;
+      gap: 14px 16px;
+      align-items: start;
     }
-    .field { display: flex; flex-direction: column; gap: 6px; }
-    .field label { font-size: 13px; color: #4c4c4c; font-weight: 500; }
+    .modal__grid-sub {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px 16px;
+      align-items: start;
+    }
+    /* Явно скрываем блок: иначе display:grid у .modal__grid-sub может оставлять поля видимыми с атрибутом hidden */
+    .modal__grid-sub[hidden] {
+      display: none !important;
+    }
+    /* Одно поле на всю ширину строки — без пустой правой ячейки */
+    .modal__grid > .field--full-row,
+    .modal__grid-sub > .field--full-row {
+      grid-column: 1 / -1;
+    }
+    .field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+    .field label {
+      font-size: 13px;
+      line-height: 1.32;
+      color: #4c4c4c;
+      font-weight: 500;
+      min-height: 2.75em;
+      display: flex;
+      align-items: flex-end;
+    }
     .field select, .field input {
       width: 100%;
-      border: 2px solid #dfdfdf;
-      border-radius: 10px;
+      border: 1px solid #d1d1d1;
+      border-radius: 18px;
       background: #fff;
       font-size: 14px;
-      padding: 10px 11px;
+      padding: 10px 18px;
+      min-height: 42px;
       font-family: inherit;
+      color: var(--ink);
+      outline: none;
+      box-sizing: border-box;
+    }
+    .field select {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      padding-right: 40px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='8' viewBox='0 0 14 8' fill='none'%3E%3Cpath d='M1.5 1.5L7 6l5.5-4.5' stroke='%233a3a3a' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+    }
+    .field input::placeholder {
+      color: #9a9a9a;
     }
     .field select:focus, .field input:focus {
-      outline: 2px solid rgba(248, 90, 11, 0.24);
-      border-color: #f85a0b;
+      outline: none;
+      border-color: #bdbdbd;
+      box-shadow: 0 0 0 2px rgba(248, 90, 11, 0.18);
     }
     .modal__actions { margin-top: 12px; display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
     .modal__actions .action-btn { border-radius: 12px; height: auto; }
@@ -525,12 +600,6 @@
       gap: 10px;
       flex-wrap: wrap;
     }
-    .filters-modal__hint {
-      margin-top: 12px;
-      font-size: 12px;
-      color: #888;
-      line-height: 1.45;
-    }
   </style>
 </head>
 <body>
@@ -557,8 +626,7 @@
       <nav class="header-menu" id="header-menu">
         <div class="header-menu__title">Меню</div>
         <button class="header-menu__item" type="button" data-nav="./account_employee.html">Личный кабинет</button>
-        <button class="header-menu__item" type="button" data-nav="./search_project.html">Поиск</button>
-        <button class="header-menu__item" type="button" data-nav="./support_project.html">Поддержать проект</button>
+        <button class="header-menu__item" type="button" data-nav="./search_project.html">Поиск проектов</button>
         <button class="header-menu__exit" type="button" data-nav="./authorization_page.html">Выйти</button>
       </nav>
     </div>
@@ -566,7 +634,11 @@
 </header>
 
 <main class="page">
-  <h1 class="top-title">Каталог проектов</h1>
+  <h1 class="top-title">Поиск проектов</h1>
+  <div class="catalog-mode-toggle" id="catalog-mode-toggle" role="tablist" aria-label="Тип проектов в каталоге">
+    <button type="button" class="catalog-mode-toggle__btn active" data-mode="commercial" role="tab" aria-selected="true">Коммерческий</button>
+    <button type="button" class="catalog-mode-toggle__btn" data-mode="noncommercial" role="tab" aria-selected="false">Учебный</button>
+  </div>
 
   <section class="card search-card" aria-label="Поиск вакансий">
     <div class="search-row">
@@ -607,22 +679,7 @@
     <div class="modal__accent-strip"></div>
     <div class="modal__body">
       <h2 class="modal__title-lg">Фильтры</h2>
-      <p class="modal__subtitle">Сузьте выдачу по типу проекта, городу, должности и условиям работы.</p>
       <div class="modal__grid" style="margin-top:14px;">
-        <div class="field">
-          <label for="f-intent">Тип проекта</label>
-          <select id="f-intent">
-            <option value="">Любой</option>
-            <option value="commercial">Коммерческий</option>
-            <option value="noncommercial">Учебный</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="f-city">Город проекта</label>
-          <select id="f-city">
-            <option value="">Любой</option>
-          </select>
-        </div>
         <div class="field">
           <label for="f-role">Должность</label>
           <select id="f-role">
@@ -630,33 +687,13 @@
           </select>
         </div>
         <div class="field">
-          <label for="f-format">Формат работы</label>
-          <select id="f-format">
+          <label for="f-city">Город</label>
+          <select id="f-city">
             <option value="">Любой</option>
-            <option value="remote">Только удалённо</option>
-            <option value="office">Только офис</option>
-            <option value="hybrid">Гибрид</option>
           </select>
         </div>
-        <div class="field">
-          <label for="f-commitment">Занятость</label>
-          <select id="f-commitment">
-            <option value="">Любая</option>
-            <option value="full_time">Полная</option>
-            <option value="part_time">Частичная</option>
-            <option value="side_project">Подработка</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="f-salary-min">Заработная плата от (в рублях)</label>
-          <input id="f-salary-min" type="text" inputmode="numeric" autocomplete="off" placeholder="например 120 000">
-        </div>
-        <div class="field">
-          <label for="f-salary-max">Заработная плата до (в рублях)</label>
-          <input id="f-salary-max" type="text" inputmode="numeric" autocomplete="off" placeholder="не задано">
-        </div>
-        <div class="field">
-          <label for="f-exp-vacancy">Требуемый опыт</label>
+        <div class="field field--full-row">
+          <label for="f-exp-vacancy" id="label-f-exp-vacancy">Требуемый опыт</label>
           <select id="f-exp-vacancy">
             <option value="">Любой</option>
             <option value="none">Без опыта</option>
@@ -666,17 +703,45 @@
             <option value="6+">6+ лет</option>
           </select>
         </div>
-        <div class="field">
-          <label for="f-contract">Тип договора</label>
-          <select id="f-contract">
-            <option value="">Любой</option>
-            <option value="tk">ТК РФ</option>
-            <option value="gph">ГПХ</option>
-            <option value="internship">Стажировка</option>
-          </select>
+        <div id="filters-project-commercial" class="modal__grid-sub">
+          <div class="field">
+            <label for="f-format">Формат работы</label>
+            <select id="f-format">
+              <option value="">Любой</option>
+              <option value="remote">Только удалённо</option>
+              <option value="office">Только офис</option>
+              <option value="hybrid">Гибрид</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-commitment">Занятость</label>
+            <select id="f-commitment">
+              <option value="">Любая</option>
+              <option value="full_time">Полная</option>
+              <option value="part_time">Частичная</option>
+              <option value="side_project">Подработка</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-salary-min">Заработная плата от (в рублях)</label>
+            <input id="f-salary-min" type="text" inputmode="numeric" autocomplete="off" placeholder="например 120 000">
+          </div>
+          <div class="field">
+            <label for="f-salary-max">Заработная плата до (в рублях)</label>
+            <input id="f-salary-max" type="text" inputmode="numeric" autocomplete="off" placeholder="не задано">
+          </div>
+          <div class="field field--full-row">
+            <label for="f-contract">Тип договора</label>
+            <select id="f-contract">
+              <option value="">Любой</option>
+              <option value="tk">ТК РФ</option>
+              <option value="gph">ГПХ</option>
+              <option value="internship">Стажировка</option>
+            </select>
+          </div>
         </div>
-        <div class="field">
-          <label for="f-posted">Дата публикации вакансии</label>
+        <div class="field field--full-row">
+          <label for="f-posted">Дата публикации</label>
           <select id="f-posted">
             <option value="">За всё время</option>
             <option value="7">За последние 7 дней</option>
@@ -685,7 +750,6 @@
           </select>
         </div>
       </div>
-      <p class="filters-modal__hint">Подсказка: поиск по названию учитывает и должность в вакансии (например, «frontend» найдёт «Frontend-разработчик»).</p>
     </div>
     <div class="modal__footer-bar">
       <button class="action-btn" id="filters-reset" type="button">Сбросить</button>
@@ -796,20 +860,77 @@
     let _rolesMap = {};
     let _vacancies = [];
 
+    const LS_PROJECT_CATALOG_MODE = "tp_search_project_catalog_mode";
+
+    function defaultFiltersEduProject() {
+      return { city_id: "", role_type_id: "", experience_vacancy: "", posted_within_days: "" };
+    }
+    function defaultFiltersComProject() {
+      return {
+        city_id: "",
+        role_type_id: "",
+        experience_vacancy: "",
+        posted_within_days: "",
+        work_format: "",
+        commitment_level: "",
+        salary_min: "",
+        salary_max: "",
+        contract_type: "",
+      };
+    }
+
     const state = {
       q: "",
-      intent: "",
-      city_id: "",
-      role_type_id: "",
-      work_format: "",
-      commitment_level: "",
-      salary_min: "",
-      salary_max: "",
-      experience_vacancy: "",
-      contract_type: "",
-      posted_within_days: "",
       page: 1,
+      catalogMode: "commercial",
+      filtersEdu: defaultFiltersEduProject(),
+      filtersCom: defaultFiltersComProject(),
     };
+
+    function activeProjectFilters() {
+      return state.catalogMode === "commercial" ? state.filtersCom : state.filtersEdu;
+    }
+
+    function initProjectCatalogModeFromStorage() {
+      try {
+        const raw = localStorage.getItem(LS_PROJECT_CATALOG_MODE);
+        if (raw === "commercial" || raw === "noncommercial") state.catalogMode = raw;
+      } catch (_) {}
+    }
+
+    const catalogModeToggle = document.getElementById("catalog-mode-toggle");
+    const expVacancyLabel = document.getElementById("label-f-exp-vacancy");
+
+    function syncProjectCatalogToggleUI() {
+      if (catalogModeToggle) {
+        catalogModeToggle.querySelectorAll(".catalog-mode-toggle__btn").forEach((b) => {
+          const on = (b.getAttribute("data-mode") || "") === state.catalogMode;
+          b.classList.toggle("active", on);
+          b.setAttribute("aria-selected", on ? "true" : "false");
+        });
+      }
+      const comWrap = document.getElementById("filters-project-commercial");
+      if (comWrap) comWrap.hidden = state.catalogMode !== "commercial";
+      if (expVacancyLabel) {
+        expVacancyLabel.textContent = state.catalogMode === "commercial" ? "Требуемый опыт" : "Опыт в резюме";
+      }
+    }
+
+    if (catalogModeToggle) {
+      catalogModeToggle.addEventListener("click", (event) => {
+        const btn = event.target.closest(".catalog-mode-toggle__btn");
+        if (!btn) return;
+        const mode = btn.getAttribute("data-mode");
+        if (mode !== "commercial" && mode !== "noncommercial") return;
+        state.catalogMode = mode;
+        try {
+          localStorage.setItem(LS_PROJECT_CATALOG_MODE, mode);
+        } catch (_) {}
+        state.page = 1;
+        syncProjectCatalogToggleUI();
+        fetchVacancies();
+      });
+    }
 
     const VACANCY_PAGE_SIZE = 15;
     let lastVacancyPageCount = 0;
@@ -829,27 +950,39 @@
           fetch(API_BASE_URL + "/cities", { credentials: "include" }),
           fetch(API_BASE_URL + "/roles_dictionary", { credentials: "include" }),
         ]);
+        const citySelect = document.getElementById("f-city");
+        if (citySelect) citySelect.innerHTML = '<option value="">Любой</option>';
+        _citiesMap = {};
         if (citiesResp.ok) {
           const cities = await citiesResp.json();
-          _citiesMap = {};
-          const citySelect = document.getElementById("f-city");
-          if (Array.isArray(cities)) cities.forEach((c) => {
-            if (c && c.id != null) {
-              _citiesMap[String(c.id)] = c.title || String(c.id);
-              if (citySelect) { const opt = document.createElement("option"); opt.value = String(c.id); opt.textContent = c.title || String(c.id); citySelect.appendChild(opt); }
-            }
-          });
+          if (Array.isArray(cities) && citySelect) {
+            cities.forEach((c) => {
+              if (c && c.id != null) {
+                _citiesMap[String(c.id)] = c.title || String(c.id);
+                const opt = document.createElement("option");
+                opt.value = String(c.id);
+                opt.textContent = c.title || String(c.id);
+                citySelect.appendChild(opt);
+              }
+            });
+          }
         }
+        const roleSelect = document.getElementById("f-role");
+        if (roleSelect) roleSelect.innerHTML = '<option value="">Любая</option>';
+        _rolesMap = {};
         if (rolesResp.ok) {
           const roles = await rolesResp.json();
-          _rolesMap = {};
-          const roleSelect = document.getElementById("f-role");
-          if (Array.isArray(roles)) roles.forEach((r) => {
-            if (r && r.id != null) {
-              _rolesMap[String(r.id)] = r.name || String(r.id);
-              if (roleSelect) { const opt = document.createElement("option"); opt.value = String(r.id); opt.textContent = r.name || String(r.id); roleSelect.appendChild(opt); }
-            }
-          });
+          if (Array.isArray(roles) && roleSelect) {
+            roles.forEach((r) => {
+              if (r && r.id != null) {
+                _rolesMap[String(r.id)] = r.name || String(r.id);
+                const opt = document.createElement("option");
+                opt.value = String(r.id);
+                opt.textContent = r.name || String(r.id);
+                roleSelect.appendChild(opt);
+              }
+            });
+          }
         }
       } catch (_) {}
     }
@@ -857,21 +990,24 @@
     async function fetchVacancies() {
       if (listEl) listEl.innerHTML = '<div class="empty-state" style="color:#aaa;">Загрузка…</div>';
       const params = new URLSearchParams();
+      const f = activeProjectFilters();
       if (state.q) params.set("q", state.q);
-      if (state.intent) params.set("employment_intent", state.intent);
-      if (state.city_id) params.set("city_id", state.city_id);
-      if (state.role_type_id) params.set("role_type_id", state.role_type_id);
-      if (state.work_format) params.set("work_format", state.work_format);
-      if (state.commitment_level) params.set("commitment_level", state.commitment_level);
-      if (state.experience_vacancy) params.set("experience", state.experience_vacancy);
-      if (state.contract_type) params.set("contract_type", state.contract_type);
-      if (state.posted_within_days) params.set("posted_within_days", state.posted_within_days);
-      const sminRaw = state.salary_min != null ? String(state.salary_min).trim().replace(/\s/g, "") : "";
-      const smaxRaw = state.salary_max != null ? String(state.salary_max).trim().replace(/\s/g, "") : "";
-      const smin = sminRaw === "" ? NaN : parseInt(sminRaw, 10);
-      const smax = smaxRaw === "" ? NaN : parseInt(smaxRaw, 10);
-      if (Number.isFinite(smin) && smin >= 0) params.set("salary_min", String(smin));
-      if (Number.isFinite(smax) && smax >= 0) params.set("salary_max", String(smax));
+      params.set("employment_intent", state.catalogMode);
+      if (f.city_id) params.set("city_id", f.city_id);
+      if (f.role_type_id) params.set("role_type_id", f.role_type_id);
+      if (f.experience_vacancy) params.set("experience", f.experience_vacancy);
+      if (f.posted_within_days) params.set("posted_within_days", f.posted_within_days);
+      if (state.catalogMode === "commercial") {
+        if (f.work_format) params.set("work_format", f.work_format);
+        if (f.commitment_level) params.set("commitment_level", f.commitment_level);
+        if (f.contract_type) params.set("contract_type", f.contract_type);
+        const sminRaw = f.salary_min != null ? String(f.salary_min).trim().replace(/\s/g, "") : "";
+        const smaxRaw = f.salary_max != null ? String(f.salary_max).trim().replace(/\s/g, "") : "";
+        const smin = sminRaw === "" ? NaN : parseInt(sminRaw, 10);
+        const smax = smaxRaw === "" ? NaN : parseInt(smaxRaw, 10);
+        if (Number.isFinite(smin) && smin >= 0) params.set("salary_min", String(smin));
+        if (Number.isFinite(smax) && smax >= 0) params.set("salary_max", String(smax));
+      }
       params.set("per_page", String(VACANCY_PAGE_SIZE));
       params.set("page", String(state.page));
       try {
@@ -984,19 +1120,20 @@
 
     function openFilters() {
       if (!filtersModal) return;
+      const f = activeProjectFilters();
       const sync = (id, val) => { const el = document.getElementById(id); if (el) el.value = val != null ? String(val) : ""; };
-      sync("f-intent", state.intent);
-      sync("f-city", state.city_id);
-      sync("f-role", state.role_type_id);
-      sync("f-format", state.work_format);
-      sync("f-commitment", state.commitment_level);
-      sync("f-salary-min", state.salary_min);
-      sync("f-salary-max", state.salary_max);
-      sync("f-exp-vacancy", state.experience_vacancy);
-      sync("f-contract", state.contract_type);
-      sync("f-posted", state.posted_within_days);
+      sync("f-city", f.city_id);
+      sync("f-role", f.role_type_id);
+      sync("f-format", f.work_format || "");
+      sync("f-commitment", f.commitment_level || "");
+      sync("f-salary-min", f.salary_min || "");
+      sync("f-salary-max", f.salary_max || "");
+      sync("f-exp-vacancy", f.experience_vacancy);
+      sync("f-contract", f.contract_type || "");
+      sync("f-posted", f.posted_within_days);
       bindGroupedSalarySP("f-salary-min");
       bindGroupedSalarySP("f-salary-max");
+      syncProjectCatalogToggleUI();
       filtersModal.classList.add("open");
     }
     function closeFilters() { if (filtersModal) filtersModal.classList.remove("open"); }
@@ -1005,36 +1142,34 @@
     if (filtersModal) { filtersModal.addEventListener("click", (e) => { if (e.target === filtersModal) closeFilters(); }); document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeFilters(); }); }
     if (applyFiltersBtn) {
       applyFiltersBtn.addEventListener("click", () => {
-        state.intent = document.getElementById("f-intent").value;
-        state.city_id = document.getElementById("f-city").value;
-        state.role_type_id = document.getElementById("f-role").value;
-        state.work_format = document.getElementById("f-format").value;
-        state.commitment_level = document.getElementById("f-commitment").value;
-        state.salary_min = document.getElementById("f-salary-min") ? document.getElementById("f-salary-min").value : "";
-        state.salary_max = document.getElementById("f-salary-max") ? document.getElementById("f-salary-max").value : "";
-        state.experience_vacancy = document.getElementById("f-exp-vacancy") ? document.getElementById("f-exp-vacancy").value : "";
-        state.contract_type = document.getElementById("f-contract") ? document.getElementById("f-contract").value : "";
-        state.posted_within_days = document.getElementById("f-posted") ? document.getElementById("f-posted").value : "";
+        const f = activeProjectFilters();
+        f.city_id = document.getElementById("f-city") ? document.getElementById("f-city").value : "";
+        f.role_type_id = document.getElementById("f-role") ? document.getElementById("f-role").value : "";
+        f.experience_vacancy = document.getElementById("f-exp-vacancy") ? document.getElementById("f-exp-vacancy").value : "";
+        f.posted_within_days = document.getElementById("f-posted") ? document.getElementById("f-posted").value : "";
+        if (state.catalogMode === "commercial") {
+          f.work_format = document.getElementById("f-format") ? document.getElementById("f-format").value : "";
+          f.commitment_level = document.getElementById("f-commitment") ? document.getElementById("f-commitment").value : "";
+          f.salary_min = document.getElementById("f-salary-min") ? document.getElementById("f-salary-min").value : "";
+          f.salary_max = document.getElementById("f-salary-max") ? document.getElementById("f-salary-max").value : "";
+          f.contract_type = document.getElementById("f-contract") ? document.getElementById("f-contract").value : "";
+        }
         closeFilters();
         doSearch();
       });
     }
     if (resetFiltersBtn) {
       resetFiltersBtn.addEventListener("click", () => {
-        state.intent = "";
-        state.city_id = "";
-        state.role_type_id = "";
-        state.work_format = "";
-        state.commitment_level = "";
-        state.salary_min = "";
-        state.salary_max = "";
-        state.experience_vacancy = "";
-        state.contract_type = "";
-        state.posted_within_days = "";
-        ["f-intent", "f-city", "f-role", "f-format", "f-commitment", "f-salary-min", "f-salary-max", "f-exp-vacancy", "f-contract", "f-posted"].forEach((id) => {
+        if (state.catalogMode === "commercial") {
+          state.filtersCom = defaultFiltersComProject();
+        } else {
+          state.filtersEdu = defaultFiltersEduProject();
+        }
+        ["f-city", "f-role", "f-format", "f-commitment", "f-salary-min", "f-salary-max", "f-exp-vacancy", "f-contract", "f-posted"].forEach((id) => {
           const el = document.getElementById(id);
           if (el) el.value = "";
         });
+        syncProjectCatalogToggleUI();
         closeFilters();
         doSearch();
       });
@@ -1145,6 +1280,8 @@
       } catch (_) {}
     }
 
+    initProjectCatalogModeFromStorage();
+    syncProjectCatalogToggleUI();
     loadDictionaries().then(() => {
       bindGroupedSalarySP("f-salary-min");
       bindGroupedSalarySP("f-salary-max");

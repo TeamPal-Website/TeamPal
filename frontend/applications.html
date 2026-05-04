@@ -212,7 +212,7 @@
       <nav class="header-menu" id="header-menu">
         <div class="header-menu__title">Меню</div>
         <button class="header-menu__item" type="button" data-nav-employee="./account_employee.html?cabinet=list" data-nav-manager="./account_manager.html?cabinet=list">Личный кабинет</button>
-        <button class="header-menu__item" type="button" data-nav-employee="./search_project.html" data-nav-manager="./search_resume.html">Поиск</button>
+        <button class="header-menu__item" type="button" id="menu-search-header" data-nav-employee="./search_project.html" data-nav-manager="./search_resume.html">Поиск проектов</button>
         <button class="header-menu__item" type="button" data-nav="./notifications.html">Уведомления</button>
         <button class="header-menu__exit" type="button" id="menu-exit">Выйти</button>
       </nav>
@@ -900,6 +900,12 @@
 
   let viewMode = resolveViewMode();
 
+  (function syncMenuSearchLabelInitial() {
+    const btn = document.getElementById("menu-search-header");
+    if (!btn) return;
+    btn.textContent = viewMode === "manager" ? "Поиск сотрудников" : "Поиск проектов";
+  })();
+
   function syncRoleToggle() {
     const toggle = document.getElementById("role-toggle");
     if (!toggle) return;
@@ -922,6 +928,8 @@
       switchEmployeeAppsTab("in");
       void loadResumesForAppsFilter().then(() => loadMyApplications());
     }
+    const menuSearchBtn = document.getElementById("menu-search-header");
+    if (menuSearchBtn) menuSearchBtn.textContent = viewMode === "manager" ? "Поиск сотрудников" : "Поиск проектов";
   }
 
   async function loadResumesForAppsFilter() {

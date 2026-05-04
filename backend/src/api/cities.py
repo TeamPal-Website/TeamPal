@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException
 from sqlalchemy.exc import IntegrityError
 
 from src.api.dependencies import DBDep
+from src.catalog_cache import cached_json_list, schedule_catalog_invalidate
 from src.schemas.cities import CityAdd
 
 router = APIRouter(prefix="/cities", tags=["Города"])
@@ -10,7 +11,7 @@ router = APIRouter(prefix="/cities", tags=["Города"])
 
 @router.get("")
 async def get_cities(db: DBDep):
-    return await db.cities.get_all()
+    return await cached_json_list("cities", db.cities.get_all)
 
 
 @router.get("/{city_id}")
@@ -32,6 +33,7 @@ async def create_city(
     except IntegrityError:
         raise HTTPException(status_code=409, detail="Такой город уже существует")
 
+    schedule_catalog_invalidate(["cities"])
     return {"status": "OK", "data": city}
 
 
@@ -53,4 +55,5 @@ async def delete_city(
             detail="Город указан в резюме или проекте и не может быть удалён",
         )
 
+    schedule_catalog_invalidate(["cities"])
     return {"status": "OK"}

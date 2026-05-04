@@ -565,8 +565,7 @@
       <nav class="header-menu" id="header-menu">
         <div class="header-menu__title">Меню</div>
         <button class="header-menu__item" type="button" data-nav="./account_employee.html">Личный кабинет</button>
-        <button class="header-menu__item" type="button" data-nav="./search_project.html">Поиск</button>
-        <button class="header-menu__item" type="button">Поддержать проект</button>
+        <button class="header-menu__item" type="button" data-nav="./search_project.html">Поиск проектов</button>
         <button class="header-menu__exit" type="button">Выйти</button>
       </nav>
     </div>
@@ -1563,16 +1562,45 @@
         avatarInput.click();
       });
       
-      avatarInput.addEventListener("change", (e) => {
-        const file = e.target.files[0];
-        if (file && file.type.startsWith("image/")) {
-          const previewUrl = URL.createObjectURL(file);
-          document.getElementById("profile-avatar").src = previewUrl;
-          personalData.avatar = previewUrl;
-          showToast("Превью обновлено (сохранение аватара на сервере пока не поддерживается)", "info");
-        } else if (file) {
+      avatarInput.addEventListener("change", async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        if (!file.type.startsWith("image/")) {
           showToast("Пожалуйста, выберите изображение", "warning");
+          avatarInput.value = "";
+          return;
         }
+        const fd = new FormData();
+        fd.append("file", file);
+        try {
+          const response = await fetch(API_BASE_URL + "/profiles/me/avatar", {
+            method: "POST",
+            body: fd,
+            credentials: "include",
+          });
+          if (response.ok) {
+            const data = await response.json();
+            const url = data.avatar;
+            if (url) {
+              document.getElementById("profile-avatar").src = url;
+              personalData.avatar = url;
+              showToast("Аватар сохранён", "success");
+            } else {
+              showToast("Аватар сохранён, но URL недоступен — задайте S3_PUBLIC_BASE_URL на сервере", "warning");
+              await loadPersonalData();
+            }
+          } else {
+            const err = await response.json().catch(() => ({}));
+            let msg = "Не удалось загрузить аватар";
+            if (typeof err.detail === "string") msg = err.detail;
+            else if (Array.isArray(err.detail)) msg = err.detail.map((d) => d.msg || d).join("; ");
+            showToast(msg, "error");
+          }
+        } catch (err) {
+          console.error("avatar upload:", err);
+          showToast("Ошибка соединения с сервером", "error");
+        }
+        avatarInput.value = "";
       });
     }
 
