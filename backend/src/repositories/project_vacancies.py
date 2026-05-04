@@ -24,6 +24,7 @@ from src.schemas.project_vacancies import (
     VacancyOccupant,
 )
 from src.schemas.search_public import VacancySearchItem
+from src.utils.avatar_url import public_avatar_url
 
 
 class ProjectVacanciesRepository(BaseRepository):
@@ -229,6 +230,7 @@ class ProjectVacanciesRepository(BaseRepository):
                     contract_type=resume.contract_type,
                     computed_experience_level=resume.computed_experience_level,
                     about_me=resume.about_me,
+                    avatar_url=public_avatar_url(profile.avatar),
                 )
             vacancies.append(
                 ProjectVacancyWithOccupant(

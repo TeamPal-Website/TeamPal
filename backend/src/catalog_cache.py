@@ -40,7 +40,7 @@ async def cached_json_list(name: str, fetch):
         if raw:
             return json.loads(raw)
     items = await fetch()
-    out = [x.model_dump() for x in items]
+    out = [x.model_dump(mode="json") for x in items]
     if r:
         await r.setex(key, TTL_SEC, json.dumps(out))
     return out

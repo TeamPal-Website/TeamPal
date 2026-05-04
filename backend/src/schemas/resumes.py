@@ -21,6 +21,7 @@ class ActiveProjectBrief(BaseModel):
     project_id: int
     title: str
     employment_intent: EmploymentIntent
+    application_id: int | None = None
 
 
 def _validate_salary_amount(v: int | None) -> int | None:

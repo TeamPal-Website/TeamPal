@@ -93,6 +93,22 @@ class TestSearchResumes:
         response = await client.get("/resumes?city_id=1&employment_intent=commercial")
         assert response.status_code == 200
 
+    async def test_search_resumes_with_skill_ids(self, client: AsyncClient, skill_id: int):
+        response = await client.get(
+            "/resumes",
+            params=[("skill_ids", str(skill_id)), ("skill_ids", str(skill_id))],
+        )
+        assert response.status_code == 200
+
+    async def test_search_resumes_skill_id_with_skill_ids_merges(self, client: AsyncClient, skill_id: int):
+        response = await client.get(f"/resumes?skill_id={skill_id}&skill_ids={skill_id}")
+        assert response.status_code == 200
+
+    async def test_search_resumes_skill_ids_max_length(self, client: AsyncClient):
+        qs = "&".join([f"skill_ids={i}" for i in range(1, 28)])
+        response = await client.get(f"/resumes?{qs}")
+        assert response.status_code == 422
+
 
 class TestCreateResume:
 

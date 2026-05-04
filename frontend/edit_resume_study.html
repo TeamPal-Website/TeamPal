@@ -214,7 +214,7 @@
 <main class="page">
   <div class="constructor-card">
     <div class="constructor-header">
-      <a href="./account_employee.html" class="back-link" style="text-decoration:none;">← Назад к резюме</a>
+      <a href="./employee_resumes.html" class="back-link" style="text-decoration:none;">← Назад к резюме</a>
       <span class="constructor-title">Редактирование резюме</span>
     </div>
     <div class="constructor-body" id="main-page">
@@ -343,7 +343,7 @@
   const params = new URLSearchParams(window.location.search);
   const resumeId = params.get('id');
   if (!resumeId) {
-    document.getElementById('main-page').innerHTML = '<div class="loading-state">Резюме не найдено. <a href="./account_employee.html">← Назад</a></div>';
+    document.getElementById('main-page').innerHTML = '<div class="loading-state">Резюме не найдено. <a href="./employee_resumes.html">← Назад</a></div>';
     return;
   }
 
@@ -396,7 +396,7 @@
     }
 
     if (!resumeResp.ok) {
-      document.getElementById('main-page').innerHTML = `<div class="loading-state">${resumeResp.status === 404 ? 'Резюме не найдено.' : 'Ошибка загрузки.'} <a href="./account_employee.html">← Назад</a></div>`;
+      document.getElementById('main-page').innerHTML = `<div class="loading-state">${resumeResp.status === 404 ? 'Резюме не найдено.' : 'Ошибка загрузки.'} <a href="./employee_resumes.html">← Назад</a></div>`;
       return;
     }
 
@@ -405,13 +405,13 @@
       resumeData = await resumeResp.json();
     } catch (parseErr) {
       console.error(parseErr);
-      document.getElementById('main-page').innerHTML = '<div class="loading-state">Не удалось разобрать ответ сервера. <a href="./account_employee.html">← Назад</a></div>';
+      document.getElementById('main-page').innerHTML = '<div class="loading-state">Не удалось разобрать ответ сервера. <a href="./employee_resumes.html">← Назад</a></div>';
       return;
     }
     const resume = resumeData.resume || resumeData;
     if (resume.status === "looking_for_job") {
       document.getElementById("main-page").innerHTML =
-        '<div class="loading-state">Редактирование недоступно, пока резюме активно в поиске (переключатель «Ищу работу»). Отключите его в <a href="./account_employee.html">личном кабинете</a>.</div>';
+        '<div class="loading-state">Редактирование недоступно, пока резюме активно в поиске (переключатель «Ищу работу»). Отключите его в <a href="./employee_resumes.html">личном кабинете</a>.</div>';
       return;
     }
     const apiSkills = Array.isArray(resumeData.skills) ? resumeData.skills : [];
@@ -450,7 +450,7 @@
       renderPage(resume);
     } catch (renderErr) {
       console.error(renderErr);
-      document.getElementById('main-page').innerHTML = '<div class="loading-state">Ошибка отображения формы. Обновите страницу или откройте <a href="./account_employee.html">← личный кабинет</a>.</div>';
+      document.getElementById('main-page').innerHTML = '<div class="loading-state">Ошибка отображения формы. Обновите страницу или откройте <a href="./employee_resumes.html">← личный кабинет</a>.</div>';
     }
   }
 
@@ -529,7 +529,7 @@
       <div class="form-actions">
         <button class="btn btn-danger" id="btn-delete" type="button">Удалить резюме</button>
         <div class="form-actions__right">
-          <a href="./account_employee.html" class="btn btn-secondary">Отмена</a>
+          <a href="./employee_resumes.html" class="btn btn-secondary">Отмена</a>
           <button class="btn btn-primary" id="btn-save" type="button">Сохранить изменения</button>
         </div>
       </div>
@@ -972,7 +972,7 @@
     const hasErrors = results.some(r => r.startsWith('✗'));
     if (!hasErrors) {
       showToast('Резюме успешно сохранено', 'success');
-      setTimeout(() => { window.location.href = './account_employee.html'; }, 1300);
+      setTimeout(() => { window.location.href = './employee_resumes.html'; }, 1300);
     } else {
       showToast('Некоторые изменения не удалось сохранить. Проверьте ниже.', 'warning');
       console.warn('Save results:', results);
@@ -989,7 +989,7 @@
       if (r.ok || r.status === 204) {
         setPosCache(resumeId, null);
         showToast('Резюме удалено', 'success');
-        setTimeout(() => { window.location.href = './account_employee.html'; }, 1200);
+        setTimeout(() => { window.location.href = './employee_resumes.html'; }, 1200);
       } else {
         const err = await r.json().catch(() => ({}));
         showToast('Ошибка: ' + (err.detail || 'Не удалось удалить'), 'error');
@@ -999,7 +999,7 @@
 
   init().catch(e => {
     console.error(e);
-    document.getElementById('main-page').innerHTML = '<div class="loading-state">Ошибка загрузки. <a href="./account_employee.html">← Назад</a></div>';
+    document.getElementById('main-page').innerHTML = '<div class="loading-state">Ошибка загрузки. <a href="./employee_resumes.html">← Назад</a></div>';
   });
 })();
 </script>

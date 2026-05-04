@@ -66,6 +66,7 @@ class ResumeSearchItem(BaseModel):
     skills_count: int = 0
     status: ResumeStatus
     created_at: datetime
+    avatar_url: str | None = None
 
 
 class RecruitingVacancyOption(BaseModel):

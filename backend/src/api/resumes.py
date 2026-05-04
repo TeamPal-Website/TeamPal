@@ -28,6 +28,35 @@ from src.utils.profile_completeness import profile_incomplete_message
 router = APIRouter(prefix="", tags=["Резюме"])
 
 RESUMES_MAX_PER_PROFILE = 5
+RESUME_SEARCH_SKILL_IDS_MAX = 25
+
+
+def _merge_resume_search_skill_ids(
+    *,
+    skill_id: int | None,
+    skill_ids: list[int] | None,
+) -> list[int] | None:
+    raw: list[int] = []
+    if skill_ids:
+        raw.extend(skill_ids)
+    if skill_id is not None:
+        raw.append(skill_id)
+    if not raw:
+        return None
+    seen: set[int] = set()
+    merged: list[int] = []
+    for x in raw:
+        if x > 0 and x not in seen:
+            seen.add(x)
+            merged.append(x)
+    if not merged:
+        return None
+    if len(merged) > RESUME_SEARCH_SKILL_IDS_MAX:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Можно указать не более {RESUME_SEARCH_SKILL_IDS_MAX} навыков в фильтре",
+        )
+    return merged
 
 
 async def _require_active_role(db: DBDep, role_type_id: int):
@@ -158,6 +187,7 @@ async def search_resumes(
     city_id: int | None = Query(default=None, gt=0),
     employment_intent: EmploymentIntent | None = None,
     skill_id: int | None = Query(default=None, gt=0),
+    skill_ids: list[int] | None = Query(default=None),
     role_type_id: int | None = Query(default=None, gt=0),
     work_format: WorkFormat | None = None,
     commitment_level: CommitmentLevel | None = None,
@@ -171,11 +201,15 @@ async def search_resumes(
             status_code=422,
             detail="Минимальная зарплата не может быть больше максимальной",
         )
+    merged_skill_ids = _merge_resume_search_skill_ids(
+        skill_id=skill_id,
+        skill_ids=skill_ids,
+    )
     return await db.resumes.search_public(
         q=q,
         city_id=city_id,
         employment_intent=employment_intent,
-        skill_id=skill_id,
+        skill_ids=merged_skill_ids,
         role_type_id=role_type_id,
         work_format=work_format,
         commitment_level=commitment_level,

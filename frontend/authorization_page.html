@@ -12,6 +12,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
     
+    <link rel="stylesheet" href="./assets/notify-banner.css">
+
     <link rel="icon" type="image/png" href="./assets/logo.png" />
 
     <meta name="theme-color" content="#2e8b57">
@@ -30,97 +32,6 @@ body {
   font-style: normal;
   margin: 0;
   background-color: #fffffc;
-}
-
-.notification-container {
-    position: fixed;
-    top: 80px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 9999;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    width: auto;
-    min-width: 280px;
-    max-width: 500px;
-    pointer-events: none;
-}
-
-.notification {
-    background: #ffffff;
-    border-radius: 8px;
-    padding: 12px 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    animation: fadeInDown 0.25s ease-out;
-    pointer-events: auto;
-    border: 1px solid #0000001a;
-    width: 100%;
-}
-
-@keyframes fadeInDown {
-    from {
-        transform: translateY(-20px);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-@keyframes fadeOutUp {
-    from {
-        transform: translateY(0);
-        opacity: 1;
-    }
-    to {
-        transform: translateY(-20px);
-        opacity: 0;
-    }
-}
-
-.notification.error {
-    border-left: 3px solid #e05a2a;
-    background: #fff6f4;
-}
-
-.notification.success {
-    border-left: 3px solid #52c41a;
-    background: #f6ffed;
-}
-
-.notification.warning {
-    border-left: 3px solid #faad14;
-    background: #fffbe6;
-}
-
-.notification-content {
-    flex: 1;
-    font-size: 14px;
-    line-height: 1.4;
-    color: #2d3e56;
-    font-family: "Space Grotesk", system-ui, sans-serif;
-    text-align: center;
-}
-
-.notification-close {
-    cursor: pointer;
-    font-size: 18px;
-    color: #b5b5b5;
-    transition: color 0.2s;
-    line-height: 1;
-    flex-shrink: 0;
-    font-family: "Space Grotesk", system-ui, sans-serif;
-}
-
-.notification-close:hover {
-    color: #F85A0B;
 }
 
 .form {
@@ -291,20 +202,6 @@ button {
     .wrapper {
         width: 85%;
     }
-    
-    .notification-container {
-        top: 70px;
-        width: 90%;
-        max-width: 90%;
-    }
-    
-    .notification {
-        padding: 10px 16px;
-    }
-    
-    .notification-content {
-        font-size: 13px;
-    }
 }
 
     </style>
@@ -339,6 +236,7 @@ button {
     </form>
 
     <script src="./config.js"></script>
+    <script src="./assets/notify-banner.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const loginTab = document.getElementById('loginTab');
@@ -347,7 +245,6 @@ button {
             const emailInput = document.getElementById('email');
             const passwordInput = document.getElementById('password');
             const submitBtn = document.getElementById('submitBtn');
-            const notificationContainer = document.getElementById('notificationContainer');
 
             function accountPageUrl() {
                 try {
@@ -367,35 +264,6 @@ button {
                     msg === 'Load failed' ||
                     (typeof msg === 'string' && msg.indexOf('NetworkError') !== -1)
                 );
-            }
-
-            function showNotification(message, type = 'error', duration = 5000) {
-                const notification = document.createElement('div');
-                notification.className = `notification ${type}`;
-                
-                notification.innerHTML = `
-                    <div class="notification-content">${message}</div>
-                    <div class="notification-close">×</div>
-                `;
-                
-                notificationContainer.appendChild(notification);
-                
-                const closeBtn = notification.querySelector('.notification-close');
-                closeBtn.addEventListener('click', () => {
-                    notification.style.animation = 'fadeOutUp 0.25s ease-out forwards';
-                    setTimeout(() => {
-                        notification.remove();
-                    }, 250);
-                });
-                
-                setTimeout(() => {
-                    if (notification.parentElement) {
-                        notification.style.animation = 'fadeOutUp 0.25s ease-out forwards';
-                        setTimeout(() => {
-                            notification.remove();
-                        }, 250);
-                    }
-                }, duration);
             }
 
             function validateEmail(email) {

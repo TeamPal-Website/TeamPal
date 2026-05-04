@@ -152,7 +152,8 @@
     .tp-toast.info { background: linear-gradient(135deg, #f5faff, #fff); border-color: rgba(24, 144, 255, 0.35); }
     .tp-toast__icon { font-size: 18px; line-height: 1.2; flex-shrink: 0; }
     .tp-toast.success .tp-toast__icon, .tp-toast.success .tp-toast__text, .tp-toast.success .tp-toast__close { color: #2d7a2d; }
-    .tp-toast.error .tp-toast__icon, .tp-toast.error .tp-toast__text, .tp-toast.error .tp-toast__close { color: #c0392b; }
+    .tp-toast.error .tp-toast__icon, .tp-toast.error .tp-toast__text, .tp-toast.error .tp-toast__close { color: #c62828; }
+    .tp-toast.error .tp-toast__text { font-weight: 600; }
     .tp-toast.warning .tp-toast__icon, .tp-toast.warning .tp-toast__text, .tp-toast.warning .tp-toast__close { color: #8b6914; }
     .tp-toast.info .tp-toast__icon, .tp-toast.info .tp-toast__text, .tp-toast.info .tp-toast__close { color: #0958d9; }
     .tp-toast__text { flex: 1; font-size: 14px; line-height: 1.45; white-space: pre-wrap; }
@@ -184,17 +185,65 @@
       background: #fff; border-radius: 12px; padding: 12px 14px; margin-bottom: 10px;
       border: 1px solid var(--line); font-size: 14px; line-height: 1.45;
     }
-    .apps-msg-item.unread { border-color: rgba(248, 90, 11, 0.45); background: #fffbf7; }
+    .apps-msg-item--neutral {
+      border: 1px solid #64b5f6;
+      background: #e3f2fd;
+    }
+    .apps-msg-item--success {
+      border: 1px solid #4caf50;
+      background: #e8f5e9;
+    }
+    .apps-msg-item--danger {
+      border: 1px solid #f5c0b0;
+      background: #fff0ee;
+    }
+    .apps-msg-item[data-notification-id] { cursor: pointer; }
+    .apps-msg-item.is-unread { position: relative; padding-left: 18px; }
+    .apps-msg-item.is-unread::before {
+      content: "";
+      position: absolute;
+      left: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent-2);
+    }
+    .apps-msg-new {
+      display: inline-block;
+      margin-left: 10px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      vertical-align: middle;
+    }
     .apps-msg-date { font-size: 12px; color: #999; margin-top: 6px; }
+    /* Колокольчик: только уведомления. Меню «Отклики»: только отклики + история (без уведомлений). */
+    .apps-page--replies .apps-tab[data-tab="msg"],
+    .apps-page--replies #apps-panel-mgr-msg,
+    .apps-page--replies #apps-panel-emp-msg {
+      display: none !important;
+    }
+    .apps-page--notifications #apps-panel-mgr-in,
+    .apps-page--notifications #apps-panel-mgr-out,
+    .apps-page--notifications #apps-panel-mgr-hist,
+    .apps-page--notifications #apps-panel-emp-in,
+    .apps-page--notifications #apps-panel-emp-out,
+    .apps-page--notifications #apps-panel-emp-hist {
+      display: none !important;
+    }
   </style>
 </head>
 <body>
 <header class="header">
   <div class="header__inner">
     <div class="header__left">
-      <button class="header-nav-btn" type="button" id="apps-nav-back" aria-label="Назад в личный кабинет" title="Личный кабинет">
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 6l-6 6 6 6" stroke="#f85a0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </button>
       <img class="logo" src="./assets/logo.png" alt="TeamPal">
       <div class="role-toggle" id="role-toggle">
         <button class="role-toggle__btn" type="button" data-role="Ищу вакансию">Ищу вакансию</button>
@@ -202,7 +251,7 @@
       </div>
     </div>
     <div class="header__actions">
-      <button class="notify-btn" type="button" aria-label="Отклики" title="Отклики">
+      <button class="notify-btn" type="button" aria-label="Уведомления" title="Уведомления" id="bell-btn-apps">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M12 4a5 5 0 0 0-5 5v2.6c0 .7-.24 1.38-.68 1.9L5 15h14l-1.32-1.5a3 3 0 0 1-.68-1.9V9a5 5 0 0 0-5-5Z" stroke="#f85a0b" stroke-width="1.8" stroke-linejoin="round"/>
           <path d="M10 18a2 2 0 0 0 4 0" stroke="#f85a0b" stroke-width="1.8" stroke-linecap="round"/>
@@ -211,9 +260,10 @@
       <button class="burger" id="burger-btn" type="button" aria-label="Меню"><span></span><span></span><span></span></button>
       <nav class="header-menu" id="header-menu">
         <div class="header-menu__title">Меню</div>
-        <button class="header-menu__item" type="button" data-nav-employee="./account_employee.html?cabinet=list" data-nav-manager="./account_manager.html?cabinet=list">Личный кабинет</button>
+        <button class="header-menu__item" type="button" data-nav-employee="./account_employee.html" data-nav-manager="./account_manager.html">Личный кабинет</button>
+        <button class="header-menu__item" type="button" id="menu-cabinet-extras" data-nav-employee="./employee_resumes.html" data-nav-manager="./employer_projects.html">Мои резюме</button>
         <button class="header-menu__item" type="button" id="menu-search-header" data-nav-employee="./search_project.html" data-nav-manager="./search_resume.html">Поиск проектов</button>
-        <button class="header-menu__item" type="button" data-nav="./notifications.html">Уведомления</button>
+        <button class="header-menu__item" type="button" id="menu-apps-replies">Отклики</button>
         <button class="header-menu__exit" type="button" id="menu-exit">Выйти</button>
       </nav>
     </div>
@@ -221,8 +271,8 @@
 </header>
 
 <main class="page">
-  <section class="card">
-    <h1 class="page-title">Отклики</h1>
+  <section class="card" id="apps-main-card">
+    <h1 class="page-title" id="page-title-apps">Отклики</h1>
 
     <div id="view-manager" class="hidden">
       <div class="field" style="margin-bottom: 8px;">
@@ -235,7 +285,7 @@
       <div class="apps-tabs" id="apps-tabs-manager" role="tablist">
         <button type="button" class="apps-tab active" data-tab="in" role="tab">Входящие отклики</button>
         <button type="button" class="apps-tab" data-tab="out" role="tab">Исходящие отклики</button>
-        <button type="button" class="apps-tab" data-tab="msg" role="tab">Сообщения</button>
+        <button type="button" class="apps-tab" data-tab="msg" role="tab">Уведомления</button>
         <button type="button" class="apps-tab" data-tab="hist" role="tab">История</button>
       </div>
 
@@ -270,7 +320,7 @@
       <div class="apps-tabs" id="apps-tabs-employee" role="tablist">
         <button type="button" class="apps-tab active" data-tab="in" role="tab">Входящие отклики</button>
         <button type="button" class="apps-tab" data-tab="out" role="tab">Исходящие отклики</button>
-        <button type="button" class="apps-tab" data-tab="msg" role="tab">Сообщения</button>
+        <button type="button" class="apps-tab" data-tab="msg" role="tab">Уведомления</button>
         <button type="button" class="apps-tab" data-tab="hist" role="tab">История</button>
       </div>
 
@@ -336,10 +386,12 @@
   function showToast(message, type = "success", duration = 5000) {
     const container = document.getElementById("toast-container");
     if (!container) return;
+    let text = String(message || "");
+    if (type === "error") text = text.replace(/^\s*ошибка\s*:\s*/i, "").trim();
     const icons = { success: "✓", error: "✕", warning: "⚠", info: "ℹ" };
     const el = document.createElement("div");
     el.className = "tp-toast " + (type || "info");
-    const msg = String(message || "").replace(/[&<>]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[m]));
+    const msg = text.replace(/[&<>]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[m]));
     el.innerHTML = `<span class="tp-toast__icon">${icons[type] || "ℹ"}</span><span class="tp-toast__text">${msg}</span><button type="button" class="tp-toast__close" aria-label="Закрыть">×</button>`;
     el.querySelector(".tp-toast__close").addEventListener("click", () => el.remove());
     container.appendChild(el);
@@ -565,17 +617,6 @@
   document.getElementById("confirm-modal").addEventListener("click", (e) => {
     if (e.target.id === "confirm-modal") _closeConfirmModal();
   });
-
-  function resolveAccountHref() {
-    try {
-      const r = localStorage.getItem("tp_role");
-      if (r === "Ищу сотрудника") return "./account_manager.html?cabinet=list";
-    } catch (_) {}
-    return "./account_employee.html?cabinet=list";
-  }
-
-  const appsNavBack = document.getElementById("apps-nav-back");
-  if (appsNavBack) appsNavBack.addEventListener("click", () => { window.location.href = resolveAccountHref(); });
 
   const STATUS_LABELS = { pending: "На рассмотрении", accepted: "Принят", rejected: "Отклонён", cancelled: "Отозван" };
 
@@ -833,7 +874,7 @@
             </div>`;
   }
 
-  function applicantOwnCardHtml(app) {
+  function applicantOwnCardHtml(app, showLeave = true) {
     const statusClass = app.status || "pending";
     const statusLabel = STATUS_LABELS[app.status] || app.status;
     const roleRaw = app.role_name || (app.vacancy && app.vacancy.role_name) || "Вакансия #" + app.vacancy_id;
@@ -861,7 +902,7 @@
       } else {
         actions = `<button class="action-btn action-btn--danger" type="button" data-withdraw="${esc2(String(app.id))}">Отозвать отклик</button>`;
       }
-    } else if (app.status === "accepted") {
+    } else if (app.status === "accepted" && showLeave) {
       actions = `<button class="action-btn action-btn--danger" type="button" data-leave="${esc2(String(app.id))}">Покинуть проект</button>`;
     }
 
@@ -904,6 +945,8 @@
     const btn = document.getElementById("menu-search-header");
     if (!btn) return;
     btn.textContent = viewMode === "manager" ? "Поиск сотрудников" : "Поиск проектов";
+    const ex = document.getElementById("menu-cabinet-extras");
+    if (ex) ex.textContent = viewMode === "manager" ? "Мои проекты" : "Мои резюме";
   })();
 
   function syncRoleToggle() {
@@ -916,21 +959,63 @@
     });
   }
 
+  const _isNotifMode = new URLSearchParams(window.location.search).get("tab") === "notifications";
+
   function showViews() {
     document.getElementById("view-manager").classList.toggle("hidden", viewMode !== "manager");
     document.getElementById("view-employee").classList.toggle("hidden", viewMode !== "employee");
     syncRoleToggle();
-    if (viewMode === "manager") {
-      switchManagerAppsTab("in");
-      loadProjectsForAppsSelect();
-      loadManagerOutgoingApplications();
-    } else {
-      switchEmployeeAppsTab("in");
-      void loadResumesForAppsFilter().then(() => loadMyApplications());
+
+    const appsCard = document.getElementById("apps-main-card");
+    if (appsCard) {
+      appsCard.classList.toggle("apps-page--replies", !_isNotifMode);
+      appsCard.classList.toggle("apps-page--notifications", _isNotifMode);
     }
+
+    const titleEl = document.getElementById("page-title-apps");
+    const tabsMgr = document.getElementById("apps-tabs-manager");
+    const tabsEmp = document.getElementById("apps-tabs-employee");
+    const projField = document.getElementById("apps-project-select")?.closest(".field");
+    const resumeField = document.getElementById("apps-resume-select")?.closest(".field");
+
+    if (_isNotifMode) {
+      if (titleEl) titleEl.textContent = "Уведомления";
+      if (tabsMgr) tabsMgr.style.display = "none";
+      if (tabsEmp) tabsEmp.style.display = "none";
+      if (projField) projField.style.display = "none";
+      if (resumeField) resumeField.style.display = "none";
+      if (viewMode === "manager") {
+        switchManagerAppsTab("msg");
+      } else {
+        switchEmployeeAppsTab("msg");
+      }
+    } else {
+      if (titleEl) titleEl.textContent = "Отклики";
+      if (tabsMgr) tabsMgr.style.display = "";
+      if (tabsEmp) tabsEmp.style.display = "";
+      if (projField) projField.style.display = "";
+      if (resumeField) resumeField.style.display = "";
+      if (viewMode === "manager") {
+        switchManagerAppsTab("in");
+        loadProjectsForAppsSelect();
+        loadManagerOutgoingApplications();
+      } else {
+        switchEmployeeAppsTab("in");
+        void loadResumesForAppsFilter().then(() => loadMyApplications());
+      }
+    }
+
     const menuSearchBtn = document.getElementById("menu-search-header");
     if (menuSearchBtn) menuSearchBtn.textContent = viewMode === "manager" ? "Поиск сотрудников" : "Поиск проектов";
+    const menuExtras = document.getElementById("menu-cabinet-extras");
+    if (menuExtras) menuExtras.textContent = viewMode === "manager" ? "Мои проекты" : "Мои резюме";
   }
+
+  document.getElementById("bell-btn-apps")?.addEventListener("click", () => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", "notifications");
+    window.location.href = url.toString();
+  });
 
   async function loadResumesForAppsFilter() {
     const sel = document.getElementById("apps-resume-select");
@@ -957,6 +1042,22 @@
       }
       if (prev && Array.from(sel.options).some((o) => o.value === prev)) sel.value = prev;
     } catch (_) {}
+  }
+
+  function notificationToneForList(n, isManagerView) {
+    const ev = n.event || "";
+    const p = n.payload || {};
+    if (isManagerView) {
+      if (ev === "application_received") return "neutral";
+      if (ev === "application_accepted") return p.invite_accepted ? "success" : "neutral";
+      if (ev === "application_cancelled") return "danger";
+      return "neutral";
+    }
+    if (ev === "application_accepted") return "success";
+    if (ev === "application_rejected") return "danger";
+    if (ev === "application_cancelled") return "danger";
+    if (ev === "employer_invited") return "neutral";
+    return "neutral";
   }
 
   function notificationMessageLine(n) {
@@ -997,6 +1098,73 @@
     }
   }
 
+  function notificationDotUnread(n) {
+    return n && n.is_read === false;
+  }
+
+  function flushUnreadNotificationsFromContainer(containerEl) {
+    if (!containerEl) return;
+    const cards = containerEl.querySelectorAll("[data-notification-id].is-unread");
+    const ids = [];
+    cards.forEach((c) => {
+      const id = parseInt(c.getAttribute("data-notification-id"), 10);
+      if (Number.isFinite(id)) ids.push(id);
+    });
+    if (!ids.length) return;
+    const url = API_BASE_URL + "/notifications/read";
+    const body = JSON.stringify({ notification_ids: ids });
+    try {
+      fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body,
+        keepalive: true,
+      }).catch(() => {});
+    } catch (_) {}
+  }
+
+  function bindMarkAppsNotificationsOnPageLeave() {
+    if (document.documentElement.dataset.tpAppsNotifLeave === "1") return;
+    document.documentElement.dataset.tpAppsNotifLeave = "1";
+    const run = () => {
+      flushUnreadNotificationsFromContainer(document.getElementById("applications-list-manager-messages"));
+      flushUnreadNotificationsFromContainer(document.getElementById("applications-list-emp-messages"));
+    };
+    window.addEventListener("pagehide", run);
+  }
+
+  function bindAppsNotificationsMarkRead() {
+    const roots = [
+      document.getElementById("applications-list-manager-messages"),
+      document.getElementById("applications-list-emp-messages"),
+    ];
+    roots.forEach((root) => {
+      if (!root || root.dataset.tpNotifReadBound === "1") return;
+      root.dataset.tpNotifReadBound = "1";
+      root.addEventListener("click", async (e) => {
+        if (e.target.closest("a[href], button")) return;
+        const card = e.target.closest(".apps-msg-item[data-notification-id]");
+        if (!card || !card.classList.contains("is-unread")) return;
+        const raw = card.getAttribute("data-notification-id");
+        const nid = raw ? parseInt(raw, 10) : NaN;
+        if (!Number.isFinite(nid)) return;
+        try {
+          const r = await fetch(API_BASE_URL + "/notifications/read", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ notification_ids: [nid] }),
+          });
+          if (r.ok) {
+            card.classList.remove("is-unread");
+            card.querySelectorAll(".apps-msg-new").forEach((x) => x.remove());
+          }
+        } catch (_) {}
+      });
+    });
+  }
+
   async function loadManagerMessages() {
     const el = document.getElementById("applications-list-manager-messages");
     if (!el) return;
@@ -1023,8 +1191,11 @@
       el.innerHTML = filtered
         .map((n) => {
           const dt = n.created_at ? new Date(n.created_at).toLocaleString("ru-RU") : "";
-          const unread = n.is_read === false ? " unread" : "";
-          return `<div class="apps-msg-item${unread}">${esc2(notificationMessageLineManager(n))}<div class="apps-msg-date">${esc2(dt)}</div></div>`;
+          const tone = notificationToneForList(n, true);
+          const unread = notificationDotUnread(n) ? " is-unread" : "";
+          const nid = n.id != null ? String(n.id) : "";
+          const newBadge = notificationDotUnread(n) ? '<span class="apps-msg-new" aria-hidden="true">Новое</span>' : "";
+          return `<div class="apps-msg-item apps-msg-item--${tone}${unread}" data-notification-id="${esc2(nid)}">${esc2(notificationMessageLineManager(n))}${newBadge}<div class="apps-msg-date">${esc2(dt)}</div></div>`;
         })
         .join("");
     } catch {
@@ -1052,8 +1223,11 @@
       el.innerHTML = filtered
         .map((n) => {
           const dt = n.created_at ? new Date(n.created_at).toLocaleString("ru-RU") : "";
-          const unread = n.is_read === false ? " unread" : "";
-          return `<div class="apps-msg-item${unread}">${esc2(notificationMessageLine(n))}<div class="apps-msg-date">${esc2(dt)}</div></div>`;
+          const tone = notificationToneForList(n, false);
+          const unread = notificationDotUnread(n) ? " is-unread" : "";
+          const nid = n.id != null ? String(n.id) : "";
+          const newBadge = notificationDotUnread(n) ? '<span class="apps-msg-new" aria-hidden="true">Новое</span>' : "";
+          return `<div class="apps-msg-item apps-msg-item--${tone}${unread}" data-notification-id="${esc2(nid)}">${esc2(notificationMessageLine(n))}${newBadge}<div class="apps-msg-date">${esc2(dt)}</div></div>`;
         })
         .join("");
     } catch {
@@ -1199,7 +1373,7 @@
       outEl.innerHTML = outgoingPending.length
         ? outgoingPending.map((app) => applicantOwnCardHtml(app)).join("")
         : '<div class="empty-state">Нет исходящих откликов на рассмотрении</div>';
-      histEl.innerHTML = history.length ? history.map((app) => applicantOwnCardHtml(app)).join("") : '<div class="empty-state">История пуста</div>';
+      histEl.innerHTML = history.length ? history.map((app) => applicantOwnCardHtml(app, false)).join("") : '<div class="empty-state">История пуста</div>';
 
       bindApplicantOutgoingActions(incEl);
       bindApplicantOutgoingActions(outEl);
@@ -1265,6 +1439,13 @@
     if (!e.target.closest(".header__actions")) headerMenu && headerMenu.classList.remove("open");
   });
 
+  document.getElementById("menu-apps-replies")?.addEventListener("click", () => {
+    headerMenu?.classList.remove("open");
+    const url = new URL(window.location.href);
+    url.searchParams.delete("tab");
+    window.location.href = url.toString();
+  });
+
   document.getElementById("menu-exit").addEventListener("click", async () => {
     try { await fetch(API_BASE_URL + "/auth/logout", { method: "POST", credentials: "include" }); } catch (_) {}
     window.location.href = "./authorization_page.html";
@@ -1288,6 +1469,8 @@
 
     syncRoleToggle();
     showViews();
+    bindAppsNotificationsMarkRead();
+    bindMarkAppsNotificationsOnPageLeave();
   })();
 })();
 </script>

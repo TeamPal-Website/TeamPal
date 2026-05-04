@@ -59,6 +59,7 @@ class VacancyOccupant(BaseModel):
     contract_type: ContractType | None = None
     computed_experience_level: ProjectVacancyExperience | None = None
     about_me: str | None = None
+    avatar_url: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

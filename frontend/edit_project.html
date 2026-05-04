@@ -9,6 +9,7 @@
   <title>Редактирование проекта | TeamPal</title>
   <link rel="icon" type="image/png" href="./assets/logo.png">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/notify-banner.css">
   <style>
     :root {
       --bg: #f7f5f2;
@@ -166,39 +167,6 @@
     @keyframes tpToastIn  { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
     @keyframes tpToastOut { to{opacity:0;transform:translateY(-10px)} }
 
-    .notification-container {
-      position: fixed; top: 80px; left: 50%; transform: translateX(-50%); z-index: 10000;
-      display: flex; flex-direction: column; align-items: center; gap: 10px;
-      width: auto; min-width: 280px; max-width: 500px; pointer-events: none;
-    }
-    .notification {
-      background: #ffffff; border-radius: 8px; padding: 12px 20px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      display: flex; align-items: center; justify-content: space-between; gap: 16px;
-      animation: fadeInDown 0.25s ease-out; pointer-events: auto;
-      border: 1px solid #0000001a; width: 100%;
-    }
-    @keyframes fadeInDown {
-      from { transform: translateY(-20px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-    @keyframes fadeOutUp {
-      from { transform: translateY(0); opacity: 1; }
-      to { transform: translateY(-20px); opacity: 0; }
-    }
-    .notification.error { border-left: 3px solid #e05a2a; background: #fff6f4; }
-    .notification.success { border-left: 3px solid #52c41a; background: #f6ffed; }
-    .notification.warning { border-left: 3px solid #faad14; background: #fffbe6; }
-    .notification-content {
-      flex: 1; font-size: 14px; line-height: 1.4; color: #2d3e56;
-      font-family: "Space Grotesk", system-ui, sans-serif; text-align: center;
-    }
-    .notification-close {
-      cursor: pointer; font-size: 18px; color: #b5b5b5; transition: color 0.2s;
-      line-height: 1; flex-shrink: 0;
-    }
-    .notification-close:hover { color: #F85A0B; }
-    
     .modal { position:fixed; inset:0; background:rgba(20,20,20,0.36); display:none; align-items:center; justify-content:center; z-index:1100; }
     .modal.open { display:flex; }
     .modal__card { width:min(92vw,440px); border-radius:16px; background:#fff; border:1px solid var(--line); padding:24px; box-shadow:0 24px 44px rgba(0,0,0,0.2); }
@@ -246,7 +214,7 @@
 <main class="page">
   <div class="constructor-card">
     <div class="constructor-header">
-      <a href="./account_manager.html" class="back-link" style="text-decoration:none;">← Назад к проектам</a>
+      <a href="./employer_projects.html" class="back-link" style="text-decoration:none;">← Назад к проектам</a>
       <span class="constructor-title">Редактирование проекта</span>
     </div>
     <div class="constructor-body" id="page-content">
@@ -261,33 +229,12 @@
 </footer>
 
 <script src="./config.js"></script>
+<script src="./assets/notify-banner.js"></script>
 <script>
 (function () {
   'use strict';
 
   document.getElementById('year').textContent = ' ' + new Date().getFullYear();
-
-  function showNotification(message, type, duration) {
-    type = type || 'error';
-    duration = duration === undefined || duration === null ? 5000 : duration;
-    var container = document.getElementById('notificationContainer');
-    if (!container) return;
-    var notification = document.createElement('div');
-    notification.className = 'notification ' + type;
-    var msg = String(message || '').replace(/[&<>]/g, function(m){return{'&':'&amp;','<':'&lt;','>':'&gt;'}[m];});
-    notification.innerHTML = '<div class="notification-content">' + msg + '</div><div class="notification-close">×</div>';
-    container.appendChild(notification);
-    notification.querySelector('.notification-close').addEventListener('click', function() {
-      notification.style.animation = 'fadeOutUp 0.25s ease-out forwards';
-      setTimeout(function() { notification.remove(); }, 250);
-    });
-    setTimeout(function() {
-      if (notification.parentElement) {
-        notification.style.animation = 'fadeOutUp 0.25s ease-out forwards';
-        setTimeout(function() { notification.remove(); }, 250);
-      }
-    }, duration);
-  }
 
   function showToast(message, type, duration) {
     duration = duration || 5000;
@@ -314,7 +261,7 @@
   var projectId = params.get('id');
 
   if (!projectId) {
-    document.getElementById('page-content').innerHTML = '<div class="loading-state">Проект не найден. <a href="./account_manager.html">← Назад</a></div>';
+    document.getElementById('page-content').innerHTML = '<div class="loading-state">Проект не найден. <a href="./employer_projects.html">← Назад</a></div>';
     return;
   }
 
@@ -736,7 +683,7 @@
       + '<div class="form-actions">'
       + '<button class="btn btn-danger" id="btn-delete" type="button">Удалить проект</button>'
       + '<div class="form-actions__right">'
-      + '<a href="./account_manager.html" class="btn btn-secondary" style="text-decoration:none;">Отмена</a>'
+      + '<a href="./employer_projects.html" class="btn btn-secondary" style="text-decoration:none;">Отмена</a>'
       + '<button class="btn btn-primary" id="btn-save" type="button">Сохранить</button>'
       + '</div>'
       + '</div>';
@@ -796,11 +743,11 @@
             showToast('У проекта нет вакансий — добавьте хотя бы одну', 'warning', 7000);
             project = { id: parseInt(projectId, 10), title:'', company_name:'', city_id:null, employment_intent:'commercial', status:'active', description:'', tasks:'' };
           } else {
-            document.getElementById('page-content').innerHTML = '<div class="loading-state">Проект не найден. <a href="./account_manager.html">← Назад</a></div>';
+            document.getElementById('page-content').innerHTML = '<div class="loading-state">Проект не найден. <a href="./employer_projects.html">← Назад</a></div>';
             return;
           }
         } else {
-          document.getElementById('page-content').innerHTML = '<div class="loading-state">Ошибка загрузки. <a href="./account_manager.html">← Назад</a></div>';
+          document.getElementById('page-content').innerHTML = '<div class="loading-state">Ошибка загрузки. <a href="./employer_projects.html">← Назад</a></div>';
           return;
         }
       } else {
@@ -848,7 +795,7 @@
 
     } catch (e) {
       console.error(e);
-      document.getElementById('page-content').innerHTML = '<div class="loading-state">Ошибка соединения. <a href="./account_manager.html">← Назад</a></div>';
+      document.getElementById('page-content').innerHTML = '<div class="loading-state">Ошибка соединения. <a href="./employer_projects.html">← Назад</a></div>';
     }
   }
 
@@ -1018,7 +965,7 @@
       btn.disabled = false; btn.textContent = 'Сохранить';
     } else {
       showToast('Проект и вакансии сохранены', 'success');
-      setTimeout(function(){ window.location.href = './account_manager.html'; }, 1400);
+      setTimeout(function(){ window.location.href = './employer_projects.html'; }, 1400);
     }
   }
 
@@ -1049,7 +996,7 @@
       });
       if (r.ok || r.status === 204) {
         showToast('Проект удалён', 'success');
-        setTimeout(function(){ window.location.href = './account_manager.html'; }, 1200);
+        setTimeout(function(){ window.location.href = './employer_projects.html'; }, 1200);
       } else {
         var e = await r.json().catch(function(){ return {}; });
         showToast('Ошибка: ' + (e.detail || 'Не удалось удалить'), 'error');

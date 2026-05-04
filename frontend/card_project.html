@@ -170,6 +170,11 @@
     .users-list { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 8px; }
     .user-chip { border-radius: 999px; padding: 5px 10px; border: 1px solid #d7e9d5; background: #f3fbf2; font-size: 12px; color: #2d6c2a; text-decoration: none; }
     .user-chip[href]:hover { border-color: #9bc995; }
+    .occupant-block { display: flex; align-items: center; gap: 14px; margin: 12px 0; padding: 12px 14px; border-radius: 12px; background: #f2fbf1; border: 1px solid #ceeacc; }
+    .occupant-avatar { width: 54px; height: 54px; border-radius: 50%; object-fit: cover; border: 2px solid #b0d9ad; flex-shrink: 0; background: #e8f5e6; }
+    .occupant-hint { font-size: 11px; color: #7a9078; font-weight: 500; margin-bottom: 3px; }
+    .occupant-name { font-size: 20px; font-weight: 700; color: #2d6c2a; text-decoration: none; display: block; line-height: 1.2; }
+    .occupant-name:hover { text-decoration: underline; }
     .btn-remove-member {
       margin-top: 10px;
       padding: 8px 12px;
@@ -197,7 +202,8 @@
     .tp-toast.error { background: linear-gradient(135deg, #fff8f6, #fff); border-color: rgba(255, 77, 79, 0.45); }
     .tp-toast__icon { font-size: 18px; flex-shrink: 0; }
     .tp-toast.success .tp-toast__icon, .tp-toast.success .tp-toast__text { color: #2d7a2d; }
-    .tp-toast.error .tp-toast__icon, .tp-toast.error .tp-toast__text { color: #c0392b; }
+    .tp-toast.error .tp-toast__icon, .tp-toast.error .tp-toast__text { color: #c62828; }
+    .tp-toast.error .tp-toast__text { font-weight: 600; }
     .tp-toast__text { flex: 1; font-size: 14px; line-height: 1.45; }
     @keyframes tpToastIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes tpToastOut { to { opacity: 0; transform: translateY(-8px); } }
@@ -320,7 +326,7 @@
       </div>
     </div>
     <div class="header__actions">
-      <button class="notify-btn" type="button" aria-label="Отклики" onclick="window.location.href='./applications.html'">
+      <button class="notify-btn" type="button" aria-label="Уведомления" onclick="window.location.href='./applications.html?tab=notifications'">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M12 4a5 5 0 0 0-5 5v2.6c0 .7-.24 1.38-.68 1.9L5 15h14l-1.32-1.5a3 3 0 0 1-.68-1.9V9a5 5 0 0 0-5-5Z" stroke="#f85a0b" stroke-width="1.8" stroke-linejoin="round"/>
           <path d="M10 18a2 2 0 0 0 4 0" stroke="#f85a0b" stroke-width="1.8" stroke-linecap="round"/>
@@ -330,7 +336,9 @@
       <nav class="header-menu" id="header-menu">
         <div class="header-menu__title">Меню</div>
         <button class="header-menu__item" type="button" data-nav="./account_manager.html">Личный кабинет</button>
+        <button class="header-menu__item" type="button" data-nav="./employer_projects.html">Мои проекты</button>
         <button class="header-menu__item" type="button" data-nav="./search_resume.html">Поиск сотрудников</button>
+        <button class="header-menu__item" type="button" data-nav="./applications.html">Отклики</button>
         <button class="header-menu__exit" type="button" data-nav="./authorization_page.html">Выйти</button>
       </nav>
     </div>
@@ -504,10 +512,12 @@
       type = type || "success";
       const container = document.getElementById("toast-container");
       if (!container) return;
+      let raw = String(message || "");
+      if (type === "error") raw = raw.replace(/^\s*ошибка\s*:\s*/i, "").trim();
       const icons = { success: "✓", error: "✕" };
       const el = document.createElement("div");
       el.className = "tp-toast " + type;
-      el.innerHTML = `<span class="tp-toast__icon">${icons[type] || ""}</span><span class="tp-toast__text">${esc(String(message || ""))}</span>`;
+      el.innerHTML = `<span class="tp-toast__icon">${icons[type] || ""}</span><span class="tp-toast__text">${esc(raw)}</span>`;
       container.appendChild(el);
       setTimeout(() => {
         el.style.animation = "tpToastOut .22s ease forwards";
@@ -534,12 +544,13 @@
       const seen = new Set();
       return sources.map((u) => {
         if (!u) return null;
-        if (typeof u === "string") return { name: u, resume_id: null, user_id: null };
+        if (typeof u === "string") return { name: u, resume_id: null, user_id: null, avatar_url: null };
         const full = [u.last_name, u.first_name].filter(Boolean).join(" ").trim();
         return {
           name: full || u.full_name || u.username || u.email || u.desired_position || (u.resume_id ? "Резюме #" + u.resume_id : ""),
           resume_id: u.resume_id || u.resume?.id || null,
           user_id: u.user_id || u.resume?.user_id || null,
+          avatar_url: u.avatar_url || null,
         };
       }).filter((u) => {
         if (!u || !u.name) return false;
@@ -552,10 +563,12 @@
 
     function renderUserChip(user) {
       const label = esc(user.name);
-      if (!user.resume_id) return `<span class="user-chip">${label}</span>`;
+      const avatarSrc = user.avatar_url ? esc(user.avatar_url) : "./assets/avatar-default.png";
+      const avatarImg = `<img src="${avatarSrc}" onerror="this.src='./assets/avatar-default.png'" style="width:18px;height:18px;border-radius:50%;object-fit:cover;border:1px solid #d7e9d5;flex-shrink:0;" alt="">`;
+      if (!user.resume_id) return `<span class="user-chip" style="display:flex;align-items:center;gap:5px;">${avatarImg}${label}</span>`;
       const params = new URLSearchParams({ id: String(user.resume_id) });
       if (user.user_id) params.set("user_id", String(user.user_id));
-      return `<a class="user-chip" href="./card_resume.html?${params.toString()}">${label}</a>`;
+      return `<a class="user-chip" style="display:flex;align-items:center;gap:5px;" href="./card_resume.html?${params.toString()}">${avatarImg}${label}</a>`;
     }
 
     async function loadCitiesMap() {
@@ -720,20 +733,36 @@
               ? `<button type="button" class="btn-apply-on-card" data-apply-vacancy="${esc(String(v.id))}" data-apply-role="${esc(v.role_name || "")}">Откликнуться</button>`
               : "";
 
+          let occupantBlock = "";
+          if (useResume && occ) {
+            const fullName = [occ.first_name, occ.last_name].filter(Boolean).join(" ").trim() || occ.desired_position || "Участник";
+            const avatarSrc = occ.avatar_url ? esc(occ.avatar_url) : "./assets/avatar-default.png";
+            const resumeParams = new URLSearchParams({ id: String(occ.resume_id) });
+            if (occ.user_id) resumeParams.set("user_id", String(occ.user_id));
+            const nameEl = occ.resume_id
+              ? `<a class="occupant-name" href="./card_resume.html?${resumeParams.toString()}">${esc(fullName)}</a>`
+              : `<span class="occupant-name">${esc(fullName)}</span>`;
+            occupantBlock = `<div class="occupant-block">
+              <img class="occupant-avatar" src="${avatarSrc}" onerror="this.src='./assets/avatar-default.png'" alt="">
+              <div>
+                <div class="occupant-hint">Участник команды</div>
+                ${nameEl}
+              </div>
+            </div>`;
+          } else if (!isTaken) {
+            occupantBlock = `<div class="taken-users"><div><b>Кто занимает вакансию:</b> пока никто</div></div>`;
+          }
+
           return `
             <article class="vacancy">
               <div class="vacancy-head">
                 <div>
-                  <div class="vacancy-title">${titleMain}</div>
-                  ${useResume ? `<div style="font-size:13px;color:#7a7060;margin-top:4px;">Должность: ${slotTitle}</div>` : ""}
+                  <div class="vacancy-title">${slotTitle}</div>
                 </div>
                 <span class="badge ${isTaken ? "taken" : "open"}">${isTaken ? "Занята" : "Свободна"}</span>
               </div>
+              ${occupantBlock}
               ${metaBlock}
-              <div class="taken-users">
-                <div><b>Кто занимает вакансию:</b> ${users.length ? "" : "пока никто"}</div>
-                ${users.length ? `<div class="users-list">${users.map(renderUserChip).join("")}</div>` : ""}
-              </div>
               ${descBlock}
               ${aboutBlock}
               ${removeBtn}

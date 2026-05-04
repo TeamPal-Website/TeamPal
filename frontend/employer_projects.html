@@ -6,7 +6,7 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Личный кабинет | TeamPal</title>
+  <title>Мои проекты | TeamPal</title>
   <link rel="icon" type="image/png" href="./assets/logo.png">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
   <style>
@@ -643,49 +643,26 @@
     </aside>
 
     <section class="card workspace">
-      <div class="tab-panel" id="panel-personal">
-        <form class="info-grid" id="personal-form">
-          <div class="field">
-            <label for="first-name">Имя</label>
-            <input id="first-name" type="text" placeholder="Только русские буквы" maxlength="35" title="Русские буквы, до 35 символов" />
-          </div>
-          <div class="field">
-            <label for="last-name">Фамилия</label>
-            <input id="last-name" type="text" placeholder="Только русские буквы" maxlength="35" title="Русские буквы, до 35 символов" />
-          </div>
-          <div class="field">
-            <label for="age">Возраст</label>
-            <input id="age" type="number" placeholder="18" min="16" max="100" />
-          </div>
-          <div class="field">
-            <label for="gender">Пол</label>
-            <select id="gender">
-              <option value="">Не выбрано</option>
-              <option value="male">Мужчина</option>
-              <option value="female">Женщина</option>
-            </select>
-          </div>
-          
-          <fieldset class="contacts-group">
-            <legend>Контакты</legend>
-            <div class="field field--full">
-              <label for="phone">Номер телефона</label>
-              <input id="phone" type="tel" placeholder="+7 (XXX) XXX-XX-XX" />
-            </div>
-            <div class="field field--full">
-              <label for="telegram">Telegram</label>
-              <input id="telegram" type="text" placeholder="@username" />
-            </div>
-            <div class="field field--full">
-              <label for="github">GitHub</label>
-              <input id="github" type="text" placeholder="https://github.com/username" />
-            </div>
-          </fieldset>
-        </form>
-        <div class="actions">
-          <button class="action-btn action-btn--accent" id="personal-save" type="button">Сохранить</button>
-        </div>
+      <div class="tabs">
+        <button class="tab-btn active" id="tab-myprojects" type="button">Активные проекты</button>
+        <button class="tab-btn" id="tab-closed-projects" type="button">Закрытые проекты</button>
       </div>
+
+      <div class="tab-panel" id="panel-myprojects">
+        <div class="projects-header">
+          <h3>Мои проекты <span id="project-count">0</span>/10</h3>
+          <a href="./create_project_com.html" class="create-link-btn" id="create-project-link">Создать проект</a>
+        </div>
+        <div id="projects-list"></div>
+      </div>
+
+      <div class="tab-panel hidden" id="panel-closed-projects">
+        <div class="projects-header">
+          <h3>Закрытые проекты</h3>
+        </div>
+        <div id="closed-projects-list"></div>
+      </div>
+
     </section>
   </section>
 </main>
@@ -710,7 +687,54 @@
   </div>
 </div>
 
+<div class="modal" id="project-type-modal" aria-hidden="true">
+  <div class="modal__card">
+    <h2 class="modal__title">Создать проект</h2>
+    <div style="color:#555; font-size:14px; margin: -4px 0 12px;">
+      Хотите создать коммерческий проект или учебный?
+    </div>
+    <div style="display:flex; flex-direction:column; gap:4px; margin:4px 0 8px;">
+      <label style="display:flex; gap:10px; align-items:center; cursor:pointer; padding:8px 0;">
+        <input type="radio" name="project-type" value="com" checked style="width:18px;height:18px;accent-color:var(--accent-2);" />
+        <span style="font-size:15px;">Коммерческий проект</span>
+      </label>
+      <label style="display:flex; gap:10px; align-items:center; cursor:pointer; padding:8px 0;">
+        <input type="radio" name="project-type" value="study" style="width:18px;height:18px;accent-color:var(--accent-2);" />
+        <span style="font-size:15px;">Учебный проект</span>
+      </label>
+    </div>
+    <div class="modal__actions">
+      <button class="action-btn" id="project-type-cancel" type="button">Отмена</button>
+      <button class="action-btn action-btn--accent" id="project-type-continue" type="button">Продолжить</button>
+    </div>
+  </div>
+</div>
+
+
+
 <div id="toast-container" class="toast-container"></div>
+
+
+<div class="modal" id="confirm-modal" aria-hidden="true">
+  <div class="modal__card">
+    <h2 class="modal__title" id="confirm-modal-title">Подтверждение</h2>
+    <p id="confirm-modal-text" style="color:#555;font-size:14px;margin:-4px 0 14px;line-height:1.5;"></p>
+    <div class="modal__actions">
+      <button class="action-btn" id="confirm-modal-cancel" type="button">Отмена</button>
+      <button class="action-btn action-btn--danger" id="confirm-modal-ok" type="button">Подтвердить</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="cabinet-detail-modal" aria-hidden="true">
+  <div class="modal__card" style="max-width:min(92vw, 640px);width:100%;">
+    <h2 class="modal__title" id="cabinet-detail-title">Просмотр</h2>
+    <div class="cabinet-detail-body" id="cabinet-detail-body"></div>
+    <div class="modal__actions">
+      <button class="action-btn action-btn--accent" id="cabinet-detail-close" type="button">Закрыть</button>
+    </div>
+  </div>
+</div>
 
 
 <script src="./config.js"></script>
@@ -744,6 +768,109 @@
 
 
 
+    let _confirmCb = null;
+    function showConfirm(title, text, onConfirm, { danger = true, okLabel = "Подтвердить" } = {}) {
+      const modal = document.getElementById("confirm-modal");
+      if (!modal) return;
+      document.getElementById("confirm-modal-title").textContent = title;
+      document.getElementById("confirm-modal-text").textContent = text;
+      const okBtn = document.getElementById("confirm-modal-ok");
+      okBtn.textContent = okLabel;
+      okBtn.className = "action-btn " + (danger ? "action-btn--danger" : "action-btn--accent");
+      _confirmCb = onConfirm;
+      modal.classList.add("open");
+    }
+    function _closeConfirmModal() {
+      const modal = document.getElementById("confirm-modal");
+      if (modal) modal.classList.remove("open");
+      _confirmCb = null;
+    }
+    document.getElementById("confirm-modal-cancel")?.addEventListener("click", _closeConfirmModal);
+    document.getElementById("confirm-modal-ok")?.addEventListener("click", () => {
+      const cb = _confirmCb;
+      _closeConfirmModal();
+      if (cb) cb();
+    });
+    document.getElementById("confirm-modal")?.addEventListener("click", (e) => {
+      if (e.target === document.getElementById("confirm-modal")) _closeConfirmModal();
+    });
+
+    function escCabinet(s) {
+      return String(s ?? "").replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+    }
+    function openCabinetDetailModal(title, html) {
+      const modal = document.getElementById("cabinet-detail-modal");
+      const tEl = document.getElementById("cabinet-detail-title");
+      const bEl = document.getElementById("cabinet-detail-body");
+      if (!modal || !tEl || !bEl) return;
+      tEl.textContent = title;
+      bEl.innerHTML = html;
+      modal.classList.add("open");
+    }
+    function closeCabinetDetailModal() {
+      document.getElementById("cabinet-detail-modal")?.classList.remove("open");
+    }
+    document.getElementById("cabinet-detail-close")?.addEventListener("click", closeCabinetDetailModal);
+    document.getElementById("cabinet-detail-modal")?.addEventListener("click", (e) => {
+      if (e.target.id === "cabinet-detail-modal") closeCabinetDetailModal();
+    });
+
+    let cabinetCitiesCache = null;
+    async function loadCitiesCabinetMap() {
+      if (cabinetCitiesCache) return cabinetCitiesCache;
+      try {
+        const r = await fetch(API_BASE_URL + "/cities", { credentials: "include" });
+        if (!r.ok) return {};
+        const arr = await r.json();
+        const m = {};
+        if (Array.isArray(arr)) arr.forEach((c) => { if (c && c.id != null) m[String(c.id)] = c.title || ""; });
+        cabinetCitiesCache = m;
+        return m;
+      } catch {
+        cabinetCitiesCache = {};
+        return cabinetCitiesCache;
+      }
+    }
+
+    document.getElementById("cabinet-detail-modal")?.addEventListener("click", (e) => {
+      const btn = e.target.closest(".cabinet-remove-member");
+      if (!btn) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const pid = btn.getAttribute("data-project-id");
+      const rid = btn.getAttribute("data-remove-resume-id");
+      const label = btn.getAttribute("data-member-label") || "Участник";
+      if (!pid || !rid) return;
+      showConfirm(
+        "Исключить участника?",
+        `«${label}» будет удалён из проекта. Слот освободится, соискатель получит уведомление.`,
+        async () => {
+          try {
+            const resp = await fetch(
+              API_BASE_URL + "/projects/" + encodeURIComponent(pid) + "/members/" + encodeURIComponent(rid),
+              { method: "DELETE", credentials: "include" },
+            );
+            if (resp.ok) {
+              showToast("Участник исключён из проекта", "success");
+              closeCabinetDetailModal();
+              loadMyProjects();
+            } else {
+              const err = await resp.json().catch(() => ({}));
+              showToast("Ошибка: " + (typeof err.detail === "string" ? err.detail : "Не удалось исключить"), "error");
+            }
+          } catch {
+            showToast("Ошибка соединения с сервером", "error");
+          }
+        },
+        { danger: true, okLabel: "Исключить" },
+      );
+    });
+
+
+    const tabMyProjects = document.getElementById("tab-myprojects");
+    const tabClosedProjects = document.getElementById("tab-closed-projects");
+    const panelMyProjects = document.getElementById("panel-myprojects");
+    const panelClosedProjects = document.getElementById("panel-closed-projects");
     const userMailSpan = document.getElementById("user-mail");
     const userNameSpan = document.getElementById("user-name-display");
 
@@ -785,6 +912,24 @@
         window.location.href = "./authorization_page.html";
       }
     }
+    
+    function showMyProjects() {
+      tabMyProjects.classList.add("active");
+      tabClosedProjects.classList.remove("active");
+      panelMyProjects.classList.remove("hidden");
+      panelClosedProjects.classList.add("hidden");
+      loadMyProjects();
+    }
+    function showClosedProjectsTab() {
+      tabClosedProjects.classList.add("active");
+      tabMyProjects.classList.remove("active");
+      panelClosedProjects.classList.remove("hidden");
+      panelMyProjects.classList.add("hidden");
+      loadClosedProjects();
+    }
+
+    if (tabMyProjects) tabMyProjects.addEventListener("click", showMyProjects);
+    if (tabClosedProjects) tabClosedProjects.addEventListener("click", showClosedProjectsTab);
 
     let personalData = {
       firstName: "",
@@ -797,13 +942,29 @@
       avatar: ""
     };
     
-    const TP_PROFILE_NAME_MAX = 35;
-    const TP_NAME_RE = /^[А-ЯЁа-яё]+(?:[-' ][А-ЯЁа-яё]+)*$/;
-
-    function strip(str) {
-      return str ? str.trim() : "";
+    const TP_PROJECTS_MAX = 10;
+    let myProjectsCount = 0;
+    async function refreshMyProjectsCount() {
+      try {
+        const [openResp, closedResp] = await Promise.all([
+          fetch(API_BASE_URL + "/my_projects", { credentials: "include" }),
+          fetch(API_BASE_URL + "/my_closed_projects", { credentials: "include" }),
+        ]);
+        let openN = 0;
+        let closedN = 0;
+        if (openResp.ok) {
+          const data = await openResp.json();
+          if (Array.isArray(data)) openN = data.length;
+        }
+        if (closedResp.ok) {
+          const data = await closedResp.json();
+          if (Array.isArray(data)) closedN = data.length;
+        }
+        myProjectsCount = openN + closedN;
+        const countSpan = document.getElementById("project-count");
+        if (countSpan) countSpan.textContent = String(openN);
+      } catch (_) {}
     }
-
 
     async function loadPersonalData() {
       try {
@@ -825,26 +986,13 @@
             avatar: data.avatar || ""
           };
 
-          document.getElementById("first-name").value = personalData.firstName;
-          document.getElementById("last-name").value = personalData.lastName;
-          document.getElementById("age").value = personalData.age;
-          document.getElementById("gender").value = personalData.gender;
-          document.getElementById("phone").value = personalData.phone;
-          document.getElementById("telegram").value = personalData.telegram;
-          document.getElementById("github").value = personalData.github;
-
           if (personalData.avatar) {
-            document.getElementById("profile-avatar").src = personalData.avatar;
+            const av = document.getElementById("profile-avatar");
+            if (av) av.src = personalData.avatar;
           }
           updateUserNameDisplay();
         } else if (response.status === 404) {
-          document.getElementById("first-name").value = "";
-          document.getElementById("last-name").value = "";
-          document.getElementById("age").value = "";
-          document.getElementById("gender").value = "";
-          document.getElementById("phone").value = "";
-          document.getElementById("telegram").value = "";
-          document.getElementById("github").value = "";
+          /* профиль пустой — имя остаётся из почты */
         } else {
           console.error("Ошибка загрузки профиля:", response.status);
         }
@@ -861,110 +1009,395 @@
       if (userDisplay) userDisplay.textContent = displayName;
     }
 
-
-    async function savePersonalData() {
-      const genderRaw = document.getElementById("gender").value;
-      const newData = {
-        first_name: strip(document.getElementById("first-name").value),
-        last_name: strip(document.getElementById("last-name").value),
-        age: document.getElementById("age").value ? parseInt(document.getElementById("age").value, 10) : null,
-        gender: genderRaw || null,
-        contacts: {
-          phone: strip(document.getElementById("phone").value) || null,
-          telegram: strip(document.getElementById("telegram").value) || null,
-          github: strip(document.getElementById("github").value) || null,
-        },
-      };
-
-      const errors = [];
-
-      if (!newData.first_name) {
-        errors.push("Укажите имя");
-      } else if (!newData.last_name) {
-        errors.push("Укажите фамилию");
-      }
-
-      const collapseWs = (s) => (s || "").replace(/\s+/g, " ").trim();
-      if (newData.first_name) {
-        const s = collapseWs(newData.first_name);
-        if (s.length > TP_PROFILE_NAME_MAX || !TP_NAME_RE.test(s)) {
-          errors.push(
-            "Имя: только русские буквы, не длиннее 35 символов; между частями допускаются пробел, дефис или апостроф.",
-          );
-        }
-      }
-      if (newData.last_name) {
-        const s = collapseWs(newData.last_name);
-        if (s.length > TP_PROFILE_NAME_MAX || !TP_NAME_RE.test(s)) {
-          errors.push(
-            "Фамилия: только русские буквы, не длиннее 35 символов; между частями допускаются пробел, дефис или апостроф.",
-          );
-        }
-      }
-      if (newData.age !== null && newData.age !== undefined && !Number.isNaN(newData.age)) {
-        if (newData.age < 16 || newData.age > 100) {
-          errors.push("Возраст должен быть от 16 до 100 лет.");
-        }
-      }
-
-      const phone = newData.contacts && newData.contacts.phone;
-      if (phone && !/^(\+7|8)\d{10}$/.test(phone.replace(/[\s\-()]/g, ""))) {
-        errors.push("Введите корректный российский номер телефона");
-      }
-
-      const tg = newData.contacts && newData.contacts.telegram;
-      if (tg && !/^@[A-Za-z0-9_]{5,32}$/.test(tg)) {
-        errors.push("Telegram должен начинаться с @ и содержать 5–32 символа (буквы, цифры, _)");
-      }
-
-      const gh = newData.contacts && newData.contacts.github;
-      if (gh && !/^https?:\/\/.+/.test(gh)) {
-        errors.push("Введите корректную ссылку (https://...)");
-      }
-
-      if (errors.length > 0) {
-        showToast(errors.join("; "), "error");
-        return;
-      }
-
+    async function renderManagerProjectCabinetModal(projectId) {
+      openCabinetDetailModal("Загрузка…", '<p style="color:#888;">Загрузка…</p>');
       try {
-        const response = await fetch(API_BASE_URL + "/profiles", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(newData),
-        });
-
-        if (response.ok) {
-          personalData = {
-            ...personalData,
-            firstName: newData.first_name,
-            lastName: newData.last_name,
-            age: newData.age,
-            gender: newData.gender || "",
-            phone: (newData.contacts && newData.contacts.phone) || "",
-            telegram: (newData.contacts && newData.contacts.telegram) || "",
-            github: (newData.contacts && newData.contacts.github) || "",
-          };
-          updateUserNameDisplay();
-          showToast("Личная информация сохранена", "success");
-        } else {
-          const error = await response.json().catch(() => ({}));
-          const formatted =
-            typeof window.tpFormatApiDetail === "function" ? window.tpFormatApiDetail(error.detail) : "";
-          const msg =
-            formatted ||
-            (typeof error.detail === "string" ? error.detail : "") ||
-            "Не удалось сохранить";
-          showToast("Ошибка: " + msg, "error");
+        const cityMap = await loadCitiesCabinetMap();
+        const r = await fetch(API_BASE_URL + "/my_project/" + encodeURIComponent(projectId), { credentials: "include" });
+        if (!r.ok) {
+          openCabinetDetailModal("Ошибка", "<p>Не удалось загрузить проект.</p>");
+          return;
         }
-      } catch (error) {
-        console.error("Ошибка сохранения:", error);
-        showToast("Ошибка соединения с сервером", "error");
+        const data = await r.json();
+        const proj = data.project || {};
+        const vacs = Array.isArray(data.vacancies) ? data.vacancies : [];
+        const isClosed = proj.status === "close";
+        const intentLab = { commercial: "Коммерческий", noncommercial: "Учебный" };
+        const statusLab = { active: "Активен", paused: "Не активен", close: "Закрыт", deleted: "Удалён" };
+        const mapExpCab = (x) =>
+          ({ none: "Без опыта", "<1": "До 1 года", "1-3": "1–3 года", "3-6": "3–6 лет", "6+": "6+ лет" })[x] || "—";
+        const mapWorkCab = (x) =>
+          ({ remote: "Удалённо", office: "В офисе", hybrid: "Гибрид" })[x] || "—";
+        const mapCommitCab = (x) =>
+          ({
+            full_time: "Полный день",
+            part_time: "Неполный день",
+            side_project: "Подработка / гибкий формат",
+          })[x] || "—";
+        const mapSchedCab = (x) =>
+          ({ "5/2": "5/2", "2/2": "2/2", "4/2": "4/2", "3/3": "3/3" })[x] || "—";
+        const mapContractCab = (x) =>
+          ({ gph: "ГПХ", tk: "ТК РФ", internship: "Стажировка" })[x] || "—";
+        const salTypeCab = (t) =>
+          t === "per_project" ? "За проект" : (t === "monthly" ? "В месяц" : "—");
+        function rubCab(v) {
+          if (v == null || v === "") return "—";
+          const n = Number(v);
+          return Number.isFinite(n) ? n.toLocaleString("ru-RU") + " ₽" : "—";
+        }
+        const cityTitle =
+          proj.city_id != null && proj.city_id !== ""
+            ? cityMap[String(proj.city_id)] || `Город #${proj.city_id}`
+            : null;
+        const commProjCabinet = proj.employment_intent === "commercial";
+        let html = "";
+        html += '<div class="cabinet-detail-meta-grid">';
+        html += `<div class="cabinet-meta-cell"><b>Компания</b>${escCabinet(proj.company_name || "—")}</div>`;
+        html += `<div class="cabinet-meta-cell"><b>Город</b>${escCabinet(cityTitle || "—")}</div>`;
+        html += `<div class="cabinet-meta-cell"><b>Тип проекта</b>${escCabinet(intentLab[proj.employment_intent] || proj.employment_intent || "—")}</div>`;
+        html += `<div class="cabinet-meta-cell"><b>Статус</b>${escCabinet(statusLab[proj.status] || proj.status || "—")}</div>`;
+        if (proj.closed_at) {
+          html += `<div class="cabinet-meta-cell"><b>Дата закрытия</b>${escCabinet(
+            new Date(proj.closed_at).toLocaleString("ru-RU"),
+          )}</div>`;
+        }
+        html += "</div>";
+        html += "<h4>Описание</h4>";
+        html += `<p${proj.description ? "" : ' style="color:#888;"'}>${proj.description ? escCabinet(proj.description) : "Не указано"}</p>`;
+        html += "<h4>Задачи / объём работ</h4>";
+        html += `<p${proj.tasks ? "" : ' style="color:#888;"'}>${proj.tasks ? escCabinet(proj.tasks) : "Не указано"}</p>`;
+        html += "<h4>Команда (приняты по откликам)</h4>";
+        const filled = vacs.filter((v) => v && v.occupant);
+        if (!filled.length) {
+          html += '<p style="color:#777;">Пока никого не приняли на вакансии этого проекта.</p>';
+        } else {
+          for (const v of filled) {
+            const o = v.occupant;
+            const name = [o.first_name, o.last_name].filter(Boolean).join(" ").trim();
+            const who = name || o.desired_position || ("Участник #" + o.user_id);
+            const rid = o.resume_id != null ? String(o.resume_id) : "";
+            const aboutRaw = o.about_me != null ? String(o.about_me).trim() : "";
+            const aboutSnip = aboutRaw.length > 300 ? aboutRaw.slice(0, 300) + "…" : aboutRaw;
+            const cardHref =
+              rid && o.user_id != null
+                ? "./card_resume.html?id=" + encodeURIComponent(rid) + "&user_id=" + encodeURIComponent(String(o.user_id))
+                : rid
+                  ? "./card_resume.html?id=" + encodeURIComponent(rid)
+                  : "";
+            html += '<div class="cabinet-team-row">';
+            html += '<div class="cabinet-member-main">';
+            html += `<div class="cabinet-member-head"><b>${escCabinet(v.role_name || "Должность")}</b> — ${escCabinet(who)}</div>`;
+            html += '<div class="cabinet-member-meta">';
+            html += `<span><b>Желаемая должность:</b> ${escCabinet(o.desired_position || "—")}</span>`;
+            html += `<span><b>Опыт работы:</b> ${escCabinet(mapExpCab(o.computed_experience_level))}</span>`;
+            if (commProjCabinet) {
+              html += `<span><b>Формат работы:</b> ${escCabinet(mapWorkCab(o.work_format))}</span>`;
+              html += `<span><b>Занятость:</b> ${escCabinet(mapCommitCab(o.commitment_level))}</span>`;
+            }
+            html += `<span><b>График:</b> ${escCabinet(mapSchedCab(o.schedule))}</span>`;
+            if (commProjCabinet) {
+              html += `<span><b>Заработная плата (в рублях):</b> ${escCabinet(rubCab(o.salary_amount))}</span>`;
+              html += `<span><b>Тип зарплаты:</b> ${escCabinet(salTypeCab(o.salary_type))}</span>`;
+              html += `<span><b>Тип договора:</b> ${escCabinet(mapContractCab(o.contract_type))}</span>`;
+            }
+            html += "</div>";
+            if (aboutSnip) {
+              html += `<div class="cabinet-member-about"><b>О себе:</b> ${escCabinet(aboutSnip)}</div>`;
+            }
+            if (cardHref) {
+              html += `<div class="cabinet-member-actions"><a class="cabinet-member-link" href="${cardHref}">Открыть полное резюме</a></div>`;
+            }
+            html += "</div>";
+            if (rid && !isClosed) {
+              html +=
+                `<button type="button" class="cabinet-remove-member" data-project-id="${escCabinet(projectId)}" data-remove-resume-id="${escCabinet(rid)}" data-member-label="${escCabinet(who)}">Исключить из проекта</button>`;
+            }
+            html += "</div>";
+          }
+        }
+        if (isClosed && vacs.length) {
+          html += "<h4>Вакансии проекта</h4>";
+          html += '<p style="color:#666;font-size:13px;margin:-6px 0 10px;">Карточки вакансий на момент закрытия.</p>';
+          for (const v of vacs) {
+            if (!v) continue;
+            html += '<div style="margin-bottom:14px;padding:12px;border:1px solid #ece8e3;border-radius:10px;background:#faf9f7;">';
+            html += `<div style="font-weight:600;margin-bottom:6px;">${escCabinet(v.role_name || "Должность")}</div>`;
+            html += `<div style="font-size:13px;color:#444;margin-bottom:4px;"><b>Опыт:</b> ${escCabinet(mapExpCab(v.experience))}</div>`;
+            if (commProjCabinet) {
+              html += `<div style="font-size:13px;color:#444;"><b>Формат:</b> ${escCabinet(mapWorkCab(v.work_format))} · <b>Занятость:</b> ${escCabinet(
+                mapCommitCab(v.commitment_level),
+              )}</div>`;
+              html += `<div style="font-size:13px;color:#444;"><b>Зарплата:</b> ${escCabinet(rubCab(v.salary_amount))} (${escCabinet(
+                salTypeCab(v.salary_type),
+              )}) · <b>Договор:</b> ${escCabinet(mapContractCab(v.contract_type))}</div>`;
+            }
+            html += `<div style="font-size:13px;color:#444;"><b>График:</b> ${escCabinet(mapSchedCab(v.schedule))}</div>`;
+            const vd = v.description ? String(v.description).trim() : "";
+            html += `<div style="font-size:13px;margin-top:6px;color:#333;">${
+              vd ? escCabinet(vd) : '<span style="color:#888;">Описание вакансии не указано</span>'
+            }</div>`;
+            html += "</div>";
+          }
+        }
+        openCabinetDetailModal(proj.title || "Проект", html);
+      } catch {
+        openCabinetDetailModal("Ошибка", "<p>Ошибка соединения с сервером.</p>");
       }
     }
 
-    document.getElementById("personal-save")?.addEventListener("click", savePersonalData);
+    async function loadMyProjects() {
+      const projectsList = document.getElementById("projects-list");
+      if (!projectsList) return;
+
+      projectsList.innerHTML = '<div class="empty-state" style="color:#aaa;">Загрузка…</div>';
+
+      let projects = null;
+      try {
+        const response = await fetch(API_BASE_URL + "/my_projects", { credentials: "include" });
+        if (response.ok) {
+          const data = await response.json();
+          if (Array.isArray(data)) projects = data;
+        }
+      } catch {}
+
+      if (!projects) projects = [];
+
+      projects.sort((a, b) => {
+        const ta = a && a.created_at ? new Date(a.created_at).getTime() : 0;
+        const tb = b && b.created_at ? new Date(b.created_at).getTime() : 0;
+        return tb - ta;
+      });
+
+      if (projects.length === 0) {
+        projectsList.innerHTML = '<div class="empty-state">У вас пока нет проектов. Нажмите «Создать проект»</div>';
+        void refreshMyProjectsCount();
+        return;
+      }
+
+      const safe = (v) => (v === null || v === undefined) ? "" : String(v);
+      const esc = (s) => safe(s).replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+
+      const intentLabel = { commercial: "Коммерческий", noncommercial: "Учебный" };
+      const statusLabel = { active: "Активен", paused: "Не активен" };
+      function allVacanciesFilled(vacs) {
+        if (!Array.isArray(vacs) || vacs.length === 0) return false;
+        return vacs.every((v) => v && (v.occupant || v.is_filled === true || v.status === "filled"));
+      }
+      function projectEditUrl(id, intent) {
+        const page = intent === "noncommercial" ? "./edit_project_study.html" : "./edit_project_com.html";
+        return page + "?id=" + encodeURIComponent(id);
+      }
+
+      const summaries = await Promise.all(
+        projects.map(async (p) => {
+          try {
+            const r = await fetch(API_BASE_URL + "/my_project/" + encodeURIComponent(p.id), { credentials: "include" });
+            if (!r.ok) return { project: p, vacancies: [] };
+            const data = await r.json();
+            return { project: p, vacancies: Array.isArray(data.vacancies) ? data.vacancies : [] };
+          } catch {
+            return { project: p, vacancies: [] };
+          }
+        }),
+      );
+
+      projectsList.innerHTML = summaries.map(({ project: p, vacancies: vacs }) => {
+        const id = p && p.id !== undefined ? String(p.id) : "";
+        const title = p?.title || (id ? `Проект #${id}` : "Проект");
+        const intent = intentLabel[p?.employment_intent] || p?.employment_intent || "—";
+        const createdAt = p?.created_at ? new Date(p.created_at).toLocaleDateString("ru-RU") : "—";
+        const descRaw = p?.description ? String(p.description).trim() : "";
+        const descriptionBlock = descRaw
+          ? `<div class="project-info project-desc-clamp" style="margin-top:6px;color:#555;">${esc(descRaw)}</div>`
+          : "";
+
+        const isActive = p?.status === "active";
+        const editHref = projectEditUrl(id, p?.employment_intent);
+        const editLocked = isActive;
+
+        const canCloseProject = isActive && allVacanciesFilled(vacs || []);
+
+        const occupantParts = (vacs || [])
+          .filter((v) => v && v.occupant)
+          .map((v) => {
+            const o = v.occupant;
+            const name = [o.first_name, o.last_name].filter(Boolean).join(" ").trim();
+            const bits = [v.role_name || "Должность", name || o.desired_position || ("Пользователь #" + o.user_id)].filter(Boolean);
+            return esc(bits.join(" — "));
+          });
+        const teamBlock = occupantParts.length
+          ? `<div class="project-info" style="margin-top:10px;line-height:1.45;"><b>Состав проекта:</b><br>${occupantParts.join("<br>")}</div>`
+          : "";
+
+        return `
+          <div class="project-card" style="display:flex;justify-content:space-between;gap:12px;align-items:center;">
+            <div style="flex:1;min-width:0;">
+              <button type="button" class="cabinet-item-title-btn" data-preview-project="${esc(id)}" title="Подробнее о проекте">${esc(title)}</button>
+              <div class="project-info"><b>Тип:</b> ${esc(intent)}</div>
+              <div class="project-info"><b>Создан:</b> ${esc(createdAt)}</div>
+              ${descriptionBlock}
+              ${teamBlock}
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;">
+              <label style="display:flex;align-items:center;gap:8px;user-select:none;cursor:pointer;">
+                <span style="font-size:12px;color:#666;">${isActive ? "Активен" : "Не активен"}</span>
+                <span class="status-toggle">
+                  <input type="checkbox" class="proj-status-check" data-project-id="${esc(id)}"
+                    data-project-title="${esc(title)}" data-current-status="${esc(p?.status || "")}"
+                    ${isActive ? "checked" : ""} />
+                  <span class="status-toggle__track"></span>
+                </span>
+              </label>
+              <button class="action-btn" type="button" data-edit-project-page="${esc(id)}" data-project-intent="${esc(p?.employment_intent || "")}"
+                ${editLocked ? "disabled title=\"Поставьте проект на паузу, чтобы редактировать\"" : ""}
+                style="${editLocked ? "opacity:.55;cursor:not-allowed;" : ""}">Редактировать</button>
+              ${
+                canCloseProject
+                  ? `<button class="action-btn action-btn--danger" type="button" data-close-project="${esc(id)}" data-project-title="${esc(title)}">Закрыть проект</button>`
+                  : ""
+              }
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      projectsList.querySelectorAll("[data-close-project]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const pid = btn.getAttribute("data-close-project");
+          const ptitle = btn.getAttribute("data-project-title") || "";
+          if (!pid) return;
+          showConfirm(
+            "Закрыть проект?",
+            (ptitle ? "«" + ptitle + "». " : "") +
+              "Все вакансии заняты: проект можно закрыть. Участники будут сняты с вакансий, открытые отклики отменены.",
+            () => {
+              void (async () => {
+                try {
+                  const r = await fetch(API_BASE_URL + "/projects/" + encodeURIComponent(pid) + "/close", {
+                    method: "POST",
+                    credentials: "include",
+                  });
+                  if (r.ok) {
+                    showToast("Проект закрыт", "success");
+                    await loadMyProjects();
+                    void loadClosedProjects();
+                  } else {
+                    const err = await r.json().catch(() => ({}));
+                    showToast("Ошибка: " + (err.detail || "Не удалось закрыть проект"), "error");
+                  }
+                } catch {
+                  showToast("Ошибка соединения с сервером", "error");
+                }
+              })();
+            },
+            { danger: true, okLabel: "Закрыть" },
+          );
+        });
+      });
+
+      projectsList.querySelectorAll("[data-preview-project]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const pid = btn.getAttribute("data-preview-project");
+          if (!pid) return;
+          void renderManagerProjectCabinetModal(pid);
+        });
+      });
+
+      projectsList.querySelectorAll("[data-edit-project-page]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          if (btn.disabled) return;
+          const id = btn.getAttribute("data-edit-project-page");
+          const intent = btn.getAttribute("data-project-intent");
+          if (id) window.location.href = projectEditUrl(id, intent);
+        });
+      });
+
+      projectsList.querySelectorAll(".proj-status-check").forEach((checkbox) => {
+        checkbox.addEventListener("click", (e) => {
+          e.preventDefault();
+          const id = checkbox.getAttribute("data-project-id");
+          const currentStatus = checkbox.getAttribute("data-current-status");
+          const projectTitle = checkbox.getAttribute("data-project-title");
+          const newStatus = currentStatus === "active" ? "paused" : "active";
+          const newLabel = statusLabel[newStatus] || newStatus;
+
+          showConfirm(
+            "Изменить статус проекта",
+            `Установить статус проекта «${projectTitle}» как «${newLabel}»?`,
+            async () => {
+              try {
+                const resp = await fetch(API_BASE_URL + "/projects/" + id, {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  credentials: "include",
+                  body: JSON.stringify({ status: newStatus }),
+                });
+                if (resp.ok) {
+                  showToast(`Статус изменён: «${newLabel}»`, "success");
+                  loadMyProjects();
+                } else {
+                  const err = await resp.json().catch(() => ({}));
+                  showToast("Ошибка: " + (err.detail || "Не удалось изменить статус"), "error");
+                }
+              } catch {
+                showToast("Ошибка соединения с сервером", "error");
+              }
+            },
+            { danger: false, okLabel: `Установить «${newLabel}»` }
+          );
+        });
+      });
+      void refreshMyProjectsCount();
+    }
+
+    async function loadClosedProjects() {
+      const listEl = document.getElementById("closed-projects-list");
+      if (!listEl) return;
+      listEl.innerHTML = '<div class="empty-state" style="color:#aaa;">Загрузка…</div>';
+      try {
+        const response = await fetch(API_BASE_URL + "/my_closed_projects", { credentials: "include" });
+        if (!response.ok) {
+          listEl.innerHTML = '<div class="empty-state">Не удалось загрузить закрытые проекты</div>';
+          return;
+        }
+        const projects = await response.json();
+        if (!Array.isArray(projects) || projects.length === 0) {
+          listEl.innerHTML = '<div class="empty-state">Закрытых проектов пока нет</div>';
+          return;
+        }
+        const safe = (v) => (v === null || v === undefined) ? "" : String(v);
+        const esc = (s) => safe(s).replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+        const intentLabel = { commercial: "Коммерческий", noncommercial: "Учебный" };
+        listEl.innerHTML = projects.map((p) => {
+          const id = p && p.id !== undefined ? String(p.id) : "";
+          const title = p?.title || (id ? `Проект #${id}` : "Проект");
+          const intent = intentLabel[p?.employment_intent] || p?.employment_intent || "—";
+          const closedAt = p?.closed_at ? new Date(p.closed_at).toLocaleString("ru-RU") : "—";
+          const descRaw = p?.description ? String(p.description).trim() : "";
+          const descriptionBlock = descRaw
+            ? `<div class="project-info project-desc-clamp" style="margin-top:6px;color:#555;">${esc(descRaw)}</div>`
+            : "";
+          return `
+            <div class="project-card" style="display:flex;justify-content:space-between;gap:12px;align-items:center;">
+              <div style="flex:1;min-width:0;">
+                <button type="button" class="cabinet-item-title-btn" data-preview-closed-project="${esc(id)}" title="Подробнее о проекте">${esc(title)}</button>
+                <div class="project-info"><b>Тип:</b> ${esc(intent)}</div>
+                <div class="project-info"><b>Закрыт:</b> ${esc(closedAt)}</div>
+                ${descriptionBlock}
+              </div>
+            </div>`;
+        }).join("");
+        listEl.querySelectorAll("[data-preview-closed-project]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const pid = btn.getAttribute("data-preview-closed-project");
+            if (!pid) return;
+            void renderManagerProjectCabinetModal(pid);
+          });
+        });
+      } catch {
+        listEl.innerHTML = '<div class="empty-state">Ошибка соединения с сервером</div>';
+      }
+    }
 
     const avatarWrap = document.getElementById("avatar-wrap");
     const avatarInput = document.getElementById("avatar-input");
@@ -1065,9 +1498,63 @@
     const passwordCancel = document.getElementById("password-cancel");
     const passwordSave = document.getElementById("password-save");
 
+    const createProjectLink = document.getElementById("create-project-link");
+    const projectTypeModal = document.getElementById("project-type-modal");
+    const projectTypeCancel = document.getElementById("project-type-cancel");
+    const projectTypeContinue = document.getElementById("project-type-continue");
+
     if (changePasswordBtn && passwordModal) {
       changePasswordBtn.addEventListener("click", function () { 
         passwordModal.classList.add("open"); 
+      });
+    }
+
+    function openProjectTypeModal() {
+      if (projectTypeModal) projectTypeModal.classList.add("open");
+    }
+    function closeProjectTypeModal() {
+      if (projectTypeModal) projectTypeModal.classList.remove("open");
+    }
+
+    if (createProjectLink) {
+      createProjectLink.addEventListener("click", async (e) => {
+        e.preventDefault();
+        const inc = await window.tpFetchProfileIncompleteMessage(API_BASE_URL);
+        if (inc) {
+          showToast(inc, "warning");
+          return;
+        }
+        await refreshMyProjectsCount();
+        if (myProjectsCount >= TP_PROJECTS_MAX) {
+          showToast(
+            "Достигнут лимит проектов (не более " +
+              TP_PROJECTS_MAX +
+              "). Удалите проект или отредактируйте существующий.",
+            "warning",
+          );
+          return;
+        }
+        openProjectTypeModal();
+      });
+    }
+    if (projectTypeCancel) projectTypeCancel.addEventListener("click", closeProjectTypeModal);
+    if (projectTypeContinue) {
+      projectTypeContinue.addEventListener("click", async () => {
+        const inc = await window.tpFetchProfileIncompleteMessage(API_BASE_URL);
+        if (inc) {
+          showToast(inc, "warning");
+          return;
+        }
+        const selected = document.querySelector('input[name="project-type"]:checked');
+        const value = selected ? selected.value : "com";
+        try { localStorage.setItem("tp_project_target", value); } catch (_) {}
+        if (value === "study") window.location.href = "./create_project_study.html";
+        else window.location.href = "./create_project_com.html";
+      });
+    }
+    if (projectTypeModal) {
+      projectTypeModal.addEventListener("click", (event) => {
+        if (event.target === projectTypeModal) closeProjectTypeModal();
       });
     }
 
@@ -1170,6 +1657,12 @@
     void (async function initAccount() {
       await loadCurrentUser();
       await loadPersonalData();
+      try {
+        const tab = new URLSearchParams(window.location.search).get("tab");
+        const cab = new URLSearchParams(window.location.search).get("cabinet");
+        if (tab === "closed" || cab === "closed") showClosedProjectsTab();
+        else showMyProjects();
+      } catch (_) {}
     })();
   })();
 </script>

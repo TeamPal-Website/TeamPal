@@ -54,8 +54,44 @@
     .mark-btn:hover { border-color: rgba(248, 90, 11, .55); color: var(--accent-2); }
     .notification-list { display: grid; gap: 10px; }
     .notification-item { border: 1px solid var(--line); border-radius: 14px; padding: 14px; background: #fff; display: grid; gap: 6px; }
-    .notification-item.unread { border-color: rgba(248, 90, 11, .45); background: #fffaf3; }
+    .notification-item--neutral {
+      border: 1px solid #64b5f6;
+      background: #e3f2fd;
+    }
+    .notification-item--success {
+      border: 1px solid #4caf50;
+      background: #e8f5e9;
+    }
+    .notification-item--danger {
+      border: 1px solid #f5c0b0;
+      background: #fff0ee;
+    }
+    .notification-item[data-notification-id] { cursor: pointer; }
+    .notification-item.is-unread { position: relative; padding-left: 20px; }
+    .notification-item.is-unread::before {
+      content: "";
+      position: absolute;
+      left: 10px;
+      top: 20px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent-2);
+    }
     .notification-title { font-size: 16px; font-weight: 800; }
+    .notification-new {
+      display: inline-block;
+      margin-left: 8px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      vertical-align: middle;
+    }
     .notification-meta { color: #6a5a4a; font-size: 13px; line-height: 1.35; }
     .notification-link { color: var(--accent-2); font-weight: 800; text-decoration: none; width: fit-content; }
     .notification-link:hover { text-decoration: underline; }
@@ -72,7 +108,7 @@
       <img class="logo" src="./assets/logo.png" alt="Логотип TeamPal">
     </div>
     <div class="header__actions">
-      <button class="notify-btn" type="button" aria-label="Отклики" onclick="window.location.href='./applications.html'" title="Отклики">
+      <button class="notify-btn" type="button" aria-label="Уведомления" onclick="window.location.href='./applications.html?tab=notifications'" title="Уведомления">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M12 4a5 5 0 0 0-5 5v2.6c0 .7-.24 1.38-.68 1.9L5 15h14l-1.32-1.5a3 3 0 0 1-.68-1.9V9a5 5 0 0 0-5-5Z" stroke="#f85a0b" stroke-width="1.8" stroke-linejoin="round"/>
           <path d="M10 18a2 2 0 0 0 4 0" stroke="#f85a0b" stroke-width="1.8" stroke-linecap="round"/>
@@ -172,6 +208,15 @@
       })[ch]);
     }
 
+    function notificationTone(item) {
+      const ev = item.event || "";
+      if (ev === "application_accepted") return "success";
+      if (ev === "application_rejected") return "danger";
+      if (ev === "application_cancelled") return "danger";
+      if (ev === "application_received" || ev === "employer_invited") return "neutral";
+      return "neutral";
+    }
+
     function eventTitle(item) {
       const p = item.payload || {};
       if (item.event === "application_received") return "Новый отклик";
@@ -206,6 +251,35 @@
       return d.toLocaleString("ru-RU", { dateStyle: "short", timeStyle: "short" });
     }
 
+    function notificationDotUnread(item) {
+      return item && item.is_read === false;
+    }
+
+    function flushUnreadOnNotificationsPage() {
+      if (!list) return;
+      const cards = list.querySelectorAll(".notification-item.is-unread[data-notification-id]");
+      const ids = [];
+      cards.forEach((c) => {
+        const id = parseInt(c.getAttribute("data-notification-id"), 10);
+        if (Number.isFinite(id)) ids.push(id);
+      });
+      if (!ids.length) return;
+      try {
+        fetch(API_BASE_URL + "/notifications/read", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ notification_ids: ids }),
+          keepalive: true,
+        }).catch(() => {});
+      } catch (_) {}
+    }
+
+    if (!document.documentElement.dataset.tpNotifPageLeave) {
+      document.documentElement.dataset.tpNotifPageLeave = "1";
+      window.addEventListener("pagehide", flushUnreadOnNotificationsPage);
+    }
+
     function render(items) {
       if (!list) return;
       if (!Array.isArray(items) || items.length === 0) {
@@ -215,9 +289,13 @@
       list.innerHTML = items.map((item) => {
         const p = item.payload || {};
         const href = p.project_id ? "./card_project.html?project=" + encodeURIComponent(p.project_id) + (p.vacancy_id ? "&vacancy=" + encodeURIComponent(p.vacancy_id) : "") : "";
+        const tone = notificationTone(item);
+        const unread = notificationDotUnread(item) ? " is-unread" : "";
+        const nid = item.id != null ? String(item.id) : "";
+        const newBadge = notificationDotUnread(item) ? '<span class="notification-new" aria-hidden="true">Новое</span>' : "";
         return `
-          <article class="notification-item ${item.is_read ? "" : "unread"}">
-            <div class="notification-title">${esc(eventTitle(item))}</div>
+          <article class="notification-item notification-item--${tone}${unread}" data-notification-id="${esc(nid)}">
+            <div class="notification-title">${esc(eventTitle(item))}${newBadge}</div>
             <div class="notification-meta">${esc(eventText(item))}</div>
             <div class="notification-meta">${esc(formatDate(item.created_at))}</div>
             ${href ? `<a class="notification-link" href="${esc(href)}">Открыть</a>` : ""}
@@ -254,6 +332,29 @@
         } finally {
           markAll.disabled = false;
         }
+      });
+    }
+
+    if (list && !list.dataset.tpNotifReadBound) {
+      list.dataset.tpNotifReadBound = "1";
+      list.addEventListener("click", async (e) => {
+        const card = e.target.closest(".notification-item[data-notification-id]");
+        if (!card || !card.classList.contains("is-unread")) return;
+        const raw = card.getAttribute("data-notification-id");
+        const nid = raw ? parseInt(raw, 10) : NaN;
+        if (!Number.isFinite(nid)) return;
+        try {
+          const r = await fetch(API_BASE_URL + "/notifications/read", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ notification_ids: [nid] }),
+          });
+          if (r.ok) {
+            card.classList.remove("is-unread");
+            card.querySelectorAll(".notification-new").forEach((x) => x.remove());
+          }
+        } catch (_) {}
       });
     }
 

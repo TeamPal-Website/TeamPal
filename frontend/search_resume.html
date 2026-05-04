@@ -7,6 +7,7 @@
   <link rel="icon" type="image/png" href="./assets/logo.png">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/notify-banner.css">
   <style>
     :root {
       --bg: #f7f5f2;
@@ -32,72 +33,6 @@
       display: flex;
       flex-direction: column;
     }
-
-    .notification-container {
-      position: fixed;
-      top: 80px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      width: auto;
-      min-width: 280px;
-      max-width: 500px;
-      pointer-events: none;
-    }
-
-    .notification {
-      background: #ffffff;
-      border-radius: 8px;
-      padding: 12px 20px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      animation: fadeInDown 0.25s ease-out;
-      pointer-events: auto;
-      border: 1px solid #0000001a;
-      width: 100%;
-    }
-
-    @keyframes fadeInDown {
-      from { transform: translateY(-20px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-    @keyframes fadeOutUp {
-      from { transform: translateY(0); opacity: 1; }
-      to { transform: translateY(-20px); opacity: 0; }
-    }
-
-    .notification.error { border-left: 3px solid #2d3e56; }
-    .notification.success { border-left: 3px solid #2d3e56; }
-    .notification.warning { border-left: 3px solid #2d3e56; }
-
-    .notification-content {
-      flex: 1;
-      font-size: 14px;
-      line-height: 1.4;
-      color: #2d3e56;
-      font-family: "Gabriela", serif;
-      text-align: center;
-    }
-
-    .notification-close {
-      cursor: pointer;
-      font-size: 18px;
-      color: #b5b5b5;
-      transition: color 0.2s;
-      line-height: 1;
-      flex-shrink: 0;
-      font-family: "Gabriela", serif;
-      user-select: none;
-    }
-
-    .notification-close:hover { color: #F85A0B; }
 
     .header {
       position: fixed;
@@ -369,11 +304,44 @@
       margin-top: 18px;
       flex-wrap: wrap;
     }
-    .search-pager__stat {
+    .search-pager__nums {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      max-width: min(100%, 560px);
+    }
+    .search-pager__ellipsis {
       font-size: 13px;
-      color: #666;
-      min-width: 88px;
-      text-align: center;
+      color: #888;
+      padding: 0 6px;
+      user-select: none;
+    }
+    .search-pager__page {
+      min-width: 40px;
+      height: 40px;
+      padding: 0 10px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      color: #2e2e2e;
+      transition: background .2s, border-color .2s, box-shadow .2s;
+    }
+    .search-pager__page:hover:not(:disabled) {
+      border-color: rgba(248, 90, 11, 0.45);
+      background: #fff9f4;
+    }
+    .search-pager__page.is-current {
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      color: #fff;
+      border-color: transparent;
+      cursor: default;
+      box-shadow: 0 6px 14px rgba(250, 149, 0, 0.22);
     }
 
     .vacancies {
@@ -482,15 +450,6 @@
       .search-row { grid-template-columns: 1fr auto; }
       .action-btn--accent { grid-column: 1 / -1; }
     }
-    @media (max-width: 768px) {
-      .notification-container {
-        top: 70px;
-        width: 90%;
-        max-width: 90%;
-      }
-      .notification { padding: 10px 16px; }
-      .notification-content { font-size: 13px; }
-    }
 
     .modal {
       position: fixed;
@@ -500,6 +459,9 @@
       align-items: center;
       justify-content: center;
       z-index: 1100;
+      padding: 24px 16px;
+      box-sizing: border-box;
+      overflow-y: auto;
     }
     .modal.open { display: flex; }
     .modal__card {
@@ -571,6 +533,39 @@
       border-color: #bdbdbd;
       box-shadow: 0 0 0 2px rgba(248, 90, 11, 0.18);
     }
+    .skills-filter-hint {
+      font-size: 12px;
+      line-height: 1.4;
+      color: #6d6d6d;
+      margin: -4px 0 2px;
+    }
+    .skills-filter-list {
+      max-height: 200px;
+      overflow: auto;
+      border: 1px solid #d1d1d1;
+      border-radius: 18px;
+      padding: 6px 4px;
+      background: #fff;
+    }
+    .skills-filter-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1.35;
+      color: var(--ink);
+    }
+    .skills-filter-item:hover { background: #fff8f0; }
+    .skills-filter-item input {
+      margin-top: 3px;
+      accent-color: var(--accent-2);
+      flex-shrink: 0;
+      width: auto;
+      min-height: 0;
+    }
     .modal__actions { margin-top: 12px; display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
     .modal__actions .action-btn { border-radius: 12px; height: auto; }
 
@@ -598,6 +593,23 @@
       gap: 10px;
       flex-wrap: wrap;
     }
+    /* Диалог фильтров: шире, не на всю высоту экрана; прокрутка в теле, кнопки всегда внизу карточки */
+    #filters-modal .modal__card--premium {
+      width: min(96vw, 680px);
+      max-height: min(calc(100vh - 48px), 720px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #filters-modal .modal__body {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    #filters-modal .modal__footer-bar {
+      flex-shrink: 0;
+    }
     .vacancy-about-snippet {
       margin-top: 10px;
       font-size: 13px;
@@ -605,6 +617,20 @@
       line-height: 1.45;
       max-height: 4.6em;
       overflow: hidden;
+    }
+    .resume-card-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #ece9e5;
+      flex-shrink: 0;
+      background: #f0ece7;
+    }
+    .vacancy-head-inner {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
     }
     .invite-preview-grid {
       display: grid;
@@ -639,7 +665,7 @@
       </div>
     </div>
     <div class="header__actions">
-      <button class="notify-btn" type="button" aria-label="Отклики" onclick="window.location.href='./applications.html'">
+      <button class="notify-btn" type="button" aria-label="Уведомления" onclick="window.location.href='./applications.html?tab=notifications'">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M12 4a5 5 0 0 0-5 5v2.6c0 .7-.24 1.38-.68 1.9L5 15h14l-1.32-1.5a3 3 0 0 1-.68-1.9V9a5 5 0 0 0-5-5Z" stroke="#f85a0b" stroke-width="1.8" stroke-linejoin="round"/>
           <path d="M10 18a2 2 0 0 0 4 0" stroke="#f85a0b" stroke-width="1.8" stroke-linecap="round"/>
@@ -651,7 +677,9 @@
       <nav class="header-menu" id="header-menu">
         <div class="header-menu__title">Меню</div>
         <button class="header-menu__item" type="button" data-nav="./account_manager.html">Личный кабинет</button>
+        <button class="header-menu__item" type="button" data-nav="./employer_projects.html">Мои проекты</button>
         <button class="header-menu__item" type="button" data-nav="./search_resume.html">Поиск сотрудников</button>
+        <button class="header-menu__item" type="button" data-nav="./applications.html">Отклики</button>
         <button class="header-menu__exit" type="button" data-nav="./authorization_page.html">Выйти</button>
       </nav>
     </div>
@@ -681,15 +709,12 @@
       </button>
       <button class="action-btn action-btn--accent" id="find" type="button">Найти</button>
     </div>
-    <div class="hint">
-      <span id="results-count">Найдено: 0</span>
-    </div>
   </section>
 
   <section class="vacancies" id="vacancies" aria-label="Список резюме"></section>
   <div class="search-pager" id="search-pager" role="navigation" aria-label="Страницы результатов">
     <button type="button" class="action-btn" id="pager-prev">Назад</button>
-    <span class="search-pager__stat" id="pager-status"></span>
+    <div class="search-pager__nums" id="pager-pages" aria-label="Номера страниц"></div>
     <button type="button" class="action-btn action-btn--accent" id="pager-next">Дальше</button>
   </div>
 </main>
@@ -728,6 +753,12 @@
             <option value="6+">6+ лет</option>
           </select>
         </div>
+        <div class="field field--full-row">
+          <label for="f-skills-search">Навыки</label>
+          <p class="skills-filter-hint">Показываются резюме, в которых есть все выбранные навыки.</p>
+          <input id="f-skills-search" type="search" inputmode="search" autocomplete="off" placeholder="Найти в списке…">
+          <div id="f-skills-list" class="skills-filter-list" role="group" aria-label="Навыки для фильтра"></div>
+        </div>
         <div id="filters-resume-commercial" class="modal__grid-sub">
           <div class="field">
             <label for="f-work-format">Формат работы</label>
@@ -760,6 +791,8 @@
           <label for="f-created-within">Дата публикации</label>
           <select id="f-created-within">
             <option value="">За всё время</option>
+            <option value="1">За последние сутки</option>
+            <option value="3">За последние 3 дня</option>
             <option value="7">За последние 7 дней</option>
             <option value="14">За последние 14 дней</option>
             <option value="30">За последние 30 дней</option>
@@ -797,36 +830,9 @@
 </div>
 
 <script src="./config.js"></script>
+<script src="./assets/notify-banner.js"></script>
 <script>
   (function () {
-    const notificationContainer = document.getElementById("notificationContainer");
-
-    function showNotification(message, type = "success", duration = 3500) {
-      if (!notificationContainer) return;
-      const notification = document.createElement("div");
-      notification.className = `notification ${type}`;
-      notification.innerHTML = `
-        <div class="notification-content">${message}</div>
-        <div class="notification-close">×</div>
-      `;
-
-      notificationContainer.appendChild(notification);
-      const closeBtn = notification.querySelector(".notification-close");
-      if (closeBtn) {
-        closeBtn.addEventListener("click", () => {
-          notification.style.animation = "fadeOutUp 0.25s ease-out forwards";
-          setTimeout(() => notification.remove(), 250);
-        });
-      }
-
-      setTimeout(() => {
-        if (notification.parentElement) {
-          notification.style.animation = "fadeOutUp 0.25s ease-out forwards";
-          setTimeout(() => notification.remove(), 250);
-        }
-      }, duration);
-    }
-
     const yearSpan = document.getElementById("year");
     if (yearSpan) yearSpan.textContent = " " + new Date().getFullYear();
 
@@ -887,11 +893,12 @@
     let vacanciesList = [];
     let _citiesMap = {};
     let _rolesMap = {};
+    let _skillsCatalog = [];
+    const RESUME_FILTER_SKILLS_MAX = 25;
 
     const qInput = document.getElementById("q");
     const findBtn = document.getElementById("find");
     const listEl = document.getElementById("vacancies");
-    const countEl = document.getElementById("results-count");
 
     const filtersModal = document.getElementById("filters-modal");
     const openFiltersBtn = document.getElementById("open-filters");
@@ -901,7 +908,7 @@
     const LS_RESUME_CATALOG_MODE = "tp_search_resume_catalog_mode";
 
     function defaultFiltersEduResume() {
-      return { role_type_id: "", city_id: "", computed_exp: "", created_within_days: "" };
+      return { role_type_id: "", city_id: "", computed_exp: "", created_within_days: "", skill_ids: [] };
     }
     function defaultFiltersComResume() {
       return {
@@ -913,6 +920,7 @@
         commitment_level: "",
         salary_min: "",
         salary_max: "",
+        skill_ids: [],
       };
     }
 
@@ -978,7 +986,25 @@
     let inviteResumeNumericId = null;
 
     const RESUME_PAGE_SIZE = 15;
+    const PAGER_RADIUS = 2;
     let lastResumePageFetchCount = 0;
+
+    function initResumePagerPages() {
+      const pagesEl = document.getElementById("pager-pages");
+      if (!pagesEl || pagesEl.dataset.tpDelegated) return;
+      pagesEl.dataset.tpDelegated = "1";
+      pagesEl.addEventListener("click", async (e) => {
+        const btn = e.target.closest("button[data-page-num]");
+        if (!btn || btn.disabled) return;
+        const n = parseInt(btn.getAttribute("data-page-num"), 10);
+        if (!Number.isFinite(n) || n < 1 || n === state.page) return;
+        state.page = n;
+        await fetchResumesFromApi();
+        render(vacanciesList);
+        updateResumePager();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    }
 
     function escapeHtml(str) {
       return String(str ?? "").replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
@@ -1050,11 +1076,46 @@
       });
     }
 
+    function bindSkillsFilterSearch() {
+      const el = document.getElementById("f-skills-search");
+      if (!el || el.dataset.tpSkillsSearchBound) return;
+      el.dataset.tpSkillsSearchBound = "1";
+      el.addEventListener("input", () => {
+        renderSkillsFilterList();
+      });
+    }
+
+    function renderSkillsFilterList() {
+      const wrap = document.getElementById("f-skills-list");
+      if (!wrap) return;
+      const searchEl = document.getElementById("f-skills-search");
+      const q = (searchEl && searchEl.value ? String(searchEl.value) : "").trim().toLowerCase();
+      const f = activeResumeFilters();
+      const selected = new Set((f.skill_ids || []).map((x) => String(x)));
+      const items = _skillsCatalog.filter((s) => !q || s.name.toLowerCase().includes(q));
+      if (items.length === 0) {
+        wrap.innerHTML =
+          '<div class="skills-filter-empty" style="padding:12px 14px;font-size:13px;color:#888;text-align:center;">' +
+          (_skillsCatalog.length === 0 ? "Нет навыков в справочнике" : "Ничего не найдено") +
+          "</div>";
+        return;
+      }
+      wrap.innerHTML = items
+        .map(
+          (s) =>
+            `<label class="skills-filter-item"><input type="checkbox" name="f-skill" value="${s.id}"` +
+            (selected.has(String(s.id)) ? " checked" : "") +
+            `/><span>${escapeHtml(s.name)}</span></label>`
+        )
+        .join("");
+    }
+
     async function loadResumeFilterDicts() {
       try {
-        const [citiesResp, rolesResp] = await Promise.all([
+        const [citiesResp, rolesResp, skillsResp] = await Promise.all([
           fetch(API_BASE_URL + "/cities", { credentials: "include" }),
           fetch(API_BASE_URL + "/roles_dictionary", { credentials: "include" }),
+          fetch(API_BASE_URL + "/skills", { credentials: "include" }),
         ]);
         const citySel = document.getElementById("f-city");
         if (citySel) {
@@ -1094,6 +1155,19 @@
             }
           }
         }
+        _skillsCatalog = [];
+        if (skillsResp.ok) {
+          const skillRows = await skillsResp.json();
+          if (Array.isArray(skillRows)) {
+            _skillsCatalog = skillRows
+              .filter((s) => s && s.id != null && s.name)
+              .map((s) => ({ id: Number(s.id), name: String(s.name) }))
+              .filter((s) => Number.isFinite(s.id) && s.id > 0)
+              .sort((a, b) => a.name.localeCompare(b.name, "ru"));
+          }
+        }
+        bindSkillsFilterSearch();
+        renderSkillsFilterList();
       } catch (_) {}
     }
 
@@ -1124,6 +1198,16 @@
           if (Number.isFinite(smin) && smin >= 0) params.set("salary_min", String(smin));
           if (Number.isFinite(smax) && smax >= 0) params.set("salary_max", String(smax));
         }
+        const rawSkillIds = Array.isArray(f.skill_ids) ? f.skill_ids : [];
+        let skillParamCount = 0;
+        for (let i = 0; i < rawSkillIds.length && skillParamCount < RESUME_FILTER_SKILLS_MAX; i++) {
+          const raw = rawSkillIds[i];
+          const n = typeof raw === "number" ? raw : parseInt(String(raw), 10);
+          if (Number.isFinite(n) && n > 0) {
+            params.append("skill_ids", String(n));
+            skillParamCount++;
+          }
+        }
 
         const r = await fetch(API_BASE_URL + "/resumes?" + params.toString(), { credentials: "include" });
         if (!r.ok) return;
@@ -1145,10 +1229,16 @@
           hasExperience: !!(row.computed_experience_level && row.computed_experience_level !== "none"),
           skillsCount: Number(row.skills_count) || 0,
           aboutSnippet: row.about_me ? String(row.about_me).replace(/\s+/g, " ").trim().slice(0, 220) : "",
+          avatarUrl: row.avatar_url || null,
         }));
         vacanciesList = mapped;
         lastResumePageFetchCount = rows.length;
       } catch (_) {}
+
+      if (lastResumePageFetchCount === 0 && state.page > 1) {
+        state.page -= 1;
+        return fetchResumesFromApi();
+      }
     }
 
     async function pollApplicationsBellBadge() {
@@ -1246,7 +1336,7 @@
             pollApplicationsBellBadge();
           } else {
             const err = await r.json().catch(() => ({}));
-            showNotification("Ошибка: " + (err.detail || "Не удалось отправить приглашение"), "error", 4500);
+            showNotification(err.detail || "Не удалось отправить приглашение", "error", 4500);
           }
         } catch (_) {
           showNotification("Ошибка соединения с сервером", "error", 4000);
@@ -1259,10 +1349,6 @@
       if (!listEl) return;
       if (!Array.isArray(list) || list.length === 0) {
         listEl.innerHTML = `<div class="empty-state">Ничего не найдено. Попробуйте изменить запрос или фильтры.</div>`;
-        if (countEl) {
-          countEl.textContent =
-            state.page > 1 ? "На этой странице пусто — вернитесь назад" : "Найдено: 0";
-        }
         return;
       }
 
@@ -1270,11 +1356,15 @@
         const aboutBlock = v.aboutSnippet
           ? `<div class="vacancy-about-snippet">${escapeHtml(v.aboutSnippet)}${v.aboutSnippet.length >= 220 ? "…" : ""}</div>`
           : "";
+        const avatarSrc = v.avatarUrl || "./assets/avatar-default.png";
         return `
           <article class="card vacancy-card">
             <div class="vacancy-head">
-              <div>
-                <div class="vacancy-title">${escapeHtml(v.desiredPosition)}</div>
+              <div class="vacancy-head-inner">
+                <img class="resume-card-avatar" src="${escapeHtml(avatarSrc)}" onerror="this.src='./assets/avatar-default.png'" alt="">
+                <div>
+                  <div class="vacancy-title">${escapeHtml(v.desiredPosition)}</div>
+                </div>
               </div>
               <div style="display:flex; justify-content:flex-end;">
                 <span class="type-badge">${escapeHtml(intentLabel(v.employmentIntent))}</span>
@@ -1291,11 +1381,6 @@
           </article>
         `;
       }).join("");
-
-      if (countEl) {
-        const hasMore = lastResumePageFetchCount >= RESUME_PAGE_SIZE;
-        countEl.textContent = "Стр. " + state.page + " · карточек: " + list.length + (hasMore ? "" : " (конец)");
-      }
 
       listEl.querySelectorAll("[data-invite]").forEach((btn) => {
         btn.addEventListener("click", () => {
@@ -1323,12 +1408,41 @@
       const wrap = document.getElementById("search-pager");
       const prev = document.getElementById("pager-prev");
       const next = document.getElementById("pager-next");
-      const stat = document.getElementById("pager-status");
-      if (!wrap || !prev || !next || !stat) return;
+      const pagesEl = document.getElementById("pager-pages");
+      if (!wrap || !prev || !next || !pagesEl) return;
+      if (lastResumePageFetchCount === 0) {
+        wrap.hidden = true;
+        pagesEl.innerHTML = "";
+        return;
+      }
       wrap.hidden = false;
-      stat.textContent = "Страница " + state.page;
-      prev.disabled = state.page <= 1;
-      next.disabled = lastResumePageFetchCount < RESUME_PAGE_SIZE;
+      const hasMore = lastResumePageFetchCount >= RESUME_PAGE_SIZE;
+      const p = state.page;
+      const minShown = Math.max(1, p - PAGER_RADIUS);
+      /* Только +1 вперёд: полная страница не гарантирует две следующие. */
+      const maxShown = hasMore ? p + 1 : p;
+
+      const segments = [];
+      if (minShown > 1) {
+        segments.push({ t: "n", v: 1 });
+        if (minShown > 2) segments.push({ t: "e" });
+      }
+      for (let n = minShown; n <= maxShown; n++) segments.push({ t: "n", v: n });
+
+      pagesEl.innerHTML = segments
+        .map((s) => {
+          if (s.t === "e") return '<span class="search-pager__ellipsis" aria-hidden="true">…</span>';
+          const cur = s.v === p;
+          return (
+            `<button type="button" class="search-pager__page${cur ? " is-current" : ""}" data-page-num="${s.v}"` +
+            (cur ? ' disabled aria-current="page"' : "") +
+            `>${s.v}</button>`
+          );
+        })
+        .join("");
+
+      prev.disabled = p <= 1;
+      next.disabled = !hasMore;
     }
 
     async function applySearch() {
@@ -1356,6 +1470,9 @@
       sync("f-created-within", f.created_within_days);
       bindGroupedSalary("f-salary-min");
       bindGroupedSalary("f-salary-max");
+      const skillSearch = document.getElementById("f-skills-search");
+      if (skillSearch) skillSearch.value = "";
+      renderSkillsFilterList();
       syncResumeCatalogToggleUI();
       filtersModal.classList.add("open");
     }
@@ -1386,6 +1503,14 @@
         f.work_format = document.getElementById("f-work-format") ? document.getElementById("f-work-format").value : "";
         f.commitment_level = document.getElementById("f-commitment-level") ? document.getElementById("f-commitment-level").value : "";
         f.created_within_days = document.getElementById("f-created-within") ? document.getElementById("f-created-within").value : "";
+        const pickedSkills = [];
+        document.querySelectorAll('#f-skills-list input[name="f-skill"]:checked').forEach((cb) => {
+          const n = parseInt(cb.value, 10);
+          if (Number.isFinite(n) && n > 0 && pickedSkills.length < RESUME_FILTER_SKILLS_MAX) {
+            pickedSkills.push(n);
+          }
+        });
+        f.skill_ids = pickedSkills;
         if (state.catalogMode !== "commercial") {
           f.work_format = "";
           f.commitment_level = "";
@@ -1430,6 +1555,7 @@
       await fetchResumesFromApi();
       render(vacanciesList);
       updateResumePager();
+      window.scrollTo({ top: 0, behavior: "smooth" });
     });
     document.getElementById("pager-next")?.addEventListener("click", async () => {
       if (lastResumePageFetchCount < RESUME_PAGE_SIZE) return;
@@ -1437,9 +1563,11 @@
       await fetchResumesFromApi();
       render(vacanciesList);
       updateResumePager();
+      window.scrollTo({ top: 0, behavior: "smooth" });
     });
 
     void (async () => {
+      initResumePagerPages();
       initResumeCatalogModeFromStorage();
       syncResumeCatalogToggleUI();
       await loadResumeFilterDicts();

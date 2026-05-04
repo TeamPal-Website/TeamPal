@@ -7,6 +7,7 @@
   <link rel="icon" type="image/png" href="./assets/logo.png">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/notify-banner.css">
   <style>
     :root {
       --bg: #f7f5f2;
@@ -32,72 +33,6 @@
       display: flex;
       flex-direction: column;
     }
-
-    .notification-container {
-      position: fixed;
-      top: 80px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      width: auto;
-      min-width: 280px;
-      max-width: 500px;
-      pointer-events: none;
-    }
-
-    .notification {
-      background: #ffffff;
-      border-radius: 8px;
-      padding: 12px 20px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      animation: fadeInDown 0.25s ease-out;
-      pointer-events: auto;
-      border: 1px solid #0000001a;
-      width: 100%;
-    }
-
-    @keyframes fadeInDown {
-      from { transform: translateY(-20px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-    @keyframes fadeOutUp {
-      from { transform: translateY(0); opacity: 1; }
-      to { transform: translateY(-20px); opacity: 0; }
-    }
-
-    .notification.error { border-left: 3px solid #2d3e56; }
-    .notification.success { border-left: 3px solid #2d3e56; }
-    .notification.warning { border-left: 3px solid #2d3e56; }
-
-    .notification-content {
-      flex: 1;
-      font-size: 14px;
-      line-height: 1.4;
-      color: #2d3e56;
-      font-family: "Gabriela", serif;
-      text-align: center;
-    }
-
-    .notification-close {
-      cursor: pointer;
-      font-size: 18px;
-      color: #b5b5b5;
-      transition: color 0.2s;
-      line-height: 1;
-      flex-shrink: 0;
-      font-family: "Gabriela", serif;
-      user-select: none;
-    }
-
-    .notification-close:hover { color: #F85A0B; }
 
     .header {
       position: fixed;
@@ -369,11 +304,44 @@
       margin-top: 18px;
       flex-wrap: wrap;
     }
-    .search-pager__stat {
+    .search-pager__nums {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      max-width: min(100%, 560px);
+    }
+    .search-pager__ellipsis {
       font-size: 13px;
-      color: #666;
-      min-width: 88px;
-      text-align: center;
+      color: #888;
+      padding: 0 6px;
+      user-select: none;
+    }
+    .search-pager__page {
+      min-width: 40px;
+      height: 40px;
+      padding: 0 10px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      color: #2e2e2e;
+      transition: background .2s, border-color .2s, box-shadow .2s;
+    }
+    .search-pager__page:hover:not(:disabled) {
+      border-color: rgba(248, 90, 11, 0.45);
+      background: #fff9f4;
+    }
+    .search-pager__page.is-current {
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      color: #fff;
+      border-color: transparent;
+      cursor: default;
+      box-shadow: 0 6px 14px rgba(250, 149, 0, 0.22);
     }
 
     .vacancies {
@@ -481,15 +449,6 @@
       .role-toggle__btn { padding: 7px 14px; font-size: 12px; }
       .search-row { grid-template-columns: 1fr auto; }
       .action-btn--accent { grid-column: 1 / -1; }
-    }
-    @media (max-width: 768px) {
-      .notification-container {
-        top: 70px;
-        width: 90%;
-        max-width: 90%;
-      }
-      .notification { padding: 10px 16px; }
-      .notification-content { font-size: 13px; }
     }
 
     .modal {
@@ -614,7 +573,7 @@
       </div>
     </div>
     <div class="header__actions">
-      <button class="notify-btn" type="button" aria-label="Отклики" onclick="window.location.href='./applications.html'">
+      <button class="notify-btn" type="button" aria-label="Уведомления" onclick="window.location.href='./applications.html?tab=notifications'">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M12 4a5 5 0 0 0-5 5v2.6c0 .7-.24 1.38-.68 1.9L5 15h14l-1.32-1.5a3 3 0 0 1-.68-1.9V9a5 5 0 0 0-5-5Z" stroke="#f85a0b" stroke-width="1.8" stroke-linejoin="round"/>
           <path d="M10 18a2 2 0 0 0 4 0" stroke="#f85a0b" stroke-width="1.8" stroke-linecap="round"/>
@@ -626,7 +585,9 @@
       <nav class="header-menu" id="header-menu">
         <div class="header-menu__title">Меню</div>
         <button class="header-menu__item" type="button" data-nav="./account_employee.html">Личный кабинет</button>
+        <button class="header-menu__item" type="button" data-nav="./employee_resumes.html">Мои резюме</button>
         <button class="header-menu__item" type="button" data-nav="./search_project.html">Поиск проектов</button>
+        <button class="header-menu__item" type="button" data-nav="./applications.html">Отклики</button>
         <button class="header-menu__exit" type="button" data-nav="./authorization_page.html">Выйти</button>
       </nav>
     </div>
@@ -656,15 +617,12 @@
       </button>
       <button class="action-btn action-btn--accent" id="find" type="button">Найти</button>
     </div>
-    <div class="hint">
-      <span id="results-count">Найдено: 0</span>
-    </div>
   </section>
 
   <section class="vacancies" id="vacancies" aria-label="Список вакансий"></section>
   <div class="search-pager" id="search-pager" role="navigation" aria-label="Страницы результатов">
     <button type="button" class="action-btn" id="pager-prev">Назад</button>
-    <span class="search-pager__stat" id="pager-status"></span>
+    <div class="search-pager__nums" id="pager-pages" aria-label="Номера страниц"></div>
     <button type="button" class="action-btn action-btn--accent" id="pager-next">Дальше</button>
   </div>
 </main>
@@ -780,21 +738,9 @@
 </div>
 
 <script src="./config.js"></script>
+<script src="./assets/notify-banner.js"></script>
 <script>
   (function () {
-    const notificationContainer = document.getElementById("notificationContainer");
-
-    function showNotification(message, type = "success", duration = 3500) {
-      if (!notificationContainer) return;
-      const notification = document.createElement("div");
-      notification.className = `notification ${type}`;
-      notification.innerHTML = `<div class="notification-content">${message}</div><div class="notification-close">×</div>`;
-      notificationContainer.appendChild(notification);
-      const closeBtn = notification.querySelector(".notification-close");
-      if (closeBtn) closeBtn.addEventListener("click", () => { notification.style.animation = "fadeOutUp 0.25s ease-out forwards"; setTimeout(() => notification.remove(), 250); });
-      setTimeout(() => { if (notification.parentElement) { notification.style.animation = "fadeOutUp 0.25s ease-out forwards"; setTimeout(() => notification.remove(), 250); } }, duration);
-    }
-
     const yearSpan = document.getElementById("year");
     if (yearSpan) yearSpan.textContent = " " + new Date().getFullYear();
 
@@ -933,12 +879,27 @@
     }
 
     const VACANCY_PAGE_SIZE = 15;
+    const PAGER_RADIUS = 2;
     let lastVacancyPageCount = 0;
+
+    function initProjectPagerPages() {
+      const pagesEl = document.getElementById("pager-pages");
+      if (!pagesEl || pagesEl.dataset.tpDelegated) return;
+      pagesEl.dataset.tpDelegated = "1";
+      pagesEl.addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-page-num]");
+        if (!btn || btn.disabled) return;
+        const n = parseInt(btn.getAttribute("data-page-num"), 10);
+        if (!Number.isFinite(n) || n < 1 || n === state.page) return;
+        state.page = n;
+        void fetchVacancies();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    }
 
     const qInput = document.getElementById("q");
     const findBtn = document.getElementById("find");
     const listEl = document.getElementById("vacancies");
-    const countEl = document.getElementById("results-count");
     const filtersModal = document.getElementById("filters-modal");
     const openFiltersBtn = document.getElementById("open-filters");
     const applyFiltersBtn = document.getElementById("filters-apply");
@@ -1019,6 +980,10 @@
         }
       } catch (_) { _vacancies = []; }
       lastVacancyPageCount = Array.isArray(_vacancies) ? _vacancies.length : 0;
+      if (lastVacancyPageCount === 0 && state.page > 1) {
+        state.page -= 1;
+        return fetchVacancies();
+      }
       render(_vacancies);
       updateVacancyPager();
     }
@@ -1027,23 +992,48 @@
       const wrap = document.getElementById("search-pager");
       const prev = document.getElementById("pager-prev");
       const next = document.getElementById("pager-next");
-      const stat = document.getElementById("pager-status");
-      if (!wrap || !prev || !next || !stat) return;
-      stat.textContent = "Страница " + state.page;
-      prev.disabled = state.page <= 1;
-      next.disabled = lastVacancyPageCount < VACANCY_PAGE_SIZE;
+      const pagesEl = document.getElementById("pager-pages");
+      if (!wrap || !prev || !next || !pagesEl) return;
+      if (lastVacancyPageCount === 0) {
+        wrap.hidden = true;
+        pagesEl.innerHTML = "";
+        return;
+      }
+      wrap.hidden = false;
+      const hasMore = lastVacancyPageCount >= VACANCY_PAGE_SIZE;
+      const p = state.page;
+      const minShown = Math.max(1, p - PAGER_RADIUS);
+      /* Только +1 вперёд: полная страница ≠ гарантия двух следующих (иначе лишние номера и откат с пустой страницы). */
+      const maxShown = hasMore ? p + 1 : p;
+
+      const segments = [];
+      if (minShown > 1) {
+        segments.push({ t: "n", v: 1 });
+        if (minShown > 2) segments.push({ t: "e" });
+      }
+      for (let n = minShown; n <= maxShown; n++) segments.push({ t: "n", v: n });
+
+      pagesEl.innerHTML = segments
+        .map((s) => {
+          if (s.t === "e") return '<span class="search-pager__ellipsis" aria-hidden="true">…</span>';
+          const cur = s.v === p;
+          return (
+            `<button type="button" class="search-pager__page${cur ? " is-current" : ""}" data-page-num="${s.v}"` +
+            (cur ? ' disabled aria-current="page"' : "") +
+            `>${s.v}</button>`
+          );
+        })
+        .join("");
+
+      prev.disabled = p <= 1;
+      next.disabled = !hasMore;
     }
 
     function render(list) {
       if (!listEl) return;
       if (!Array.isArray(list) || list.length === 0) {
         listEl.innerHTML = '<div class="empty-state">Ничего не найдено. Попробуйте изменить запрос или фильтры.</div>';
-        if (countEl) countEl.textContent = state.page > 1 ? "На этой странице пусто — вернитесь назад" : "Найдено: 0";
         return;
-      }
-      if (countEl) {
-        const hasMore = lastVacancyPageCount >= VACANCY_PAGE_SIZE;
-        countEl.textContent = "Стр. " + state.page + " · карточек: " + list.length + (hasMore ? "" : " (конец)");
       }
       listEl.innerHTML = list.map((v) => {
         const roleName = _rolesMap[String(v.role_type_id)] || "Должность #" + v.role_type_id;
@@ -1180,12 +1170,12 @@
     document.getElementById("pager-prev")?.addEventListener("click", () => {
       if (state.page <= 1) return;
       state.page -= 1;
-      fetchVacancies();
+      void fetchVacancies().then(() => window.scrollTo({ top: 0, behavior: "smooth" }));
     });
     document.getElementById("pager-next")?.addEventListener("click", () => {
       if (lastVacancyPageCount < VACANCY_PAGE_SIZE) return;
       state.page += 1;
-      fetchVacancies();
+      void fetchVacancies().then(() => window.scrollTo({ top: 0, behavior: "smooth" }));
     });
 
     let _applyVacancyId = null;
@@ -1247,7 +1237,7 @@
             pollApplicationsBellBadge();
           } else {
             const err = await resp.json().catch(() => ({}));
-            showNotification("Ошибка: " + (err.detail || "Не удалось отправить отклик"), "error", 4000);
+            showNotification(err.detail || "Не удалось отправить отклик", "error", 4000);
             applyConfirmBtn.disabled = false;
           }
         } catch (_) {
@@ -1282,6 +1272,7 @@
 
     initProjectCatalogModeFromStorage();
     syncProjectCatalogToggleUI();
+    initProjectPagerPages();
     loadDictionaries().then(() => {
       bindGroupedSalarySP("f-salary-min");
       bindGroupedSalarySP("f-salary-max");

@@ -9,6 +9,7 @@
   <title>Создание проекта | TeamPal</title>
   <link rel="icon" type="image/png" href="./assets/logo.png">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/notify-banner.css">
   <style>
     :root {
       --bg: #f7f5f2;
@@ -33,63 +34,6 @@
       display: flex;
       flex-direction: column;
     }
-    .notification-container {
-      position: fixed;
-      top: 80px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      width: auto;
-      min-width: 280px;
-      max-width: 500px;
-      pointer-events: none;
-    }
-    .notification {
-      background: #ffffff;
-      border-radius: 8px;
-      padding: 12px 20px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      animation: fadeInDown 0.25s ease-out;
-      pointer-events: auto;
-      border: 1px solid #0000001a;
-      width: 100%;
-    }
-    @keyframes fadeInDown {
-      from { transform: translateY(-20px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-    @keyframes fadeOutUp {
-      from { transform: translateY(0); opacity: 1; }
-      to { transform: translateY(-20px); opacity: 0; }
-    }
-    .notification.error { border-left: 3px solid #e05a2a; background: #fff6f4; }
-    .notification.success { border-left: 3px solid #52c41a; background: #f6ffed; }
-    .notification.warning { border-left: 3px solid #faad14; background: #fffbe6; }
-    .notification-content {
-      flex: 1;
-      font-size: 14px;
-      line-height: 1.4;
-      color: #2d3e56;
-      font-family: "Space Grotesk", system-ui, sans-serif;
-      text-align: center;
-    }
-    .notification-close {
-      cursor: pointer;
-      font-size: 18px;
-      color: #b5b5b5;
-      transition: color 0.2s;
-      line-height: 1;
-      flex-shrink: 0;
-    }
-    .notification-close:hover { color: #F85A0B; }
     .header {
       position: fixed;
       inset: 0 0 auto 0;
@@ -587,7 +531,7 @@
       </div>
     </div>
     <div class="header__actions">
-      <button class="notify-btn" type="button" aria-label="Отклики" onclick="window.location.href='./applications.html'">
+      <button class="notify-btn" type="button" aria-label="Уведомления" onclick="window.location.href='./applications.html?tab=notifications'">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M12 4a5 5 0 0 0-5 5v2.6c0 .7-.24 1.38-.68 1.9L5 15h14l-1.32-1.5a3 3 0 0 1-.68-1.9V9a5 5 0 0 0-5-5Z" stroke="#f85a0b" stroke-width="1.8" stroke-linejoin="round"/>
           <path d="M10 18a2 2 0 0 0 4 0" stroke="#f85a0b" stroke-width="1.8" stroke-linecap="round"/>
@@ -598,8 +542,9 @@
       </button>
       <nav class="header-menu" id="header-menu">
         <div class="header-menu__title">Меню</div>
-        <button class="header-menu__item" type="button">Личный кабинет</button>
-        <button class="header-menu__item" type="button">Поиск сотрудников</button>
+        <button class="header-menu__item" type="button" id="hdr-menu-account">Личный кабинет</button>
+        <button class="header-menu__item" type="button" id="hdr-menu-search">Поиск сотрудников</button>
+        <button class="header-menu__item" type="button" id="hdr-menu-apps">Отклики</button>
         <button class="header-menu__exit" type="button">Выйти</button>
       </nav>
     </div>
@@ -667,6 +612,7 @@
 
 
 <script src="./config.js"></script>
+<script src="./assets/notify-banner.js"></script>
 <script>
 (function () {
   const TP_PROJECTS_MAX = 10;
@@ -688,36 +634,13 @@
           "Достигнут лимит проектов (не более " + TP_PROJECTS_MAX + "). Удалите проект или отредактируйте существующий.",
         );
       } catch (e) {}
-      window.location.replace("./account_manager.html");
+      window.location.replace("./employer_projects.html");
     })
     .catch(function () {});
 })();
 </script>
 <script>
   (function() {
-    const notificationContainer = document.getElementById('notificationContainer');
-
-    function showNotification(message, type = 'error', duration = 5000) {
-      const notification = document.createElement('div');
-      notification.className = `notification ${type}`;
-      notification.innerHTML = `
-        <div class="notification-content">${message}</div>
-        <div class="notification-close">×</div>
-      `;
-      notificationContainer.appendChild(notification);
-      const closeBtn = notification.querySelector('.notification-close');
-      closeBtn.addEventListener('click', () => {
-        notification.style.animation = 'fadeOutUp 0.25s ease-out forwards';
-        setTimeout(() => { notification.remove(); }, 250);
-      });
-      setTimeout(() => {
-        if (notification.parentElement) {
-          notification.style.animation = 'fadeOutUp 0.25s ease-out forwards';
-          setTimeout(() => { notification.remove(); }, 250);
-        }
-      }, duration);
-    }
-
     const yearSpan = document.getElementById("year");
     if (yearSpan) yearSpan.textContent = " " + new Date().getFullYear();
 
@@ -1207,7 +1130,7 @@
             showNotification('Проект успешно создан!', 'success', 3000);
             resetForm();
             setTimeout(() => {
-              window.location.href = "./account_manager.html";
+              window.location.href = "./employer_projects.html";
             }, 1500);
           } else {
             const error = await response.json().catch(() => ({}));
@@ -1233,6 +1156,19 @@
       if (burgerBtn) burgerBtn.classList.remove("open");
     }
 
+    document.getElementById("hdr-menu-account")?.addEventListener("click", () => {
+      closeMenus();
+      window.location.href = "./employer_projects.html";
+    });
+    document.getElementById("hdr-menu-search")?.addEventListener("click", () => {
+      closeMenus();
+      window.location.href = "./search_resume.html";
+    });
+    document.getElementById("hdr-menu-apps")?.addEventListener("click", () => {
+      closeMenus();
+      window.location.href = "./applications.html";
+    });
+
     if (roleToggle) {
       roleToggle.addEventListener("click", function(e) {
         const btn = e.target.closest(".role-toggle__btn");
@@ -1242,7 +1178,7 @@
         roleToggle.querySelectorAll(".role-toggle__btn").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
         if (role === "Ищу вакансию") {
-          window.location.href = "./account_employee.html";
+          window.location.href = "./employee_resumes.html";
         }
       });
     }

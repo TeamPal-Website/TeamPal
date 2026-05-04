@@ -4,6 +4,7 @@ from sqlalchemy import func, or_, select, update
 from sqlalchemy.sql import func as sa_func
 
 from src.enums import (
+    ApplicationStatus,
     CommitmentLevel,
     EmploymentIntent,
     ProjectVacancyExperience,
@@ -11,7 +12,7 @@ from src.enums import (
     ResumeStatus,
     WorkFormat,
 )
-from src.models.applications import VacancyAssignmentsOrm
+from src.models.applications import ApplicationsOrm, VacancyAssignmentsOrm
 from src.models.projects import ProjectsOrm, ProjectVacancyOrm
 from src.models.profiles import ProfilesOrm
 from src.models.resumes import ResumesOrm, ResumeSkillOrm, ResumeExperienceOrm
@@ -22,6 +23,7 @@ from src.schemas.resumes import (
     ResumeExperienceLevelPatch,
 )
 from src.schemas.search_public import ResumeSearchItem
+from src.utils.avatar_url import public_avatar_url
 
 
 def _compute_experience_level(
@@ -59,7 +61,7 @@ class ResumesRepository(BaseRepository):
         q: str | None = None,
         city_id: int | None = None,
         employment_intent: EmploymentIntent | None = None,
-        skill_id: int | None = None,
+        skill_ids: list[int] | None = None,
         role_type_id: int | None = None,
         work_format: WorkFormat | None = None,
         commitment_level: CommitmentLevel | None = None,
@@ -91,15 +93,16 @@ class ResumesRepository(BaseRepository):
             filters.append(ResumesOrm.work_format == work_format)
         if commitment_level is not None:
             filters.append(ResumesOrm.commitment_level == commitment_level)
-        if skill_id is not None:
-            filters.append(
-                select(ResumeSkillOrm.id)
-                .where(
-                    ResumeSkillOrm.resume_id == ResumesOrm.id,
-                    ResumeSkillOrm.skill_id == skill_id,
+        if skill_ids:
+            for sid in skill_ids:
+                filters.append(
+                    select(ResumeSkillOrm.id)
+                    .where(
+                        ResumeSkillOrm.resume_id == ResumesOrm.id,
+                        ResumeSkillOrm.skill_id == sid,
+                    )
+                    .exists()
                 )
-                .exists()
-            )
         if salary_min is not None:
             filters.append(ResumesOrm.salary_amount >= salary_min)
         if salary_max is not None:
@@ -139,7 +142,7 @@ class ResumesRepository(BaseRepository):
         )
 
         query = (
-            select(ResumesOrm, ProfilesOrm.user_id, skills_count_sq)
+            select(ResumesOrm, ProfilesOrm.user_id, ProfilesOrm.avatar, skills_count_sq)
             .join(ProfilesOrm, ProfilesOrm.id == ResumesOrm.profile_id)
             .where(*filters)
             .order_by(ResumesOrm.created_at.desc(), ResumesOrm.id.desc())
@@ -167,8 +170,9 @@ class ResumesRepository(BaseRepository):
                 skills_count=int(skills_count or 0),
                 status=resume.status,
                 created_at=resume.created_at,
+                avatar_url=public_avatar_url(profile_avatar),
             )
-            for resume, user_id, skills_count in result.all()
+            for resume, user_id, profile_avatar, skills_count in result.all()
         ]
 
     async def recompute_experience_level(self, resume_id: int) -> None:
@@ -214,6 +218,7 @@ class ResumesRepository(BaseRepository):
                 ProjectsOrm.id,
                 ProjectsOrm.title,
                 ProjectsOrm.employment_intent,
+                ApplicationsOrm.id,
             )
             .select_from(ResumesOrm)
             .join(
@@ -225,6 +230,12 @@ class ResumesRepository(BaseRepository):
                 ProjectVacancyOrm.id == VacancyAssignmentsOrm.vacancy_id,
             )
             .join(ProjectsOrm, ProjectsOrm.id == ProjectVacancyOrm.project_id)
+            .outerjoin(
+                ApplicationsOrm,
+                (ApplicationsOrm.resume_id == VacancyAssignmentsOrm.resume_id)
+                & (ApplicationsOrm.vacancy_id == VacancyAssignmentsOrm.vacancy_id)
+                & (ApplicationsOrm.status == ApplicationStatus.ACCEPTED),
+            )
             .where(
                 ResumesOrm.id.in_(resume_ids),
                 VacancyAssignmentsOrm.released_at.is_(None),
@@ -233,10 +244,11 @@ class ResumesRepository(BaseRepository):
         )
         result = await self.session.execute(query)
         out: dict[int, ActiveProjectBrief] = {}
-        for rid, pid, title, emp in result.all():
+        for rid, pid, title, emp, app_id in result.all():
             out[int(rid)] = ActiveProjectBrief(
                 project_id=int(pid),
                 title=str(title),
                 employment_intent=emp,
+                application_id=int(app_id) if app_id is not None else None,
             )
         return out
