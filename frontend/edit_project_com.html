@@ -242,9 +242,18 @@
     var icons = { success:'✓', error:'✕', warning:'⚠', info:'ℹ' };
     var container = document.getElementById('toast-container');
     if (!container) return;
+    var displayText = String(message || '');
+    if (type === 'error') {
+      if (typeof window.tpUserFacingErrorLine === 'function') {
+        displayText = window.tpUserFacingErrorLine(displayText);
+      } else {
+        displayText = displayText.replace(/^\s*ошибка\s*:\s*/i, '').trim();
+        if (displayText) displayText = displayText.charAt(0).toUpperCase() + displayText.slice(1);
+      }
+    }
     var el = document.createElement('div');
     el.className = 'tp-toast ' + type;
-    var msg = String(message || '').replace(/[&<>]/g, function(m){return{'&':'&amp;','<':'&lt;','>':'&gt;'}[m];});
+    var msg = displayText.replace(/[&<>]/g, function(m){return{'&':'&amp;','<':'&lt;','>':'&gt;'}[m];});
     el.innerHTML = '<span class="tp-toast__icon">'+(icons[type]||'ℹ')+'</span><span class="tp-toast__text">'+msg+'</span><button class="tp-toast__close" aria-label="Закрыть">×</button>';
     el.querySelector('.tp-toast__close').addEventListener('click', function(){ el.remove(); });
     container.appendChild(el);
@@ -1000,7 +1009,7 @@
         setTimeout(function(){ window.location.href = './employer_projects.html'; }, 1200);
       } else {
         var e = await r.json().catch(function(){ return {}; });
-        showToast('Ошибка: ' + (e.detail || 'Не удалось удалить'), 'error');
+        showToast(tpFormatApiDetail(e.detail) || 'Не удалось удалить', 'error');
       }
     } catch { showToast('Ошибка соединения с сервером', 'error'); }
   });

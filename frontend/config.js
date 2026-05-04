@@ -17,24 +17,30 @@ const API_BASE_URL = (() => {
   return loc.origin.replace(/\/+$/, "");
 })();
 
-/** Лимит как в backend: MAX_SALARY_AMOUNT_RUB в schemas/resumes.py и project_vacancies.py (50_000_000). */
+function tpAvatarSrcFromApiField(apiAvatarField) {
+  if (apiAvatarField == null || String(apiAvatarField).trim() === "") {
+    return "./assets/avatar-default.png";
+  }
+  const v = String(apiAvatarField).trim();
+  if (v.startsWith("http://") || v.startsWith("https://")) {
+    return v;
+  }
+  if (v.startsWith("/")) {
+    return API_BASE_URL + v;
+  }
+  return v;
+}
+
+function tpMyProfileAvatarSrc(apiAvatarValue) {
+  return tpAvatarSrcFromApiField(apiAvatarValue);
+}
+
 const TP_MAX_SALARY_RUB = 50000000;
 
-/** Как в ORM: String(255) — например resumes.desired_position, resume_experiences.company_name / position. */
 const TP_ORM_VARCHAR255 = 255;
 
-/**
- * В ORM поля Text без max_length; верхняя граница для проверки на фронте (защита от случайной вставки очень длинного текста).
- * Согласуйте при изменении лимитов на бэкенде.
- */
 const TP_ORM_TEXT_SAFE_MAX = 100000;
 
-/**
- * @param {string|null|undefined} s
- * @param {number} maxLen
- * @param {string} fieldLabel
- * @returns {{ ok: true, value: string } | { ok: false, message: string }}
- */
 function tpCheckStringMaxLen(s, maxLen, fieldLabel) {
   const v = s == null ? "" : String(s);
   if (v.length > maxLen) {
@@ -50,10 +56,6 @@ function tpCheckStringMaxLen(s, maxLen, fieldLabel) {
   return { ok: true, value: v };
 }
 
-/**
- * @param {number|null|undefined} n
- * @returns {{ ok: true, value: number|null } | { ok: false, message: string }}
- */
 function tpValidateSalaryAmount(n) {
   if (n === null || n === undefined || Number.isNaN(n)) return { ok: true, value: null };
   const v = Math.trunc(Number(n));
@@ -72,27 +74,20 @@ function tpValidateSalaryAmount(n) {
   return { ok: true, value: v };
 }
 
-/** Только цифры из строки (форматирование суммы в поле ввода). */
 function tpSalaryDigitsOnly(raw) {
   return String(raw ?? "").replace(/\D/g, "");
 }
 
-/** Группировка цифр пробелами по разрядам (например 10 000 000). */
 function tpFormatSalaryGroupedFromDigits(digits) {
   const d = tpSalaryDigitsOnly(digits);
   if (!d) return "";
   return d.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 }
 
-/** Отформатировать число или строку для отображения в поле зарплаты. */
 function tpFormatSalaryGroupedForDisplay(value) {
   return tpFormatSalaryGroupedFromDigits(tpSalaryDigitsOnly(String(value ?? "")));
 }
 
-/**
- * Поле ввода суммы: ввод только цифр, отображение с пробелами между тысячами.
- * При отправке использовать tpParseAndValidateSalaryRaw.
- */
 function tpBindSalaryGroupedInput(el) {
   if (!el || el.nodeType !== 1) return;
   try {
@@ -121,11 +116,6 @@ function tpBindSalaryGroupedInput(el) {
   refresh();
 }
 
-/**
- * Разбор суммы из поля ввода: пробелы/NBSP, подчёркивания; пусто → null.
- * @param {string|null|undefined} raw
- * @returns {{ ok: true, value: number|null } | { ok: false, message: string }}
- */
 function tpParseAndValidateSalaryRaw(raw) {
   const t = String(raw ?? "").trim();
   if (!t) return { ok: true, value: null };
@@ -201,7 +191,20 @@ function tpFormatApiDetail(detail) {
   }
 }
 
+function tpUserFacingErrorLine(message) {
+  let s = String(message == null ? "" : message).replace(/^\uFEFF/, "").trim();
+  if (!s) return "";
+  const stripped = s.match(/^\s*ошибка\s*:\s*(.*)$/i);
+  if (stripped) {
+    s = (stripped[1] || "").trim();
+    if (!s) return "";
+  }
+  const first = s.charAt(0).toUpperCase();
+  return first + s.slice(1);
+}
+
 if (typeof window !== "undefined") {
+  window.tpMyProfileAvatarSrc = tpMyProfileAvatarSrc;
   window.TP_MAX_SALARY_RUB = TP_MAX_SALARY_RUB;
   window.TP_ORM_VARCHAR255 = TP_ORM_VARCHAR255;
   window.TP_ORM_TEXT_SAFE_MAX = TP_ORM_TEXT_SAFE_MAX;
@@ -209,6 +212,7 @@ if (typeof window !== "undefined") {
   window.tpValidateSalaryAmount = tpValidateSalaryAmount;
   window.tpParseAndValidateSalaryRaw = tpParseAndValidateSalaryRaw;
   window.tpFormatApiDetail = tpFormatApiDetail;
+  window.tpUserFacingErrorLine = tpUserFacingErrorLine;
   window.tpSalaryDigitsOnly = tpSalaryDigitsOnly;
   window.tpFormatSalaryGroupedFromDigits = tpFormatSalaryGroupedFromDigits;
   window.tpFormatSalaryGroupedForDisplay = tpFormatSalaryGroupedForDisplay;

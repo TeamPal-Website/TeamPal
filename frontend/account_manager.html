@@ -198,6 +198,7 @@
       margin: 0 auto 14px;
       cursor: pointer;
       position: relative;
+      overflow: hidden;
     }
     .avatar-wrap:hover::after {
       content: " ";
@@ -634,7 +635,7 @@
   <section class="dashboard">
     <aside class="card sidebar">
       <div class="avatar-wrap" id="avatar-wrap">
-        <img class="avatar" id="profile-avatar" src="./assets/avatar-default.png" alt="Аватар">
+        <img class="avatar" id="profile-avatar" src="./assets/avatar-default.png" alt="" onerror="this.onerror=null;this.src='./assets/avatar-default.png'">
         <input type="file" id="avatar-input" accept="image/*" style="display: none;">
       </div>
       <div class="user-name" id="user-name-display">Пользователь</div>
@@ -713,7 +714,7 @@
 <div id="toast-container" class="toast-container"></div>
 
 
-<script src="./config.js"></script>
+<script src="./config.js?v=202605042"></script>
 <script src="./profile_complete_check.js"></script>
 <script>
   (function () {
@@ -727,9 +728,18 @@
       const icons = { success: "✓", error: "✕", warning: "⚠", info: "ℹ" };
       const container = document.getElementById("toast-container");
       if (!container) return;
+      let displayText = String(message || "");
+      if (type === "error") {
+        if (typeof window.tpUserFacingErrorLine === "function") {
+          displayText = window.tpUserFacingErrorLine(displayText);
+        } else {
+          displayText = displayText.replace(/^\s*ошибка\s*:\s*/i, "").trim();
+          if (displayText) displayText = displayText.charAt(0).toUpperCase() + displayText.slice(1);
+        }
+      }
       const el = document.createElement("div");
       el.className = "tp-toast " + (type || "info");
-      const msg = String(message || "").replace(/[&<>]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[m]));
+      const msg = displayText.replace(/[&<>]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[m]));
       el.innerHTML = `<span class="tp-toast__icon">${icons[type] || "ℹ"}</span><span class="tp-toast__text">${msg}</span><button class="tp-toast__close" aria-label="Закрыть">×</button>`;
       el.querySelector(".tp-toast__close").addEventListener("click", () => el.remove());
       container.appendChild(el);
@@ -745,7 +755,6 @@
 
 
     const userMailSpan = document.getElementById("user-mail");
-    const userNameSpan = document.getElementById("user-name-display");
 
     function displayNameFromEmail(email) {
       if (!email) return "Пользователь";
@@ -766,7 +775,7 @@
 
         const user = await response.json();
         if (userMailSpan) userMailSpan.textContent = user.email || "";
-        if (userNameSpan) userNameSpan.textContent = displayNameFromEmail(user.email);
+        updateUserNameDisplay();
       } catch (error) {
         console.error(error);
         window.location.href = "./authorization_page.html";
@@ -825,6 +834,8 @@
             avatar: data.avatar || ""
           };
 
+          updateUserNameDisplay();
+
           document.getElementById("first-name").value = personalData.firstName;
           document.getElementById("last-name").value = personalData.lastName;
           document.getElementById("age").value = personalData.age;
@@ -834,9 +845,11 @@
           document.getElementById("github").value = personalData.github;
 
           if (personalData.avatar) {
-            document.getElementById("profile-avatar").src = personalData.avatar;
+            document.getElementById("profile-avatar").src =
+              typeof tpMyProfileAvatarSrc === "function"
+                ? tpMyProfileAvatarSrc(personalData.avatar)
+                : personalData.avatar;
           }
-          updateUserNameDisplay();
         } else if (response.status === 404) {
           document.getElementById("first-name").value = "";
           document.getElementById("last-name").value = "";
@@ -856,7 +869,11 @@
     function updateUserNameDisplay() {
       const firstName = personalData.firstName || "";
       const lastName = personalData.lastName || "";
-      const displayName = `${firstName} ${lastName}`.trim() || "Пользователь";
+      let displayName = `${firstName} ${lastName}`.trim();
+      if (!displayName) {
+        const mail = userMailSpan && userMailSpan.textContent ? String(userMailSpan.textContent).trim() : "";
+        displayName = mail ? displayNameFromEmail(mail) : "Пользователь";
+      }
       const userDisplay = document.getElementById("user-name-display");
       if (userDisplay) userDisplay.textContent = displayName;
     }
@@ -956,7 +973,7 @@
             formatted ||
             (typeof error.detail === "string" ? error.detail : "") ||
             "Не удалось сохранить";
-          showToast("Ошибка: " + msg, "error");
+          showToast(msg, "error");
         }
       } catch (error) {
         console.error("Ошибка сохранения:", error);
@@ -994,7 +1011,8 @@
             const data = await response.json();
             const url = data.avatar;
             if (url) {
-              document.getElementById("profile-avatar").src = url;
+              document.getElementById("profile-avatar").src =
+                typeof tpMyProfileAvatarSrc === "function" ? tpMyProfileAvatarSrc(url) : url;
               personalData.avatar = url;
               showToast("Аватар сохранён", "success");
             } else {

@@ -224,7 +224,20 @@
       vertical-align: middle;
     }
     .apps-msg-date { font-size: 12px; color: #999; margin-top: 6px; }
-    /* Колокольчик: только уведомления. Меню «Отклики»: только отклики + история (без уведомлений). */
+    .apps-msg-open-link {
+      display: inline-block;
+      margin-top: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent-2);
+      text-decoration: none;
+    }
+    .apps-msg-open-link:hover { text-decoration: underline; }
+    .app-card--highlight {
+      outline: 2px solid rgba(248, 90, 11, 0.55);
+      border-radius: 14px;
+      transition: outline-color 0.3s ease;
+    }
     .apps-page--replies .apps-tab[data-tab="msg"],
     .apps-page--replies #apps-panel-mgr-msg,
     .apps-page--replies #apps-panel-emp-msg {
@@ -387,7 +400,14 @@
     const container = document.getElementById("toast-container");
     if (!container) return;
     let text = String(message || "");
-    if (type === "error") text = text.replace(/^\s*ошибка\s*:\s*/i, "").trim();
+    if (type === "error") {
+      if (typeof window.tpUserFacingErrorLine === "function") {
+        text = window.tpUserFacingErrorLine(text);
+      } else {
+        text = text.replace(/^\s*ошибка\s*:\s*/i, "").trim();
+        if (text) text = text.charAt(0).toUpperCase() + text.slice(1);
+      }
+    }
     const icons = { success: "✓", error: "✕", warning: "⚠", info: "ℹ" };
     const el = document.createElement("div");
     el.className = "tp-toast " + (type || "info");
@@ -493,6 +513,20 @@
     } else {
       html += `<p style="color:#777;">Подробное резюме недоступно.</p>`;
     }
+    const fullPageLinks = [];
+    if (detail.resume_id != null && detail.applicant_user_id != null) {
+      fullPageLinks.push(
+        `<a class="app-inline-link" href="./card_resume.html?id=${encodeURIComponent(String(detail.resume_id))}&user_id=${encodeURIComponent(String(detail.applicant_user_id))}&${appsCardReturnQuery()}">Полная карточка резюме →</a>`,
+      );
+    }
+    if (detail.project_id != null) {
+      fullPageLinks.push(
+        `<a class="app-inline-link" href="./card_project.html?id=${encodeURIComponent(String(detail.project_id))}&${appsCardReturnQuery()}">Полная карточка проекта →</a>`,
+      );
+    }
+    if (fullPageLinks.length) {
+      html += `<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:12px 18px;">${fullPageLinks.join("")}</div>`;
+    }
     return html;
   }
 
@@ -574,7 +608,7 @@
         });
       }
 
-      html += `<p style="margin-top:14px;"><a class="app-inline-link" href="./card_project.html?id=${encodeURIComponent(String(projectId))}">Открыть полную карточку проекта →</a></p>`;
+      html += `<p style="margin-top:14px;"><a class="app-inline-link" href="./card_project.html?id=${encodeURIComponent(String(projectId))}&${appsCardReturnQuery()}">Открыть полную карточку проекта →</a></p>`;
       bodyEl.innerHTML = html;
     } catch {
       titleEl.textContent = "Ошибка";
@@ -671,7 +705,7 @@
               reloadOutgoingApplicantLists();
             } else {
               const err = await r.json().catch(() => ({}));
-              showToast("Ошибка: " + (apiErrDetail(err) || "Не удалось отозвать"), "error");
+              showToast(apiErrDetail(err) || "Не удалось отозвать", "error");
             }
           } catch {
             showToast("Ошибка соединения с сервером", "error");
@@ -691,7 +725,7 @@
               reloadOutgoingApplicantLists();
             } else {
               const err = await r.json().catch(() => ({}));
-              showToast("Ошибка: " + (apiErrDetail(err) || "Не удалось покинуть"), "error");
+              showToast(apiErrDetail(err) || "Не удалось покинуть", "error");
             }
           } catch {
             showToast("Ошибка соединения с сервером", "error");
@@ -717,7 +751,7 @@
                 reloadOutgoingApplicantLists();
               } else {
                 const err = await r.json().catch(() => ({}));
-                showToast("Ошибка: " + (apiErrDetail(err) || "Не удалось принять приглашение"), "error");
+                showToast(apiErrDetail(err) || "Не удалось принять приглашение", "error");
               }
             } catch {
               showToast("Ошибка соединения с сервером", "error");
@@ -767,7 +801,14 @@
           const r = await fetch(API_BASE_URL + "/projects/" + projectId + "/applications/" + id, { credentials: "include" });
           if (!r.ok) {
             const err = await r.json().catch(() => ({}));
-            panel.innerHTML = '<span style="color:#c62828;">Ошибка: ' + esc2(apiErrDetail(err) || "Не удалось загрузить контакты") + "</span>";
+            panel.innerHTML =
+              '<span style="color:#c62828;">' +
+              esc2(
+                typeof tpUserFacingErrorLine === "function"
+                  ? tpUserFacingErrorLine(apiErrDetail(err) || "Не удалось загрузить контакты")
+                  : apiErrDetail(err) || "Не удалось загрузить контакты",
+              ) +
+              "</span>";
             panel.classList.add("is-empty");
             panel.dataset.loaded = "1";
             return;
@@ -805,7 +846,7 @@
               loadEmployerManagerPanels();
             } else {
               const err = await r.json().catch(() => ({}));
-              showToast("Ошибка: " + (apiErrDetail(err) || "Не удалось принять"), "error");
+              showToast(apiErrDetail(err) || "Не удалось принять", "error");
             }
           } catch {
             showToast("Ошибка соединения с сервером", "error");
@@ -825,7 +866,7 @@
               loadEmployerManagerPanels();
             } else {
               const err = await r.json().catch(() => ({}));
-              showToast("Ошибка: " + (apiErrDetail(err) || "Не удалось отклонить"), "error");
+              showToast(apiErrDetail(err) || "Не удалось отклонить", "error");
             }
           } catch {
             showToast("Ошибка соединения с сервером", "error");
@@ -855,8 +896,24 @@
       actions = `<button class="action-btn" type="button" data-contacts="${esc2(String(app.id))}" data-project-id="${pidAttr}">Контакты</button>`;
     }
 
+    const ridEnc = app.resume_id != null ? encodeURIComponent(String(app.resume_id)) : "";
+    const uidEnc = app.applicant_user_id != null ? encodeURIComponent(String(app.applicant_user_id)) : "";
+    const projEnc = app.project_id != null ? encodeURIComponent(String(app.project_id)) : "";
+    const fullPageLinks = [];
+    if (ridEnc && uidEnc) {
+      fullPageLinks.push(
+        `<a class="app-inline-link" href="./card_resume.html?id=${ridEnc}&user_id=${uidEnc}&${appsCardReturnQuery()}">Полная карточка резюме</a>`,
+      );
+    }
+    if (projEnc) {
+      fullPageLinks.push(`<a class="app-inline-link" href="./card_project.html?id=${projEnc}&${appsCardReturnQuery()}">Полная карточка проекта</a>`);
+    }
+    const fullPageLinksHtml = fullPageLinks.length
+      ? `<div class="app-card-external" style="font-size:13px;margin:6px 0 10px;display:flex;flex-wrap:wrap;gap:12px 16px;">${fullPageLinks.join("")}</div>`
+      : "";
+
     return `
-            <div class="app-card">
+            <div class="app-card" data-application-id="${esc2(String(app.id))}">
               <div class="app-card-head">
                 <button type="button" class="app-card-summary-btn" data-app-detail="${esc2(String(app.id))}" data-project-id="${pidAttr}" title="Резюме, контакты и опыт кандидата">
                   <div class="app-role">${roleName}</div>
@@ -868,6 +925,7 @@
                   ${createdAt ? `<span class="app-date">${esc2(createdAt)}</span>` : ""}
                 </div>
               </div>
+              ${fullPageLinksHtml}
               <p style="font-size:11px;color:#9a9088;margin:-4px 0 8px;">Нажмите на блок с именем и должностью выше — откроются контакты и полное резюме.</p>
               ${actions ? `<div class="app-actions">${actions}</div>` : ""}
               <div class="app-contacts-panel is-empty" id="app-contacts-${esc2(String(app.id))}" hidden></div>
@@ -885,7 +943,7 @@
 
     const roleName =
       rid && uid
-        ? `<a class="app-inline-link" href="./card_resume.html?id=${rid}&user_id=${uid}">${esc2(roleRaw)}</a>`
+        ? `<a class="app-inline-link" href="./card_resume.html?id=${rid}&user_id=${uid}&${appsCardReturnQuery()}">${esc2(roleRaw)}</a>`
         : esc2(roleRaw);
     const projectTitle = pid
       ? `<button type="button" class="app-inline-btn" data-applicant-project="${pid}">${esc2(projectRaw)}</button>`
@@ -911,8 +969,21 @@
         ? `<div class="app-applicant" style="font-size:12px;color:#7a7060;margin-top:4px;">Приглашение от работодателя</div>`
         : "";
 
+    const fullApplicantLinks = [];
+    if (rid && uid) {
+      fullApplicantLinks.push(
+        `<a class="app-inline-link" href="./card_resume.html?id=${rid}&user_id=${uid}&${appsCardReturnQuery()}">Полная карточка резюме</a>`,
+      );
+    }
+    if (pid) {
+      fullApplicantLinks.push(`<a class="app-inline-link" href="./card_project.html?id=${pid}&${appsCardReturnQuery()}">Полная карточка проекта</a>`);
+    }
+    const fullApplicantLinksHtml = fullApplicantLinks.length
+      ? `<div class="app-card-external" style="font-size:13px;margin:8px 0 0;display:flex;flex-wrap:wrap;gap:12px 16px;">${fullApplicantLinks.join("")}</div>`
+      : "";
+
     return `
-            <div class="app-card">
+            <div class="app-card" data-application-id="${esc2(String(app.id))}">
               <div class="app-card-head">
                 <div>
                   <div class="app-role">${roleName}</div>
@@ -924,6 +995,7 @@
                   ${createdAt ? `<span class="app-date">${esc2(createdAt)}</span>` : ""}
                 </div>
               </div>
+              ${fullApplicantLinksHtml}
               ${actions ? `<div class="app-actions">${actions}</div>` : ""}
             </div>`;
   }
@@ -940,6 +1012,117 @@
   }
 
   let viewMode = resolveViewMode();
+
+  function appsCardReturnQuery() {
+    return "from=apps&view=" + encodeURIComponent(viewMode);
+  }
+
+  function applicationsDeepLinkHref(applicationId, projectId) {
+    const aid = applicationId != null && String(applicationId).trim() !== "" ? String(applicationId).trim() : "";
+    const pid = projectId != null && String(projectId).trim() !== "" ? String(projectId).trim() : "";
+    if (!aid || !pid) return "";
+    return (
+      "./applications.html?view=" +
+      encodeURIComponent(viewMode) +
+      "&open_application=" +
+      encodeURIComponent(aid) +
+      "&project=" +
+      encodeURIComponent(pid)
+    );
+  }
+
+  function notificationApplicationLinkTargets(n) {
+    const p = n.payload || {};
+    const applicationId = n.application_id != null ? n.application_id : p.application_id;
+    const projectId = n.project_id != null ? n.project_id : p.project_id;
+    return { applicationId, projectId };
+  }
+
+  function switchManagerTabForApplicationCard(appId) {
+    const sel = '[data-application-id="' + String(appId) + '"]';
+    const card = document.querySelector(sel);
+    if (!card) return false;
+    const host = card.parentElement;
+    if (!host) return false;
+    const hid = host.id;
+    if (hid === "applications-list-manager-incoming") switchManagerAppsTab("in");
+    else if (hid === "applications-list-manager-history-project") switchManagerAppsTab("hist");
+    else if (hid === "applications-list-manager-outgoing-active") switchManagerAppsTab("out");
+    else if (hid === "applications-list-manager-history-self") switchManagerAppsTab("hist");
+    else return false;
+    return true;
+  }
+
+  function switchEmployeeTabForApplicationCard(appId) {
+    const sel = '[data-application-id="' + String(appId) + '"]';
+    const card = document.querySelector(sel);
+    if (!card) return false;
+    const host = card.parentElement;
+    if (!host) return false;
+    const hid = host.id;
+    if (hid === "applications-list-emp-incoming") switchEmployeeAppsTab("in");
+    else if (hid === "applications-list-emp-outgoing") switchEmployeeAppsTab("out");
+    else if (hid === "applications-list-emp-history") switchEmployeeAppsTab("hist");
+    else return false;
+    return true;
+  }
+
+  function highlightApplicationCard(appId) {
+    const card = document.querySelector('[data-application-id="' + String(appId) + '"]');
+    if (!card) return;
+    card.scrollIntoView({ behavior: "smooth", block: "center" });
+    card.classList.add("app-card--highlight");
+    window.setTimeout(() => card.classList.remove("app-card--highlight"), 2800);
+  }
+
+  function stripOpenApplicationParamsFromUrl() {
+    try {
+      const url = new URL(window.location.href);
+      if (!url.searchParams.has("open_application")) return;
+      url.searchParams.delete("open_application");
+      url.searchParams.delete("project");
+      url.searchParams.delete("tab");
+      window.history.replaceState({}, "", url.toString());
+    } catch (_) {}
+  }
+
+  async function tryOpenApplicationFromQuery() {
+    const params = new URLSearchParams(window.location.search);
+    const rawAid = params.get("open_application");
+    const rawPid = params.get("project");
+    if (!rawAid || !rawPid) return;
+    const aid = parseInt(rawAid, 10);
+    const pid = parseInt(rawPid, 10);
+    if (!Number.isFinite(aid) || !Number.isFinite(pid)) return;
+
+    if (viewMode === "manager") {
+      await loadProjectsForAppsSelect(String(pid));
+      switchManagerTabForApplicationCard(aid);
+      const card = document.querySelector('[data-application-id="' + String(aid) + '"]');
+      if (card) {
+        highlightApplicationCard(aid);
+      } else {
+        switchManagerAppsTab("in");
+        showToast("Отклик не найден во входящих (возможно, он уже в истории или другом проекте).", "warning");
+      }
+      stripOpenApplicationParamsFromUrl();
+      return;
+    }
+
+    const rs = document.getElementById("apps-resume-select");
+    if (rs) rs.value = "";
+    await loadResumesForAppsFilter();
+    await loadMyApplications();
+    switchEmployeeTabForApplicationCard(aid);
+    const card = document.querySelector('[data-application-id="' + String(aid) + '"]');
+    if (card) {
+      highlightApplicationCard(aid);
+      stripOpenApplicationParamsFromUrl();
+    } else {
+      showToast("Отклик не найден в списке.", "warning");
+      stripOpenApplicationParamsFromUrl();
+    }
+  }
 
   (function syncMenuSearchLabelInitial() {
     const btn = document.getElementById("menu-search-header");
@@ -959,9 +1142,11 @@
     });
   }
 
-  const _isNotifMode = new URLSearchParams(window.location.search).get("tab") === "notifications";
+  const _appsUrlParams = new URLSearchParams(window.location.search);
+  const _isNotifMode =
+    _appsUrlParams.get("tab") === "notifications" && !_appsUrlParams.get("open_application");
 
-  function showViews() {
+  async function showViews() {
     document.getElementById("view-manager").classList.toggle("hidden", viewMode !== "manager");
     document.getElementById("view-employee").classList.toggle("hidden", viewMode !== "employee");
     syncRoleToggle();
@@ -997,11 +1182,12 @@
       if (resumeField) resumeField.style.display = "";
       if (viewMode === "manager") {
         switchManagerAppsTab("in");
-        loadProjectsForAppsSelect();
+        await loadProjectsForAppsSelect();
         loadManagerOutgoingApplications();
       } else {
         switchEmployeeAppsTab("in");
-        void loadResumesForAppsFilter().then(() => loadMyApplications());
+        await loadResumesForAppsFilter();
+        await loadMyApplications();
       }
     }
 
@@ -1195,7 +1381,10 @@
           const unread = notificationDotUnread(n) ? " is-unread" : "";
           const nid = n.id != null ? String(n.id) : "";
           const newBadge = notificationDotUnread(n) ? '<span class="apps-msg-new" aria-hidden="true">Новое</span>' : "";
-          return `<div class="apps-msg-item apps-msg-item--${tone}${unread}" data-notification-id="${esc2(nid)}">${esc2(notificationMessageLineManager(n))}${newBadge}<div class="apps-msg-date">${esc2(dt)}</div></div>`;
+          const { applicationId: linkAid, projectId: linkPid } = notificationApplicationLinkTargets(n);
+          const appDeep = applicationsDeepLinkHref(linkAid, linkPid);
+          const openLink = appDeep ? `<a class="apps-msg-open-link" href="${esc2(appDeep)}">Открыть отклик</a>` : "";
+          return `<div class="apps-msg-item apps-msg-item--${tone}${unread}" data-notification-id="${esc2(nid)}">${esc2(notificationMessageLineManager(n))}${newBadge}<div class="apps-msg-date">${esc2(dt)}</div>${openLink}</div>`;
         })
         .join("");
     } catch {
@@ -1227,7 +1416,10 @@
           const unread = notificationDotUnread(n) ? " is-unread" : "";
           const nid = n.id != null ? String(n.id) : "";
           const newBadge = notificationDotUnread(n) ? '<span class="apps-msg-new" aria-hidden="true">Новое</span>' : "";
-          return `<div class="apps-msg-item apps-msg-item--${tone}${unread}" data-notification-id="${esc2(nid)}">${esc2(notificationMessageLine(n))}${newBadge}<div class="apps-msg-date">${esc2(dt)}</div></div>`;
+          const { applicationId: linkAid, projectId: linkPid } = notificationApplicationLinkTargets(n);
+          const appDeep = applicationsDeepLinkHref(linkAid, linkPid);
+          const openLink = appDeep ? `<a class="apps-msg-open-link" href="${esc2(appDeep)}">Открыть отклик</a>` : "";
+          return `<div class="apps-msg-item apps-msg-item--${tone}${unread}" data-notification-id="${esc2(nid)}">${esc2(notificationMessageLine(n))}${newBadge}<div class="apps-msg-date">${esc2(dt)}</div>${openLink}</div>`;
         })
         .join("");
     } catch {
@@ -1235,7 +1427,7 @@
     }
   }
 
-  async function loadProjectsForAppsSelect() {
+  async function loadProjectsForAppsSelect(preferredProjectId) {
     const sel = document.getElementById("apps-project-select");
     if (!sel) return;
     try {
@@ -1251,9 +1443,11 @@
           opt.textContent = p.title || "Проект #" + p.id;
           sel.appendChild(opt);
         });
-        if (prev && Array.from(sel.options).some((o) => o.value === prev)) sel.value = prev;
+        const pref = preferredProjectId != null && String(preferredProjectId).trim() !== "" ? String(preferredProjectId) : "";
+        if (pref && Array.from(sel.options).some((o) => o.value === pref)) sel.value = pref;
+        else if (prev && Array.from(sel.options).some((o) => o.value === prev)) sel.value = prev;
       }
-      loadEmployerManagerPanels();
+      await loadEmployerManagerPanels();
     } catch (_) {}
   }
 
@@ -1412,7 +1606,7 @@
         url.searchParams.set("view", viewMode);
         window.history.replaceState({}, "", url.toString());
       } catch (_) {}
-      showViews();
+      void showViews();
     });
   }
 
@@ -1468,9 +1662,10 @@
     } catch (_) {}
 
     syncRoleToggle();
-    showViews();
+    await showViews();
     bindAppsNotificationsMarkRead();
     bindMarkAppsNotificationsOnPageLeave();
+    await tryOpenApplicationFromQuery();
   })();
 })();
 </script>

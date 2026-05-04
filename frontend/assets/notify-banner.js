@@ -4,17 +4,17 @@
   function normalizeErrorMessage(message, type) {
     var raw = message == null ? "" : String(message);
     if (type !== "error") return raw;
-    return raw
+    if (typeof window.tpUserFacingErrorLine === "function") {
+      return window.tpUserFacingErrorLine(raw);
+    }
+    raw = raw
       .trim()
       .replace(/^Ошибка\s*:\s*/i, "")
       .trim();
+    if (!raw) return "";
+    return raw.charAt(0).toUpperCase() + raw.slice(1);
   }
 
-  /**
-   * @param {string} message
-   * @param {'error'|'success'|'warning'} [type]
-   * @param {number} [duration]
-   */
   window.showNotification = function (message, type, duration) {
     type = type || "error";
     duration =

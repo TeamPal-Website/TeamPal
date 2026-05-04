@@ -1,18 +1,9 @@
 import json
-
 import redis.asyncio as redis
-
 from src.config import settings
-
 TTL_SEC = 300
-NAMES_TO_KEY = {
-    "cities": "tp:cat:cities",
-    "skills": "tp:cat:skills",
-    "roles": "tp:cat:roles",
-}
-
+NAMES_TO_KEY = {'cities': 'tp:cat:cities', 'skills': 'tp:cat:skills', 'roles': 'tp:cat:roles'}
 _redis: redis.Redis | None = None
-
 
 async def get_redis():
     global _redis
@@ -22,13 +13,11 @@ async def get_redis():
         _redis = redis.from_url(settings.REDIS_URL, decode_responses=True)
     return _redis
 
-
 async def close_redis():
     global _redis
     if _redis is not None:
         await _redis.aclose()
         _redis = None
-
 
 async def cached_json_list(name: str, fetch):
     key = NAMES_TO_KEY.get(name)
@@ -40,15 +29,13 @@ async def cached_json_list(name: str, fetch):
         if raw:
             return json.loads(raw)
     items = await fetch()
-    out = [x.model_dump(mode="json") for x in items]
+    out = [x.model_dump(mode='json') for x in items]
     if r:
         await r.setex(key, TTL_SEC, json.dumps(out))
     return out
-
 
 def schedule_catalog_invalidate(names: list[str]):
     if not settings.celery_broker:
         return
     from src.tasks.catalog import invalidate_catalog_cache
-
     invalidate_catalog_cache.delay(names)

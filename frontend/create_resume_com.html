@@ -394,6 +394,12 @@
     .exp-field--date { gap: 4px; }
     .exp-field--date > label:first-of-type { margin-bottom: 0; line-height: 1.35; }
     .exp-field--date > input { margin-top: auto; }
+    .exp-date-opt { font-weight: 500; color: #6b5d4f; font-size: 12px; }
+    .exp-field input[type="date"] {
+      min-height: 44px;
+      padding: 10px 12px;
+      color: #2b2118;
+    }
     .exp-field input,
     .exp-field textarea {
       width: 100%;
@@ -593,7 +599,7 @@
         <div class="section-title">Основное</div>
         <div class="exp-fields">
           <div class="field exp-field-full">
-            <label>Название резюме <span class="req-star" aria-hidden="true">*</span></label>
+            <label for="resumeTitle">Название резюме (видно только вам в списке резюме) <span class="req-star" aria-hidden="true">*</span></label>
             <input id="resumeTitle" type="text" maxlength="255" placeholder="Например: Junior Frontend" />
           </div>
           <div class="field">
@@ -915,8 +921,38 @@
       return synonyms.some((ph) => t === ph || t.includes(ph));
     }
 
+    function toDateInputValue(raw) {
+      if (!raw) return "";
+      const s = String(raw).trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+      const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (m) return m[1] + "-" + m[2] + "-" + m[3];
+      if (/^\d{2}\.\d{2}\.\d{4}$/.test(s)) {
+        const parts = s.split(".");
+        return parts[2] + "-" + parts[1].padStart(2, "0") + "-" + parts[0].padStart(2, "0");
+      }
+      return "";
+    }
+
+    function localTodayYmd() {
+      const d = new Date();
+      return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    }
+    function normalizedExpEndYmd(v) {
+      const s = String(v || "").trim();
+      if (!s) return "";
+      if (!isValidDateString(s)) return "";
+      return toDateInputValue(s) || "";
+    }
+    function experienceEndDateIsAfterToday(v) {
+      const ymd = normalizedExpEndYmd(v);
+      if (!ymd) return false;
+      return ymd > localTodayYmd();
+    }
+
     function renderExperiences() {
       if (!experienceListDiv) return;
+      const endDateMax = localTodayYmd();
       if (experiences.length === 0) {
         experienceListDiv.innerHTML = '<div class="exp-list-empty">Нет добавленного опыта работы</div>';
         return;
@@ -931,8 +967,8 @@
           </div>
           <div class="exp-grid">
             <div class="exp-field">
-              <label>Компания <span class="req-star" aria-hidden="true">*</span></label>
-              <input type="text" class="exp-company-input" maxlength="255" value="${escapeHtml(exp.company)}" placeholder="ООО Рога и Копыта">
+              <label>Название компании <span class="req-star" aria-hidden="true">*</span></label>
+              <input type="text" class="exp-company-input" maxlength="255" value="${escapeHtml(exp.company)}" placeholder="Юридическое или брендовое название">
             </div>
             <div class="exp-field">
               <label for="exp-pos-idx-${idx}">Должность <span class="req-star" aria-hidden="true">*</span></label>
@@ -940,11 +976,11 @@
             </div>
             <div class="exp-field exp-field--date">
               <label>Дата начала <span class="req-star" aria-hidden="true">*</span></label>
-              <input type="text" class="exp-start-input" data-exp-idx="${idx}" value="${escapeHtml(exp.dateStart)}" placeholder="ДД.ММ.ГГГГ или ГГГГ-ММ-ДД">
+              <input type="date" class="exp-start-input" max="2100-12-31" min="1950-01-01" data-exp-idx="${idx}" value="${escapeHtml(toDateInputValue(exp.dateStart))}">
             </div>
             <div class="exp-field exp-field--date">
-              <label>Дата окончания (если не заполнено — по настоящее время)</label>
-              <input type="text" class="exp-end-input" data-exp-idx="${idx}" value="${escapeHtml(exp.dateEnd)}" placeholder="ДД.ММ.ГГГГ или оставьте пустым">
+              <label>Дата окончания <span class="exp-date-opt">(если не указана — по настоящее время)</span></label>
+              <input type="date" class="exp-end-input" max="${escapeHtml(endDateMax)}" min="1950-01-01" data-exp-idx="${idx}" value="${escapeHtml(toDateInputValue(exp.dateEnd))}">
             </div>
             <div class="exp-field exp-field-full">
               <label>Описание</label>
@@ -987,7 +1023,9 @@
         if (positionSelect) positionSelect.addEventListener('change', () => { clearExpInvalid(); updateExpData(); });
         descInput.addEventListener('input', () => { clearExpInvalid(); updateExpData(); });
         startInput.addEventListener('input', () => { clearExpInvalid(); updateExpData(); });
+        startInput.addEventListener('change', () => { clearExpInvalid(); updateExpData(); });
         endInput.addEventListener('input', () => { clearExpInvalid(); updateExpData(); });
+        endInput.addEventListener('change', () => { clearExpInvalid(); updateExpData(); });
         updateExpData();
       });
     }
@@ -1105,7 +1143,7 @@
 
       const title = (resumeTitleInput?.value || "").trim();
       if (!title) {
-        showNotification('Пожалуйста, заполните поле "Название резюме"', 'error');
+        showNotification('Пожалуйста, заполните название резюме (видно только вам в списке резюме).', 'error');
         return;
       }
 
@@ -1139,7 +1177,7 @@
               return { ok: true, value: v };
             };
 
-      let lenChk = maxCheck(title, V255, "Название резюме");
+      let lenChk = maxCheck(title, V255, "Название резюме (для списка)");
       if (!lenChk.ok) {
         showNotification(lenChk.message, "error", 7000);
         resumeTitleInput?.classList.add("inp-invalid");
@@ -1216,7 +1254,7 @@
         if (!row.company && !row.role_type_id && !row.dateStart && !row.dateEnd && !row.description) continue;
         const entry = experienceListDiv && experienceListDiv.querySelector(`.exp-entry[data-exp-idx="${idx}"]`);
         if (!row.company) {
-          showNotification('Заполните "Компания" в опыте работы (или удалите пустой блок)', 'error');
+          showNotification('Укажите «Название компании» в опыте работы (или удалите пустой блок)', 'error');
           entry?.querySelector('.exp-company-input')?.classList.add('inp-invalid');
           return;
         }
@@ -1231,16 +1269,21 @@
           return;
         }
         if (!isValidDateString(row.dateStart)) {
-          showNotification('Дата начала введена неверно. Укажите дату в формате ДД.ММ.ГГГГ или ГГГГ-ММ-ДД.', 'error', 5500);
+          showNotification('Дата начала не выбрана или указана неверно. Выберите дату в календаре.', 'error', 5500);
           entry?.querySelector('.exp-start-input')?.classList.add('inp-invalid');
           return;
         }
         if (row.dateEnd && !isAcceptableEndDateInput(row.dateEnd)) {
-          showNotification('Дата окончания введена неверно. Оставьте поле пустым (по настоящее время) или укажите дату в формате ДД.ММ.ГГГГ или ГГГГ-ММ-ДД.', 'error', 6500);
+          showNotification('Проверьте дату окончания или оставьте поле пустым (по настоящее время).', 'error', 6500);
           entry?.querySelector('.exp-end-input')?.classList.add('inp-invalid');
           return;
         }
-        lenChk = maxCheck(row.company, V255, "Компания в опыте работы");
+        if (row.dateEnd && experienceEndDateIsAfterToday(row.dateEnd)) {
+          showNotification('Дата окончания не может быть позже сегодняшнего дня.', 'error', 6500);
+          entry?.querySelector('.exp-end-input')?.classList.add('inp-invalid');
+          return;
+        }
+        lenChk = maxCheck(row.company, V255, "Название компании в опыте работы");
         if (!lenChk.ok) {
           showNotification(lenChk.message, "error", 7000);
           entry?.querySelector(".exp-company-input")?.classList.add("inp-invalid");
@@ -1337,11 +1380,13 @@
       }
       } catch (e) {
         console.error(e);
-        showNotification(
-          (e && e.message) ? 'Ошибка: ' + e.message : 'Произошла ошибка при публикации резюме. Проверьте поля и попробуйте снова.',
-          'error',
-          7000,
-        );
+        const pubErr =
+          e && e.message
+            ? typeof window.tpUserFacingErrorLine === "function"
+              ? window.tpUserFacingErrorLine(e.message)
+              : e.message
+            : "Произошла ошибка при публикации резюме. Проверьте поля и попробуйте снова.";
+        showNotification(pubErr, "error", 7000);
       }
     });
 

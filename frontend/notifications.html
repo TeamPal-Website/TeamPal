@@ -208,6 +208,25 @@
       })[ch]);
     }
 
+    function applicationsPageDeepLink(applicationId, projectId) {
+      if (applicationId == null || projectId == null) return "";
+      const a = String(applicationId).trim();
+      const p = String(projectId).trim();
+      if (!a || !p) return "";
+      let view = "employee";
+      try {
+        if (localStorage.getItem("tp_role") === "Ищу сотрудника") view = "manager";
+      } catch (_) {}
+      return (
+        "./applications.html?view=" +
+        encodeURIComponent(view) +
+        "&open_application=" +
+        encodeURIComponent(a) +
+        "&project=" +
+        encodeURIComponent(p)
+      );
+    }
+
     function notificationTone(item) {
       const ev = item.event || "";
       if (ev === "application_accepted") return "success";
@@ -288,17 +307,29 @@
       }
       list.innerHTML = items.map((item) => {
         const p = item.payload || {};
-        const href = p.project_id ? "./card_project.html?project=" + encodeURIComponent(p.project_id) + (p.vacancy_id ? "&vacancy=" + encodeURIComponent(p.vacancy_id) : "") : "";
+        const aid = item.application_id != null ? item.application_id : p.application_id;
+        const pidTop = item.project_id != null ? item.project_id : p.project_id;
+        const appRepliesHref = applicationsPageDeepLink(aid, pidTop);
+        const projectHref = p.project_id
+          ? "./card_project.html?project=" +
+            encodeURIComponent(p.project_id) +
+            (p.vacancy_id ? "&vacancy=" + encodeURIComponent(p.vacancy_id) : "")
+          : "";
         const tone = notificationTone(item);
         const unread = notificationDotUnread(item) ? " is-unread" : "";
         const nid = item.id != null ? String(item.id) : "";
         const newBadge = notificationDotUnread(item) ? '<span class="notification-new" aria-hidden="true">Новое</span>' : "";
+        const linkHtml = appRepliesHref
+          ? `<a class="notification-link" href="${esc(appRepliesHref)}">Открыть отклик</a>`
+          : projectHref
+            ? `<a class="notification-link" href="${esc(projectHref)}">Открыть проект</a>`
+            : "";
         return `
           <article class="notification-item notification-item--${tone}${unread}" data-notification-id="${esc(nid)}">
             <div class="notification-title">${esc(eventTitle(item))}${newBadge}</div>
             <div class="notification-meta">${esc(eventText(item))}</div>
             <div class="notification-meta">${esc(formatDate(item.created_at))}</div>
-            ${href ? `<a class="notification-link" href="${esc(href)}">Открыть</a>` : ""}
+            ${linkHtml}
           </article>
         `;
       }).join("");
@@ -338,6 +369,7 @@
     if (list && !list.dataset.tpNotifReadBound) {
       list.dataset.tpNotifReadBound = "1";
       list.addEventListener("click", async (e) => {
+        if (e.target.closest("a[href]")) return;
         const card = e.target.closest(".notification-item[data-notification-id]");
         if (!card || !card.classList.contains("is-unread")) return;
         const raw = card.getAttribute("data-notification-id");

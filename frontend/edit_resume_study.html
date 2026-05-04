@@ -119,6 +119,12 @@
     .exp-field--date { gap: 4px; }
     .exp-field--date > label:first-of-type { margin-bottom: 0; line-height: 1.35; }
     .exp-field--date > input { margin-top: auto; }
+    .exp-date-opt { font-weight: 500; color: #6b5d4f; font-size: 12px; }
+    .exp-field input[type="date"] {
+      min-height: 44px;
+      padding: 10px 12px;
+      color: #2b2118;
+    }
     .exp-field input,.exp-field textarea,.exp-field select {
       width:100%; border:1.5px solid #ddd; border-radius:12px; padding:14px 16px; font-family:inherit; font-size:15px; background:#fff;
       transition:border-color .15s, box-shadow .15s; min-height:52px; box-sizing:border-box; line-height:1.45;
@@ -259,9 +265,18 @@
     const icons = { success:'✓', error:'✕', warning:'⚠', info:'ℹ' };
     const c = document.getElementById('toast-container');
     if (!c) return;
+    let displayText = String(msg || '');
+    if (type === 'error') {
+      if (typeof window.tpUserFacingErrorLine === 'function') {
+        displayText = window.tpUserFacingErrorLine(displayText);
+      } else {
+        displayText = displayText.replace(/^\s*ошибка\s*:\s*/i, '').trim();
+        if (displayText) displayText = displayText.charAt(0).toUpperCase() + displayText.slice(1);
+      }
+    }
     const el = document.createElement('div');
     el.className = 'tp-toast ' + type;
-    const safe = String(msg || '').replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+    const safe = displayText.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
     el.innerHTML = `<span class="tp-toast__icon">${icons[type]||'ℹ'}</span><span class="tp-toast__text">${safe}</span><button class="tp-toast__close">×</button>`;
     el.querySelector('.tp-toast__close').onclick = () => el.remove();
     c.appendChild(el);
@@ -288,6 +303,19 @@
     if (!dateStr) return '';
     const m = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
     return m ? `${m[3]}.${m[2]}.${m[1]}` : dateStr;
+  }
+
+  function toDateInputValue(raw) {
+    if (!raw) return '';
+    const s = String(raw).trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+    const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+    if (/^\d{2}\.\d{2}\.\d{4}$/.test(s)) {
+      const [d, mo, y] = s.split('.');
+      return `${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    }
+    return '';
   }
 
   function isValidDateString(dateStr) {
@@ -327,6 +355,23 @@
       'по сей день', 'сейчас', 'работаю', 'до настоящего времени', 'now', 'present', 'current'
     ];
     return synonyms.some((ph) => t === ph || t.includes(ph));
+  }
+
+  function localTodayYmd() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function normalizedExpEndYmd(v) {
+    const s = String(v || '').trim();
+    if (!s) return '';
+    if (!isValidDateString(s)) return '';
+    const iso = toISO(s);
+    return iso && /^\d{4}-\d{2}-\d{2}$/.test(iso) ? iso : '';
+  }
+  function experienceEndDateIsAfterToday(v) {
+    const ymd = normalizedExpEndYmd(v);
+    if (!ymd) return false;
+    return ymd > localTodayYmd();
   }
 
 
@@ -489,7 +534,7 @@
         <div class="section-title">Основное</div>
         <div class="exp-fields">
           <div class="field exp-field-full">
-            <label for="f-resume-list-title">Название резюме <span class="req-star" aria-hidden="true">*</span></label>
+            <label for="f-resume-list-title">Название резюме (видно только вам в списке резюме) <span class="req-star" aria-hidden="true">*</span></label>
             <input id="f-resume-list-title" type="text" placeholder="Например: Junior Frontend" maxlength="255" value="${esc(cachedListTitle || dp)}" />
           </div>
           <div class="field">
@@ -623,12 +668,16 @@
         }
       };
       if (el.tagName === 'SELECT') el.addEventListener('change', handler);
-      else el.addEventListener('input', handler);
+      else {
+        el.addEventListener('input', handler);
+        if (el.getAttribute('type') === 'date') el.addEventListener('change', handler);
+      }
     });
   }
 
   function renderExpList() {
     const visible = experiences.filter(e => !e._deleted);
+    const endDateMax = localTodayYmd();
     if (visible.length === 0) {
       return '<div class="exp-list-empty">Нет добавленного опыта работы</div>';
     }
@@ -641,8 +690,8 @@
         <div class="exp-err-msg" id="exp-err-${exp._key}"></div>
         <div class="exp-grid">
           <div class="exp-field">
-            <label>Компания <span class="req-star" aria-hidden="true">*</span></label>
-            <input type="text" maxlength="255" placeholder="ООО Рога и Копыта"
+            <label>Название компании <span class="req-star" aria-hidden="true">*</span></label>
+            <input type="text" maxlength="255" placeholder="Юридическое или брендовое название"
               value="${esc(exp.company_name)}" data-exp-key="${exp._key}" data-field="company_name" />
           </div>
           <div class="exp-field">
@@ -651,13 +700,13 @@
           </div>
           <div class="exp-field exp-field--date">
             <label>Дата начала <span class="req-star" aria-hidden="true">*</span></label>
-            <input type="text" placeholder="ДД.ММ.ГГГГ или ГГГГ-ММ-ДД"
-              value="${esc(fromISO(exp.start_date))}" data-exp-key="${exp._key}" data-field="start_date" />
+            <input type="date" max="2100-12-31" min="1950-01-01"
+              value="${esc(toDateInputValue(exp.start_date))}" data-exp-key="${exp._key}" data-field="start_date" />
           </div>
           <div class="exp-field exp-field--date">
-            <label>Дата окончания (если не заполнено — по настоящее время)</label>
-            <input type="text" placeholder="ДД.ММ.ГГГГ или ГГГГ-ММ-ДД"
-              value="${esc(fromISO(exp.end_date))}" data-exp-key="${exp._key}" data-field="end_date" />
+            <label>Дата окончания <span class="exp-date-opt">(если не указана — по настоящее время)</span></label>
+            <input type="date" max="${esc(endDateMax)}" min="1950-01-01"
+              value="${esc(toDateInputValue(exp.end_date))}" data-exp-key="${exp._key}" data-field="end_date" />
           </div>
           <div class="exp-field exp-field-full">
             <label>Описание обязанностей</label>
@@ -792,13 +841,17 @@
         entry?.querySelector('[data-field="start_date"]')?.classList.add('inp-invalid');
         ok = false;
       } else if (!isValidDateString(exp.start_date)) {
-        showToast('Дата начала введена неверно. Укажите дату в формате ДД.ММ.ГГГГ или ГГГГ-ММ-ДД.', 'error', 6000);
+        showToast('Дата начала не выбрана. Выберите дату в календаре.', 'error', 6000);
         entry?.querySelector('[data-field="start_date"]')?.classList.add('inp-invalid');
         ok = false;
       }
       const endTrim = (exp.end_date || '').trim();
       if (endTrim && !isAcceptableEndDateInput(exp.end_date)) {
-        showToast('Дата окончания введена неверно. Оставьте поле пустым (по настоящее время) или укажите дату в формате ДД.ММ.ГГГГ или ГГГГ-ММ-ДД.', 'error', 6500);
+        showToast('Проверьте дату окончания или оставьте поле пустым (трудоустройство по настоящее время).', 'error', 6500);
+        entry?.querySelector('[data-field="end_date"]')?.classList.add('inp-invalid');
+        ok = false;
+      } else if (endTrim && experienceEndDateIsAfterToday(exp.end_date)) {
+        showToast('Дата окончания не может быть позже сегодняшнего дня.', 'error', 6500);
         entry?.querySelector('[data-field="end_date"]')?.classList.add('inp-invalid');
         ok = false;
       }
@@ -810,7 +863,7 @@
 
     if (!ok) {
       if (document.querySelector('.exp-err-msg.show')) {
-        showToast('Заполните обязательные поля в опыте работы (компания, должность, дата начала) или удалите пустой блок.', 'warning', 6000);
+        showToast('Заполните обязательные поля в опыте работы (название компании, должность, дата начала) или удалите пустой блок.', 'warning', 6000);
       }
       const scrollTo = document.querySelector('.exp-err-msg.show') || document.querySelector('.exp-entry .inp-invalid');
       if (scrollTo) scrollTo.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -825,7 +878,7 @@
     const intent = frozenResumeMeta.employment_intent;
 
     if (!listTitle) {
-      showToast('Укажите название резюме — это обязательное поле.', 'error', 5500);
+      showToast('Укажите название резюме (видно только вам в списке резюме) — обязательное поле.', 'error', 5500);
       const lt = document.getElementById('f-resume-list-title');
       lt?.classList.add('inp-invalid');
       lt?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -992,7 +1045,7 @@
         setTimeout(() => { window.location.href = './employee_resumes.html'; }, 1200);
       } else {
         const err = await r.json().catch(() => ({}));
-        showToast('Ошибка: ' + (err.detail || 'Не удалось удалить'), 'error');
+        showToast(tpFormatApiDetail(err.detail) || 'Не удалось удалить', 'error');
       }
     } catch { showToast('Ошибка соединения', 'error'); }
   }

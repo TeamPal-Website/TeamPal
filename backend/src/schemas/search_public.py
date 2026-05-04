@@ -1,18 +1,6 @@
 from datetime import datetime
 from pydantic import BaseModel
-
-from src.enums import (
-    CommitmentLevel,
-    ContractType,
-    EmploymentIntent,
-    ProjectVacancyExperience,
-    ProjectsStatus,
-    ResumeStatus,
-    SalaryType,
-    Schedule,
-    WorkFormat,
-)
-
+from src.enums import CommitmentLevel, ContractType, EmploymentIntent, ProjectVacancyExperience, ProjectsStatus, ResumeStatus, SalaryType, Schedule, WorkFormat
 
 class VacancySearchItem(BaseModel):
     vacancy_id: int
@@ -33,7 +21,6 @@ class VacancySearchItem(BaseModel):
     project_description: str | None
     created_at: datetime
 
-
 class ProjectSearchItem(BaseModel):
     id: int
     user_id: int
@@ -46,7 +33,6 @@ class ProjectSearchItem(BaseModel):
     tasks: str | None
     status: ProjectsStatus
     created_at: datetime
-
 
 class ResumeSearchItem(BaseModel):
     id: int
@@ -67,7 +53,6 @@ class ResumeSearchItem(BaseModel):
     status: ResumeStatus
     created_at: datetime
     avatar_url: str | None = None
-
 
 class RecruitingVacancyOption(BaseModel):
     vacancy_id: int

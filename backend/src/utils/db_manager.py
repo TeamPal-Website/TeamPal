@@ -14,14 +14,13 @@ from src.repositories.skills import SkillsRepository
 from src.repositories.users import UsersRepository
 from src.repositories.vacancy_assignments import VacancyAssignmentsRepository
 
-
 class DBManager:
+
     def __init__(self, session_factory):
         self.session = session_factory
 
     async def __aenter__(self):
         self.session = self.session()
-
         self.users = UsersRepository(self.session)
         self.admins = AdminsRepository(self.session)
         self.profiles = ProfilesRepository(self.session)
@@ -37,7 +36,6 @@ class DBManager:
         self.applications = ApplicationsRepository(self.session)
         self.vacancy_assignments = VacancyAssignmentsRepository(self.session)
         self.notifications = NotificationsRepository(self.session)
-
         return self
 
     async def __aexit__(self, *args):

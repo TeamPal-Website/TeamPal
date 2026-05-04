@@ -358,7 +358,7 @@
       display: grid;
       grid-template-columns: 1fr auto;
       gap: 8px;
-      align-items: start;
+      align-items: center;
       margin-bottom: 8px;
     }
     .vacancy-title {
@@ -369,11 +369,16 @@
     }
     .vacancy-meta {
       margin-top: 8px;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      display: flex;
+      flex-wrap: wrap;
       gap: 6px 10px;
+      align-items: flex-start;
     }
     .meta-item {
+      flex: 0 1 auto;
+      width: fit-content;
+      max-width: 100%;
+      box-sizing: border-box;
       background: #faf9f7;
       border: 1px solid #ece9e5;
       border-radius: 10px;
@@ -575,6 +580,7 @@
       padding: 0;
       overflow: hidden;
       border: none;
+      background: #fff;
       box-shadow: 0 28px 56px rgba(0, 0, 0, 0.18);
     }
     .modal__accent-strip {
@@ -584,6 +590,7 @@
     .modal__body { padding: 20px 22px 16px; }
     .modal__title-lg { font-size: 22px; font-weight: 700; margin: 0; color: var(--ink); letter-spacing: -0.02em; }
     .modal__subtitle { margin: 8px 0 0; font-size: 14px; color: #666; line-height: 1.45; }
+    .modal__subtitle[hidden] { display: none !important; }
     .modal__footer-bar {
       padding: 14px 22px 18px;
       background: linear-gradient(180deg, #faf9f7, #fff);
@@ -593,7 +600,6 @@
       gap: 10px;
       flex-wrap: wrap;
     }
-    /* Диалог фильтров: шире, не на всю высоту экрана; прокрутка в теле, кнопки всегда внизу карточки */
     #filters-modal .modal__card--premium {
       width: min(96vw, 680px);
       max-height: min(calc(100vh - 48px), 720px);
@@ -629,8 +635,9 @@
     }
     .vacancy-head-inner {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       gap: 10px;
+      min-width: 0;
     }
     .invite-preview-grid {
       display: grid;
@@ -650,6 +657,9 @@
       font-size: 11px;
       text-transform: uppercase;
       letter-spacing: .03em;
+    }
+    .invite-preview-grid[hidden] {
+      display: none !important;
     }
   </style>
 </head>
@@ -808,15 +818,14 @@
 </div>
 
 <div class="modal" id="invite-modal" aria-hidden="true">
-  <div class="modal__card modal__card--premium" role="dialog" aria-modal="true" aria-label="Пригласить кандидата">
+  <div class="modal__card modal__card--premium" role="dialog" aria-modal="true" aria-label="Откликнуться">
     <div class="modal__accent-strip"></div>
     <div class="modal__body">
-      <h2 class="modal__title-lg">Пригласить кандидата</h2>
-      <p id="invite-resume-label" class="modal__subtitle"></p>
-      <div id="invite-resume-preview" class="invite-preview-grid"></div>
-      <div class="field">
-        <label for="invite-vacancy-select">Выберите свою вакансию</label>
-        <select id="invite-vacancy-select"></select>
+      <h2 class="modal__title-lg" id="invite-modal-title">Откликнуться</h2>
+      <p id="invite-resume-label" class="modal__subtitle" hidden></p>
+      <div id="invite-resume-preview" class="invite-preview-grid" hidden></div>
+      <div class="field" style="margin-top:14px;">
+        <select id="invite-vacancy-select" aria-label="Выберите вакансию"></select>
       </div>
       <div id="invite-no-vacancies" style="display:none;margin-top:10px;padding:12px 14px;border-radius:14px;background:#fff8e6;border:1px solid #ffe082;color:#6d4c41;font-size:13px;line-height:1.45;">
         Нет свободных слотов в активных проектах. Создайте вакансию в проекте или верните проект со статуса паузы.
@@ -824,7 +833,7 @@
     </div>
     <div class="modal__footer-bar">
       <button class="action-btn" id="invite-cancel" type="button">Отмена</button>
-      <button class="action-btn action-btn--accent" id="invite-confirm" type="button">Отправить приглашение</button>
+      <button class="action-btn action-btn--accent" id="invite-confirm" type="button">Откликнуться</button>
     </div>
   </div>
 </div>
@@ -1014,49 +1023,18 @@
       return intent === "commercial" ? "Коммерческий" : intent === "noncommercial" ? "Учебный" : "—";
     }
 
-    const EXP_BUCKET_LABELS = {
-      none: "Без опыта",
-      "<1": "До 1 года",
-      "1-3": "1–3 года",
-      "3-6": "3–6 лет",
-      "6+": "6+ лет",
-    };
+    const EXP_LABELS = { none: "Без опыта", "<1": "До 1 года", "1-3": "1–3 года", "3-6": "3–6 лет", "6+": "6+ лет" };
+    const WORK_LABELS = { remote: "Удалённо", office: "В офисе", hybrid: "Гибрид" };
 
-    const WORK_FMT_SR = { remote: "Удалённо", office: "В офисе", hybrid: "Гибрид" };
+    function resumeSalaryRub(amount) {
+      if (amount == null || !Number.isFinite(Number(amount))) return "—";
+      return Number(amount).toLocaleString("ru-RU") + " ₽";
+    }
+    function resumeSalaryType(t) {
+      return t === "per_project" ? "За проект" : t === "monthly" ? "В месяц" : "—";
+    }
+
     const CREATED_WITHIN_LABELS = { "7": "за 7 дн.", "14": "за 14 дн.", "30": "за 30 дн." };
-
-    function salaryAmountPlain(value) {
-      if (value === null || value === undefined || value === "") return "—";
-      const n = Number(value);
-      if (!Number.isFinite(n)) return "—";
-      return n.toLocaleString("ru-RU") + " ₽";
-    }
-    function salaryTypePlain(t) {
-      return t === "per_project" ? "За проект" : (t === "monthly" ? "В месяц" : "—");
-    }
-
-    function resumeFieldsHtml(item, layout) {
-      const cityName =
-        item.cityId != null && _citiesMap[String(item.cityId)] ? _citiesMap[String(item.cityId)] : "—";
-      const comm = item.employmentIntent === "commercial";
-      const salAmt = salaryAmountPlain(item.salaryAmount);
-      const salTyp = salaryTypePlain(item.salaryType);
-      let salaryVal = "—";
-      if (comm) {
-        if (salAmt !== "—") salaryVal = salTyp !== "—" ? salAmt + " · " + salTyp : salAmt;
-        else if (salTyp !== "—") salaryVal = salTyp;
-      }
-      const rows = [
-        ["Заработная плата", salaryVal],
-        ["Формат работы", WORK_FMT_SR[item.workFormat] || "—"],
-        ["Город", cityName],
-        ["Опыт работы", EXP_BUCKET_LABELS[item.computedExp] || "—"],
-      ];
-      if (layout === "modal") {
-        return rows.map(([k, val]) => `<div><b>${escapeHtml(k)}</b>${escapeHtml(val)}</div>`).join("");
-      }
-      return rows.map(([k, val]) => `<div class="meta-item"><b>${escapeHtml(k)}:</b>${escapeHtml(val)}</div>`).join("");
-    }
 
     function digitsGrouped(raw) {
       const d = String(raw || "").replace(/\D/g, "");
@@ -1242,12 +1220,16 @@
     }
 
     async function pollApplicationsBellBadge() {
+      const notifyBtn = document.querySelector(".notify-btn");
+      const clearBadge = () => notifyBtn?.querySelector(".notif-badge")?.remove();
       try {
-        const resp = await fetch(API_BASE_URL + "/applications/badge_counts", { credentials: "include" });
-        if (!resp.ok) return;
+        const resp = await fetch(API_BASE_URL + "/notifications/unread_count", { credentials: "include" });
+        if (!resp.ok) {
+          clearBadge();
+          return;
+        }
         const data = await resp.json();
-        const count = Number(data.incoming_pending || 0);
-        const notifyBtn = document.querySelector(".notify-btn");
+        const count = Number(data.unread_count ?? 0);
         if (!notifyBtn) return;
         let badge = notifyBtn.querySelector(".notif-badge");
         if (count > 0) {
@@ -1261,28 +1243,43 @@
         } else if (badge) {
           badge.remove();
         }
-      } catch (_) {}
+      } catch (_) {
+        document.querySelector(".notify-btn")?.querySelector(".notif-badge")?.remove();
+      }
     }
 
     function closeInviteModal() {
       if (inviteModal) inviteModal.classList.remove("open");
       inviteResumeNumericId = null;
       const prevEl = document.getElementById("invite-resume-preview");
-      if (prevEl) prevEl.innerHTML = "";
+      if (prevEl) {
+        prevEl.innerHTML = "";
+        prevEl.hidden = true;
+      }
+      if (inviteResumeLabel) {
+        inviteResumeLabel.textContent = "";
+        inviteResumeLabel.hidden = true;
+      }
     }
 
-    async function openInviteModal(resumeIdNum, item) {
+    async function openInviteModal(resumeIdNum) {
       inviteResumeNumericId = resumeIdNum;
       const prevEl = document.getElementById("invite-resume-preview");
-      if (inviteResumeLabel) inviteResumeLabel.textContent = item && item.desiredPosition ? item.desiredPosition : "";
-      if (prevEl) prevEl.innerHTML = item ? resumeFieldsHtml(item, "modal") : "";
+      if (inviteResumeLabel) {
+        inviteResumeLabel.textContent = "";
+        inviteResumeLabel.hidden = true;
+      }
+      if (prevEl) {
+        prevEl.innerHTML = "";
+        prevEl.hidden = true;
+      }
       if (inviteModal) inviteModal.classList.add("open");
       if (inviteVacancySelect) inviteVacancySelect.innerHTML = '<option value="">Загрузка…</option>';
       if (inviteNoVacancies) inviteNoVacancies.style.display = "none";
       try {
         const r = await fetch(API_BASE_URL + "/my_recruiting_vacancies", { credentials: "include" });
         if (r.status === 401) {
-          showNotification("Войдите в аккаунт работодателя, чтобы отправить приглашение.", "warning", 4500);
+          showNotification("Войдите в аккаунт работодателя, чтобы отправить отклик.", "warning", 4500);
           closeInviteModal();
           return;
         }
@@ -1292,13 +1289,13 @@
         }
         const opts = await r.json();
         if (!Array.isArray(opts) || opts.length === 0) {
-          if (inviteVacancySelect) inviteVacancySelect.innerHTML = '<option value="">— нет свободных вакансий —</option>';
+          if (inviteVacancySelect) inviteVacancySelect.innerHTML = '<option value="">Нет свободных вакансий</option>';
           if (inviteNoVacancies) inviteNoVacancies.style.display = "block";
           return;
         }
         if (inviteVacancySelect) {
           inviteVacancySelect.innerHTML =
-            '<option value="">— выберите вакансию —</option>' +
+            '<option value="">Выберите вакансию</option>' +
             opts.map((o) => {
               const vid = Number(o.vacancy_id);
               const label = (o.project_title || "Проект") + " · " + (o.role_name || "Должность");
@@ -1332,11 +1329,11 @@
           });
           if (r.ok) {
             closeInviteModal();
-            showNotification("Приглашение отправлено. Отклик появится у соискателя.", "success", 4000);
+            showNotification("Отклик отправлен. Уведомление уйдёт соискателю.", "success", 4000);
             pollApplicationsBellBadge();
           } else {
             const err = await r.json().catch(() => ({}));
-            showNotification(err.detail || "Не удалось отправить приглашение", "error", 4500);
+            showNotification(err.detail || "Не удалось отправить отклик", "error", 4500);
           }
         } catch (_) {
           showNotification("Ошибка соединения с сервером", "error", 4000);
@@ -1356,12 +1353,33 @@
         const aboutBlock = v.aboutSnippet
           ? `<div class="vacancy-about-snippet">${escapeHtml(v.aboutSnippet)}${v.aboutSnippet.length >= 220 ? "…" : ""}</div>`
           : "";
-        const avatarSrc = v.avatarUrl || "./assets/avatar-default.png";
+        const avatarSrc = tpAvatarSrcFromApiField(v.avatarUrl);
+        const cityName = v.cityId != null && v.cityId !== "" ? _citiesMap[String(v.cityId)] || "" : "";
+        const commResume = v.employmentIntent === "commercial";
+        const expLabel = EXP_LABELS[v.computedExp] || EXP_LABELS.none;
+        const metaItems = [];
+        if (commResume) {
+          const salaryRub = resumeSalaryRub(v.salaryAmount);
+          const salaryTyp = resumeSalaryType(v.salaryType);
+          let salaryVal = null;
+          if (salaryRub !== "—") salaryVal = salaryTyp !== "—" ? salaryRub + " · " + salaryTyp : salaryRub;
+          else if (salaryTyp !== "—") salaryVal = salaryTyp;
+          if (salaryVal) metaItems.push(["Заработная плата", salaryVal]);
+          const wf = WORK_LABELS[v.workFormat];
+          if (wf) metaItems.push(["Формат работы", wf]);
+          if (String(cityName || "").trim()) metaItems.push(["Город", String(cityName).trim()]);
+        } else if (String(cityName || "").trim()) {
+          metaItems.push(["Город", String(cityName).trim()]);
+        }
+        metaItems.push(["Опыт работы", expLabel]);
+        const metaBlock = `<div class="vacancy-meta">${metaItems
+          .map(([k, val]) => `<div class="meta-item"><b>${escapeHtml(k)}:</b>${escapeHtml(val)}</div>`)
+          .join("")}</div>`;
         return `
           <article class="card vacancy-card">
             <div class="vacancy-head">
               <div class="vacancy-head-inner">
-                <img class="resume-card-avatar" src="${escapeHtml(avatarSrc)}" onerror="this.src='./assets/avatar-default.png'" alt="">
+                <img class="resume-card-avatar" src="${escapeHtml(avatarSrc)}" onerror="this.onerror=null;this.src='./assets/avatar-default.png'" alt="">
                 <div>
                   <div class="vacancy-title">${escapeHtml(v.desiredPosition)}</div>
                 </div>
@@ -1370,9 +1388,7 @@
                 <span class="type-badge">${escapeHtml(intentLabel(v.employmentIntent))}</span>
               </div>
             </div>
-            <div class="vacancy-meta">
-              ${resumeFieldsHtml(v, "card")}
-            </div>
+            ${metaBlock}
             ${aboutBlock}
             <div class="vacancy-actions">
               <button class="action-btn" type="button" data-view="${escapeHtml(v.id)}" data-user="${escapeHtml(v.userId)}">Просмотреть резюме</button>
@@ -1385,10 +1401,9 @@
       listEl.querySelectorAll("[data-invite]").forEach((btn) => {
         btn.addEventListener("click", () => {
           const id = btn.getAttribute("data-invite");
-          const item = vacanciesList.find((x) => x.id === id);
           const numId = id ? parseInt(id, 10) : NaN;
           if (!Number.isFinite(numId)) return;
-          openInviteModal(numId, item || null);
+          openInviteModal(numId);
         });
       });
 
@@ -1419,7 +1434,6 @@
       const hasMore = lastResumePageFetchCount >= RESUME_PAGE_SIZE;
       const p = state.page;
       const minShown = Math.max(1, p - PAGER_RADIUS);
-      /* Только +1 вперёд: полная страница не гарантирует две следующие. */
       const maxShown = hasMore ? p + 1 : p;
 
       const segments = [];

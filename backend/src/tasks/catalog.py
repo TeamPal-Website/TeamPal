@@ -1,9 +1,7 @@
 import redis
-
 from src.catalog_cache import NAMES_TO_KEY
 from src.celery_app import celery_app
 from src.config import settings
-
 
 @celery_app.task
 def invalidate_catalog_cache(names: list[str]):

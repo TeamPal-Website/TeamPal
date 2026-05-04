@@ -121,8 +121,9 @@
     }
     .modal__accent-strip { height: 5px; background: linear-gradient(90deg, var(--accent-1), var(--accent-2)); }
     .modal__body { padding: 20px 22px 16px; }
-    .modal__title-lg { font-size: 22px; font-weight: 700; margin: 0; color: var(--ink); }
+    .modal__title-lg { font-size: 22px; font-weight: 700; margin: 0; color: var(--ink); letter-spacing: -0.02em; }
     .modal__subtitle { margin: 8px 0 0; font-size: 14px; color: #666; line-height: 1.45; }
+    .modal__subtitle[hidden] { display: none !important; }
     .modal__footer-bar {
       padding: 14px 22px 18px;
       background: linear-gradient(180deg, #faf9f7, #fff);
@@ -144,10 +145,24 @@
       font-size: 13px;
     }
     .invite-preview-grid div b { color: #6a625b; display: block; margin-bottom: 2px; font-size: 11px; text-transform: uppercase; letter-spacing: .03em; }
+    .invite-preview-grid[hidden] {
+      display: none !important;
+    }
     .invite-preview-about {
       grid-column: 1 / -1;
       white-space: pre-wrap;
       word-break: break-word;
+    }
+    .modal .field {
+      border: none;
+      background: transparent;
+      padding: 0;
+      box-shadow: none;
+      font-size: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 0;
     }
     .modal .field label { font-size: 13px; color: #4c4c4c; font-weight: 500; display: block; margin-bottom: 6px; }
     .modal .field select {
@@ -198,7 +213,7 @@
     <div class="header__left">
       <img class="logo" src="./assets/logo.png" alt="Логотип TeamPal">
       <div class="role-toggle" id="role-toggle">
-        <button class="role-toggle__btn active" type="button" data-role="Ищу вакансию">Ищу вакансию</button>
+        <button class="role-toggle__btn" type="button" data-role="Ищу вакансию">Ищу вакансию</button>
         <button class="role-toggle__btn" type="button" data-role="Ищу сотрудника">Ищу сотрудника</button>
       </div>
     </div>
@@ -212,10 +227,7 @@
       <button class="burger" id="burger-btn" type="button"><span></span><span></span><span></span></button>
       <nav class="header-menu" id="header-menu">
         <div class="header-menu__title">Меню</div>
-        <button class="header-menu__item" type="button" data-nav="./account_employee.html">Личный кабинет</button>
-        <button class="header-menu__item" type="button" data-nav="./employee_resumes.html">Мои резюме</button>
-        <button class="header-menu__item" type="button" data-nav="./search_project.html">Поиск проектов</button>
-        <button class="header-menu__item" type="button" data-nav="./applications.html">Отклики</button>
+        <div id="header-menu-links"></div>
         <button class="header-menu__exit" type="button" data-nav="./authorization_page.html">Выйти</button>
       </nav>
     </div>
@@ -253,22 +265,28 @@
     <div class="exp-list" id="resume-experiences"></div>
   </section>
 
-  <section class="card section">
+  <section class="card section" id="resume-contacts-section">
     <h2>Контакты</h2>
     <div class="grid" id="resume-contacts"></div>
   </section>
 </main>
 
 <div class="modal" id="invite-modal-card" aria-hidden="true">
-  <div class="modal__card modal__card--premium" role="dialog" aria-modal="true" aria-label="Пригласить кандидата">
+  <div class="modal__card modal__card--premium" role="dialog" aria-modal="true" aria-label="Откликнуться">
     <div class="modal__accent-strip"></div>
     <div class="modal__body">
-      <h2 class="modal__title-lg">Пригласить кандидата</h2>
-      <p id="invite-resume-label-card" class="modal__subtitle"></p>
-      <div id="invite-resume-preview-card" class="invite-preview-grid"></div>
-      <div class="field" style="margin-top:14px;">
-        <label for="invite-vacancy-select-card">Выберите свою вакансию</label>
-        <select id="invite-vacancy-select-card"></select>
+      <h2 class="modal__title-lg" id="invite-modal-card-title">Откликнуться</h2>
+      <p id="invite-resume-label-card" class="modal__subtitle" hidden></p>
+      <div id="invite-resume-preview-card" class="invite-preview-grid" hidden></div>
+      <div class="field" id="apply-resume-field-card" style="display:none;margin-top:14px;">
+        <label for="apply-resume-select-card">Выберите резюме</label>
+        <select id="apply-resume-select-card"></select>
+      </div>
+      <div id="apply-no-my-resumes-card" style="display:none;margin-top:10px;padding:12px 14px;border-radius:14px;background:#fff5f5;border:1px solid #ffcdd2;color:#b71c1c;font-size:13px;line-height:1.45;">
+        У вас нет активных резюме. <a href="./create_resume_com.html" style="color:#f85a0b;font-weight:700;">Создайте резюме</a>.
+      </div>
+      <div class="field" id="invite-vacancy-field-card" style="margin-top:14px;">
+        <select id="invite-vacancy-select-card" aria-label="Выберите вакансию"></select>
       </div>
       <div id="invite-no-vacancies-card" style="display:none;margin-top:10px;padding:12px 14px;border-radius:14px;background:#fff8e6;border:1px solid #ffe082;color:#6d4c41;font-size:13px;line-height:1.45;">
         Нет свободных слотов в активных проектах. Создайте вакансию в проекте или верните проект со статуса паузы.
@@ -276,7 +294,7 @@
     </div>
     <div class="modal__footer-bar">
       <button class="action-btn" id="invite-cancel-card" type="button">Отмена</button>
-      <button class="action-btn action-btn--accent" id="invite-confirm-card" type="button">Отправить приглашение</button>
+      <button class="action-btn action-btn--accent" id="invite-confirm-card" type="button">Откликнуться</button>
     </div>
   </div>
 </div>
@@ -295,23 +313,93 @@
     const roleToggle = document.getElementById("role-toggle");
     const burgerBtn = document.getElementById("burger-btn");
     const headerMenu = document.getElementById("header-menu");
+    const TP_MENU_EMPLOYEE = [
+      ["./account_employee.html", "Личный кабинет"],
+      ["./employee_resumes.html", "Мои резюме"],
+      ["./search_project.html", "Поиск проектов"],
+      ["./applications.html", "Отклики"],
+    ];
+    const TP_MENU_MANAGER = [
+      ["./account_manager.html", "Личный кабинет"],
+      ["./employer_projects.html", "Мои проекты"],
+      ["./search_resume.html", "Поиск сотрудников"],
+      ["./applications.html", "Отклики"],
+    ];
     function closeMenus() { if (headerMenu) headerMenu.classList.remove("open"); if (burgerBtn) burgerBtn.classList.remove("open"); }
+    function resolveTpRole(defaultRole) {
+      let role = null;
+      try { role = localStorage.getItem("tp_role"); } catch (_) {}
+      if (role !== "Ищу вакансию" && role !== "Ищу сотрудника") role = defaultRole;
+      return role;
+    }
+    function applyRoleToggleVisual(role) {
+      if (!roleToggle) return;
+      roleToggle.querySelectorAll(".role-toggle__btn").forEach((b) => {
+        b.classList.toggle("active", b.getAttribute("data-role") === role);
+      });
+    }
+    function renderHeaderMenuForRole(role) {
+      const el = document.getElementById("header-menu-links");
+      if (!el) return;
+      const rows = role === "Ищу сотрудника" ? TP_MENU_MANAGER : TP_MENU_EMPLOYEE;
+      el.innerHTML = rows.map(([href, label]) =>
+        `<button class="header-menu__item" type="button" data-nav="${href}">${label}</button>`
+      ).join("");
+    }
+    function refreshResumeActionBar() {
+      const bar = document.getElementById("resume-invite-bar");
+      const btn = document.getElementById("resume-invite-open");
+      if (!bar || !btn || bar.hidden) return;
+      btn.textContent = "Откликнуться";
+    }
+    function syncRoleAndMenuFromStorage(defaultRole) {
+      const role = resolveTpRole(defaultRole);
+      applyRoleToggleVisual(role);
+      renderHeaderMenuForRole(role);
+      refreshResumeActionBar();
+    }
+    syncRoleAndMenuFromStorage("Ищу сотрудника");
     if (roleToggle) roleToggle.addEventListener("click", function (event) {
       const btn = event.target.closest(".role-toggle__btn"); if (!btn) return;
       const role = btn.dataset.role || "Ищу вакансию";
       try { localStorage.setItem("tp_role", role); } catch (_) {}
-      roleToggle.querySelectorAll(".role-toggle__btn").forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
+      applyRoleToggleVisual(role);
       if (role === "Ищу сотрудника") window.location.href = "./search_resume.html";
+      else { renderHeaderMenuForRole(role); refreshResumeActionBar(); }
     });
+    if (headerMenu) {
+      headerMenu.addEventListener("click", function (e) {
+        const navBtn = e.target.closest("button[data-nav]");
+        if (!navBtn) return;
+        const href = navBtn.getAttribute("data-nav");
+        if (href) window.location.href = href;
+      });
+    }
     if (burgerBtn && headerMenu) burgerBtn.addEventListener("click", (e) => { e.stopPropagation(); burgerBtn.classList.toggle("open"); headerMenu.classList.toggle("open"); });
     document.addEventListener("click", (e) => { if (!e.target.closest(".header__actions")) closeMenus(); });
-    document.querySelectorAll("[data-nav]").forEach((btn) => btn.addEventListener("click", () => { const href = btn.getAttribute("data-nav"); if (href) window.location.href = href; }));
 
-    document.getElementById("page-back")?.addEventListener("click", () => {
-      if (document.referrer && document.referrer.includes("search_resume.html")) history.back();
-      else window.location.href = "./search_resume.html";
-    });
+    (function initResumePageBack() {
+      const params = new URLSearchParams(window.location.search);
+      const fromApps = params.get("from") === "apps";
+      const btn = document.getElementById("page-back");
+      if (!btn) return;
+      if (fromApps) {
+        btn.textContent = "← Назад к откликам";
+        btn.addEventListener("click", () => {
+          const p = new URLSearchParams(window.location.search);
+          const v = p.get("view");
+          window.location.href =
+            v === "manager" || v === "employee"
+              ? "./applications.html?view=" + encodeURIComponent(v)
+              : "./applications.html";
+        });
+      } else {
+        btn.addEventListener("click", () => {
+          if (document.referrer && document.referrer.includes("search_resume.html")) history.back();
+          else window.location.href = "./search_resume.html";
+        });
+      }
+    })();
 
     function esc(v) { return String(v == null ? "" : v).replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m])); }
     function mapResumeTypeCard(v) {
@@ -377,41 +465,163 @@
     }
 
     let inviteResumeNumericId = null;
+    let _cardModalMode = "invite";
+    let _applyResumeSingleId = null;
 
-    async function openInviteModalCard(resumeIdNum, rd, skillMap) {
+    function setInviteNoVacanciesMessage(isApply) {
+      const noVac = document.getElementById("invite-no-vacancies-card");
+      if (!noVac) return;
+      noVac.textContent = isApply
+        ? "Открытых вакансий не найдено. Загляните в поиск проектов."
+        : "Нет свободных слотов в активных проектах. Создайте вакансию в проекте или верните проект со статуса паузы.";
+    }
+
+    async function fetchRolesMapForCard() {
+      const map = {};
+      try {
+        const r = await fetch(API_BASE_URL + "/roles_dictionary", { credentials: "include" });
+        if (!r.ok) return map;
+        const arr = await r.json();
+        if (Array.isArray(arr)) arr.forEach((x) => { if (x && x.id != null) map[String(x.id)] = x.name || ""; });
+      } catch (_) {}
+      return map;
+    }
+
+    function openInviteModalCard(resumeIdNum) {
+      _cardModalMode = "invite";
       inviteResumeNumericId = resumeIdNum;
+      _applyResumeSingleId = null;
       const modal = document.getElementById("invite-modal-card");
+      const titleEl = document.getElementById("invite-modal-card-title");
       const labelEl = document.getElementById("invite-resume-label-card");
       const prevEl = document.getElementById("invite-resume-preview-card");
       const sel = document.getElementById("invite-vacancy-select-card");
       const noVac = document.getElementById("invite-no-vacancies-card");
-      if (labelEl) labelEl.textContent = rd.desired_position || "Резюме";
-      if (prevEl) prevEl.innerHTML = resumePreviewCells(rd, skillMap);
-      if (noVac) noVac.style.display = "none";
+      const applyResumeField = document.getElementById("apply-resume-field-card");
+      const noMyRes = document.getElementById("apply-no-my-resumes-card");
+      const confirmBtn = document.getElementById("invite-confirm-card");
+      if (modal) modal.setAttribute("aria-label", "Откликнуться");
+      if (titleEl) titleEl.textContent = "Откликнуться";
+      if (labelEl) {
+        labelEl.hidden = true;
+        labelEl.textContent = "";
+      }
+      if (prevEl) {
+        prevEl.hidden = true;
+        prevEl.innerHTML = "";
+      }
+      if (applyResumeField) applyResumeField.style.display = "none";
+      if (noMyRes) noMyRes.style.display = "none";
+      if (confirmBtn) confirmBtn.textContent = "Откликнуться";
+      if (noVac) { noVac.style.display = "none"; setInviteNoVacanciesMessage(false); }
       if (modal) modal.classList.add("open");
       if (sel) sel.innerHTML = '<option value="">Загрузка…</option>';
+      (async () => {
+        try {
+          const r = await fetch(API_BASE_URL + "/my_recruiting_vacancies", { credentials: "include" });
+          if (r.status === 401) {
+            window.alert("Войдите в аккаунт работодателя.");
+            modal?.classList.remove("open");
+            return;
+          }
+          if (!r.ok) {
+            if (sel) sel.innerHTML = '<option value="">Ошибка загрузки</option>';
+            return;
+          }
+          const opts = await r.json();
+          if (!Array.isArray(opts) || opts.length === 0) {
+            if (sel) sel.innerHTML = '<option value="">Нет вакансий</option>';
+            if (noVac) noVac.style.display = "block";
+            return;
+          }
+          if (sel) {
+            sel.innerHTML = '<option value="">Выберите вакансию</option>' +
+              opts.map((o) => {
+                const vid = Number(o.vacancy_id);
+                const label = (o.project_title || "Проект") + " · " + (o.role_name || "Должность");
+                return `<option value="${vid}">${esc(label)}</option>`;
+              }).join("");
+          }
+        } catch {
+          if (sel) sel.innerHTML = '<option value="">Ошибка соединения</option>';
+        }
+      })();
+    }
+
+    async function openApplyFromResumeCardModal() {
+      _cardModalMode = "apply";
+      inviteResumeNumericId = null;
+      _applyResumeSingleId = null;
+      const modal = document.getElementById("invite-modal-card");
+      const titleEl = document.getElementById("invite-modal-card-title");
+      const subEl = document.getElementById("invite-resume-label-card");
+      const prevEl = document.getElementById("invite-resume-preview-card");
+      const sel = document.getElementById("invite-vacancy-select-card");
+      const noVac = document.getElementById("invite-no-vacancies-card");
+      const applyResumeField = document.getElementById("apply-resume-field-card");
+      const applyResumeSel = document.getElementById("apply-resume-select-card");
+      const noMyRes = document.getElementById("apply-no-my-resumes-card");
+      const confirmBtn = document.getElementById("invite-confirm-card");
+      if (modal) modal.setAttribute("aria-label", "Откликнуться");
+      if (titleEl) titleEl.textContent = "Откликнуться";
+      if (subEl) subEl.hidden = true;
+      if (prevEl) { prevEl.hidden = true; prevEl.innerHTML = ""; }
+      if (noVac) { noVac.style.display = "none"; setInviteNoVacanciesMessage(true); }
+      if (noMyRes) noMyRes.style.display = "none";
+      if (confirmBtn) confirmBtn.textContent = "Откликнуться";
+      if (applyResumeField) applyResumeField.style.display = "none";
+      if (modal) modal.classList.add("open");
+      if (sel) sel.innerHTML = '<option value="">Загрузка…</option>';
+      if (applyResumeSel) applyResumeSel.innerHTML = "";
       try {
-        const r = await fetch(API_BASE_URL + "/my_recruiting_vacancies", { credentials: "include" });
-        if (r.status === 401) {
-          window.alert("Войдите в аккаунт работодателя.");
-          modal?.classList.remove("open");
+        const rm = await fetch(API_BASE_URL + "/my_resumes", { credentials: "include" });
+        if (rm.status === 401) {
+          window.location.href = "./authorization_page.html";
           return;
         }
-        if (!r.ok) {
+        const resumes = rm.ok ? await rm.json() : [];
+        const active = Array.isArray(resumes) ? resumes.filter((x) => x.status === "looking_for_job") : [];
+        if (active.length === 0) {
+          if (applyResumeSel) applyResumeSel.innerHTML = "";
+          if (applyResumeField) applyResumeField.style.display = "none";
+          if (noMyRes) noMyRes.style.display = "block";
+          if (sel) sel.innerHTML = '<option value="">Нет резюме</option>';
+          return;
+        }
+        if (active.length === 1) {
+          _applyResumeSingleId = Number(active[0].id);
+          if (applyResumeField) applyResumeField.style.display = "none";
+        } else {
+          _applyResumeSingleId = null;
+          if (applyResumeField) applyResumeField.style.display = "";
+          if (applyResumeSel) {
+            applyResumeSel.innerHTML = active.map((x) => {
+              const id = Number(x.id);
+              const lab = x.desired_position || ("Резюме №" + id);
+              return `<option value="${id}">${esc(lab)}</option>`;
+            }).join("");
+          }
+        }
+        const [vacRes, rolesMap] = await Promise.all([
+          fetch(API_BASE_URL + "/vacancies?per_page=50&page=1", { credentials: "include" }),
+          fetchRolesMapForCard(),
+        ]);
+        if (!vacRes.ok) {
           if (sel) sel.innerHTML = '<option value="">Ошибка загрузки</option>';
           return;
         }
-        const opts = await r.json();
-        if (!Array.isArray(opts) || opts.length === 0) {
-          if (sel) sel.innerHTML = '<option value="">— нет —</option>';
+        const vacancies = await vacRes.json();
+        if (!Array.isArray(vacancies) || vacancies.length === 0) {
+          if (sel) sel.innerHTML = '<option value="">Нет вакансий</option>';
           if (noVac) noVac.style.display = "block";
           return;
         }
         if (sel) {
-          sel.innerHTML = '<option value="">— выберите вакансию —</option>' +
-            opts.map((o) => {
-              const vid = Number(o.vacancy_id);
-              const label = (o.project_title || "Проект") + " · " + (o.role_name || "Должность");
+          sel.innerHTML = '<option value="">Выберите вакансию</option>' +
+            vacancies.map((v) => {
+              const vid = Number(v.vacancy_id);
+              const roleName = rolesMap[String(v.role_type_id)] || "Должность";
+              const label = (v.project_title || "Проект") + " · " + roleName;
               return `<option value="${vid}">${esc(label)}</option>`;
             }).join("");
         }
@@ -423,6 +633,17 @@
     function closeInviteModalCard() {
       document.getElementById("invite-modal-card")?.classList.remove("open");
       inviteResumeNumericId = null;
+      _cardModalMode = "invite";
+      _applyResumeSingleId = null;
+      const subEl = document.getElementById("invite-resume-label-card");
+      if (subEl) { subEl.textContent = ""; subEl.hidden = true; }
+      const prevEl = document.getElementById("invite-resume-preview-card");
+      if (prevEl) { prevEl.innerHTML = ""; prevEl.hidden = true; }
+      const applyResumeField = document.getElementById("apply-resume-field-card");
+      if (applyResumeField) applyResumeField.style.display = "none";
+      const noMyRes = document.getElementById("apply-no-my-resumes-card");
+      if (noMyRes) noMyRes.style.display = "none";
+      setInviteNoVacanciesMessage(false);
     }
 
     document.getElementById("invite-cancel-card")?.addEventListener("click", closeInviteModalCard);
@@ -433,8 +654,39 @@
     document.getElementById("invite-confirm-card")?.addEventListener("click", async () => {
       const sel = document.getElementById("invite-vacancy-select-card");
       const vacancyId = sel ? sel.value : "";
-      if (!vacancyId || inviteResumeNumericId == null) return;
       const btn = document.getElementById("invite-confirm-card");
+      if (!vacancyId) return;
+      if (_cardModalMode === "apply") {
+        let resumeId = _applyResumeSingleId;
+        const applySel = document.getElementById("apply-resume-select-card");
+        const applyField = document.getElementById("apply-resume-field-card");
+        if (applyField && applyField.style.display !== "none" && applySel && applySel.value) {
+          resumeId = Number(applySel.value);
+        }
+        if (resumeId == null || !Number.isFinite(Number(resumeId))) return;
+        if (btn) btn.disabled = true;
+        try {
+          const r = await fetch(API_BASE_URL + "/applications", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ resume_id: Number(resumeId), vacancy_id: Number(vacancyId) }),
+          });
+          if (r.ok) {
+            closeInviteModalCard();
+            window.alert("Отклик отправлен.");
+          } else {
+            const err = await r.json().catch(() => ({}));
+            const line = tpFormatApiDetail(err.detail) || "Не удалось отправить отклик";
+            window.alert(typeof tpUserFacingErrorLine === "function" ? tpUserFacingErrorLine(line) : line);
+          }
+        } catch {
+          window.alert("Ошибка соединения с сервером");
+        }
+        if (btn) btn.disabled = false;
+        return;
+      }
+      if (inviteResumeNumericId == null) return;
       if (btn) btn.disabled = true;
       try {
         const r = await fetch(API_BASE_URL + "/vacancies/" + encodeURIComponent(vacancyId) + "/invite_resume", {
@@ -445,10 +697,11 @@
         });
         if (r.ok) {
           closeInviteModalCard();
-          window.alert("Приглашение отправлено.");
+          window.alert("Отклик отправлен.");
         } else {
           const err = await r.json().catch(() => ({}));
-          window.alert("Ошибка: " + (typeof err.detail === "string" ? err.detail : "Не удалось отправить"));
+          const line = tpFormatApiDetail(err.detail) || "Не удалось отправить отклик";
+          window.alert(typeof tpUserFacingErrorLine === "function" ? tpUserFacingErrorLine(line) : line);
         }
       } catch {
         window.alert("Ошибка соединения с сервером");
@@ -458,9 +711,13 @@
 
     document.getElementById("resume-invite-open")?.addEventListener("click", () => {
       const pid = new URLSearchParams(window.location.search).get("id");
-      if (!pid || !window._tpCardResumePayload) return;
-      const { resumeData: rd, skillMap: sm } = window._tpCardResumePayload;
-      openInviteModalCard(parseInt(pid, 10), rd, sm);
+      if (!pid) return;
+      const role = resolveTpRole("Ищу сотрудника");
+      if (role === "Ищу сотрудника") {
+        openInviteModalCard(parseInt(pid, 10));
+      } else {
+        openApplyFromResumeCardModal();
+      }
     });
 
     let skillsCatalogCache = null;
@@ -521,7 +778,7 @@
           const pr = await fetch(API_BASE_URL + "/profiles/" + encodeURIComponent(userId), { credentials: "include" });
           if (pr.ok) {
             const pj = await pr.json();
-            if (pj.avatar) avatarEl.src = pj.avatar;
+            if (pj.avatar) avatarEl.src = tpAvatarSrcFromApiField(pj.avatar);
             else avatarEl.src = "./assets/avatar-default.png";
           }
         } catch (_) {
@@ -544,7 +801,10 @@
             const meR = await fetch(API_BASE_URL + "/profiles/me", { credentials: "include" });
             if (meR.ok) {
               const me = await meR.json();
-              if (Number(me.user_id) !== Number(userId)) bar.hidden = false;
+              if (Number(me.user_id) !== Number(userId)) {
+                bar.hidden = false;
+                refreshResumeActionBar();
+              }
             }
           } catch (_) {}
         }
@@ -591,8 +851,34 @@
         ["GitHub", contacts.github || "—"],
       ];
       const contactsEl = document.getElementById("resume-contacts");
-      if (contactsEl) {
+      const contactsSection = document.getElementById("resume-contacts-section");
+
+      async function employerHasApplicationForResume(resumeNumericId) {
+        try {
+          const r = await fetch(API_BASE_URL + "/employer/applications?per_page=100", { credentials: "include" });
+          if (!r.ok) return false;
+          const apps = await r.json();
+          if (!Array.isArray(apps)) return false;
+          const rid = Number(resumeNumericId);
+          return apps.some((a) => a && Number(a.resume_id) === rid);
+        } catch (_) {
+          return false;
+        }
+      }
+
+      let showContactsBlock = true;
+      const resumeNumId = parseInt(id, 10);
+      if (bar && userId && !bar.hidden) {
+        showContactsBlock = await employerHasApplicationForResume(resumeNumId);
+      }
+
+      if (contactsSection) {
+        contactsSection.style.display = showContactsBlock ? "" : "none";
+      }
+      if (contactsEl && showContactsBlock) {
         contactsEl.innerHTML = contactsRows.map((f) => `<div class="field"><b>${esc(f[0])}:</b>${esc(f[1])}</div>`).join("");
+      } else if (contactsEl) {
+        contactsEl.innerHTML = "";
       }
     }
 
