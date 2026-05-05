@@ -17,7 +17,6 @@ attrs==25.4.0
 bcrypt==5.0.0
 billiard==4.2.0
 black==26.1.0
-aiobotocore==2.18.0
 celery==5.4.0
 certifi==2026.1.4
 cffi==2.0.0

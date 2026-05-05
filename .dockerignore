@@ -2,20 +2,12 @@
 .github/
 
 __pycache__/
-**/__pycache__/
 *.pyc
 *.pyo
 *.pyd
 .pytest_cache/
-**/.pytest_cache/
 .mypy_cache/
 .ruff_cache/
-.pytype/
-.hypothesis/
-htmlcov/
-.coverage
-coverage.xml
-*.cover
 
 .env
 .env.*
@@ -24,29 +16,12 @@ coverage.xml
 *.db
 
 venv/
-**/venv/
 env/
-**/env/
 .venv/
-**/.venv/
-
-node_modules/
-**/node_modules/
-
-.idea/
-.vscode/
-.DS_Store
-
-*.egg-info/
-dist/
-build/
 
 *.pdf
 *.docx
 
 tests/
-infra/
-
-pytest.ini
 
 *.md
