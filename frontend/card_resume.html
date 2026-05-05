@@ -244,7 +244,7 @@
 <main class="page">
   <p class="page-back-row"><button type="button" class="page-back-btn" id="page-back">← Назад к поиску</button></p>
   <div class="invite-action-bar" id="resume-invite-bar" hidden>
-    <button type="button" class="action-btn action-btn--accent" id="resume-invite-open">Пригласить кандидата</button>
+    <button type="button" class="action-btn action-btn--accent" id="resume-invite-open">Откликнуться</button>
   </div>
   <section class="card section" id="resume-active-project-card" style="display:none;">
     <h2>Текущий проект</h2>
@@ -294,11 +294,14 @@
         <label for="apply-resume-select-card">Выберите резюме</label>
         <select id="apply-resume-select-card"></select>
       </div>
-      <div id="apply-no-my-resumes-card" style="display:none;margin-top:10px;padding:12px 14px;border-radius:14px;background:#fff5f5;border:1px solid #ffcdd2;color:#b71c1c;font-size:13px;line-height:1.45;">
-        У вас нет активных резюме. <a href="./create_resume_com.html" style="color:#f85a0b;font-weight:700;">Создайте резюме</a>.
+      <div id="apply-no-my-resumes-card" style="display:none;margin-top:10px;padding:12px 14px;border-radius:14px;background:#fff8e6;border:1px solid #ffe082;color:#6d4c41;font-size:13px;line-height:1.45;">
+        У вас нет активных резюме в статусе «Ищу работу». <a id="apply-my-resumes-link-card" href="./employee_resumes.html" style="color:#f85a0b;font-weight:700;">Мои резюме</a>.
       </div>
       <div class="field" id="invite-vacancy-field-card" style="margin-top:14px;">
         <select id="invite-vacancy-select-card" aria-label="Выберите вакансию"></select>
+      </div>
+      <div id="invite-no-projects-card" style="display:none;margin-top:10px;padding:12px 14px;border-radius:14px;background:#fff8e6;border:1px solid #ffe082;color:#6d4c41;font-size:13px;line-height:1.45;">
+        У вас нет активных проектов. <a id="invite-my-projects-link-card" href="./employer_projects.html" class="resume-ap-link">Мои проекты</a>.
       </div>
       <div id="invite-no-vacancies-card" style="display:none;margin-top:10px;padding:12px 14px;border-radius:14px;background:#fff8e6;border:1px solid #ffe082;color:#6d4c41;font-size:13px;line-height:1.45;">
         Нет свободных слотов в активных проектах. Создайте вакансию в проекте или верните проект со статуса паузы.
@@ -362,8 +365,7 @@
       const bar = document.getElementById("resume-invite-bar");
       const btn = document.getElementById("resume-invite-open");
       if (!bar || !btn || bar.hidden) return;
-      const role = resolveTpRole("Ищу сотрудника");
-      btn.textContent = role === "Ищу сотрудника" ? "Пригласить кандидата" : "Откликнуться";
+      btn.textContent = "Откликнуться";
     }
     function syncRoleAndMenuFromStorage(defaultRole) {
       const role = resolveTpRole(defaultRole);
@@ -527,11 +529,12 @@
       const prevEl = document.getElementById("invite-resume-preview-card");
       const sel = document.getElementById("invite-vacancy-select-card");
       const noVac = document.getElementById("invite-no-vacancies-card");
+      const noProj = document.getElementById("invite-no-projects-card");
       const applyResumeField = document.getElementById("apply-resume-field-card");
       const noMyRes = document.getElementById("apply-no-my-resumes-card");
       const confirmBtn = document.getElementById("invite-confirm-card");
-      if (modal) modal.setAttribute("aria-label", "Пригласить кандидата");
-      if (titleEl) titleEl.textContent = "Пригласить кандидата";
+      if (modal) modal.setAttribute("aria-label", "Откликнуться");
+      if (titleEl) titleEl.textContent = "Откликнуться";
       if (labelEl) {
         labelEl.hidden = true;
         labelEl.textContent = "";
@@ -542,12 +545,29 @@
       }
       if (applyResumeField) applyResumeField.style.display = "none";
       if (noMyRes) noMyRes.style.display = "none";
-      if (confirmBtn) confirmBtn.textContent = "Пригласить";
+      if (noProj) noProj.style.display = "none";
+      if (confirmBtn) {
+        confirmBtn.textContent = "Откликнуться";
+        confirmBtn.disabled = false;
+      }
       if (noVac) { noVac.style.display = "none"; setInviteNoVacanciesMessage(false); }
       if (modal) modal.classList.add("open");
       if (sel) sel.innerHTML = '<option value="">Загрузка…</option>';
       (async () => {
         try {
+          const mp = await fetch(API_BASE_URL + "/my_projects", { credentials: "include" });
+          if (mp.status === 401) {
+            window.alert("Войдите в аккаунт работодателя.");
+            modal?.classList.remove("open");
+            return;
+          }
+          const projects = mp.ok ? await mp.json() : [];
+          if (!Array.isArray(projects) || projects.length === 0) {
+            if (sel) sel.innerHTML = '<option value="">Нет активных проектов</option>';
+            if (noProj) noProj.style.display = "block";
+            if (confirmBtn) confirmBtn.disabled = true;
+            return;
+          }
           const r = await fetch(API_BASE_URL + "/my_recruiting_vacancies", { credentials: "include" });
           if (r.status === 401) {
             window.alert("Войдите в аккаунт работодателя.");
@@ -556,14 +576,17 @@
           }
           if (!r.ok) {
             if (sel) sel.innerHTML = '<option value="">Ошибка загрузки</option>';
+            if (confirmBtn) confirmBtn.disabled = true;
             return;
           }
           const opts = await r.json();
           if (!Array.isArray(opts) || opts.length === 0) {
             if (sel) sel.innerHTML = '<option value="">Нет вакансий</option>';
             if (noVac) noVac.style.display = "block";
+            if (confirmBtn) confirmBtn.disabled = true;
             return;
           }
+          if (confirmBtn) confirmBtn.disabled = false;
           if (sel) {
             sel.innerHTML = '<option value="">Выберите вакансию</option>' +
               opts.map((o) => {
@@ -574,6 +597,7 @@
           }
         } catch {
           if (sel) sel.innerHTML = '<option value="">Ошибка соединения</option>';
+          if (confirmBtn) confirmBtn.disabled = true;
         }
       })();
     }
@@ -591,12 +615,14 @@
       const applyResumeField = document.getElementById("apply-resume-field-card");
       const applyResumeSel = document.getElementById("apply-resume-select-card");
       const noMyRes = document.getElementById("apply-no-my-resumes-card");
+      const noProj = document.getElementById("invite-no-projects-card");
       const confirmBtn = document.getElementById("invite-confirm-card");
       if (modal) modal.setAttribute("aria-label", "Откликнуться");
       if (titleEl) titleEl.textContent = "Откликнуться";
       if (subEl) subEl.hidden = true;
       if (prevEl) { prevEl.hidden = true; prevEl.innerHTML = ""; }
       if (noVac) { noVac.style.display = "none"; setInviteNoVacanciesMessage(true); }
+      if (noProj) noProj.style.display = "none";
       if (noMyRes) noMyRes.style.display = "none";
       if (confirmBtn) confirmBtn.textContent = "Откликнуться";
       if (applyResumeField) applyResumeField.style.display = "none";
@@ -615,7 +641,7 @@
           if (applyResumeSel) applyResumeSel.innerHTML = "";
           if (applyResumeField) applyResumeField.style.display = "none";
           if (noMyRes) noMyRes.style.display = "block";
-          if (sel) sel.innerHTML = '<option value="">Нет резюме</option>';
+          if (sel) sel.innerHTML = '<option value="">Нет активных резюме</option>';
           return;
         }
         if (active.length === 1) {
@@ -676,6 +702,8 @@
       if (applyResumeField) applyResumeField.style.display = "none";
       const noMyRes = document.getElementById("apply-no-my-resumes-card");
       if (noMyRes) noMyRes.style.display = "none";
+      const noProj = document.getElementById("invite-no-projects-card");
+      if (noProj) noProj.style.display = "none";
       setInviteNoVacanciesMessage(false);
     }
 
@@ -730,10 +758,10 @@
         });
         if (r.ok) {
           closeInviteModalCard();
-          window.alert("Приглашение отправлено.");
+          window.alert("Отклик отправлен.");
         } else {
           const err = await r.json().catch(() => ({}));
-          const line = tpFormatApiDetail(err.detail) || "Не удалось отправить приглашение";
+          const line = tpFormatApiDetail(err.detail) || "Не удалось отправить отклик";
           window.alert(typeof tpUserFacingErrorLine === "function" ? tpUserFacingErrorLine(line) : line);
         }
       } catch {

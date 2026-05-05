@@ -214,7 +214,7 @@ function tpFormatApiDetail(detail) {
     const uniq = [...new Set(parts)];
     const onlyNameHints = uniq.every((p) => p === "Укажите имя" || p === "Укажите фамилию");
     if (onlyNameHints && uniq.includes("Укажите имя")) {
-      return "Укажите имя";
+      return "Заполните полностью данные в Личном кабинете";
     }
     return uniq.join("; ");
   }

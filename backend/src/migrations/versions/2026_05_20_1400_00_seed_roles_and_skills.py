@@ -45,7 +45,6 @@ SKILL_NAMES = (
     "HTML/CSS",
 )
 
-# Названия до 50 символов (ограничение cities.title)
 CITY_TITLES = (
     "Москва",
     "Санкт-Петербург",
@@ -101,7 +100,6 @@ CITY_TITLES = (
     "Мурманск",
 )
 
-# Алиасы навыков: (каноническое имя из SKILL_NAMES, текст алиаса)
 SKILL_ALIAS_SEEDS = (
     ("JavaScript", "JS"),
     ("JavaScript", "Java Script"),
@@ -116,28 +114,56 @@ SKILL_ALIAS_SEEDS = (
 
 def upgrade() -> None:
     conn = op.get_bind()
+    if conn.dialect.name == "postgresql":
+        for tbl in ("roles_dictionary", "skills", "cities", "skill_aliases"):
+            conn.execute(
+                sa.text(
+                    f"SELECT setval(pg_get_serial_sequence('{tbl}', 'id'), "
+                    f"COALESCE((SELECT MAX(id) FROM {tbl}), 1), "
+                    f"(SELECT MAX(id) FROM {tbl}) IS NOT NULL)",
+                ),
+            )
     for name in ROLE_NAMES:
         conn.execute(
             sa.text(
-                "INSERT INTO roles_dictionary (name, is_active) "
-                "VALUES (:name, true) ON CONFLICT (name) DO NOTHING",
+                "INSERT INTO roles_dictionary (name, is_active) SELECT :name, true "
+                "WHERE NOT EXISTS (SELECT 1 FROM roles_dictionary r WHERE r.name = :name)",
             ).bindparams(name=name),
         )
     for name in SKILL_NAMES:
-        conn.execute(sa.text("INSERT INTO skills (name) VALUES (:name) ON CONFLICT (name) DO NOTHING").bindparams(name=name))
+        conn.execute(
+            sa.text(
+                "INSERT INTO skills (name) SELECT :name "
+                "WHERE NOT EXISTS (SELECT 1 FROM skills s WHERE s.name = :name)",
+            ).bindparams(name=name),
+        )
     for title in CITY_TITLES:
         conn.execute(
-            sa.text("INSERT INTO cities (title) VALUES (:title) ON CONFLICT (title) DO NOTHING").bindparams(title=title),
+            sa.text(
+                "INSERT INTO cities (title) SELECT :t "
+                "WHERE NOT EXISTS (SELECT 1 FROM cities c WHERE c.title = :t)",
+            ).bindparams(t=title),
         )
     for skill_name, alias in SKILL_ALIAS_SEEDS:
         conn.execute(
             sa.text(
                 "INSERT INTO skill_aliases (skill_id, alias) "
                 "SELECT s.id, :alias FROM skills s WHERE s.name = :skill_name "
-                "ON CONFLICT (skill_id, alias) DO NOTHING",
+                "AND NOT EXISTS ("
+                "SELECT 1 FROM skill_aliases sa WHERE sa.skill_id = s.id AND sa.alias = :alias"
+                ")",
             ).bindparams(alias=alias, skill_name=skill_name),
         )
+    if conn.dialect.name == "postgresql":
+        for tbl in ("roles_dictionary", "skills", "cities", "skill_aliases"):
+            conn.execute(
+                sa.text(
+                    f"SELECT setval(pg_get_serial_sequence('{tbl}', 'id'), "
+                    f"COALESCE((SELECT MAX(id) FROM {tbl}), 1), "
+                    f"(SELECT MAX(id) FROM {tbl}) IS NOT NULL)",
+                ),
+            )
 
 
 def downgrade() -> None:
-    """Seed left in DB: строки могут быть уже связаны с вакансиями/резюме."""
+    pass

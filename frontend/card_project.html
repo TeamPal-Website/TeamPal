@@ -398,7 +398,7 @@
         <select id="apply-resume-select-project" aria-label="Выберите резюме"></select>
       </div>
       <div id="apply-no-resumes-project" style="display:none;margin-top:10px;padding:12px 14px;border-radius:14px;background:#fff8e6;border:1px solid #ffe082;color:#6d4c41;font-size:13px;line-height:1.45;">
-        У вас нет активных резюме в статусе «Ищу работу». <a id="apply-create-resume-link-project" href="./create_resume_com.html" style="color:#f85a0b;font-weight:700;">Создайте резюме</a>.
+        У вас нет активных резюме в статусе «Ищу работу». <a id="apply-create-resume-link-project" href="./employee_resumes.html" style="color:#f85a0b;font-weight:700;">Мои резюме</a>.
       </div>
     </div>
     <div class="tp-modal__footer">
@@ -526,11 +526,6 @@
         applyVacancyLabelProject.textContent = "";
         applyVacancyLabelProject.hidden = true;
       }
-      const createLink = document.getElementById("apply-create-resume-link-project");
-      if (createLink) {
-        createLink.href = _projectCardEmploymentIntent === "commercial" ? "./create_resume_com.html" : "./create_resume_study.html";
-      }
-      if (applyResumeSelectProject) applyResumeSelectProject.innerHTML = '<option value="">Загрузка…</option>';
       if (applyNoResumesProject) applyNoResumesProject.style.display = "none";
       const confirmBtn = document.getElementById("apply-confirm-project");
       if (confirmBtn) confirmBtn.disabled = true;
@@ -709,9 +704,7 @@
     async function loadData() {
       const params = new URLSearchParams(window.location.search);
       const id = params.get("id") || params.get("project");
-      const catalogView = params.get("catalog") === "1";
       const fromApps = params.get("from") === "apps";
-      const fromProjectsClosedArchive = params.get("from") === "projects" && params.get("closed") === "1";
       if (!id) {
         document.getElementById("project-sub").textContent = "ID проекта не указан";
         return;
@@ -748,13 +741,10 @@
         const allowApplicantApply = project.status === "active" && !isOwner && !isParticipant;
 
         document.getElementById("project-title").textContent = project.title || "Без названия";
-        document.getElementById("project-sub").textContent = fromApps
-          ? mapIntent(project.employment_intent)
-          : (project.company_name ? project.company_name + " • " : "") + mapIntent(project.employment_intent);
+        document.getElementById("project-sub").textContent = mapIntent(project.employment_intent);
         document.getElementById("project-description").textContent = project.description || "Описание не заполнено";
         document.getElementById("project-tasks").textContent = project.tasks || "Задачи не заполнены";
 
-        const showVisitorChrome = !isOwner && !isParticipant;
         const mainFieldsAll = [
           ["Тип проекта", mapIntent(project.employment_intent)],
           ["Статус", mapStatus(project.status)],
@@ -765,27 +755,15 @@
           ["Контакт", project.contact_info || project.contact || "—"],
         ];
         const hiddenForVisitorLabels = new Set(["Статус", "План участников", "Сроки", "Контакт"]);
-        let mainFields = showVisitorChrome
-          ? mainFieldsAll.filter((row) => !hiddenForVisitorLabels.has(row[0]))
-          : mainFieldsAll;
-        if (showVisitorChrome) {
-          mainFields = mainFields.filter((row) => {
-            if (row[0] === "Тип проекта") return true;
-            return !isEmptyDisplayField(row[1]);
-          });
-        }
-        if (fromApps) {
-          mainFields = [
-            ["Тип проекта", mapIntent(project.employment_intent)],
-            ["Создан", project.created_at ? new Date(project.created_at).toLocaleDateString("ru-RU") : "—"],
-          ];
-        }
+        let mainFields = mainFieldsAll.filter((row) => !hiddenForVisitorLabels.has(row[0]));
+        mainFields = mainFields.filter((row) => {
+          if (row[0] === "Тип проекта") return true;
+          return !isEmptyDisplayField(row[1]);
+        });
         document.getElementById("project-main-fields").innerHTML = mainFields.map((f) => `<div class="field"><b>${esc(f[0])}:</b>${esc(f[1])}</div>`).join("");
 
         const summarySection = document.getElementById("project-summary-section");
-        if (summarySection) {
-          summarySection.style.display = showVisitorChrome || fromApps || fromProjectsClosedArchive ? "none" : "";
-        }
+        if (summarySection) summarySection.style.display = "none";
 
         const list = document.getElementById("vacancies-list");
         const extraEl = document.getElementById("project-extra-fields");
@@ -824,7 +802,7 @@
 
         let occupiedSlots = 0;
         const projectIsCommercial = project.employment_intent === "commercial";
-        const hideVacancyEmpty = showVisitorChrome || fromApps;
+        const hideVacancyEmpty = true;
         list.innerHTML = vacancies.map((v) => {
           const users = extractUsers(v);
           const occ = v.occupant;
@@ -887,7 +865,7 @@
               ? ([occ.first_name, occ.last_name].filter(Boolean).join(" ").trim() || occ.desired_position || "Участник")
               : "";
           const removeBtn =
-            isOwner && occ && occ.resume_id != null && !catalogView
+            isOwner && occ && occ.resume_id != null
               ? `<button type="button" class="btn-remove-member" data-remove-member="${esc(String(occ.resume_id))}" data-member-label="${esc(memberLabel)}">Исключить из проекта</button>`
               : "";
           const applyBtnVac =

@@ -827,6 +827,9 @@
       <div class="field" style="margin-top:14px;">
         <select id="invite-vacancy-select" aria-label="Выберите вакансию"></select>
       </div>
+      <div id="invite-no-projects" style="display:none;margin-top:10px;padding:12px 14px;border-radius:14px;background:#fff8e6;border:1px solid #ffe082;color:#6d4c41;font-size:13px;line-height:1.45;">
+        У вас нет активных проектов. <a href="./employer_projects.html" style="color:#f85a0b;font-weight:700;">Мои проекты</a>.
+      </div>
       <div id="invite-no-vacancies" style="display:none;margin-top:10px;padding:12px 14px;border-radius:14px;background:#fff8e6;border:1px solid #ffe082;color:#6d4c41;font-size:13px;line-height:1.45;">
         Нет свободных слотов в активных проектах. Создайте вакансию в проекте или верните проект со статуса паузы.
       </div>
@@ -1260,6 +1263,8 @@
         inviteResumeLabel.textContent = "";
         inviteResumeLabel.hidden = true;
       }
+      const noProj = document.getElementById("invite-no-projects");
+      if (noProj) noProj.style.display = "none";
     }
 
     async function openInviteModal(resumeIdNum) {
@@ -1273,10 +1278,26 @@
         prevEl.innerHTML = "";
         prevEl.hidden = true;
       }
+      const noProj = document.getElementById("invite-no-projects");
+      if (noProj) noProj.style.display = "none";
+      if (inviteNoVacancies) inviteNoVacancies.style.display = "none";
       if (inviteModal) inviteModal.classList.add("open");
       if (inviteVacancySelect) inviteVacancySelect.innerHTML = '<option value="">Загрузка…</option>';
-      if (inviteNoVacancies) inviteNoVacancies.style.display = "none";
+      if (inviteConfirmBtn) inviteConfirmBtn.disabled = true;
       try {
+        const mp = await fetch(API_BASE_URL + "/my_projects", { credentials: "include" });
+        if (mp.status === 401) {
+          showNotification("Войдите в аккаунт работодателя, чтобы отправить отклик.", "warning", 4500);
+          closeInviteModal();
+          return;
+        }
+        const projects = mp.ok ? await mp.json() : [];
+        if (!Array.isArray(projects) || projects.length === 0) {
+          if (inviteVacancySelect) inviteVacancySelect.innerHTML = '<option value="">Нет активных проектов</option>';
+          if (noProj) noProj.style.display = "block";
+          if (inviteConfirmBtn) inviteConfirmBtn.disabled = true;
+          return;
+        }
         const r = await fetch(API_BASE_URL + "/my_recruiting_vacancies", { credentials: "include" });
         if (r.status === 401) {
           showNotification("Войдите в аккаунт работодателя, чтобы отправить отклик.", "warning", 4500);
@@ -1291,8 +1312,10 @@
         if (!Array.isArray(opts) || opts.length === 0) {
           if (inviteVacancySelect) inviteVacancySelect.innerHTML = '<option value="">Нет свободных вакансий</option>';
           if (inviteNoVacancies) inviteNoVacancies.style.display = "block";
+          if (inviteConfirmBtn) inviteConfirmBtn.disabled = true;
           return;
         }
+        if (inviteConfirmBtn) inviteConfirmBtn.disabled = false;
         if (inviteVacancySelect) {
           inviteVacancySelect.innerHTML =
             '<option value="">Выберите вакансию</option>' +
