@@ -2,7 +2,6 @@ import json
 import redis.asyncio as redis
 from src.config import settings
 TTL_SEC = 300
-# cities:v2 — сброс устаревшего кэша после сидов в БД (пустой список мог «залипнуть» на 300 с)
 NAMES_TO_KEY = {'cities': 'tp:cat:cities:v2', 'skills': 'tp:cat:skills', 'roles': 'tp:cat:roles'}
 _redis: redis.Redis | None = None
 
@@ -29,7 +28,6 @@ async def cached_json_list(name: str, fetch):
         raw = await r.get(key)
         if raw:
             parsed = json.loads(raw)
-            # Пустой список городов в Redis часто «залипал» до сидов — не доверяем, перечитываем БД
             if name == 'cities' and isinstance(parsed, list) and len(parsed) == 0:
                 try:
                     await r.delete(key)
@@ -40,7 +38,6 @@ async def cached_json_list(name: str, fetch):
     items = await fetch()
     out = [x.model_dump(mode='json') for x in items]
     if r:
-        # Не кэшировать пустой cities — иначе после наполнения БД снова залипнет до истечения TTL
         if name == 'cities' and len(out) == 0:
             try:
                 await r.delete(key)

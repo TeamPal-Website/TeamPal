@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Query, Query
+from fastapi import APIRouter, HTTPException, Query
 from src.api.dependencies import DBDep, UserIdDep, PageDep, PerPageDep
 from src.enums import ApplicationStatus, CancelReason, NotificationEvent, ProjectsStatus, ResumeStatus
 from src.schemas.applications import ApplicationCreate, ApplicationAdd, VacancyAssignmentAdd, EmployerInviteResume, ApplicationsBadgeCounts

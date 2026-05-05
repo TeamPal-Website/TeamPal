@@ -8,11 +8,10 @@ from src.models.resumes import ResumesOrm
 from src.schemas.project_vacancies import ProjectVacancy
 from src.schemas.projects import Project
 from src.schemas.resumes import Resume
-from src.services.application_flow import resume_has_active_assignment
 router = APIRouter(prefix='', tags=['Каталог'])
 
 @router.get('/vacancies')
-async def catalog_vacancies(db: DBDep, user_id: UserIdDep, city_id: int | None=None, employment_intent: EmploymentIntent | None=None, role_type_id: int | None=None, experience: ProjectVacancyExperience | None=None, work_format: WorkFormat | None=None, schedule: Schedule | None=None, commitment_level: CommitmentLevel | None=None, salary_type: SalaryType | None=None):
+async def catalog_vacancies(db: DBDep, _user_id: UserIdDep, city_id: int | None=None, employment_intent: EmploymentIntent | None=None, role_type_id: int | None=None, experience: ProjectVacancyExperience | None=None, work_format: WorkFormat | None=None, schedule: Schedule | None=None, commitment_level: CommitmentLevel | None=None, salary_type: SalaryType | None=None):
     filled = exists(select(VacancyAssignmentOrm.id).where(VacancyAssignmentOrm.vacancy_id == ProjectVacancyOrm.id, VacancyAssignmentOrm.released_at.is_(None)))
     q = select(ProjectVacancyOrm, ProjectsOrm).join(ProjectsOrm, ProjectsOrm.id == ProjectVacancyOrm.project_id).where(ProjectsOrm.status == ProjectsStatus.ACTIVE, ~filled)
     if city_id is not None:
@@ -91,7 +90,7 @@ async def catalog_resumes(db: DBDep, user_id: UserIdDep, employment_intent: Empl
     resumes = (await db.session.execute(q)).scalars().all()
     out: list[Resume] = []
     for r in resumes:
-        if await resume_has_active_assignment(db.session, r.id):
+        if await db.resumes.has_active_assignment(r.id):
             continue
         out.append(Resume.model_validate(r, from_attributes=True))
     return out

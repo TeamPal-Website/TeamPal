@@ -1,7 +1,5 @@
 from fastapi import APIRouter, Body
 from src.api.dependencies import UserIdDep, DBDep
-from src.database import async_session_maker
-from src.repositories.admins import AdminsRepository
 router = APIRouter(prefix='/admins', tags=['Администрирование'])
 
 @router.post('/block', summary='Блокировка пользователя', description='Блокирует пользователя по его ID. Заблокированный пользователь не сможет войти в систему. Требует авторизации.')

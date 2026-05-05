@@ -7,7 +7,7 @@ from src.models.projects import ProjectsOrm, ProjectVacancyOrm
 from src.models.profiles import ProfilesOrm
 from src.models.resumes import ResumesOrm, ResumeSkillOrm, ResumeExperienceOrm
 from src.repositories.base import BaseRepository
-from src.schemas.resumes import ActiveProjectBrief, Resume, ResumeExperienceLevelPatch
+from src.schemas.resumes import ActiveProjectBrief, Resume
 from src.schemas.search_public import ResumeSearchItem
 from src.utils.avatar_url import client_avatar_url
 

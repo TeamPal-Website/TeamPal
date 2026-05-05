@@ -11,9 +11,6 @@ from sqlalchemy import event
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlalchemy.pool import StaticPool
 from src.database import Base
-import src.models.skills
-import src.models.projects
-import src.models.roles_dictionary
 from src.main import app
 from tests.common import COMPLETE_PROFILE_JSON
 test_engine = create_async_engine('sqlite+aiosqlite://', connect_args={'check_same_thread': False}, poolclass=StaticPool)

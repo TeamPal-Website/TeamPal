@@ -1,5 +1,4 @@
 from datetime import timedelta
-import pytest
 from httpx import AsyncClient
 from src.services.auth import AuthService
 

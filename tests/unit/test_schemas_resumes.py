@@ -2,7 +2,7 @@ import pytest
 from datetime import datetime
 from pydantic import ValidationError
 from src.schemas.resumes import Resume, ResumeRequestAdd, ResumeAdd, ResumePatch
-from src.enums import EmploymentIntent, WorkFormat, ResumeStatus, CommitmentLevel
+from src.enums import EmploymentIntent, ResumeStatus, CommitmentLevel
 
 class TestResume:
 

@@ -3,7 +3,7 @@ from datetime import datetime
 from pydantic import ValidationError
 from src.schemas.projects import Project, ProjectRequestAdd, ProjectAdd, ProjectPatch
 from src.schemas.project_vacancies import ProjectVacancyRequestAdd
-from src.enums import EmploymentIntent, WorkFormat, ProjectsStatus
+from src.enums import EmploymentIntent, ProjectsStatus
 
 class TestProject:
 

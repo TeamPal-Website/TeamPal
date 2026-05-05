@@ -5,7 +5,7 @@ from src.models.projects import ProjectVacancyOrm
 from src.models.profiles import ProfilesOrm
 from src.models.resumes import ResumesOrm
 from src.repositories.base import BaseRepository
-from src.schemas.applications import VacancyAssignment, VacancyAssignmentAdd
+from src.schemas.applications import VacancyAssignment
 
 class VacancyAssignmentsRepository(BaseRepository):
     model = VacancyAssignmentsOrm

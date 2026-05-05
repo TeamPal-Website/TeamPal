@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy.exc import IntegrityError
 from src.api.dependencies import DBDep, UserIdDep, OptionalViewerIdDep, PageDep, PerPageDep, SearchQDep
-from src.api.resume_edit_policy import ACTIVE_RESUME_DETAIL, raise_if_resume_locked_for_editing
+from src.api.resume_edit_policy import ACTIVE_RESUME_DETAIL
 from src.enums import CancelReason, CommitmentLevel, EmploymentIntent, NotificationEvent, ProjectVacancyExperience, ResumeStatus, WorkFormat
 from src.schemas.notifications import NotificationAdd
 from src.schemas.resume_experiences import ResumeExperienceAdd

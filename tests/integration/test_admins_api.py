@@ -1,4 +1,3 @@
-import pytest
 from httpx import AsyncClient
 
 async def setup_admin_and_target(client: AsyncClient):

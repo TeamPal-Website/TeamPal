@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from sqlalchemy.exc import IntegrityError
-from src.api.dependencies import DBDep, UserIdDep
+from src.api.dependencies import DBDep
 from src.catalog_cache import cached_json_list, schedule_catalog_invalidate
 from src.schemas.skills import SkillAdd
 router = APIRouter(prefix='/skills', tags=['Навыки (справочник)'])
