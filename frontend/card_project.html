@@ -317,6 +317,61 @@
       background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
       color: #fff;
     }
+    /* Подтверждение исключения участника — тот же тип, что «Покинуть проект?» на др. страницах */
+    .confirm-sheet {
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 20, 20, 0.36);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2600;
+      padding: 16px;
+    }
+    .confirm-sheet.open { display: flex; }
+    .confirm-sheet__card {
+      width: min(92vw, 440px);
+      border-radius: 18px;
+      background: #fff;
+      border: 1px solid var(--line);
+      padding: 22px 24px 24px;
+      box-shadow: 0 24px 44px rgba(0, 0, 0, 0.2);
+      font-family: inherit;
+    }
+    .confirm-sheet__title {
+      font-size: 21px;
+      font-weight: 700;
+      margin: 0 0 10px;
+      color: var(--ink);
+      line-height: 1.25;
+    }
+    .confirm-sheet__text { color: #555; font-size: 15px; margin: 0 0 18px; line-height: 1.5; }
+    .confirm-sheet__actions { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+    .confirm-sheet .action-btn {
+      border: 1px solid #d1d1d1;
+      border-radius: 12px;
+      background: #fff;
+      color: #1a1a1a;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+    .confirm-sheet .action-btn:hover { border-color: #bbb; background: #fafafa; }
+    .confirm-sheet .action-btn--danger {
+      background: #fff1f0;
+      color: #c53030;
+      border-color: #f5c2c2;
+    }
+    .confirm-sheet .action-btn--danger:hover { background: #ffe0dc; color: #b91c1c; border-color: #eab3b3; }
+    .confirm-sheet .action-btn--accent {
+      border: none;
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      color: #fff;
+    }
+    .confirm-sheet .action-btn--accent:hover { filter: brightness(1.03); }
     @media (max-width: 700px) {
       .header__inner { padding: 0 16px; }
       .page { padding: 92px 14px 24px; }
@@ -388,6 +443,17 @@
 
 <div id="toast-container" class="toast-container"></div>
 
+<div class="confirm-sheet" id="confirm-modal" aria-hidden="true">
+  <div class="confirm-sheet__card" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
+    <h2 class="confirm-sheet__title" id="confirm-modal-title">Подтверждение</h2>
+    <p id="confirm-modal-text" class="confirm-sheet__text"></p>
+    <div class="confirm-sheet__actions">
+      <button type="button" class="action-btn" id="confirm-modal-cancel">Отмена</button>
+      <button type="button" class="action-btn action-btn--danger" id="confirm-modal-ok">Подтвердить</button>
+    </div>
+  </div>
+</div>
+
 <div class="tp-modal" id="apply-modal-project" aria-hidden="true">
   <div class="tp-modal__card" role="dialog" aria-modal="true" aria-label="Откликнуться">
     <div class="tp-modal__accent"></div>
@@ -407,6 +473,7 @@
 </div>
 
 <script src="./config.js"></script>
+<script src="./assets/notify-bell.js"></script>
 <script>
   (function () {
     const yearSpan = document.getElementById("year");
@@ -649,6 +716,41 @@
         setTimeout(() => el.remove(), 240);
       }, 4200);
     }
+
+    let _confirmCbProject = null;
+    function showConfirmModal(title, text, onConfirm, { danger = true, okLabel = "Подтвердить" } = {}) {
+      const modal = document.getElementById("confirm-modal");
+      if (!modal) return;
+      const titleEl = document.getElementById("confirm-modal-title");
+      const textEl = document.getElementById("confirm-modal-text");
+      const okBtn = document.getElementById("confirm-modal-ok");
+      if (!titleEl || !textEl || !okBtn) return;
+      titleEl.textContent = title;
+      textEl.textContent = text;
+      okBtn.textContent = okLabel;
+      okBtn.className = "action-btn " + (danger ? "action-btn--danger" : "action-btn--accent");
+      _confirmCbProject = onConfirm;
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+    }
+    function closeConfirmModalProject() {
+      const modal = document.getElementById("confirm-modal");
+      if (modal) {
+        modal.classList.remove("open");
+        modal.setAttribute("aria-hidden", "true");
+      }
+      _confirmCbProject = null;
+    }
+    document.getElementById("confirm-modal-cancel")?.addEventListener("click", closeConfirmModalProject);
+    document.getElementById("confirm-modal-ok")?.addEventListener("click", () => {
+      const cb = _confirmCbProject;
+      closeConfirmModalProject();
+      if (cb) cb();
+    });
+    document.getElementById("confirm-modal")?.addEventListener("click", (e) => {
+      if (e.target.id === "confirm-modal") closeConfirmModalProject();
+    });
+
     function mapIntent(v) { return v === "commercial" ? "Коммерческий" : (v === "noncommercial" ? "Некоммерческий" : "—"); }
     function mapStatus(v) { return ({ active: "Активен", paused: "Не активен", close: "Закрыт", deleted: "Удалён" })[v] || (v || "—"); }
     function mapExp(v) { return ({ none: "Без опыта", "<1": "До 1 года", "1-3": "1-3 года", "3-6": "3-6 лет", "6+": "6+ лет" })[v] || "—"; }
@@ -758,7 +860,8 @@
             const occ = v && v.occupant;
             return occ != null && occ.user_id != null && Number(occ.user_id) === myUserId;
           });
-        const allowApplicantApply = project.status === "active" && !isOwner && !isParticipant;
+        const allowApplicantApply =
+          project.status === "active" && !isOwner && !isParticipant && !fromApps;
 
         document.getElementById("project-title").textContent = project.title || "Без названия";
         document.getElementById("project-sub").textContent = mapIntent(project.employment_intent);
@@ -963,23 +1066,29 @@
       const params = new URLSearchParams(window.location.search);
       const pid = params.get("id") || params.get("project");
       if (!resumeId || !pid) return;
-      if (!window.confirm('Исключить «' + label + '» из проекта? Слот станет свободным, участник получит уведомление.')) return;
-      try {
-        const r = await fetch(API_BASE_URL + "/projects/" + encodeURIComponent(pid) + "/members/" + encodeURIComponent(resumeId), {
-          method: "DELETE",
-          credentials: "include",
-        });
-        if (r.ok) {
-          showToast("Участник исключён из проекта", "success");
-          loadData();
-        } else {
-          const err = await r.json().catch(() => ({}));
-          const msg = typeof err.detail === "string" ? err.detail : "Не удалось исключить";
-          showToast(msg, "error");
-        }
-      } catch {
-        showToast("Ошибка соединения с сервером", "error");
-      }
+      showConfirmModal(
+        "Исключить «" + label + "» из проекта?",
+        "Слот станет свободным, участник получит уведомление.",
+        async () => {
+          try {
+            const r = await fetch(API_BASE_URL + "/projects/" + encodeURIComponent(pid) + "/members/" + encodeURIComponent(resumeId), {
+              method: "DELETE",
+              credentials: "include",
+            });
+            if (r.ok) {
+              showToast("Участник исключён из проекта", "success");
+              loadData();
+            } else {
+              const err = await r.json().catch(() => ({}));
+              const msg = typeof err.detail === "string" ? err.detail : "Не удалось исключить";
+              showToast(msg, "error");
+            }
+          } catch {
+            showToast("Ошибка соединения с сервером", "error");
+          }
+        },
+        { danger: true, okLabel: "Исключить" },
+      );
     });
 
     loadData();

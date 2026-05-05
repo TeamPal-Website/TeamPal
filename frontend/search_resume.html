@@ -840,6 +840,7 @@
 </div>
 
 <script src="./config.js"></script>
+<script src="./assets/notify-bell.js"></script>
 <script src="./assets/notify-banner.js"></script>
 <script>
   (function () {
@@ -1239,35 +1240,6 @@
       }
     }
 
-    async function pollApplicationsBellBadge() {
-      const notifyBtn = document.querySelector(".notify-btn");
-      const clearBadge = () => notifyBtn?.querySelector(".notif-badge")?.remove();
-      try {
-        const resp = await fetch(API_BASE_URL + "/notifications/unread_count", { credentials: "include" });
-        if (!resp.ok) {
-          clearBadge();
-          return;
-        }
-        const data = await resp.json();
-        const count = Number(data.unread_count ?? 0);
-        if (!notifyBtn) return;
-        let badge = notifyBtn.querySelector(".notif-badge");
-        if (count > 0) {
-          if (!badge) {
-            badge = document.createElement("span");
-            badge.className = "notif-badge";
-            badge.style.cssText = "position:absolute;top:-4px;right:-4px;background:#f85a0b;color:#fff;border-radius:50%;font-size:10px;font-weight:700;min-width:18px;height:18px;padding:0 4px;display:flex;align-items:center;justify-content:center;pointer-events:none;";
-            notifyBtn.appendChild(badge);
-          }
-          badge.textContent = count > 99 ? "99+" : String(count);
-        } else if (badge) {
-          badge.remove();
-        }
-      } catch (_) {
-        document.querySelector(".notify-btn")?.querySelector(".notif-badge")?.remove();
-      }
-    }
-
     function closeInviteModal() {
       if (inviteModal) inviteModal.classList.remove("open");
       inviteResumeNumericId = null;
@@ -1388,7 +1360,7 @@
           if (r.ok) {
             closeInviteModal();
             showNotification("Отклик отправлен. Уведомление уйдёт соискателю.", "success", 4000);
-            pollApplicationsBellBadge();
+            if (typeof window.tpRefreshUnreadBell === "function") window.tpRefreshUnreadBell();
           } else {
             const err = await r.json().catch(() => ({}));
             showNotification(err.detail || "Не удалось отправить отклик", "error", 4500);
@@ -1649,8 +1621,6 @@
       await fetchResumesFromApi();
       render(vacanciesList);
       updateResumePager();
-      pollApplicationsBellBadge();
-      setInterval(pollApplicationsBellBadge, 60000);
     })();
   })();
 </script>

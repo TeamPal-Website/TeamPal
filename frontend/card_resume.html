@@ -316,6 +316,7 @@
 </footer>
 
 <script src="./config.js"></script>
+<script src="./assets/notify-bell.js"></script>
 <script>
   (function () {
     const yearSpan = document.getElementById("year");
@@ -963,9 +964,10 @@
       document.getElementById("resume-sub").textContent = subLine;
 
       const bar = document.getElementById("resume-invite-bar");
+      const fromAppsContext = new URLSearchParams(window.location.search).get("from") === "apps";
       if (bar) {
         bar.hidden = true;
-        if (userId) {
+        if (userId && !fromAppsContext) {
           try {
             const meR = await fetch(API_BASE_URL + "/profiles/me", { credentials: "include" });
             if (meR.ok) {

@@ -17,7 +17,6 @@ const API_BASE_URL = (() => {
   return loc.origin.replace(/\/+$/, "");
 })();
 
-/** Явно в window — иначе в Safari/отдельных окружениях другие скрипты видят `typeof API_BASE_URL === "undefined"`. */
 if (typeof window !== "undefined") {
   window.API_BASE_URL = API_BASE_URL;
 }
@@ -40,7 +39,6 @@ function tpMyProfileAvatarSrc(apiAvatarValue) {
   return tpAvatarSrcFromApiField(apiAvatarValue);
 }
 
-/** Аватар соискателя в списках откликов работодателя: URL из API или прямой /profiles/:userId/avatar/file. */
 function tpApplicationApplicantAvatarSrc(applicationLike) {
   if (!applicationLike || typeof tpAvatarSrcFromApiField !== "function") return "./assets/avatar-default.png";
   const raw = applicationLike.applicant_avatar_url;
@@ -54,7 +52,6 @@ function tpApplicationApplicantAvatarSrc(applicationLike) {
   return "./assets/avatar-default.png";
 }
 
-/** Подпись резюме в выпадающем списке: желаемая должность из карточки; при пустой — номер резюме; дата для различения копий. */
 function tpResumeSelectOptionLabel(r) {
   if (!r || r.id == null) return "Резюме";
   const raw = r.desired_position != null ? String(r.desired_position).trim() : "";
