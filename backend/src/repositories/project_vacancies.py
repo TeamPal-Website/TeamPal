@@ -49,9 +49,9 @@ class ProjectVacanciesRepository(BaseRepository):
 
     async def list_open_recruiting_for_profile(self, profile_id: int) -> list[dict]:
         active_vacancy_ids_sq = select(VacancyAssignmentsOrm.vacancy_id).where(VacancyAssignmentsOrm.released_at.is_(None)).scalar_subquery()
-        query = select(ProjectVacancyOrm.id, ProjectsOrm.id, ProjectsOrm.title, RolesDictionaryOrm.name).join(ProjectsOrm, ProjectsOrm.id == ProjectVacancyOrm.project_id).join(RolesDictionaryOrm, RolesDictionaryOrm.id == ProjectVacancyOrm.role_type_id).where(ProjectsOrm.profile_id == profile_id, ProjectsOrm.status == ProjectsStatus.ACTIVE, ProjectVacancyOrm.id.not_in(active_vacancy_ids_sq)).order_by(ProjectsOrm.title.asc(), ProjectVacancyOrm.id.asc())
+        query = select(ProjectVacancyOrm.id, ProjectsOrm.id, ProjectsOrm.title, ProjectsOrm.employment_intent, RolesDictionaryOrm.name).join(ProjectsOrm, ProjectsOrm.id == ProjectVacancyOrm.project_id).join(RolesDictionaryOrm, RolesDictionaryOrm.id == ProjectVacancyOrm.role_type_id).where(ProjectsOrm.profile_id == profile_id, ProjectsOrm.status == ProjectsStatus.ACTIVE, ProjectVacancyOrm.id.not_in(active_vacancy_ids_sq)).order_by(ProjectsOrm.title.asc(), ProjectVacancyOrm.id.asc())
         result = await self.session.execute(query)
-        return [{'vacancy_id': vid, 'project_id': pid, 'project_title': title, 'role_name': role_name} for vid, pid, title, role_name in result.all()]
+        return [{'vacancy_id': vid, 'project_id': pid, 'project_title': title, 'project_employment_intent': emp_intent, 'role_name': role_name} for vid, pid, title, emp_intent, role_name in result.all()]
 
     async def has_active_assignment(self, vacancy_id: int) -> bool:
         sq = select(VacancyAssignmentsOrm.id).where(VacancyAssignmentsOrm.vacancy_id == vacancy_id, VacancyAssignmentsOrm.released_at.is_(None)).exists()

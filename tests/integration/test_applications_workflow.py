@@ -42,6 +42,23 @@ async def _resume(client: AsyncClient, token: str, skill_id: int, role_type_id: 
     assert response.status_code == 200, response.text
     return response.json()['data']['resume']['id']
 
+async def _study_project(client: AsyncClient, token: str, role_id: int, skill_id: int, title: str) -> tuple[int, list[int]]:
+    _auth(client, token)
+    await _complete_profile(client)
+    payload = {'title': title, 'company_name': None, 'employment_intent': 'noncommercial', 'description': 'Описание проекта', 'tasks': 'Задачи проекта', 'vacancies': [{'role_type_id': role_id, 'experience': 'none', 'work_format': 'remote', 'schedule': '5/2', 'commitment_level': 'part_time', 'description': 'Учебная вакансия', 'skill_ids': [skill_id]}]}
+    response = await client.post('/projects', json=payload)
+    assert response.status_code == 200, response.text
+    data = response.json()['data']
+    return (data['project']['id'], [v['id'] for v in data['vacancies']])
+
+async def _resume_study(client: AsyncClient, token: str, skill_id: int, role_type_id: int) -> int:
+    _auth(client, token)
+    await _complete_profile(client)
+    payload = {'role_type_id': role_type_id, 'employment_intent': 'noncommercial', 'commitment_level': 'part_time', 'work_format': 'remote', 'schedule': '5/2', 'about_me': 'Учебное резюме', 'skill_ids': [skill_id], 'experiences': []}
+    response = await client.post('/resumes', json=payload)
+    assert response.status_code == 200, response.text
+    return response.json()['data']['resume']['id']
+
 async def _apply(client: AsyncClient, token: str, resume_id: int, vacancy_id: int) -> int:
     _auth(client, token)
     response = await client.post('/applications', json={'resume_id': resume_id, 'vacancy_id': vacancy_id})
@@ -202,3 +219,43 @@ class TestApplicationsWorkflow:
         assert response.status_code == 200
         item = await _my_application(client, applicant, application_id)
         assert item['status'] == 'accepted'
+
+    async def test_cannot_apply_commercial_resume_to_study_vacancy(self, client: AsyncClient):
+        owner = await _register(client, 'owner-studyvac')
+        applicant = await _register(client, 'applicant-studyvac')
+        role_id, skill_id = await _catalog(client, 'studyvac')
+        _, vacancies = await _study_project(client, owner, role_id, skill_id, 'Учебный проект')
+        resume_id = await _resume(client, applicant, skill_id, role_id)
+        _auth(client, applicant)
+        response = await client.post('/applications', json={'resume_id': resume_id, 'vacancy_id': vacancies[0]})
+        assert response.status_code == 400
+
+    async def test_cannot_apply_study_resume_to_commercial_vacancy(self, client: AsyncClient):
+        owner = await _register(client, 'owner-comvac')
+        applicant = await _register(client, 'applicant-comvac')
+        role_id, skill_id = await _catalog(client, 'comvac')
+        _, vacancies = await _project(client, owner, role_id, 'Коммерческий проект')
+        resume_id = await _resume_study(client, applicant, skill_id, role_id)
+        _auth(client, applicant)
+        response = await client.post('/applications', json={'resume_id': resume_id, 'vacancy_id': vacancies[0]})
+        assert response.status_code == 400
+
+    async def test_cannot_invite_study_resume_to_commercial_vacancy(self, client: AsyncClient):
+        owner = await _register(client, 'owner-inv-mix')
+        applicant = await _register(client, 'applicant-inv-mix')
+        role_id, skill_id = await _catalog(client, 'invmix')
+        _, vacancies = await _project(client, owner, role_id, 'Комм проект приглашение')
+        resume_id = await _resume_study(client, applicant, skill_id, role_id)
+        _auth(client, owner)
+        response = await client.post(f'/vacancies/{vacancies[0]}/invite_resume', json={'resume_id': resume_id})
+        assert response.status_code == 400
+
+    async def test_cannot_invite_commercial_resume_to_study_vacancy(self, client: AsyncClient):
+        owner = await _register(client, 'owner-inv-study')
+        applicant = await _register(client, 'applicant-inv-study')
+        role_id, skill_id = await _catalog(client, 'invstudy')
+        _, vacancies = await _study_project(client, owner, role_id, skill_id, 'Учебный приглашение')
+        resume_id = await _resume(client, applicant, skill_id, role_id)
+        _auth(client, owner)
+        response = await client.post(f'/vacancies/{vacancies[0]}/invite_resume', json={'resume_id': resume_id})
+        assert response.status_code == 400

@@ -294,18 +294,14 @@
         <label for="apply-resume-select-card">Выберите резюме</label>
         <select id="apply-resume-select-card"></select>
       </div>
-      <div id="apply-no-my-resumes-card" style="display:none;margin-top:10px;padding:12px 14px;border-radius:14px;background:#fff8e6;border:1px solid #ffe082;color:#6d4c41;font-size:13px;line-height:1.45;">
-        У вас нет активных резюме в статусе «Ищу работу». <a id="apply-my-resumes-link-card" href="./employee_resumes.html" style="color:#f85a0b;font-weight:700;">Мои резюме</a>.
-      </div>
+      <div id="apply-no-my-resumes-card" style="display:none;margin-top:10px;padding:12px 14px;border-radius:14px;background:#fff8e6;border:1px solid #ffe082;color:#6d4c41;font-size:13px;line-height:1.45;"></div>
       <div class="field" id="invite-vacancy-field-card" style="margin-top:14px;">
         <select id="invite-vacancy-select-card" aria-label="Выберите вакансию"></select>
       </div>
       <div id="invite-no-projects-card" style="display:none;margin-top:10px;padding:12px 14px;border-radius:14px;background:#fff8e6;border:1px solid #ffe082;color:#6d4c41;font-size:13px;line-height:1.45;">
         У вас нет активных проектов. <a id="invite-my-projects-link-card" href="./employer_projects.html" class="resume-ap-link">Мои проекты</a>.
       </div>
-      <div id="invite-no-vacancies-card" style="display:none;margin-top:10px;padding:12px 14px;border-radius:14px;background:#fff8e6;border:1px solid #ffe082;color:#6d4c41;font-size:13px;line-height:1.45;">
-        Нет свободных слотов в активных проектах. Создайте вакансию в проекте или верните проект со статуса паузы.
-      </div>
+      <div id="invite-no-vacancies-card" style="display:none;margin-top:10px;padding:12px 14px;border-radius:14px;background:#fff8e6;border:1px solid #ffe082;color:#6d4c41;font-size:13px;line-height:1.45;"></div>
     </div>
     <div class="modal__footer-bar">
       <button class="action-btn" id="invite-cancel-card" type="button">Отмена</button>
@@ -432,6 +428,39 @@
     function mapResumeTypeCard(v) {
       return v === "commercial" ? "Коммерческий проект" : (v === "noncommercial" ? "Учебный проект" : "—");
     }
+    function tpIntentAdjPlural(intent) {
+      return intent === "commercial" ? "коммерческих" : intent === "noncommercial" ? "учебных" : "подходящего типа";
+    }
+    function tpFillNoMyResumesCard(cardEl, intent) {
+      if (!cardEl) return;
+      const resumeLink =
+        '<a href="./employee_resumes.html" style="color:#f85a0b;font-weight:700;">Мои резюме</a>.';
+      if (intent === "commercial" || intent === "noncommercial") {
+        const adj = tpIntentAdjPlural(intent);
+        cardEl.innerHTML =
+          `Нет активных ${adj} резюме в статусе «Ищу работу». Создайте резюме этого типа или включите поиск работы. ${resumeLink}`;
+      } else {
+        cardEl.innerHTML =
+          `Нет активных резюме в статусе «Ищу работу». Создайте резюме или включите поиск работы. ${resumeLink}`;
+      }
+    }
+    function tpFillEmployerNoVacanciesCard(cardEl, variant, intent) {
+      if (!cardEl) return;
+      const projLink = '<a href="./employer_projects.html" class="resume-ap-link">Мои проекты</a>.';
+      const searchLink = '<a href="./search_project.html" class="resume-ap-link">поиск проектов</a>';
+      const employerNoVacLine =
+        intent === "commercial" || intent === "noncommercial"
+          ? `Нет свободных вакансий в активных ${tpIntentAdjPlural(intent)} проектах. Создайте вакансию в проекте или верните проект со статуса паузы. ${projLink}`
+          : `Нет свободных вакансий в активных проектах. Создайте вакансию в проекте или верните проект со статуса паузы. ${projLink}`;
+      if (variant === "apply_catalog") {
+        cardEl.innerHTML =
+          intent === "commercial" || intent === "noncommercial"
+            ? `Открытых вакансий в ${tpIntentAdjPlural(intent)} проектах сейчас нет. Загляните позже в ${searchLink}.`
+            : `Подходящих вакансий для ваших резюме сейчас нет. Загляните в ${searchLink}.`;
+      } else {
+        cardEl.innerHTML = employerNoVacLine;
+      }
+    }
     function mapCommit(v) { return ({ full_time: "Полный день", part_time: "Неполный день", side_project: "Подработка / гибкий формат" })[v] || "—"; }
     function mapWork(v) { return ({ remote: "Удалённо", office: "В офисе", hybrid: "Гибрид" })[v] || "—"; }
     function mapSchedule(v) { return ({ "5/2": "5/2", "2/2": "2/2", "4/2": "4/2", "3/3": "3/3" })[v] || "—"; }
@@ -500,12 +529,11 @@
     let _cardModalMode = "invite";
     let _applyResumeSingleId = null;
 
-    function setInviteNoVacanciesMessage(isApply) {
+    function resetInviteNoVacanciesCardForNextOpen() {
       const noVac = document.getElementById("invite-no-vacancies-card");
       if (!noVac) return;
-      noVac.textContent = isApply
-        ? "Открытых вакансий не найдено. Загляните в поиск проектов."
-        : "Нет свободных слотов в активных проектах. Создайте вакансию в проекте или верните проект со статуса паузы.";
+      noVac.style.display = "none";
+      tpFillEmployerNoVacanciesCard(noVac, "generic", null);
     }
 
     async function fetchRolesMapForCard() {
@@ -550,7 +578,10 @@
         confirmBtn.textContent = "Откликнуться";
         confirmBtn.disabled = false;
       }
-      if (noVac) { noVac.style.display = "none"; setInviteNoVacanciesMessage(false); }
+      if (noVac) {
+        tpFillEmployerNoVacanciesCard(noVac, "generic", null);
+        noVac.style.display = "none";
+      }
       if (modal) modal.classList.add("open");
       if (sel) sel.innerHTML = '<option value="">Загрузка…</option>';
       (async () => {
@@ -563,7 +594,7 @@
           }
           const projects = mp.ok ? await mp.json() : [];
           if (!Array.isArray(projects) || projects.length === 0) {
-            if (sel) sel.innerHTML = '<option value="">Нет активных проектов</option>';
+            if (sel) sel.innerHTML = '<option value="">—</option>';
             if (noProj) noProj.style.display = "block";
             if (confirmBtn) confirmBtn.disabled = true;
             return;
@@ -580,16 +611,32 @@
             return;
           }
           const opts = await r.json();
+          const ridIntent = window._tpCardResumePayload?.resumeData?.employment_intent;
+          const optsUse = Array.isArray(opts) && ridIntent
+            ? opts.filter((o) => o.project_employment_intent === ridIntent)
+            : opts;
           if (!Array.isArray(opts) || opts.length === 0) {
-            if (sel) sel.innerHTML = '<option value="">Нет вакансий</option>';
-            if (noVac) noVac.style.display = "block";
+            if (sel) sel.innerHTML = '<option value="">—</option>';
+            if (noVac) {
+              tpFillEmployerNoVacanciesCard(noVac, "generic", ridIntent);
+              noVac.style.display = "block";
+            }
+            if (confirmBtn) confirmBtn.disabled = true;
+            return;
+          }
+          if (!Array.isArray(optsUse) || optsUse.length === 0) {
+            if (sel) sel.innerHTML = '<option value="">—</option>';
+            if (noVac) {
+              tpFillEmployerNoVacanciesCard(noVac, "wrong_type", ridIntent);
+              noVac.style.display = "block";
+            }
             if (confirmBtn) confirmBtn.disabled = true;
             return;
           }
           if (confirmBtn) confirmBtn.disabled = false;
           if (sel) {
             sel.innerHTML = '<option value="">Выберите вакансию</option>' +
-              opts.map((o) => {
+              optsUse.map((o) => {
                 const vid = Number(o.vacancy_id);
                 const label = (o.project_title || "Проект") + " · " + (o.role_name || "Должность");
                 return `<option value="${vid}">${esc(label)}</option>`;
@@ -621,7 +668,10 @@
       if (titleEl) titleEl.textContent = "Откликнуться";
       if (subEl) subEl.hidden = true;
       if (prevEl) { prevEl.hidden = true; prevEl.innerHTML = ""; }
-      if (noVac) { noVac.style.display = "none"; setInviteNoVacanciesMessage(true); }
+      if (noVac) {
+        tpFillEmployerNoVacanciesCard(noVac, "generic", null);
+        noVac.style.display = "none";
+      }
       if (noProj) noProj.style.display = "none";
       if (noMyRes) noMyRes.style.display = "none";
       if (confirmBtn) confirmBtn.textContent = "Откликнуться";
@@ -640,8 +690,11 @@
         if (active.length === 0) {
           if (applyResumeSel) applyResumeSel.innerHTML = "";
           if (applyResumeField) applyResumeField.style.display = "none";
-          if (noMyRes) noMyRes.style.display = "block";
-          if (sel) sel.innerHTML = '<option value="">Нет активных резюме</option>';
+          if (noMyRes) {
+            tpFillNoMyResumesCard(noMyRes, window._tpCardResumePayload?.resumeData?.employment_intent);
+            noMyRes.style.display = "block";
+          }
+          if (sel) sel.innerHTML = '<option value="">—</option>';
           return;
         }
         if (active.length === 1) {
@@ -670,20 +723,29 @@
           return;
         }
         const vacancies = await vacRes.json();
-        if (!Array.isArray(vacancies) || vacancies.length === 0) {
-          if (sel) sel.innerHTML = '<option value="">Нет вакансий</option>';
-          if (noVac) noVac.style.display = "block";
+        const intentSet = new Set(active.map((x) => x.employment_intent));
+        const vacList = Array.isArray(vacancies) ? vacancies.filter((v) => intentSet.has(v.project_employment_intent)) : [];
+        if (!Array.isArray(vacList) || vacList.length === 0) {
+          if (sel) sel.innerHTML = '<option value="">—</option>';
+          if (noVac) {
+            const uniqIntents = [...intentSet];
+            const single = uniqIntents.length === 1 ? uniqIntents[0] : null;
+            tpFillEmployerNoVacanciesCard(noVac, "apply_catalog", single);
+            noVac.style.display = "block";
+          }
+          if (confirmBtn) confirmBtn.disabled = true;
           return;
         }
         if (sel) {
           sel.innerHTML = '<option value="">Выберите вакансию</option>' +
-            vacancies.map((v) => {
+            vacList.map((v) => {
               const vid = Number(v.vacancy_id);
               const roleName = rolesMap[String(v.role_type_id)] || "Должность";
               const label = (v.project_title || "Проект") + " · " + roleName;
               return `<option value="${vid}">${esc(label)}</option>`;
             }).join("");
         }
+        if (confirmBtn) confirmBtn.disabled = false;
       } catch {
         if (sel) sel.innerHTML = '<option value="">Ошибка соединения</option>';
       }
@@ -704,7 +766,7 @@
       if (noMyRes) noMyRes.style.display = "none";
       const noProj = document.getElementById("invite-no-projects-card");
       if (noProj) noProj.style.display = "none";
-      setInviteNoVacanciesMessage(false);
+      resetInviteNoVacanciesCardForNextOpen();
     }
 
     document.getElementById("invite-cancel-card")?.addEventListener("click", closeInviteModalCard);

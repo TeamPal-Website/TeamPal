@@ -5,6 +5,11 @@ from src.schemas.applications import ApplicationCreate, ApplicationAdd, VacancyA
 from src.schemas.notifications import NotificationAdd
 router = APIRouter(tags=['Отклики'])
 
+
+def _require_resume_project_intent_match(resume, project) -> None:
+    if resume.employment_intent != project.employment_intent:
+        raise HTTPException(status_code=400, detail='Тип резюме должен совпадать с типом проекта: коммерческое резюме — только коммерческие проекты, учебное — только учебные.')
+
 @router.get('/applications/badge_counts', response_model=ApplicationsBadgeCounts)
 async def applications_badge_counts(db: DBDep, user_id: UserIdDep):
     profile = await db.profiles.get_one_or_none(user_id=user_id)
@@ -43,6 +48,7 @@ async def employer_invite_resume(vacancy_id: int, db: DBDep, user_id: UserIdDep,
         raise HTTPException(status_code=409, detail='Слот уже занят')
     if await db.applications.has_blocking_application_for_user_vacancy(user_id=applicant_profile.user_id, vacancy_id=vacancy_id):
         raise HTTPException(status_code=409, detail='На эту вакансию уже есть отклик с этого аккаунта')
+    _require_resume_project_intent_match(resume, project)
     application = await db.applications.add(ApplicationAdd(resume_id=data.resume_id, vacancy_id=vacancy_id, employer_initiated=True))
     role = await db.roles_dictionary.get_one_or_none(id=vacancy.role_type_id)
     await db.notifications.create_notification(NotificationAdd(user_id=applicant_profile.user_id, event=NotificationEvent.EMPLOYER_INVITED, application_id=application.id, project_id=project.id, payload={'project_id': project.id, 'project_title': project.title, 'resume_id': data.resume_id, 'vacancy_id': vacancy_id, 'role_name': role.name if role else ''}))
@@ -73,6 +79,7 @@ async def create_application(db: DBDep, user_id: UserIdDep, data: ApplicationCre
         raise HTTPException(status_code=409, detail='Слот уже занят')
     if await db.applications.has_blocking_application_for_user_vacancy(user_id=user_id, vacancy_id=data.vacancy_id):
         raise HTTPException(status_code=409, detail='С этого аккаунта уже есть активный или отклонённый отклик на эту вакансию')
+    _require_resume_project_intent_match(resume, project)
     application = await db.applications.add(ApplicationAdd(resume_id=data.resume_id, vacancy_id=data.vacancy_id))
     owner_profile = await db.profiles.get_one_or_none(id=project.profile_id)
     if owner_profile is not None:
@@ -195,6 +202,10 @@ async def accept_application(application_id: int, db: DBDep, user_id: UserIdDep)
         raise HTTPException(status_code=409, detail='Слот уже занят')
     if await db.resumes.has_active_assignment(application.resume_id):
         raise HTTPException(status_code=409, detail='Резюме уже принято в другой проект')
+    resume_for_accept = await db.resumes.get_one_or_none(id=application.resume_id)
+    if resume_for_accept is None:
+        raise HTTPException(status_code=404, detail='Резюме не найдено')
+    _require_resume_project_intent_match(resume_for_accept, project)
     await db.applications.set_status(application_id, ApplicationStatus.ACCEPTED)
     await db.vacancy_assignments.add(VacancyAssignmentAdd(resume_id=application.resume_id, vacancy_id=application.vacancy_id, application_id=application_id))
     cancelled_ids = await db.applications.cancel_pending_for_resume(application.resume_id, CancelReason.ANOTHER_ACCEPTED)
@@ -241,6 +252,7 @@ async def accept_invitation_as_applicant(application_id: int, db: DBDep, user_id
         raise HTTPException(status_code=409, detail='Слот уже занят')
     if await db.resumes.has_active_assignment(application.resume_id):
         raise HTTPException(status_code=409, detail='Резюме уже принято в другой проект')
+    _require_resume_project_intent_match(resume, project)
     await db.applications.set_status(application_id, ApplicationStatus.ACCEPTED)
     await db.vacancy_assignments.add(VacancyAssignmentAdd(resume_id=application.resume_id, vacancy_id=application.vacancy_id, application_id=application_id))
     cancelled_ids = await db.applications.cancel_pending_for_resume(application.resume_id, CancelReason.ANOTHER_ACCEPTED)

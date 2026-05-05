@@ -730,9 +730,7 @@
       <div class="field" style="margin-top:14px;">
         <select id="apply-resume-select" aria-label="Выберите резюме"></select>
       </div>
-      <div id="apply-no-resumes" style="display:none;margin-top:10px;padding:12px 14px;border-radius:14px;background:#fff8e6;border:1px solid #ffe082;color:#6d4c41;font-size:13px;line-height:1.45;">
-        У вас нет активных резюме в статусе «Ищу работу». <a id="apply-create-resume-link" href="./employee_resumes.html" style="color:#f85a0b;font-weight:700;">Мои резюме</a>.
-      </div>
+      <div id="apply-no-resumes" style="display:none;margin-top:10px;padding:12px 14px;border-radius:14px;background:#fff8e6;border:1px solid #ffe082;color:#6d4c41;font-size:13px;line-height:1.45;"></div>
     </div>
     <div class="modal__footer-bar">
       <button class="action-btn" id="apply-cancel" type="button">Отмена</button>
@@ -793,6 +791,22 @@
       });
     }
 
+    function spIntentAdjPlural(intent) {
+      return intent === "commercial" ? "коммерческих" : intent === "noncommercial" ? "учебных" : "подходящего типа";
+    }
+    function spFillApplyNoResumes(el, catalogMode) {
+      if (!el) return;
+      const resumeLink =
+        '<a id="apply-create-resume-link" href="./employee_resumes.html" style="color:#f85a0b;font-weight:700;">Мои резюме</a>.';
+      if (catalogMode === "commercial" || catalogMode === "noncommercial") {
+        const adj = spIntentAdjPlural(catalogMode);
+        el.innerHTML =
+          `Нет активных ${adj} резюме в статусе «Ищу работу». Создайте резюме этого типа или включите поиск работы. ${resumeLink}`;
+      } else {
+        el.innerHTML =
+          `Нет активных резюме в статусе «Ищу работу». Создайте резюме или включите поиск работы. ${resumeLink}`;
+      }
+    }
     const EXP_LABELS = { none: "Без опыта", "<1": "До 1 года", "1-3": "1–3 года", "3-6": "3–6 лет", "6+": "6+ лет" };
     const WORK_LABELS = { remote: "Удалённо", office: "В офисе", hybrid: "Гибрид" };
     const INTENT_LABELS = { commercial: "Коммерческий", noncommercial: "Учебный" };
@@ -1222,11 +1236,16 @@
           return;
         }
         const resumes = await resp.json();
-        const active = Array.isArray(resumes) ? resumes.filter((r) => r.status === "looking_for_job") : [];
+        const active = Array.isArray(resumes)
+          ? resumes.filter((r) => r.status === "looking_for_job" && r.employment_intent === state.catalogMode)
+          : [];
         if (applyResumeSelect) {
           if (active.length === 0) {
-            applyResumeSelect.innerHTML = '<option value="">Нет активных резюме</option>';
-            if (applyNoResumes) applyNoResumes.style.display = "block";
+            applyResumeSelect.innerHTML = '<option value="">—</option>';
+            if (applyNoResumes) {
+              spFillApplyNoResumes(applyNoResumes, state.catalogMode);
+              applyNoResumes.style.display = "block";
+            }
             if (applyConfirmBtn) applyConfirmBtn.disabled = true;
           } else {
             applyResumeSelect.innerHTML = '<option value="">Выберите резюме</option>';

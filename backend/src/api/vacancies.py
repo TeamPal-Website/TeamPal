@@ -10,7 +10,7 @@ async def my_recruiting_vacancies(db: DBDep, user_id: UserIdDep):
     if profile is None:
         raise HTTPException(status_code=404, detail='Профиль не найден')
     rows = await db.project_vacancies.list_open_recruiting_for_profile(profile.id)
-    return [RecruitingVacancyOption(vacancy_id=r['vacancy_id'], project_id=r['project_id'], project_title=r['project_title'], role_name=r['role_name']) for r in rows]
+    return [RecruitingVacancyOption(vacancy_id=r['vacancy_id'], project_id=r['project_id'], project_title=r['project_title'], project_employment_intent=r['project_employment_intent'], role_name=r['role_name']) for r in rows]
 
 @router.get('/vacancies', response_model=list[VacancySearchItem])
 async def search_vacancies(db: DBDep, q: SearchQDep, page: PageDep=1, per_page: PerPageDep=10, city_id: int | None=Query(default=None, gt=0), employment_intent: EmploymentIntent | None=None, role_type_id: int | None=Query(default=None, gt=0), work_format: WorkFormat | None=None, commitment_level: CommitmentLevel | None=None, salary_min: int | None=Query(default=None, ge=0), salary_max: int | None=Query(default=None, ge=0), experience: ProjectVacancyExperience | None=None, contract_type: ContractType | None=None, posted_within_days: int | None=Query(default=None, ge=1, le=366)):

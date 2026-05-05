@@ -830,9 +830,7 @@
       <div id="invite-no-projects" style="display:none;margin-top:10px;padding:12px 14px;border-radius:14px;background:#fff8e6;border:1px solid #ffe082;color:#6d4c41;font-size:13px;line-height:1.45;">
         У вас нет активных проектов. <a href="./employer_projects.html" style="color:#f85a0b;font-weight:700;">Мои проекты</a>.
       </div>
-      <div id="invite-no-vacancies" style="display:none;margin-top:10px;padding:12px 14px;border-radius:14px;background:#fff8e6;border:1px solid #ffe082;color:#6d4c41;font-size:13px;line-height:1.45;">
-        Нет свободных слотов в активных проектах. Создайте вакансию в проекте или верните проект со статуса паузы.
-      </div>
+      <div id="invite-no-vacancies" style="display:none;margin-top:10px;padding:12px 14px;border-radius:14px;background:#fff8e6;border:1px solid #ffe082;color:#6d4c41;font-size:13px;line-height:1.45;"></div>
     </div>
     <div class="modal__footer-bar">
       <button class="action-btn" id="invite-cancel" type="button">Отмена</button>
@@ -1024,6 +1022,25 @@
 
     function intentLabel(intent) {
       return intent === "commercial" ? "Коммерческий" : intent === "noncommercial" ? "Учебный" : "—";
+    }
+
+    function srIntentAdjPlural(intent) {
+      return intent === "commercial" ? "коммерческих" : intent === "noncommercial" ? "учебных" : "подходящего типа";
+    }
+
+    function srFillEmployerNoVacancies(el, _variant, resumeIntent) {
+      if (!el) return;
+      const projLink = '<a href="./employer_projects.html" style="color:#f85a0b;font-weight:700;">Мои проекты</a>.';
+      el.innerHTML =
+        resumeIntent === "commercial" || resumeIntent === "noncommercial"
+          ? `Нет свободных вакансий в активных ${srIntentAdjPlural(resumeIntent)} проектах. Создайте вакансию в проекте или верните проект со статуса паузы. ${projLink}`
+          : `Нет свободных вакансий в активных проектах. Создайте вакансию в проекте или верните проект со статуса паузы. ${projLink}`;
+    }
+
+    function srResetInviteNoVacancies() {
+      if (!inviteNoVacancies) return;
+      inviteNoVacancies.style.display = "none";
+      srFillEmployerNoVacancies(inviteNoVacancies, "generic", null);
     }
 
     const EXP_LABELS = { none: "Без опыта", "<1": "До 1 года", "1-3": "1–3 года", "3-6": "3–6 лет", "6+": "6+ лет" };
@@ -1265,10 +1282,12 @@
       }
       const noProj = document.getElementById("invite-no-projects");
       if (noProj) noProj.style.display = "none";
+      srResetInviteNoVacancies();
     }
 
-    async function openInviteModal(resumeIdNum) {
+    async function openInviteModal(resumeIdNum, resumeEmploymentIntent) {
       inviteResumeNumericId = resumeIdNum;
+      const resumeIntent = resumeEmploymentIntent || "commercial";
       const prevEl = document.getElementById("invite-resume-preview");
       if (inviteResumeLabel) {
         inviteResumeLabel.textContent = "";
@@ -1280,10 +1299,13 @@
       }
       const noProj = document.getElementById("invite-no-projects");
       if (noProj) noProj.style.display = "none";
-      if (inviteNoVacancies) inviteNoVacancies.style.display = "none";
-      if (inviteModal) inviteModal.classList.add("open");
+      if (inviteNoVacancies) {
+        srFillEmployerNoVacancies(inviteNoVacancies, "generic", null);
+        inviteNoVacancies.style.display = "none";
+      }
       if (inviteVacancySelect) inviteVacancySelect.innerHTML = '<option value="">Загрузка…</option>';
       if (inviteConfirmBtn) inviteConfirmBtn.disabled = true;
+      if (inviteModal) inviteModal.classList.add("open");
       try {
         const mp = await fetch(API_BASE_URL + "/my_projects", { credentials: "include" });
         if (mp.status === 401) {
@@ -1293,7 +1315,7 @@
         }
         const projects = mp.ok ? await mp.json() : [];
         if (!Array.isArray(projects) || projects.length === 0) {
-          if (inviteVacancySelect) inviteVacancySelect.innerHTML = '<option value="">Нет активных проектов</option>';
+          if (inviteVacancySelect) inviteVacancySelect.innerHTML = '<option value="">—</option>';
           if (noProj) noProj.style.display = "block";
           if (inviteConfirmBtn) inviteConfirmBtn.disabled = true;
           return;
@@ -1310,8 +1332,21 @@
         }
         const opts = await r.json();
         if (!Array.isArray(opts) || opts.length === 0) {
-          if (inviteVacancySelect) inviteVacancySelect.innerHTML = '<option value="">Нет свободных вакансий</option>';
-          if (inviteNoVacancies) inviteNoVacancies.style.display = "block";
+          if (inviteVacancySelect) inviteVacancySelect.innerHTML = '<option value="">—</option>';
+          if (inviteNoVacancies) {
+            srFillEmployerNoVacancies(inviteNoVacancies, "generic", resumeIntent);
+            inviteNoVacancies.style.display = "block";
+          }
+          if (inviteConfirmBtn) inviteConfirmBtn.disabled = true;
+          return;
+        }
+        const filtered = opts.filter((o) => o.project_employment_intent === resumeIntent);
+        if (filtered.length === 0) {
+          if (inviteVacancySelect) inviteVacancySelect.innerHTML = '<option value="">—</option>';
+          if (inviteNoVacancies) {
+            srFillEmployerNoVacancies(inviteNoVacancies, "wrong_type", resumeIntent);
+            inviteNoVacancies.style.display = "block";
+          }
           if (inviteConfirmBtn) inviteConfirmBtn.disabled = true;
           return;
         }
@@ -1319,7 +1354,7 @@
         if (inviteVacancySelect) {
           inviteVacancySelect.innerHTML =
             '<option value="">Выберите вакансию</option>' +
-            opts.map((o) => {
+            filtered.map((o) => {
               const vid = Number(o.vacancy_id);
               const label = (o.project_title || "Проект") + " · " + (o.role_name || "Должность");
               return `<option value="${vid}">${escapeHtml(label)}</option>`;
@@ -1415,7 +1450,7 @@
             ${aboutBlock}
             <div class="vacancy-actions">
               <button class="action-btn" type="button" data-view="${escapeHtml(v.id)}" data-user="${escapeHtml(v.userId)}">Просмотреть резюме</button>
-              <button class="action-btn action-btn--accent" type="button" data-invite="${escapeHtml(v.id)}">Откликнуться</button>
+              <button class="action-btn action-btn--accent" type="button" data-invite="${escapeHtml(v.id)}" data-invite-intent="${escapeHtml(v.employmentIntent)}">Откликнуться</button>
             </div>
           </article>
         `;
@@ -1424,9 +1459,10 @@
       listEl.querySelectorAll("[data-invite]").forEach((btn) => {
         btn.addEventListener("click", () => {
           const id = btn.getAttribute("data-invite");
+          const intent = btn.getAttribute("data-invite-intent") || "commercial";
           const numId = id ? parseInt(id, 10) : NaN;
           if (!Number.isFinite(numId)) return;
-          openInviteModal(numId);
+          openInviteModal(numId, intent);
         });
       });
 

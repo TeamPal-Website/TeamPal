@@ -58,4 +58,5 @@ class RecruitingVacancyOption(BaseModel):
     vacancy_id: int
     project_id: int
     project_title: str
+    project_employment_intent: EmploymentIntent
     role_name: str | None
