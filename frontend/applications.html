@@ -333,7 +333,7 @@
         <div id="applications-list-manager-incoming"></div>
       </div>
       <div id="apps-panel-mgr-out" class="apps-tab-panel hidden">
-        <p class="section-hint" style="margin-top:0;">Вы откликались на вакансии других работодателей — активные отклики и участие.</p>
+        <p class="section-hint" style="margin-top:0;">Ваши приглашения кандидатам (ожидают ответа) и отклики на вакансии других работодателей.</p>
         <div id="applications-list-manager-outgoing-active"></div>
       </div>
       <div id="apps-panel-mgr-msg" class="apps-tab-panel hidden">
@@ -636,8 +636,7 @@
 
   function reloadOutgoingApplicantLists() {
     if (viewMode === "manager") {
-      loadManagerOutgoingApplications();
-      loadEmployerManagerPanels();
+      void loadEmployerManagerPanels();
     } else loadMyApplications();
   }
 
@@ -707,6 +706,34 @@
             }
           },
           { danger: false, okLabel: "Принять" },
+        );
+      });
+    });
+  }
+
+  function bindEmployerRevokeInviteActions(listRoot) {
+    if (!listRoot) return;
+    listRoot.querySelectorAll("[data-revoke-invite]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-revoke-invite");
+        showConfirm(
+          "Отозвать приглашение?",
+          "Кандидат увидит уведомление об отмене. При необходимости вы сможете пригласить его снова.",
+          async () => {
+            try {
+              const r = await fetch(API_BASE_URL + "/applications/" + id, { method: "DELETE", credentials: "include" });
+              if (r.ok) {
+                showToast("Приглашение отозвано", "success");
+                void loadEmployerManagerPanels();
+              } else {
+                const err = await r.json().catch(() => ({}));
+                showToast(apiErrDetail(err) || "Не удалось отозвать приглашение", "error");
+              }
+            } catch {
+              showToast("Ошибка соединения с сервером", "error");
+            }
+          },
+          { danger: true, okLabel: "Отозвать" },
         );
       });
     });
@@ -890,6 +917,65 @@
               ${fullPageLinksHtml}
               <p style="font-size:11px;color:#9a9088;margin:-4px 0 8px;">Нажмите на блок с именем и должностью выше — откроются контакты и полное резюме.</p>
               ${actions ? `<div class="app-actions">${actions}</div>` : ""}
+              <div class="app-contacts-panel is-empty" id="app-contacts-${esc2(String(app.id))}" hidden></div>
+            </div>`;
+  }
+
+  function managerOutgoingInviteCardHtml(app) {
+    const statusClass = "pending";
+    const statusLabel = "Ожидает ответа кандидата";
+    const roleName = esc2(app.role_name || "Вакансия #" + app.vacancy_id);
+    const createdAt = app.created_at ? new Date(app.created_at).toLocaleDateString("ru-RU") : "";
+    const applicantLine = esc2(app.desired_position || (app.resume_id ? "Резюме #" + app.resume_id : "Соискатель"));
+    const avatarSrc =
+      typeof tpApplicationApplicantAvatarSrc === "function"
+        ? tpApplicationApplicantAvatarSrc(app)
+        : typeof tpAvatarSrcFromApiField === "function"
+          ? tpAvatarSrcFromApiField(app.applicant_avatar_url)
+          : "./assets/avatar-default.png";
+    const pidAttr = app.project_id != null ? esc2(String(app.project_id)) : "";
+    const projectLine = app.project_title ? `<div class="app-project">${esc2(app.project_title)}</div>` : "";
+    const actions = `<button class="action-btn" type="button" data-contacts="${esc2(String(app.id))}" data-project-id="${pidAttr}">Контакты</button>
+              <button class="action-btn action-btn--danger" type="button" data-revoke-invite="${esc2(String(app.id))}">Отозвать приглашение</button>`;
+    const ridEnc = app.resume_id != null ? encodeURIComponent(String(app.resume_id)) : "";
+    const uidEnc = app.applicant_user_id != null ? encodeURIComponent(String(app.applicant_user_id)) : "";
+    const projEnc = app.project_id != null ? encodeURIComponent(String(app.project_id)) : "";
+    const fullPageLinks = [];
+    if (ridEnc && uidEnc) {
+      fullPageLinks.push(
+        `<a class="app-inline-link" href="./card_resume.html?id=${ridEnc}&user_id=${uidEnc}&${appsCardReturnQuery()}">Полная карточка резюме</a>`,
+      );
+    }
+    if (projEnc) {
+      fullPageLinks.push(`<a class="app-inline-link" href="./card_project.html?id=${projEnc}&${appsCardReturnQuery()}">Полная карточка проекта</a>`);
+    }
+    const fullPageLinksHtml = fullPageLinks.length
+      ? `<div class="app-card-external" style="font-size:13px;margin:6px 0 10px;display:flex;flex-wrap:wrap;gap:12px 16px;">${fullPageLinks.join("")}</div>`
+      : "";
+    return `
+            <div class="app-card" data-application-id="${esc2(String(app.id))}">
+              <div class="app-card-head">
+                <div class="app-card-summary-wrap">
+                  <div class="app-applicant-thumb-wrap" aria-hidden="true">
+                    <img src="${esc2(avatarSrc)}" width="56" height="56" alt=""
+                      decoding="async" fetchpriority="low"
+                      onerror="this.onerror=null;this.src='./assets/avatar-default.png'">
+                  </div>
+                <button type="button" class="app-card-summary-btn" data-app-detail="${esc2(String(app.id))}" data-project-id="${pidAttr}" title="Резюме, контакты и опыт кандидата">
+                  <div class="app-role">${roleName}</div>
+                  <div class="app-applicant">${applicantLine}</div>
+                  ${projectLine}
+                  <div class="app-applicant" style="font-size:12px;color:#7a7060;margin-top:4px;">Вы пригласили кандидата — ждём ответа</div>
+                </button>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+                  <span class="app-status-badge ${statusClass}">${statusLabel}</span>
+                  ${createdAt ? `<span class="app-date">${esc2(createdAt)}</span>` : ""}
+                </div>
+              </div>
+              ${fullPageLinksHtml}
+              <p style="font-size:11px;color:#9a9088;margin:-4px 0 8px;">Нажмите на блок с именем и должностью выше — откроются контакты и полное резюме.</p>
+              <div class="app-actions">${actions}</div>
               <div class="app-contacts-panel is-empty" id="app-contacts-${esc2(String(app.id))}" hidden></div>
             </div>`;
   }
@@ -1140,7 +1226,6 @@
       if (viewMode === "manager") {
         switchManagerAppsTab("in");
         await loadProjectsForAppsSelect();
-        loadManagerOutgoingApplications();
       } else {
         switchEmployeeAppsTab("in");
         await loadResumesForAppsFilter();
@@ -1213,6 +1298,7 @@
         return "Отклонили отклик по проекту: " + project;
       case "application_cancelled":
         if (p.reason === "project_closed") return "Проект закрыт: " + project;
+        if (p.reason === "employer_invite_revoked") return "Работодатель отозвал приглашение: " + project;
         return "Отклик отменён: " + project;
       case "employer_invited":
         return "Приглашение в проект: " + project;
@@ -1386,10 +1472,16 @@
 
   async function loadProjectsForAppsSelect(preferredProjectId) {
     const sel = document.getElementById("apps-project-select");
-    if (!sel) return;
+    if (!sel) {
+      void loadManagerOutgoingApplications();
+      return;
+    }
     try {
       const resp = await fetch(API_BASE_URL + "/my_projects", { credentials: "include" });
-      if (!resp.ok) return;
+      if (!resp.ok) {
+        void loadEmployerManagerPanels();
+        return;
+      }
       const projects = await resp.json();
       const prev = sel.value;
       sel.innerHTML = '<option value="">Все проекты</option>';
@@ -1429,7 +1521,7 @@
       }
       const apps = await resp.json();
       const arr = Array.isArray(apps) ? apps : [];
-      const pending = arr.filter((a) => a.status === "pending");
+      const pending = arr.filter((a) => a.status === "pending" && !a.employer_initiated);
       const hist = arr.filter((a) => a.status !== "pending");
 
       incomingEl.innerHTML = pending.length
@@ -1444,6 +1536,8 @@
     } catch {
       incomingEl.innerHTML = '<div class="empty-state">Ошибка загрузки данных</div>';
       histProjEl.innerHTML = "";
+    } finally {
+      void loadManagerOutgoingApplications();
     }
   }
 
@@ -1453,26 +1547,58 @@
     if (!activeEl || !histSelfEl) return;
     activeEl.innerHTML = '<div class="empty-state" style="color:#aaa;">Загрузка…</div>';
     histSelfEl.innerHTML = '<div class="empty-state" style="color:#aaa;">Загрузка…</div>';
+
+    const sel = document.getElementById("apps-project-select");
+    const projectId = sel && sel.value ? sel.value : "";
+
+    let invites = [];
+    try {
+      const qsEmp = new URLSearchParams({ per_page: "50" });
+      if (projectId) qsEmp.set("project_id", projectId);
+      const respEmp = await fetch(API_BASE_URL + "/employer/applications?" + qsEmp.toString(), { credentials: "include" });
+      if (respEmp.ok) {
+        const appsEmp = await respEmp.json();
+        if (Array.isArray(appsEmp)) {
+          invites = appsEmp.filter((a) => a.status === "pending" && a.employer_initiated);
+        }
+      }
+    } catch (_) {}
+
+    let appsArr = [];
     try {
       const resp = await fetch(API_BASE_URL + "/my_applications?per_page=50", { credentials: "include" });
-      if (!resp.ok) {
-        activeEl.innerHTML = '<div class="empty-state">Ошибка загрузки откликов</div>';
-        histSelfEl.innerHTML = "";
-        return;
+      if (resp.ok) {
+        const apps = await resp.json();
+        appsArr = Array.isArray(apps) ? apps : [];
       }
-      const apps = await resp.json();
-      if (!Array.isArray(apps) || apps.length === 0) {
-        activeEl.innerHTML = '<div class="empty-state">Нет активных откликов на чужие вакансии</div>';
-        histSelfEl.innerHTML = '<div class="empty-state">Архив пуст</div>';
-        return;
-      }
+    } catch (_) {}
 
-      const active = apps.filter((a) => a.status === "pending" || a.status === "accepted");
-      const hist = apps.filter((a) => a.status !== "pending" && a.status !== "accepted");
+    try {
+      const activeFromMy = appsArr.filter((a) => a.status === "pending" || a.status === "accepted");
+      const hist = appsArr.filter((a) => a.status !== "pending" && a.status !== "accepted");
 
-      activeEl.innerHTML = active.length ? active.map((app) => applicantOwnCardHtml(app)).join("") : '<div class="empty-state">Нет активных откликов на чужие вакансии</div>';
-      histSelfEl.innerHTML = hist.length ? hist.map((app) => applicantOwnCardHtml(app)).join("") : '<div class="empty-state">Архив пуст</div>';
+      const inviteIds = new Set(invites.map((i) => i.id));
+      const combinedActive = [...invites, ...activeFromMy];
+      combinedActive.sort((a, b) => {
+        const ta = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const tb = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return tb - ta;
+      });
 
+      const activeHtml = combinedActive
+        .map((app) => (inviteIds.has(app.id) ? managerOutgoingInviteCardHtml(app) : applicantOwnCardHtml(app)))
+        .join("");
+
+      activeEl.innerHTML = combinedActive.length
+        ? activeHtml
+        : '<div class="empty-state">Нет исходящих приглашений и активных откликов на чужие вакансии</div>';
+
+      histSelfEl.innerHTML = hist.length
+        ? hist.map((app) => applicantOwnCardHtml(app)).join("")
+        : '<div class="empty-state">Архив пуст</div>';
+
+      bindManagerIncomingActions(activeEl);
+      bindEmployerRevokeInviteActions(activeEl);
       bindApplicantOutgoingActions(activeEl);
       bindApplicantOutgoingActions(histSelfEl);
     } catch {

@@ -104,26 +104,42 @@ async def withdraw_application(application_id: int, db: DBDep, user_id: UserIdDe
     if application is None:
         raise HTTPException(status_code=404, detail='Отклик не найден')
     resume = await db.resumes.get_one_or_none(id=application.resume_id, profile_id=profile.id)
-    if resume is None:
+    if resume is not None:
+        vacancy = await db.project_vacancies.get_one_or_none(id=application.vacancy_id)
+        project = None
+        owner_user_id = None
+        if vacancy is not None:
+            project = await db.projects.get_one_or_none(id=vacancy.project_id)
+            owner_user_id = await db.applications.get_owner_user_id_for_application(application_id)
+        prev_status = application.status
+        if application.status == ApplicationStatus.PENDING:
+            await db.applications.set_status(application_id, ApplicationStatus.CANCELLED, CancelReason.USER_WITHDRAWN)
+        elif application.status == ApplicationStatus.ACCEPTED:
+            assignment = await db.vacancy_assignments.get_active_by_resume(application.resume_id)
+            if assignment is None:
+                raise HTTPException(status_code=409, detail='Активное участие не найдено')
+            await db.vacancy_assignments.release_by_resume(application.resume_id)
+            await db.applications.set_status(application_id, ApplicationStatus.CANCELLED, CancelReason.USER_LEFT)
+        else:
+            raise HTTPException(status_code=409, detail='Отклик в финальном статусе, действие невозможно')
+        if owner_user_id is not None and project is not None:
+            await db.notifications.create_notification(NotificationAdd(user_id=owner_user_id, event=NotificationEvent.APPLICATION_CANCELLED, application_id=application_id, project_id=project.id, payload={'project_id': project.id, 'project_title': project.title, 'resume_id': application.resume_id, 'vacancy_id': application.vacancy_id, 'reason': 'user_left' if prev_status == ApplicationStatus.ACCEPTED else 'user_withdrawn'}))
+        await db.commit()
+        return {'status': 'OK'}
+
+    if application.status != ApplicationStatus.PENDING or not application.employer_initiated:
         raise HTTPException(status_code=403, detail='Нет доступа')
     vacancy = await db.project_vacancies.get_one_or_none(id=application.vacancy_id)
-    project = None
-    owner_user_id = None
-    if vacancy is not None:
-        project = await db.projects.get_one_or_none(id=vacancy.project_id)
-        owner_user_id = await db.applications.get_owner_user_id_for_application(application_id)
-    if application.status == ApplicationStatus.PENDING:
-        await db.applications.set_status(application_id, ApplicationStatus.CANCELLED, CancelReason.USER_WITHDRAWN)
-    elif application.status == ApplicationStatus.ACCEPTED:
-        assignment = await db.vacancy_assignments.get_active_by_resume(application.resume_id)
-        if assignment is None:
-            raise HTTPException(status_code=409, detail='Активное участие не найдено')
-        await db.vacancy_assignments.release_by_resume(application.resume_id)
-        await db.applications.set_status(application_id, ApplicationStatus.CANCELLED, CancelReason.USER_LEFT)
-    else:
-        raise HTTPException(status_code=409, detail='Отклик в финальном статусе, действие невозможно')
-    if owner_user_id is not None and project is not None:
-        await db.notifications.create_notification(NotificationAdd(user_id=owner_user_id, event=NotificationEvent.APPLICATION_CANCELLED, application_id=application_id, project_id=project.id, payload={'project_id': project.id, 'project_title': project.title, 'resume_id': application.resume_id, 'vacancy_id': application.vacancy_id, 'reason': 'user_left' if application.status == ApplicationStatus.ACCEPTED else 'user_withdrawn'}))
+    if vacancy is None:
+        raise HTTPException(status_code=404, detail='Вакансия не найдена')
+    project = await db.projects.get_one_or_none(id=vacancy.project_id, profile_id=profile.id)
+    if project is None:
+        raise HTTPException(status_code=403, detail='Нет доступа')
+    await db.applications.set_status(application_id, ApplicationStatus.CANCELLED, CancelReason.EMPLOYER_INVITE_REVOKED)
+    applicant_user_id = await db.applications.get_applicant_user_id_for_application(application_id)
+    role = await db.roles_dictionary.get_one_or_none(id=vacancy.role_type_id)
+    if applicant_user_id is not None:
+        await db.notifications.create_notification(NotificationAdd(user_id=applicant_user_id, event=NotificationEvent.APPLICATION_CANCELLED, application_id=application_id, project_id=project.id, payload={'project_id': project.id, 'project_title': project.title, 'resume_id': application.resume_id, 'vacancy_id': application.vacancy_id, 'role_name': role.name if role else '', 'reason': 'employer_invite_revoked'}))
     await db.commit()
     return {'status': 'OK'}
 

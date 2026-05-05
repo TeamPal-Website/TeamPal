@@ -57,6 +57,7 @@ class ApplicationForOwner(BaseModel):
     vacancy_id: int
     status: ApplicationStatus
     cancel_reason: CancelReason | None
+    employer_initiated: bool = False
     created_at: datetime
     updated_at: datetime
     applicant_profile_id: int

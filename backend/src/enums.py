@@ -65,6 +65,7 @@ class CancelReason(str, Enum):
     PROJECT_PAUSED = 'project_paused'
     PROJECT_DELETED = 'project_deleted'
     PROJECT_CLOSED = 'project_closed'
+    EMPLOYER_INVITE_REVOKED = 'employer_invite_revoked'
 
 class NotificationEvent(str, Enum):
     APPLICATION_RECEIVED = 'application_received'
