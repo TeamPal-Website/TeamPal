@@ -350,7 +350,8 @@
       const bar = document.getElementById("resume-invite-bar");
       const btn = document.getElementById("resume-invite-open");
       if (!bar || !btn || bar.hidden) return;
-      btn.textContent = "Откликнуться";
+      const role = resolveTpRole("Ищу сотрудника");
+      btn.textContent = role === "Ищу сотрудника" ? "Пригласить кандидата" : "Откликнуться";
     }
     function syncRoleAndMenuFromStorage(defaultRole) {
       const role = resolveTpRole(defaultRole);
@@ -381,6 +382,8 @@
     (function initResumePageBack() {
       const params = new URLSearchParams(window.location.search);
       const fromApps = params.get("from") === "apps";
+      const fromResumes = params.get("from") === "resumes";
+      const fromProjects = params.get("from") === "projects";
       const btn = document.getElementById("page-back");
       if (!btn) return;
       if (fromApps) {
@@ -392,6 +395,16 @@
             v === "manager" || v === "employee"
               ? "./applications.html?view=" + encodeURIComponent(v)
               : "./applications.html";
+        });
+      } else if (fromResumes) {
+        btn.textContent = "← Назад к моим резюме";
+        btn.addEventListener("click", () => {
+          window.location.href = "./employee_resumes.html";
+        });
+      } else if (fromProjects) {
+        btn.textContent = "← Назад к моим проектам";
+        btn.addEventListener("click", () => {
+          window.location.href = "./employer_projects.html";
         });
       } else {
         btn.addEventListener("click", () => {
@@ -500,8 +513,8 @@
       const applyResumeField = document.getElementById("apply-resume-field-card");
       const noMyRes = document.getElementById("apply-no-my-resumes-card");
       const confirmBtn = document.getElementById("invite-confirm-card");
-      if (modal) modal.setAttribute("aria-label", "Откликнуться");
-      if (titleEl) titleEl.textContent = "Откликнуться";
+      if (modal) modal.setAttribute("aria-label", "Пригласить кандидата");
+      if (titleEl) titleEl.textContent = "Пригласить кандидата";
       if (labelEl) {
         labelEl.hidden = true;
         labelEl.textContent = "";
@@ -512,7 +525,7 @@
       }
       if (applyResumeField) applyResumeField.style.display = "none";
       if (noMyRes) noMyRes.style.display = "none";
-      if (confirmBtn) confirmBtn.textContent = "Откликнуться";
+      if (confirmBtn) confirmBtn.textContent = "Пригласить";
       if (noVac) { noVac.style.display = "none"; setInviteNoVacanciesMessage(false); }
       if (modal) modal.classList.add("open");
       if (sel) sel.innerHTML = '<option value="">Загрузка…</option>';
@@ -597,7 +610,10 @@
           if (applyResumeSel) {
             applyResumeSel.innerHTML = active.map((x) => {
               const id = Number(x.id);
-              const lab = x.desired_position || ("Резюме №" + id);
+              const lab =
+                typeof tpResumeSelectOptionLabel === "function"
+                  ? tpResumeSelectOptionLabel(x)
+                  : "Резюме №" + id;
               return `<option value="${id}">${esc(lab)}</option>`;
             }).join("");
           }
@@ -697,10 +713,10 @@
         });
         if (r.ok) {
           closeInviteModalCard();
-          window.alert("Отклик отправлен.");
+          window.alert("Приглашение отправлено.");
         } else {
           const err = await r.json().catch(() => ({}));
-          const line = tpFormatApiDetail(err.detail) || "Не удалось отправить отклик";
+          const line = tpFormatApiDetail(err.detail) || "Не удалось отправить приглашение";
           window.alert(typeof tpUserFacingErrorLine === "function" ? tpUserFacingErrorLine(line) : line);
         }
       } catch {

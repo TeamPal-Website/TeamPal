@@ -832,89 +832,10 @@
     }
 
 
-    let applicantCabinetCitiesCache = null;
-    async function loadApplicantCabinetCitiesMap() {
-      if (applicantCabinetCitiesCache) return applicantCabinetCitiesCache;
-      try {
-        const r = await fetch(API_BASE_URL + "/cities", { credentials: "include" });
-        if (!r.ok) return {};
-        const arr = await r.json();
-        const m = {};
-        if (Array.isArray(arr)) arr.forEach((c) => { if (c && c.id != null) m[String(c.id)] = c.title || ""; });
-        applicantCabinetCitiesCache = m;
-        return m;
-      } catch {
-        applicantCabinetCitiesCache = {};
-        return applicantCabinetCitiesCache;
-      }
-    }
-
-    async function renderApplicantProjectCabinetModal(projectId) {
-      openCabinetDetailModal("Загрузка…", '<p style="color:#888;">Загрузка…</p>');
-      try {
-        const cityMap = await loadApplicantCabinetCitiesMap();
-        const r = await fetch(API_BASE_URL + "/projects/" + encodeURIComponent(projectId), { credentials: "include" });
-        if (!r.ok) {
-          openCabinetDetailModal("Ошибка", "<p>Не удалось загрузить проект.</p>");
-          return;
-        }
-        const data = await r.json();
-        const proj = data.project || {};
-        const vacs = Array.isArray(data.vacancies) ? data.vacancies : [];
-        const isClosed = proj.status === "close";
-        const intentLab = { commercial: "Коммерческий", noncommercial: "Учебный" };
-        const statusLab = { active: "Активен", paused: "Не активен", close: "Закрыт", deleted: "Удалён" };
-        const comm = proj.employment_intent === "commercial";
-        let html = "";
-        const cityTitle =
-          proj.city_id != null && proj.city_id !== ""
-            ? cityMap[String(proj.city_id)] || `Город #${proj.city_id}`
-            : null;
-        html += '<div class="cabinet-detail-meta-grid">';
-        html += `<div class="cabinet-meta-cell"><b>Компания</b>${escCabinet(proj.company_name || "—")}</div>`;
-        html += `<div class="cabinet-meta-cell"><b>Город</b>${escCabinet(cityTitle || "—")}</div>`;
-        html += `<div class="cabinet-meta-cell"><b>Тип проекта</b>${escCabinet(intentLab[proj.employment_intent] || proj.employment_intent || "—")}</div>`;
-        html += `<div class="cabinet-meta-cell"><b>Статус</b>${escCabinet(statusLab[proj.status] || proj.status || "—")}</div>`;
-        if (proj.closed_at) {
-          html += `<div class="cabinet-meta-cell"><b>Дата закрытия</b>${escCabinet(
-            new Date(proj.closed_at).toLocaleString("ru-RU"),
-          )}</div>`;
-        }
-        html += "</div>";
-        html += "<h4>Описание</h4>";
-        html += `<p${proj.description ? "" : ' style="color:#888;"'}>${proj.description ? escCabinet(proj.description) : "Не указано"}</p>`;
-        html += "<h4>Задачи / объём работ</h4>";
-        html += `<p${proj.tasks ? "" : ' style="color:#888;"'}>${proj.tasks ? escCabinet(proj.tasks) : "Не указано"}</p>`;
-        if (vacs.length) {
-          html += `<h4>${isClosed ? "Вакансии проекта" : "Вакансии"}</h4>`;
-          if (isClosed) {
-            html += '<p style="color:#666;font-size:13px;margin:-6px 0 10px;">Карточки на момент закрытия.</p>';
-          }
-          for (const v of vacs) {
-            if (!v) continue;
-            html += '<div style="margin-bottom:14px;padding:12px;border:1px solid #ece8e3;border-radius:10px;background:#faf9f7;">';
-            html += `<div style="font-weight:600;margin-bottom:6px;">${escCabinet(v.role_name || "Должность")}</div>`;
-            html += `<div style="font-size:13px;color:#444;margin-bottom:4px;"><b>Опыт:</b> ${escCabinet(CABINET_EXP_LABELS[v.experience] || "—")}</div>`;
-            if (comm) {
-              html += `<div style="font-size:13px;color:#444;"><b>Формат:</b> ${escCabinet(cabinetWorkFmt(v.work_format))} · <b>Занятость:</b> ${escCabinet(
-                cabinetCommit(v.commitment_level),
-              )}</div>`;
-              html += `<div style="font-size:13px;color:#444;"><b>Зарплата:</b> ${escCabinet(cabinetRubSalary(v.salary_amount))} (${escCabinet(
-                cabinetSalType(v.salary_type),
-              )}) · <b>Договор:</b> ${escCabinet(cabinetContract(v.contract_type))}</div>`;
-            }
-            html += `<div style="font-size:13px;color:#444;"><b>График:</b> ${escCabinet(cabinetSchedule(v.schedule))}</div>`;
-            const vd = v.description ? String(v.description).trim() : "";
-            html += `<div style="font-size:13px;margin-top:6px;color:#333;">${
-              vd ? escCabinet(vd) : '<span style="color:#888;">Описание не указано</span>'
-            }</div>`;
-            html += "</div>";
-          }
-        }
-        openCabinetDetailModal(proj.title || "Проект", html);
-      } catch {
-        openCabinetDetailModal("Ошибка", "<p>Ошибка соединения с сервером.</p>");
-      }
+    function openApplicantProjectCard(projectId) {
+      const id = projectId !== undefined && projectId !== null ? String(projectId).trim() : "";
+      if (!id) return;
+      window.location.href = "./card_project.html?id=" + encodeURIComponent(id) + "&from=resumes";
     }
 
     async function loadClosedMemberProjects() {
@@ -963,7 +884,7 @@
           btn.addEventListener("click", () => {
             const pid = btn.getAttribute("data-applicant-closed-project");
             if (!pid) return;
-            void renderApplicantProjectCabinetModal(pid);
+            openApplicantProjectCard(pid);
           });
         });
       } catch {
@@ -1255,7 +1176,7 @@
           btn.addEventListener("click", (e) => {
             e.preventDefault();
             const pid = btn.getAttribute("data-open-applicant-project");
-            if (pid) void renderApplicantProjectCabinetModal(pid);
+            if (pid) openApplicantProjectCard(pid);
           });
         });
 
@@ -1307,7 +1228,7 @@
                   '<div style="margin-bottom:16px;padding:12px;border:1px solid #ece8e3;border-radius:10px;background:#f9f7f4;">' +
                   '<h4 style="margin:0 0 8px;">Текущий проект</h4>' +
                   `<p style="margin:0 0 8px;"><button type="button" class="cabinet-item-title-btn" data-inline-applicant-project="${escCabinet(pid)}">${escCabinet(apt)}</button></p>` +
-                  '<p style="margin:0;color:#666;font-size:13px;line-height:1.4;">Откройте карточку, чтобы увидеть описание проекта, задачи и вакансии.</p>' +
+                  '<p style="margin:0;color:#666;font-size:13px;line-height:1.4;">Нажмите на название — откроется полная карточка проекта со всеми вакансиями.</p>' +
                   "</div>";
               }
 
@@ -1354,7 +1275,7 @@
               document.getElementById("cabinet-detail-body")?.querySelectorAll("[data-inline-applicant-project]").forEach((b) => {
                 b.addEventListener("click", () => {
                   const x = b.getAttribute("data-inline-applicant-project");
-                  if (x) void renderApplicantProjectCabinetModal(x);
+                  if (x) openApplicantProjectCard(x);
                 });
               });
             } catch {

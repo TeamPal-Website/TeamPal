@@ -1237,7 +1237,8 @@
             active.forEach((r) => {
               const opt = document.createElement("option");
               opt.value = String(r.id);
-              opt.textContent = r.desired_position || "Резюме #" + r.id;
+              opt.textContent =
+                typeof tpResumeSelectOptionLabel === "function" ? tpResumeSelectOptionLabel(r) : "Резюме №" + r.id;
               applyResumeSelect.appendChild(opt);
             });
             if (applyConfirmBtn) applyConfirmBtn.disabled = false;

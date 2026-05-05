@@ -86,9 +86,34 @@
     .footer { width: 100%; background: #eae8e4; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; font-size: 13px; color: #6b6560; min-height: 48px; flex-wrap: wrap; }
     .footer a { color: #c44c08; text-decoration: none; }
     .app-card { background: #fff; border-radius: 12px; padding: 14px; margin-bottom: 10px; border: 1px solid var(--line); }
-    .app-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+    .app-card-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 8px; }
     .app-role { font-size: 16px; font-weight: 700; color: var(--accent-2); }
     .app-applicant, .app-project { font-size: 13px; color: #555; margin-top: 2px; }
+    .app-applicant-thumb-wrap {
+      width: 56px;
+      height: 56px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 2px solid rgba(248, 90, 11, 0.22);
+      background: linear-gradient(135deg, #f5ebe0, #efe8dc);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.65);
+    }
+    .app-applicant-thumb-wrap img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      background: transparent;
+    }
+    .app-card-summary-wrap {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex: 1;
+      min-width: 0;
+      text-align: left;
+    }
     .app-date { font-size: 12px; color: #999; flex-shrink: 0; }
     .app-status-badge { display: inline-flex; align-items: center; border-radius: 999px; font-size: 12px; font-weight: 600; padding: 4px 10px; }
     .app-status-badge.pending { background: #fff8e1; border: 1px solid #ffc107; color: #7a5500; }
@@ -175,6 +200,7 @@
     .app-card-summary-btn {
       display: block; width: 100%; text-align: left; background: none; border: none; padding: 0; cursor: pointer; font-family: inherit;
     }
+    .app-card-summary-wrap .app-card-summary-btn { flex: 1; min-width: 0; width: auto; }
     .app-card-summary-btn:hover .app-role { text-decoration: underline; text-underline-offset: 3px; }
     .app-inline-btn {
       background: none; border: none; padding: 0; margin: 0; font: inherit; color: #1565c0; font-weight: 600;
@@ -431,25 +457,8 @@
     if (e.target.id === "apps-detail-modal") closeAppsDetailModal();
   });
 
-  let citiesModalCache = null;
-  async function loadCitiesModalMap() {
-    if (citiesModalCache) return citiesModalCache;
-    try {
-      const r = await fetch(API_BASE_URL + "/cities", { credentials: "include" });
-      if (!r.ok) return {};
-      const arr = await r.json();
-      const map = {};
-      if (Array.isArray(arr)) arr.forEach((c) => { if (c && c.id != null) map[String(c.id)] = c.title || ""; });
-      citiesModalCache = map;
-      return map;
-    } catch {
-      citiesModalCache = {};
-      return citiesModalCache;
-    }
-  }
 
   function mapIntent(v) { return v === "commercial" ? "Коммерческий" : (v === "noncommercial" ? "Учебный" : (v || "—")); }
-  function mapProjStatus(v) { return ({ active: "Активен", paused: "Не активен", close: "Закрыт", deleted: "Удалён" })[v] || (v || "Не выбрано"); }
   function mapExp(v) { return ({ none: "Без опыта", "<1": "До 1 года", "1-3": "1–3 года", "3-6": "3–6 лет", "6+": "6+ лет" })[v] || (v || "—"); }
   function mapWork(v) { return ({ remote: "Удалённо", office: "Офис", hybrid: "Гибрид" })[v] || (v || "—"); }
   function mapEmployment(v) { return ({ full_time: "Полная", part_time: "Частичная", side_project: "Подработка" })[v] || (v || "—"); }
@@ -463,6 +472,16 @@
   }
 
   function renderEmployerApplicationDetailHtml(detail) {
+    const avSrc =
+      typeof tpApplicationApplicantAvatarSrc === "function"
+        ? tpApplicationApplicantAvatarSrc(detail)
+        : typeof tpAvatarSrcFromApiField === "function"
+          ? tpAvatarSrcFromApiField(detail.applicant_avatar_url)
+          : "./assets/avatar-default.png";
+    const avatarBlock = `<div style="display:flex;justify-content:center;margin:0 0 16px;">
+      <img class="apps-detail-avatar" src="${esc2(avSrc)}" width="96" height="96" alt="" style="border-radius:50%;object-fit:cover;border:3px solid var(--line);background:#f3efe8;"
+        onerror="this.onerror=null;this.src='./assets/avatar-default.png'"></div>`;
+
     const contacts = detail.contacts || {};
     const contactRows = [
       contacts.phone ? `<div><b>Телефон:</b> ${esc2(contacts.phone)}</div>` : "",
@@ -476,7 +495,7 @@
         : `<p style="margin:10px 0 0;color:#777;">В профиле не указаны телефон и соцсети.</p>`) +
       `<p style="margin:10px 0 0;font-size:12px;color:#7a7060;">После связи и собеседования вы можете принять отклик или отказать кандидату.</p></div>`;
 
-    let html = contactsBlock;
+    let html = avatarBlock + contactsBlock;
     html += `<p><b>Вакансия в проекте:</b> ${esc2(detail.role_name || "—")}</p>`;
     html += `<p><b>Как в резюме:</b> ${esc2(detail.desired_position || "—")}</p>`;
 
@@ -555,73 +574,13 @@
     }
   }
 
-  async function openApplicantProjectModal(projectId) {
-    const modal = document.getElementById("apps-detail-modal");
-    const titleEl = document.getElementById("apps-detail-title");
-    const bodyEl = document.getElementById("apps-detail-body");
-    if (!modal || !titleEl || !bodyEl) return;
-    titleEl.textContent = "Проект — загрузка…";
-    bodyEl.innerHTML = '<p style="color:#888;">Загрузка…</p>';
-    modal.classList.add("open");
-    try {
-      const [r, citiesMap] = await Promise.all([
-        fetch(API_BASE_URL + "/projects/" + encodeURIComponent(projectId), { credentials: "include" }),
-        loadCitiesModalMap(),
-      ]);
-      if (!r.ok) {
-        const err = await r.json().catch(() => ({}));
-        bodyEl.innerHTML = `<p style="color:#c62828;">${esc2(apiErrDetail(err) || "Не удалось загрузить проект")}</p>`;
-        titleEl.textContent = "Ошибка";
-        return;
-      }
-      const data = await r.json();
-      const project = data.project || data;
-      const vacancies = Array.isArray(data.vacancies) ? data.vacancies : [];
-      titleEl.textContent = project.title || "Проект";
-
-      let html = "";
-      html += `<p><b>Компания:</b> ${esc2(project.company_name || "—")}</p>`;
-      html += `<p><b>Тип:</b> ${esc2(mapIntent(project.employment_intent))}</p>`;
-      html += `<p><b>Статус:</b> ${esc2(mapProjStatus(project.status))}</p>`;
-      html += `<p><b>Город:</b> ${esc2(citiesMap[String(project.city_id)] || "—")}</p>`;
-      html += `<p><b>Создан:</b> ${project.created_at ? esc2(new Date(project.created_at).toLocaleDateString("ru-RU")) : "—"}</p>`;
-      html += `<h4>Описание</h4><p>${project.description ? esc2(project.description) : '<span style="color:#888;">Не указано</span>'}</p>`;
-      html += `<h4>Задачи</h4><p>${project.tasks ? esc2(project.tasks) : '<span style="color:#888;">Не указано</span>'}</p>`;
-
-      if (vacancies.length) {
-        html += `<h4>Вакансии (${vacancies.length})</h4>`;
-        vacancies.forEach((v) => {
-          const occ = v.occupant;
-          const filled = !!(occ || v.is_filled);
-          html += `<div style="border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:#faf9f7;">`;
-          html += `<p style="margin:0 0 6px;"><b>${esc2(v.role_name || "Должность")}</b> · ${filled ? "занята" : "свободна"}</p>`;
-          if (!filled && ((v.description && String(v.description).trim()) || (v.responsibilities && String(v.responsibilities).trim()) || (v.requirements && String(v.requirements).trim()))) {
-            var _d = (v.description && String(v.description).trim())
-              || [v.responsibilities, v.requirements].map(function(x){ return x && String(x).trim() ? String(x).trim() : ''; }).filter(Boolean).join('\n\n');
-            html += `<p style="margin:0;font-size:13px;"><b>Описание вакансии:</b> ${esc2(_d)}</p>`;
-          }
-          if (occ) {
-            const name = [occ.first_name, occ.last_name].filter(Boolean).join(" ").trim();
-            html += `<p style="margin:8px 0 0;font-size:13px;color:#555;">Участник: ${esc2(name || occ.desired_position || ("#" + occ.user_id))}</p>`;
-          }
-          html += "</div>";
-        });
-      }
-
-      html += `<p style="margin-top:14px;"><a class="app-inline-link" href="./card_project.html?id=${encodeURIComponent(String(projectId))}&${appsCardReturnQuery()}">Открыть полную карточку проекта →</a></p>`;
-      bodyEl.innerHTML = html;
-    } catch {
-      titleEl.textContent = "Ошибка";
-      bodyEl.innerHTML = '<p style="color:#c62828;">Ошибка соединения с сервером</p>';
-    }
-  }
-
   function bindApplicantProjectPreview(root) {
     if (!root) return;
     root.querySelectorAll("[data-applicant-project]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const pid = btn.getAttribute("data-applicant-project");
-        if (pid) void openApplicantProjectModal(pid);
+        if (!pid) return;
+        window.location.href = "./card_project.html?id=" + encodeURIComponent(pid) + "&" + appsCardReturnQuery();
       });
     });
   }
@@ -882,6 +841,12 @@
     const roleName = esc2(app.role_name || "Вакансия #" + app.vacancy_id);
     const createdAt = app.created_at ? new Date(app.created_at).toLocaleDateString("ru-RU") : "";
     const applicantLine = esc2(app.desired_position || (app.resume_id ? "Резюме #" + app.resume_id : "Соискатель"));
+    const avatarSrc =
+      typeof tpApplicationApplicantAvatarSrc === "function"
+        ? tpApplicationApplicantAvatarSrc(app)
+        : typeof tpAvatarSrcFromApiField === "function"
+          ? tpAvatarSrcFromApiField(app.applicant_avatar_url)
+          : "./assets/avatar-default.png";
 
     const pidAttr = app.project_id != null ? esc2(String(app.project_id)) : "";
     const projectLine = app.project_title ? `<div class="app-project">${esc2(app.project_title)}</div>` : "";
@@ -915,11 +880,18 @@
     return `
             <div class="app-card" data-application-id="${esc2(String(app.id))}">
               <div class="app-card-head">
+                <div class="app-card-summary-wrap">
+                  <div class="app-applicant-thumb-wrap" aria-hidden="true">
+                    <img src="${esc2(avatarSrc)}" width="56" height="56" alt=""
+                      decoding="async" fetchpriority="low"
+                      onerror="this.onerror=null;this.src='./assets/avatar-default.png'">
+                  </div>
                 <button type="button" class="app-card-summary-btn" data-app-detail="${esc2(String(app.id))}" data-project-id="${pidAttr}" title="Резюме, контакты и опыт кандидата">
                   <div class="app-role">${roleName}</div>
                   <div class="app-applicant">${applicantLine}</div>
                   ${projectLine}
                 </button>
+                </div>
                 <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
                   <span class="app-status-badge ${statusClass}">${statusLabel}</span>
                   ${createdAt ? `<span class="app-date">${esc2(createdAt)}</span>` : ""}
@@ -1221,8 +1193,8 @@
           if (!r || r.id == null) return;
           const opt = document.createElement("option");
           opt.value = String(r.id);
-          const pos = r.desired_position || "Резюме #" + r.id;
-          opt.textContent = pos;
+          opt.textContent =
+            typeof tpResumeSelectOptionLabel === "function" ? tpResumeSelectOptionLabel(r) : "Резюме №" + r.id;
           sel.appendChild(opt);
         });
       }

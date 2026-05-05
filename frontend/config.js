@@ -35,6 +35,40 @@ function tpMyProfileAvatarSrc(apiAvatarValue) {
   return tpAvatarSrcFromApiField(apiAvatarValue);
 }
 
+/** Аватар соискателя в списках откликов работодателя: URL из API или прямой /profiles/:userId/avatar/file. */
+function tpApplicationApplicantAvatarSrc(applicationLike) {
+  if (!applicationLike || typeof tpAvatarSrcFromApiField !== "function") return "./assets/avatar-default.png";
+  const raw = applicationLike.applicant_avatar_url;
+  if (raw != null && String(raw).trim() !== "") {
+    return tpAvatarSrcFromApiField(raw);
+  }
+  const uid = applicationLike.applicant_user_id;
+  if (uid != null && String(uid).trim() !== "") {
+    return API_BASE_URL + "/profiles/" + encodeURIComponent(String(uid)) + "/avatar/file";
+  }
+  return "./assets/avatar-default.png";
+}
+
+/** Подпись резюме в списке выбора при отклике: всегда различается по номеру; не использует только желаемую должность. */
+function tpResumeSelectOptionLabel(r) {
+  if (!r || r.id == null) return "Резюме";
+  const prefix = "Резюме №" + String(r.id);
+  const about = r.about_me != null ? String(r.about_me).trim() : "";
+  if (about) {
+    const preview = about.length > 52 ? about.slice(0, 52) + "…" : about;
+    return prefix + " — " + preview;
+  }
+  if (r.created_at) {
+    try {
+      const d = new Date(r.created_at);
+      if (!Number.isNaN(d.getTime())) {
+        return prefix + " · " + d.toLocaleDateString("ru-RU");
+      }
+    } catch (_) {}
+  }
+  return prefix;
+}
+
 const TP_MAX_SALARY_RUB = 50000000;
 
 const TP_ORM_VARCHAR255 = 255;

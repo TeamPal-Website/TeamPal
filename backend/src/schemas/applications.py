@@ -61,6 +61,7 @@ class ApplicationForOwner(BaseModel):
     updated_at: datetime
     applicant_profile_id: int
     applicant_user_id: int
+    applicant_avatar_url: str | None = None
     desired_position: str
     role_type_id: int
     role_name: str | None
