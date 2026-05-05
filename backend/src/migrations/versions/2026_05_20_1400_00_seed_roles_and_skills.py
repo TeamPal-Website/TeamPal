@@ -45,6 +45,74 @@ SKILL_NAMES = (
     "HTML/CSS",
 )
 
+# Названия до 50 символов (ограничение cities.title)
+CITY_TITLES = (
+    "Москва",
+    "Санкт-Петербург",
+    "Новосибирск",
+    "Екатеринбург",
+    "Казань",
+    "Нижний Новгород",
+    "Челябинск",
+    "Самара",
+    "Омск",
+    "Ростов-на-Дону",
+    "Уфа",
+    "Красноярск",
+    "Воронеж",
+    "Пермь",
+    "Волгоград",
+    "Краснодар",
+    "Саратов",
+    "Тюмень",
+    "Тольятти",
+    "Ижевск",
+    "Барнаул",
+    "Ульяновск",
+    "Иркутск",
+    "Хабаровск",
+    "Ярославль",
+    "Владивосток",
+    "Махачкала",
+    "Томск",
+    "Оренбург",
+    "Кемерово",
+    "Новокузнецк",
+    "Астрахань",
+    "Набережные Челны",
+    "Пенза",
+    "Липецк",
+    "Киров",
+    "Чебоксары",
+    "Калининград",
+    "Тула",
+    "Сочи",
+    "Тверь",
+    "Курск",
+    "Белгород",
+    "Владимир",
+    "Сургут",
+    "Чита",
+    "Нижний Тагил",
+    "Архангельск",
+    "Симферополь",
+    "Грозный",
+    "Йошкар-Ола",
+    "Мурманск",
+)
+
+# Алиасы навыков: (каноническое имя из SKILL_NAMES, текст алиаса)
+SKILL_ALIAS_SEEDS = (
+    ("JavaScript", "JS"),
+    ("JavaScript", "Java Script"),
+    ("TypeScript", "TS"),
+    ("PostgreSQL", "Postgres"),
+    ("PostgreSQL", "PSQL"),
+    ("HTML/CSS", "HTML"),
+    ("HTML/CSS", "CSS"),
+    ("CI/CD", "CI CD"),
+)
+
 
 def upgrade() -> None:
     conn = op.get_bind()
@@ -57,6 +125,18 @@ def upgrade() -> None:
         )
     for name in SKILL_NAMES:
         conn.execute(sa.text("INSERT INTO skills (name) VALUES (:name) ON CONFLICT (name) DO NOTHING").bindparams(name=name))
+    for title in CITY_TITLES:
+        conn.execute(
+            sa.text("INSERT INTO cities (title) VALUES (:title) ON CONFLICT (title) DO NOTHING").bindparams(title=title),
+        )
+    for skill_name, alias in SKILL_ALIAS_SEEDS:
+        conn.execute(
+            sa.text(
+                "INSERT INTO skill_aliases (skill_id, alias) "
+                "SELECT s.id, :alias FROM skills s WHERE s.name = :skill_name "
+                "ON CONFLICT (skill_id, alias) DO NOTHING",
+            ).bindparams(alias=alias, skill_name=skill_name),
+        )
 
 
 def downgrade() -> None:

@@ -17,6 +17,11 @@ const API_BASE_URL = (() => {
   return loc.origin.replace(/\/+$/, "");
 })();
 
+/** Явно в window — иначе в Safari/отдельных окружениях другие скрипты видят `typeof API_BASE_URL === "undefined"`. */
+if (typeof window !== "undefined") {
+  window.API_BASE_URL = API_BASE_URL;
+}
+
 function tpAvatarSrcFromApiField(apiAvatarField) {
   if (apiAvatarField == null || String(apiAvatarField).trim() === "") {
     return "./assets/avatar-default.png";
@@ -49,24 +54,21 @@ function tpApplicationApplicantAvatarSrc(applicationLike) {
   return "./assets/avatar-default.png";
 }
 
-/** Подпись резюме в списке выбора при отклике: всегда различается по номеру; не использует только желаемую должность. */
+/** Подпись резюме в выпадающем списке: желаемая должность из карточки; при пустой — номер резюме; дата для различения копий. */
 function tpResumeSelectOptionLabel(r) {
   if (!r || r.id == null) return "Резюме";
-  const prefix = "Резюме №" + String(r.id);
-  const about = r.about_me != null ? String(r.about_me).trim() : "";
-  if (about) {
-    const preview = about.length > 52 ? about.slice(0, 52) + "…" : about;
-    return prefix + " — " + preview;
-  }
+  const raw = r.desired_position != null ? String(r.desired_position).trim() : "";
+  const base = raw || "Резюме №" + String(r.id);
+  let suffix = "";
   if (r.created_at) {
     try {
       const d = new Date(r.created_at);
       if (!Number.isNaN(d.getTime())) {
-        return prefix + " · " + d.toLocaleDateString("ru-RU");
+        suffix = " · " + d.toLocaleDateString("ru-RU");
       }
     } catch (_) {}
   }
-  return prefix;
+  return base + suffix;
 }
 
 const TP_MAX_SALARY_RUB = 50000000;

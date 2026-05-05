@@ -1108,7 +1108,8 @@
           btn.addEventListener("click", () => {
             const pid = btn.getAttribute("data-preview-closed-project");
             if (!pid) return;
-            window.location.href = "./card_project.html?id=" + encodeURIComponent(pid) + "&from=projects";
+            window.location.href =
+              "./card_project.html?id=" + encodeURIComponent(pid) + "&from=projects&closed=1";
           });
         });
       } catch {

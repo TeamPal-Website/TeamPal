@@ -101,6 +101,13 @@
       box-shadow: 0 4px 14px rgba(248, 90, 11, 0.28);
     }
     .invite-action-bar .action-btn:hover { filter: brightness(1.03); }
+    .resume-ap-link {
+      font-weight: 700;
+      color: var(--accent-2);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .resume-ap-link:hover { color: var(--accent-1); }
     .modal {
       position: fixed;
       inset: 0;
@@ -239,6 +246,11 @@
   <div class="invite-action-bar" id="resume-invite-bar" hidden>
     <button type="button" class="action-btn action-btn--accent" id="resume-invite-open">Пригласить кандидата</button>
   </div>
+  <section class="card section" id="resume-active-project-card" style="display:none;">
+    <h2>Текущий проект</h2>
+    <p style="margin:0 0 8px;"><a class="resume-ap-link" id="resume-active-project-link" href="#">Проект</a></p>
+    <p style="margin:0;color:#666;font-size:13px;line-height:1.45;">Нажмите на название — откроется полная карточка проекта со всеми вакансиями.</p>
+  </section>
   <section class="card top">
     <div class="resume-head">
       <img class="resume-owner-avatar" id="resume-owner-avatar" src="./assets/avatar-default.png" alt="">
@@ -440,11 +452,15 @@
     }
     function fmtDate(v) { if (!v) return "—"; const d = new Date(v); return isNaN(d.getTime()) ? String(v) : d.toLocaleDateString("ru-RU"); }
 
-    function buildResumeMainPreviewRows(rd) {
+    function buildResumeMainPreviewRows(rd, cityTitle) {
+      const statusLab = { looking_for_job: "Ищу работу", not_looking_for_job: "Не ищу работу" };
       const rows = [
         ["Желаемая должность", rd.desired_position || "—"],
-        ["Опыт работы", mapExpBucket(rd.computed_experience_level)],
+        ["Тип резюме", mapResumeTypeCard(rd.employment_intent)],
+        ["Статус поиска работы", statusLab[rd.status] || rd.status || "—"],
       ];
+      if (cityTitle) rows.push(["Город", cityTitle]);
+      rows.push(["Опыт работы", mapExpBucket(rd.computed_experience_level)]);
       if (rd.employment_intent === "commercial") {
         rows.push(
           ["Формат работы", mapWork(rd.work_format)],
@@ -458,7 +474,8 @@
       return rows;
     }
 
-    function resumePreviewCells(rd, skillMap) {
+    function resumePreviewCells(rd, skillMap, cityTitle) {
+      const ct = cityTitle || "";
       const skillLabels = (Array.isArray(rd.skills) ? rd.skills : []).slice(0, 12).map((s) => {
         if (typeof s === "string") return s;
         if (s && typeof s === "object") {
@@ -468,7 +485,7 @@
         }
         return "";
       }).filter(Boolean);
-      const rows = buildResumeMainPreviewRows(rd).concat([
+      const rows = buildResumeMainPreviewRows(rd, ct).concat([
         ["Стек технологий / Скиллы", skillLabels.length ? skillLabels.join(", ") : "—"],
       ]);
       const cells = rows.map(([k, val]) => `<div><b>${esc(k)}</b>${esc(val)}</div>`).join("");
@@ -765,19 +782,28 @@
       const skillMap = await loadSkillsCatalogMap();
 
       let resumeData = null;
+      let activeProject = undefined;
+      let contactsFromPayload = undefined;
       const paths = [];
       if (userId) paths.push("/profiles/" + encodeURIComponent(userId) + "/resumes/" + encodeURIComponent(id));
-      paths.push("/resumes/" + encodeURIComponent(id), "/my_resume/" + encodeURIComponent(id));
+      paths.push("/my_resume/" + encodeURIComponent(id));
+      paths.push("/resumes/" + encodeURIComponent(id));
       for (const path of paths) {
         try {
           const r = await fetch(API_BASE_URL + path, { credentials: "include" });
           if (r.ok) {
             const data = await r.json();
+            if (Object.prototype.hasOwnProperty.call(data, "contacts")) {
+              contactsFromPayload = data.contacts;
+            }
             resumeData = data.resume || data;
             const skillsArr = Array.isArray(data.skills) ? data.skills : resumeData.skills;
             const expArr = Array.isArray(data.experiences) ? data.experiences : resumeData.experiences;
             resumeData.skills = Array.isArray(skillsArr) ? skillsArr : [];
             resumeData.experiences = Array.isArray(expArr) ? expArr : [];
+            if (Object.prototype.hasOwnProperty.call(data, "active_project")) {
+              activeProject = data.active_project;
+            }
             break;
           }
         } catch (_) {}
@@ -801,7 +827,44 @@
           avatarEl.src = "./assets/avatar-default.png";
         }
       } else if (avatarEl) {
-        avatarEl.src = "./assets/avatar-default.png";
+        try {
+          const meR = await fetch(API_BASE_URL + "/profiles/me", { credentials: "include" });
+          if (meR.ok) {
+            const me = await meR.json();
+            if (me.avatar) avatarEl.src = tpAvatarSrcFromApiField(me.avatar);
+            else avatarEl.src = "./assets/avatar-default.png";
+          } else {
+            avatarEl.src = "./assets/avatar-default.png";
+          }
+        } catch (_) {
+          avatarEl.src = "./assets/avatar-default.png";
+        }
+      }
+
+      let cityTitle = "";
+      if (resumeData.city_id != null && resumeData.city_id !== "") {
+        try {
+          const cr = await fetch(API_BASE_URL + "/cities", { credentials: "include" });
+          if (cr.ok) {
+            const cities = await cr.json();
+            if (Array.isArray(cities)) {
+              const c = cities.find((x) => Number(x.id) === Number(resumeData.city_id));
+              if (c && c.title) cityTitle = String(c.title);
+            }
+          }
+        } catch (_) {}
+      }
+
+      const apCard = document.getElementById("resume-active-project-card");
+      const apLink = document.getElementById("resume-active-project-link");
+      if (apCard && apLink) {
+        if (activeProject && activeProject.project_id != null) {
+          apCard.style.display = "";
+          apLink.textContent = activeProject.title || "Проект";
+          apLink.href = "./card_project.html?id=" + encodeURIComponent(String(activeProject.project_id)) + "&from=resumes";
+        } else {
+          apCard.style.display = "none";
+        }
       }
 
       const displayTitle = resumeData.title || resumeData.desired_position || "Резюме";
@@ -832,8 +895,21 @@
       document.getElementById("resume-about").textContent = aboutRaw || "Не указано";
       if (aboutSection) aboutSection.style.display = "";
 
-      const contacts = resumeData.contacts || resumeData.profile?.contacts || {};
-      const mainFields = buildResumeMainPreviewRows(resumeData);
+      /** API: authenticated viewer gets contacts object; anonymous gets null — не показываем блок без входа в аккаунт. */
+      let contacts;
+      let showContactsBlock;
+      if (contactsFromPayload !== undefined && contactsFromPayload !== null && typeof contactsFromPayload === "object") {
+        contacts = contactsFromPayload;
+        showContactsBlock = true;
+      } else if (contactsFromPayload === null) {
+        contacts = {};
+        showContactsBlock = false;
+      } else {
+        contacts = resumeData.contacts || resumeData.profile?.contacts || {};
+        showContactsBlock = true;
+      }
+
+      const mainFields = buildResumeMainPreviewRows(resumeData, cityTitle);
       document.getElementById("resume-main-fields").innerHTML = mainFields.map((f) => `<div class="field"><b>${esc(f[0])}:</b>${esc(f[1])}</div>`).join("");
 
       const skills = Array.isArray(resumeData.skills) ? resumeData.skills : [];
@@ -868,25 +944,6 @@
       ];
       const contactsEl = document.getElementById("resume-contacts");
       const contactsSection = document.getElementById("resume-contacts-section");
-
-      async function employerHasApplicationForResume(resumeNumericId) {
-        try {
-          const r = await fetch(API_BASE_URL + "/employer/applications?per_page=100", { credentials: "include" });
-          if (!r.ok) return false;
-          const apps = await r.json();
-          if (!Array.isArray(apps)) return false;
-          const rid = Number(resumeNumericId);
-          return apps.some((a) => a && Number(a.resume_id) === rid);
-        } catch (_) {
-          return false;
-        }
-      }
-
-      let showContactsBlock = true;
-      const resumeNumId = parseInt(id, 10);
-      if (bar && userId && !bar.hidden) {
-        showContactsBlock = await employerHasApplicationForResume(resumeNumId);
-      }
 
       if (contactsSection) {
         contactsSection.style.display = showContactsBlock ? "" : "none";

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy.exc import IntegrityError
-from src.api.dependencies import DBDep, UserIdDep, PageDep, PerPageDep, SearchQDep
+from src.api.dependencies import DBDep, UserIdDep, OptionalViewerIdDep, PageDep, PerPageDep, SearchQDep
 from src.api.resume_edit_policy import ACTIVE_RESUME_DETAIL, raise_if_resume_locked_for_editing
 from src.enums import CancelReason, CommitmentLevel, EmploymentIntent, NotificationEvent, ProjectVacancyExperience, ResumeStatus, WorkFormat
 from src.schemas.notifications import NotificationAdd
@@ -12,6 +12,26 @@ from src.utils.profile_completeness import profile_incomplete_message
 router = APIRouter(prefix='', tags=['Резюме'])
 RESUMES_MAX_PER_PROFILE = 5
 RESUME_SEARCH_SKILL_IDS_MAX = 25
+
+
+def resume_contacts_for_viewer(profile_contacts_obj) -> dict:
+    if profile_contacts_obj is None:
+        return {'phone': None, 'telegram': None, 'github': None}
+    if hasattr(profile_contacts_obj, 'model_dump'):
+        blob = profile_contacts_obj.model_dump(exclude_none=False)
+    elif isinstance(profile_contacts_obj, dict):
+        blob = dict(profile_contacts_obj)
+    else:
+        blob = {}
+    out = {'phone': None, 'telegram': None, 'github': None}
+    for key in ('phone', 'telegram', 'github'):
+        if key not in blob or blob[key] is None:
+            continue
+        v = blob[key]
+        if isinstance(v, str) and not v.strip():
+            continue
+        out[key] = v
+    return out
 
 def _merge_resume_search_skill_ids(*, skill_id: int | None, skill_ids: list[int] | None) -> list[int] | None:
     raw: list[int] = []
@@ -52,7 +72,7 @@ async def _expand_resume_role_patch_fields(db: DBDep, payload: dict) -> dict:
     return payload
 
 @router.get('/profiles/{user_id}/resumes/{resume_id}')
-async def get_resume(db: DBDep, user_id: int, resume_id: int):
+async def get_resume(db: DBDep, user_id: int, resume_id: int, viewer_id: OptionalViewerIdDep):
     profile = await db.profiles.get_one_or_none(user_id=user_id)
     if profile is None:
         raise HTTPException(status_code=404, detail='Профиль не найден')
@@ -61,7 +81,12 @@ async def get_resume(db: DBDep, user_id: int, resume_id: int):
         raise HTTPException(status_code=404, detail='Резюме не найдено')
     skills = await db.resume_skills.get_filtered(resume_id=resume.id)
     experiences = await db.resume_experiences.get_filtered(resume_id=resume.id)
-    return {'resume': resume, 'skills': skills, 'experiences': experiences}
+    payload = {'resume': resume, 'skills': skills, 'experiences': experiences}
+    if viewer_id is not None:
+        payload['contacts'] = resume_contacts_for_viewer(profile.contacts)
+    else:
+        payload['contacts'] = None
+    return payload
 
 @router.get('/profiles/{user_id}/resumes')
 async def get_profile_resumes(db: DBDep, user_id: int):
@@ -82,7 +107,7 @@ async def get_my_resume(db: DBDep, user_id: UserIdDep, resume_id: int):
     experiences = await db.resume_experiences.get_filtered(resume_id=resume.id)
     briefs = await db.resumes.get_active_project_briefs_by_resume_ids([resume_id])
     active_project = briefs.get(resume_id)
-    return {'resume': resume, 'skills': skills, 'experiences': experiences, 'active_project': active_project}
+    return {'resume': resume, 'skills': skills, 'experiences': experiences, 'active_project': active_project, 'contacts': resume_contacts_for_viewer(profile.contacts)}
 
 @router.get('/my_resumes', response_model=list[ResumeWithActiveProject])
 async def get_my_resumes(db: DBDep, user_id: UserIdDep):

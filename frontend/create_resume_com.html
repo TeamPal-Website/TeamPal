@@ -794,7 +794,7 @@
 
     async function loadCitiesFromApi() {
       try {
-        const resp = await fetch(API_BASE_URL + "/cities", { credentials: "include" });
+        const resp = await fetch(API_BASE_URL + "/cities?_=" + Date.now(), { credentials: "include", cache: "no-store" });
         if (resp.ok) {
           const data = await resp.json();
           allCitiesFromApi = Array.isArray(data) ? data : [];

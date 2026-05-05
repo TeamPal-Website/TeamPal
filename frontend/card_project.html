@@ -711,6 +711,7 @@
       const id = params.get("id") || params.get("project");
       const catalogView = params.get("catalog") === "1";
       const fromApps = params.get("from") === "apps";
+      const fromProjectsClosedArchive = params.get("from") === "projects" && params.get("closed") === "1";
       if (!id) {
         document.getElementById("project-sub").textContent = "ID проекта не указан";
         return;
@@ -747,7 +748,9 @@
         const allowApplicantApply = project.status === "active" && !isOwner && !isParticipant;
 
         document.getElementById("project-title").textContent = project.title || "Без названия";
-        document.getElementById("project-sub").textContent = (project.company_name ? project.company_name + " • " : "") + mapIntent(project.employment_intent);
+        document.getElementById("project-sub").textContent = fromApps
+          ? mapIntent(project.employment_intent)
+          : (project.company_name ? project.company_name + " • " : "") + mapIntent(project.employment_intent);
         document.getElementById("project-description").textContent = project.description || "Описание не заполнено";
         document.getElementById("project-tasks").textContent = project.tasks || "Задачи не заполнены";
 
@@ -771,11 +774,17 @@
             return !isEmptyDisplayField(row[1]);
           });
         }
+        if (fromApps) {
+          mainFields = [
+            ["Тип проекта", mapIntent(project.employment_intent)],
+            ["Создан", project.created_at ? new Date(project.created_at).toLocaleDateString("ru-RU") : "—"],
+          ];
+        }
         document.getElementById("project-main-fields").innerHTML = mainFields.map((f) => `<div class="field"><b>${esc(f[0])}:</b>${esc(f[1])}</div>`).join("");
 
         const summarySection = document.getElementById("project-summary-section");
         if (summarySection) {
-          summarySection.style.display = showVisitorChrome ? "none" : "";
+          summarySection.style.display = showVisitorChrome || fromApps || fromProjectsClosedArchive ? "none" : "";
         }
 
         const list = document.getElementById("vacancies-list");
@@ -815,7 +824,7 @@
 
         let occupiedSlots = 0;
         const projectIsCommercial = project.employment_intent === "commercial";
-        const hideVacancyEmpty = showVisitorChrome;
+        const hideVacancyEmpty = showVisitorChrome || fromApps;
         list.innerHTML = vacancies.map((v) => {
           const users = extractUsers(v);
           const occ = v.occupant;

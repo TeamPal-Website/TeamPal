@@ -469,16 +469,17 @@ button {
                 submitBtn.disabled = true;
                 
                 try {
-                    if (typeof API_BASE_URL === 'undefined') {
-                        showNotification('Ошибка конфигурации: API_BASE_URL не определен', 'error');
+                    const baseUrl = typeof window !== "undefined" && window.API_BASE_URL ? window.API_BASE_URL : (typeof API_BASE_URL !== "undefined" ? API_BASE_URL : undefined);
+                    if (!baseUrl) {
+                        showNotification('Ошибка конфигурации: API_BASE_URL не определен. Откройте сайт через сервер TeamPal и проверьте ./config.js.', 'error');
                         submitBtn.disabled = !consentCheckbox.checked;
                         return;
                     }
-                    
+
                     const email = emailInput.value.trim();
                     const password = passwordInput.value;
-                    
-                    const registerResponse = await fetch(API_BASE_URL + '/auth/register', {
+
+                    const registerResponse = await fetch(baseUrl + '/auth/register', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -499,7 +500,7 @@ button {
                     
                     showNotification('Регистрация успешна. Выполняется вход...', 'success', 3000);
                     
-                    const loginResponse = await fetch(API_BASE_URL + '/auth/login', {
+                    const loginResponse = await fetch(baseUrl + '/auth/login', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

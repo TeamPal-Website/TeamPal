@@ -574,17 +574,6 @@
     }
   }
 
-  function bindApplicantProjectPreview(root) {
-    if (!root) return;
-    root.querySelectorAll("[data-applicant-project]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const pid = btn.getAttribute("data-applicant-project");
-        if (!pid) return;
-        window.location.href = "./card_project.html?id=" + encodeURIComponent(pid) + "&" + appsCardReturnQuery();
-      });
-    });
-  }
-
   let _confirmCb = null;
   function showConfirm(title, text, onConfirm, opts = {}) {
     const danger = opts.danger !== false;
@@ -913,13 +902,8 @@
     const rid = app.resume_id != null ? encodeURIComponent(String(app.resume_id)) : "";
     const uid = appsViewerUserId != null ? encodeURIComponent(String(appsViewerUserId)) : "";
 
-    const roleName =
-      rid && uid
-        ? `<a class="app-inline-link" href="./card_resume.html?id=${rid}&user_id=${uid}&${appsCardReturnQuery()}">${esc2(roleRaw)}</a>`
-        : esc2(roleRaw);
-    const projectTitle = pid
-      ? `<button type="button" class="app-inline-btn" data-applicant-project="${pid}">${esc2(projectRaw)}</button>`
-      : esc2(projectRaw);
+    const roleName = esc2(roleRaw);
+    const projectTitle = esc2(projectRaw);
 
     const createdAt = app.created_at ? new Date(app.created_at).toLocaleDateString("ru-RU") : "";
 
@@ -1490,8 +1474,6 @@
 
       bindApplicantOutgoingActions(activeEl);
       bindApplicantOutgoingActions(histSelfEl);
-      bindApplicantProjectPreview(activeEl);
-      bindApplicantProjectPreview(histSelfEl);
     } catch {
       activeEl.innerHTML = '<div class="empty-state">Ошибка загрузки данных</div>';
       histSelfEl.innerHTML = "";
@@ -1544,9 +1526,6 @@
       bindApplicantOutgoingActions(incEl);
       bindApplicantOutgoingActions(outEl);
       bindApplicantOutgoingActions(histEl);
-      bindApplicantProjectPreview(incEl);
-      bindApplicantProjectPreview(outEl);
-      bindApplicantProjectPreview(histEl);
     } catch {
       incEl.innerHTML = '<div class="empty-state">Ошибка загрузки данных</div>';
       outEl.innerHTML = "";
