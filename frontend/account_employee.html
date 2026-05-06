@@ -79,6 +79,24 @@
       color: #fff;
       box-shadow: 0 2px 8px rgba(248, 90, 11, 0.25);
     }
+    .notify-btn {
+      width: 48px;
+      height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .notify-btn:hover {
+      background: linear-gradient(135deg, #fff5e8, #ffffff);
+      border-color: rgba(248, 90, 11, 0.55);
+      box-shadow: 0 8px 18px rgba(250, 149, 0, 0.18);
+    }
+    .notify-btn svg { width: 22px; height: 22px; display: block; }
     .burger {
       width: 48px;
       height: 48px;
@@ -180,6 +198,7 @@
       margin: 0 auto 14px;
       cursor: pointer;
       position: relative;
+      overflow: hidden;
     }
     .avatar-wrap:hover::after {
       content: " ";
@@ -357,6 +376,12 @@
       text-overflow: ellipsis;
       white-space: nowrap;
     }
+    .project-title-link {
+      display: block;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .project-title-link:hover { color: var(--accent-1); }
     .project-info { font-size: 13px; color: #666; margin: 4px 0; }
     .project-roles { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
     .role-badge { background: #fff0e0; padding: 3px 10px; border-radius: 12px; font-size: 11px; }
@@ -463,6 +488,59 @@
     .modal__field input:focus,.modal__field select:focus,.modal__field textarea:focus { outline:2px solid rgba(248,90,11,.2); border-color:#f85a0b; }
     .modal__field textarea { resize:vertical; min-height:90px; }
     .modal__split { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:14px; }
+
+    .cabinet-item-title-btn {
+      display: inline-block;
+      font-weight: 700;
+      color: var(--accent-2, #f85a0b);
+      background: none;
+      border: none;
+      padding: 0;
+      margin: 0;
+      font-family: inherit;
+      font-size: inherit;
+      cursor: pointer;
+      text-align: left;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .cabinet-item-title-btn:hover { color: var(--accent-3, #eb6424); }
+    .cabinet-detail-body {
+      max-height: min(70vh, 560px);
+      overflow: auto;
+      text-align: left;
+      font-size: 14px;
+      line-height: 1.55;
+      color: #333;
+    }
+    .cabinet-detail-body h4 { margin: 14px 0 8px; font-size: 15px; color: var(--ink); }
+    .cabinet-detail-body p { margin: 0 0 10px; white-space: pre-wrap; }
+    .cabinet-detail-meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 14px;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 520px) {
+      .cabinet-detail-meta-grid { grid-template-columns: 1fr; }
+    }
+    .cabinet-detail-meta-cell {
+      background: #fff;
+      border: 1px solid #ece8e3;
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+    .cabinet-detail-meta-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #666;
+      margin-bottom: 4px;
+    }
+    .cabinet-detail-meta-val { font-size: 14px; color: #222; line-height: 1.35; }
+    .cabinet-detail-team-list { margin: 0; padding-left: 18px; }
+    .cabinet-detail-team-list li { margin-bottom: 6px; }
+
   </style>
 </head>
 <body>
@@ -476,15 +554,21 @@
       </div>
     </div>
     <div class="header__actions">
+      <button class="notify-btn" type="button" aria-label="Уведомления" onclick="window.location.href='./applications.html?tab=notifications'">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 4a5 5 0 0 0-5 5v2.6c0 .7-.24 1.38-.68 1.9L5 15h14l-1.32-1.5a3 3 0 0 1-.68-1.9V9a5 5 0 0 0-5-5Z" stroke="#f85a0b" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M10 18a2 2 0 0 0 4 0" stroke="#f85a0b" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
       <button class="burger" id="burger-btn" type="button" aria-label="Открыть меню">
         <span></span><span></span><span></span>
       </button>
       <nav class="header-menu" id="header-menu">
         <div class="header-menu__title">Меню</div>
-        <button class="header-menu__item" type="button">Личный кабинет</button>
-        <button class="header-menu__item" type="button">Мои заявки</button>
-        <button class="header-menu__item" type="button">Каталог</button>
-        <button class="header-menu__item" type="button">Поддержать проект</button>
+        <button class="header-menu__item" type="button" data-nav="./account_employee.html">Личный кабинет</button>
+        <button class="header-menu__item" type="button" data-nav="./employee_resumes.html">Мои резюме</button>
+        <button class="header-menu__item" type="button" data-nav="./search_project.html">Поиск проектов</button>
+        <button class="header-menu__item" type="button" data-nav="./applications.html">Отклики</button>
         <button class="header-menu__exit" type="button">Выйти</button>
       </nav>
     </div>
@@ -495,7 +579,7 @@
   <section class="dashboard">
     <aside class="card sidebar">
       <div class="avatar-wrap" id="avatar-wrap">
-        <img class="avatar" id="profile-avatar" src="./assets/avatar-default.png" alt="Аватар">
+        <img class="avatar" id="profile-avatar" src="./assets/avatar-default.png" alt="" onerror="this.onerror=null;this.src='./assets/avatar-default.png'">
         <input type="file" id="avatar-input" accept="image/*" style="display: none;">
       </div>
       <div class="user-name" id="user-name-display">Пользователь</div>
@@ -504,11 +588,6 @@
     </aside>
 
     <section class="card workspace">
-      <div class="tabs">
-        <button class="tab-btn active" id="tab-personal" type="button">Личная информация</button>
-        <button class="tab-btn" id="tab-myprojects" type="button">Мои резюме</button>
-      </div>
-
       <div class="tab-panel" id="panel-personal">
         <form class="info-grid" id="personal-form">
           <div class="field">
@@ -526,15 +605,9 @@
           <div class="field">
             <label for="gender">Пол</label>
             <select id="gender">
-              <option value="">Не выбран</option>
+              <option value="">Не выбрано</option>
               <option value="male">Мужчина</option>
               <option value="female">Женщина</option>
-            </select>
-          </div>
-          <div class="field field--full">
-            <label for="city">Город</label>
-            <select id="city">
-              <option value="">Выберите город</option>
             </select>
           </div>
           
@@ -557,14 +630,6 @@
         <div class="actions">
           <button class="action-btn action-btn--accent" id="personal-save" type="button">Сохранить</button>
         </div>
-      </div>
-
-      <div class="tab-panel hidden" id="panel-myprojects">
-        <div class="projects-header">
-          <h3>Мои резюме <span id="project-count">0</span>/5</h3>
-          <a href="./create_resume_com.html" class="create-link-btn" id="create-project-link">Создать резюме</a>
-        </div>
-        <div id="projects-list"></div>
       </div>
 
     </section>
@@ -591,75 +656,11 @@
   </div>
 </div>
 
-<div class="modal" id="resume-type-modal" aria-hidden="true">
-  <div class="modal__card">
-    <h2 class="modal__title">Создать резюме</h2>
-    <div style="color:#555; font-size:14px; margin: -4px 0 12px;">
-      Хотите подать резюме на коммерческий или учебный проект?
-    </div>
-    <div style="display:flex; flex-direction:column; gap:4px; margin:4px 0 8px;">
-      <label style="display:flex; gap:10px; align-items:center; cursor:pointer; padding:8px 0;">
-        <input type="radio" name="resume-type" value="com" checked style="width:18px;height:18px;accent-color:var(--accent-2);" />
-        <span style="font-size:15px;">Коммерческий проект</span>
-      </label>
-      <label style="display:flex; gap:10px; align-items:center; cursor:pointer; padding:8px 0;">
-        <input type="radio" name="resume-type" value="study" style="width:18px;height:18px;accent-color:var(--accent-2);" />
-        <span style="font-size:15px;">Учебный проект</span>
-      </label>
-    </div>
-    <div class="modal__actions">
-      <button class="action-btn" id="resume-type-cancel" type="button">Отмена</button>
-      <button class="action-btn action-btn--accent" id="resume-type-continue" type="button">Продолжить</button>
-    </div>
-  </div>
-</div>
-
-
-
 <div id="toast-container" class="toast-container"></div>
 
-
-<div class="modal" id="confirm-modal" aria-hidden="true">
-  <div class="modal__card">
-    <h2 class="modal__title" id="confirm-modal-title">Подтверждение</h2>
-    <p id="confirm-modal-text" style="color:#555;font-size:14px;margin:-4px 0 14px;line-height:1.5;"></p>
-    <div class="modal__actions">
-      <button class="action-btn" id="confirm-modal-cancel" type="button">Отмена</button>
-      <button class="action-btn action-btn--danger" id="confirm-modal-ok" type="button">Подтвердить</button>
-    </div>
-  </div>
-</div>
-
-
-<div class="modal" id="resume-edit-modal" aria-hidden="true">
-  <div class="modal__card" style="width:min(92vw,540px);">
-    <h2 class="modal__title">Редактирование резюме</h2>
-    <div class="modal__field">
-      <label for="edit-resume-position">Желаемая должность</label>
-      <input id="edit-resume-position" type="text" placeholder="Backend Developer" maxlength="255" />
-    </div>
-    <div class="modal__field">
-      <label for="edit-resume-about">О себе</label>
-      <textarea id="edit-resume-about" placeholder="Расскажите о вашем опыте и навыках..."></textarea>
-    </div>
-    <div class="modal__field">
-      <label for="edit-resume-status">Статус поиска</label>
-      <select id="edit-resume-status">
-        <option value="looking_for_job">Ищу работу</option>
-        <option value="not_looking_for_job">Не ищу работу</option>
-      </select>
-    </div>
-    <div class="modal__split">
-      <button class="action-btn action-btn--danger" id="resume-edit-delete" type="button">Удалить резюме</button>
-      <div style="display:flex;gap:8px;">
-        <button class="action-btn" id="resume-edit-cancel" type="button">Отмена</button>
-        <button class="action-btn action-btn--accent" id="resume-edit-save" type="button">Сохранить</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script src="./config.js"></script>
+<script src="./config.js?v=202605042"></script>
+<script src="./assets/notify-bell.js"></script>
+<script src="./profile_complete_check.js"></script>
 <script>
   (function () {
     const yearSpan = document.getElementById("year");
@@ -672,9 +673,18 @@
       const icons = { success: "✓", error: "✕", warning: "⚠", info: "ℹ" };
       const container = document.getElementById("toast-container");
       if (!container) return;
+      let displayText = String(message || "");
+      if (type === "error") {
+        if (typeof window.tpUserFacingErrorLine === "function") {
+          displayText = window.tpUserFacingErrorLine(displayText);
+        } else {
+          displayText = displayText.replace(/^\s*ошибка\s*:\s*/i, "").trim();
+          if (displayText) displayText = displayText.charAt(0).toUpperCase() + displayText.slice(1);
+        }
+      }
       const el = document.createElement("div");
       el.className = "tp-toast " + (type || "info");
-      const msg = String(message || "").replace(/[&<>]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[m]));
+      const msg = displayText.replace(/[&<>]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[m]));
       el.innerHTML = `<span class="tp-toast__icon">${icons[type] || "ℹ"}</span><span class="tp-toast__text">${msg}</span><button class="tp-toast__close" aria-label="Закрыть">×</button>`;
       el.querySelector(".tp-toast__close").addEventListener("click", () => el.remove());
       container.appendChild(el);
@@ -689,161 +699,8 @@
 
 
 
-    let _confirmCb = null;
-    function showConfirm(title, text, onConfirm, { danger = true, okLabel = "Подтвердить" } = {}) {
-      const modal = document.getElementById("confirm-modal");
-      if (!modal) return;
-      document.getElementById("confirm-modal-title").textContent = title;
-      document.getElementById("confirm-modal-text").textContent = text;
-      const okBtn = document.getElementById("confirm-modal-ok");
-      okBtn.textContent = okLabel;
-      okBtn.className = "action-btn " + (danger ? "action-btn--danger" : "action-btn--accent");
-      _confirmCb = onConfirm;
-      modal.classList.add("open");
-    }
-    function _closeConfirmModal() {
-      const modal = document.getElementById("confirm-modal");
-      if (modal) modal.classList.remove("open");
-      _confirmCb = null;
-    }
-    document.getElementById("confirm-modal-cancel")?.addEventListener("click", _closeConfirmModal);
-    document.getElementById("confirm-modal-ok")?.addEventListener("click", () => {
-      const cb = _confirmCb;
-      _closeConfirmModal();
-      if (cb) cb();
-    });
-    document.getElementById("confirm-modal")?.addEventListener("click", (e) => {
-      if (e.target === document.getElementById("confirm-modal")) _closeConfirmModal();
-    });
 
-
-
-
-
-    function _getPosCache() {
-      try { return JSON.parse(localStorage.getItem("tp_resume_positions") || "{}"); } catch { return {}; }
-    }
-    function _setPosCache(id, pos) {
-      try {
-        const c = _getPosCache();
-        if (pos) c[String(id)] = pos; else delete c[String(id)];
-        localStorage.setItem("tp_resume_positions", JSON.stringify(c));
-      } catch {}
-    }
-
-
-
-
-    let _editingResumeId = null;
-
-    async function openResumeEdit(resumeId) {
-      _editingResumeId = String(resumeId);
-      const modal = document.getElementById("resume-edit-modal");
-      if (!modal) return;
-
-      const posCache = _getPosCache();
-      document.getElementById("edit-resume-position").value = posCache[_editingResumeId] || "";
-      document.getElementById("edit-resume-about").value = "";
-      document.getElementById("edit-resume-status").value = "looking_for_job";
-
-      try {
-        const resp = await fetch(API_BASE_URL + "/my_resume/" + resumeId, { credentials: "include" });
-        if (resp.ok) {
-          const data = await resp.json();
-          const r = data.resume || data;
-          const listTitle = posCache[_editingResumeId] || "";
-          const posEl = document.getElementById("edit-resume-position");
-          if (posEl) {
-            posEl.value = (r.desired_position || "").trim() || listTitle;
-          }
-          document.getElementById("edit-resume-about").value = r.about_me || "";
-          document.getElementById("edit-resume-status").value = r.status || "looking_for_job";
-        }
-      } catch {}
-
-      modal.classList.add("open");
-    }
-
-    function _closeResumeEditModal() {
-      const modal = document.getElementById("resume-edit-modal");
-      if (modal) modal.classList.remove("open");
-      _editingResumeId = null;
-    }
-
-    async function _saveResumeEdit() {
-      const id = _editingResumeId;
-      if (!id) return;
-      const position = document.getElementById("edit-resume-position").value.trim();
-      const aboutMe = document.getElementById("edit-resume-about").value.trim();
-      const status = document.getElementById("edit-resume-status").value;
-
-      const payload = {};
-      if (position) payload.desired_position = position;
-      payload.about_me = aboutMe || null;
-      if (status) payload.status = status;
-
-      try {
-        const resp = await fetch(API_BASE_URL + "/resumes/" + id, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify(payload),
-        });
-        if (resp.ok) {
-          if (position) _setPosCache(id, position);
-          _closeResumeEditModal();
-          showToast("Резюме успешно обновлено", "success");
-          loadMyProjects();
-        } else {
-          const err = await resp.json().catch(() => ({}));
-          showToast("Ошибка: " + (err.detail || "Не удалось сохранить"), "error");
-        }
-      } catch {
-        showToast("Ошибка соединения с сервером", "error");
-      }
-    }
-
-    async function _deleteResume(resumeId) {
-      try {
-        const resp = await fetch(API_BASE_URL + "/resumes/" + resumeId, {
-          method: "DELETE",
-          credentials: "include",
-        });
-        if (resp.ok || resp.status === 204) {
-          _setPosCache(resumeId, null);
-          _closeResumeEditModal();
-          showToast("Резюме удалено", "success");
-          loadMyProjects();
-        } else {
-          const err = await resp.json().catch(() => ({}));
-          showToast("Ошибка: " + (err.detail || "Не удалось удалить"), "error");
-        }
-      } catch {
-        showToast("Ошибка соединения с сервером", "error");
-      }
-    }
-
-    document.getElementById("resume-edit-cancel")?.addEventListener("click", _closeResumeEditModal);
-    document.getElementById("resume-edit-save")?.addEventListener("click", _saveResumeEdit);
-    document.getElementById("resume-edit-delete")?.addEventListener("click", () => {
-      const id = _editingResumeId;
-      if (!id) return;
-      showConfirm(
-        "Удалить резюме?",
-        "Это действие необратимо. Резюме будет удалено навсегда.",
-        () => _deleteResume(id)
-      );
-    });
-    document.getElementById("resume-edit-modal")?.addEventListener("click", (e) => {
-      if (e.target === document.getElementById("resume-edit-modal")) _closeResumeEditModal();
-    });
-
-    const tabPersonal = document.getElementById("tab-personal");
-    const tabMyProjects = document.getElementById("tab-myprojects");
-    const panelPersonal = document.getElementById("panel-personal");
-    const panelMyProjects = document.getElementById("panel-myprojects");
     const userMailSpan = document.getElementById("user-mail");
-    const userNameSpan = document.getElementById("user-name-display");
 
     function displayNameFromEmail(email) {
       if (!email) return "Пользователь";
@@ -864,7 +721,7 @@
 
         const user = await response.json();
         if (userMailSpan) userMailSpan.textContent = user.email || "";
-        if (userNameSpan) userNameSpan.textContent = displayNameFromEmail(user.email);
+        updateUserNameDisplay();
         return user;
       } catch (error) {
         console.error(error);
@@ -885,76 +742,22 @@
       }
     }
 
-    function showPersonal() {
-      tabPersonal.classList.add("active");
-      tabMyProjects.classList.remove("active");
-      panelPersonal.classList.remove("hidden");
-      panelMyProjects.classList.add("hidden");
-      loadPersonalData();
-    }
-
-    function showMyProjects() {
-      tabMyProjects.classList.add("active");
-      tabPersonal.classList.remove("active");
-      panelMyProjects.classList.remove("hidden");
-      panelPersonal.classList.add("hidden");
-      loadMyProjects();
-    }
-
-    if (tabPersonal) tabPersonal.addEventListener("click", showPersonal);
-    if (tabMyProjects) tabMyProjects.addEventListener("click", showMyProjects);
-
     let personalData = {
       firstName: "",
       lastName: "",
       age: "",
       gender: "",
-      city: "",
       phone: "",
       telegram: "",
       github: "",
       avatar: ""
     };
-    
-    const TP_RESUMES_MAX = 5;
-    let myResumesCount = 0;
-    async function refreshMyResumesCount() {
-      try {
-        const response = await fetch(API_BASE_URL + "/my_resumes", { credentials: "include" });
-        if (response.ok) {
-          const data = await response.json();
-          if (Array.isArray(data)) myResumesCount = data.length;
-        }
-      } catch (_) {}
-    }
 
     const TP_PROFILE_NAME_MAX = 35;
     const TP_NAME_RE = /^[А-ЯЁа-яё]+(?:[-' ][А-ЯЁа-яё]+)*$/;
 
     function strip(str) {
       return str ? str.trim() : "";
-    }
-
-    async function loadCities() {
-      const sel = document.getElementById("city");
-      if (!sel) return;
-      try {
-        const resp = await fetch(API_BASE_URL + "/cities", { credentials: "include" });
-        if (!resp.ok) return;
-        const list = await resp.json();
-        if (!Array.isArray(list)) return;
-        const currentVal = sel.value;
-        sel.innerHTML = '<option value="">Выберите город</option>';
-        for (const c of list) {
-          if (c && c.id != null && c.title != null) {
-            const opt = document.createElement("option");
-            opt.value = String(c.id);
-            opt.textContent = c.title;
-            sel.appendChild(opt);
-          }
-        }
-        if (currentVal) sel.value = currentVal;
-      } catch (_) {}
     }
 
     async function loadPersonalData() {
@@ -971,26 +774,28 @@
             lastName: data.last_name || "",
             age: data.age || "",
             gender: data.gender || "",
-            cityId: data.city_id || "",
             phone: (data.contacts && data.contacts.phone) || "",
             telegram: (data.contacts && data.contacts.telegram) || "",
             github: (data.contacts && data.contacts.github) || "",
             avatar: data.avatar || ""
           };
 
+          updateUserNameDisplay();
+
           document.getElementById("first-name").value = personalData.firstName;
           document.getElementById("last-name").value = personalData.lastName;
           document.getElementById("age").value = personalData.age;
           document.getElementById("gender").value = personalData.gender;
-          document.getElementById("city").value = personalData.cityId ? String(personalData.cityId) : "";
           document.getElementById("phone").value = personalData.phone;
           document.getElementById("telegram").value = personalData.telegram;
           document.getElementById("github").value = personalData.github;
 
           if (personalData.avatar) {
-            document.getElementById("profile-avatar").src = personalData.avatar;
+            document.getElementById("profile-avatar").src =
+              typeof tpMyProfileAvatarSrc === "function"
+                ? tpMyProfileAvatarSrc(personalData.avatar)
+                : personalData.avatar;
           }
-          updateUserNameDisplay();
         } else if (response.status === 404) {
           console.log("Профиль не найден, будут использованы значения по умолчанию");
         } else {
@@ -1004,157 +809,13 @@
     function updateUserNameDisplay() {
       const firstName = personalData.firstName || "";
       const lastName = personalData.lastName || "";
-      const displayName = `${firstName} ${lastName}`.trim() || "Пользователь";
+      let displayName = `${firstName} ${lastName}`.trim();
+      if (!displayName) {
+        const mail = userMailSpan && userMailSpan.textContent ? String(userMailSpan.textContent).trim() : "";
+        displayName = mail ? displayNameFromEmail(mail) : "Пользователь";
+      }
       const userDisplay = document.getElementById("user-name-display");
       if (userDisplay) userDisplay.textContent = displayName;
-    }
-
-    async function loadMyProjects() {
-      const projectsList = document.getElementById("projects-list");
-      if (!projectsList) return;
-
-      projectsList.innerHTML = '<div class="empty-state" style="color:#aaa;">Загрузка…</div>';
-
-      try {
-        const response = await fetch(API_BASE_URL + "/my_resumes", { credentials: "include" });
-
-        if (!response.ok) {
-          projectsList.innerHTML = '<div class="empty-state">У вас пока нет резюме. Нажмите «Создать резюме»</div>';
-          return;
-        }
-
-        const resumes = await response.json();
-        if (Array.isArray(resumes)) {
-          resumes.sort((a, b) => {
-            const ta = a && a.created_at ? new Date(a.created_at).getTime() : 0;
-            const tb = b && b.created_at ? new Date(b.created_at).getTime() : 0;
-            return tb - ta;
-          });
-        }
-        const countSpan = document.getElementById("project-count");
-        const n = Array.isArray(resumes) ? resumes.length : 0;
-        myResumesCount = n;
-        if (countSpan) countSpan.textContent = String(n);
-
-        if (!Array.isArray(resumes) || resumes.length === 0) {
-          projectsList.innerHTML = '<div class="empty-state">У вас пока нет резюме. Нажмите «Создать резюме»</div>';
-          return;
-        }
-
-        const posCache = _getPosCache();
-        let typeCache = {};
-        try { typeCache = JSON.parse(localStorage.getItem("tp_resume_types") || "{}"); } catch {}
-        const intentLabel = { commercial: "Коммерческий", noncommercial: "Учебный" };
-        const safe = (v) => (v === null || v === undefined) ? "" : String(v);
-        const esc = (s) => safe(s).replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
-        const statusLabel = { looking_for_job: "Ищу работу", not_looking_for_job: "Не ищу работу" };
-
-        const resumeDetails = await Promise.all(
-          resumes.map(async (resume) => {
-            const id = resume && resume.id !== undefined ? String(resume.id) : "";
-            if (!id) return { ...resume, _displayTitle: "Резюме" };
-
-            const cached = posCache[id];
-            if (cached) return { ...resume, _displayTitle: cached };
-
-            try {
-              const detResp = await fetch(API_BASE_URL + "/my_resume/" + id, { credentials: "include" });
-              if (detResp.ok) {
-                const det = await detResp.json();
-                const r = det.resume || det;
-                const pos = r.desired_position || null;
-                if (pos && pos !== "Не указано") {
-                  _setPosCache(id, pos);
-                  return { ...resume, _displayTitle: pos };
-                }
-                const aboutPreview = r.about_me
-                  ? (r.about_me.length > 50 ? r.about_me.slice(0, 50) + "…" : r.about_me)
-                  : null;
-                return { ...resume, _displayTitle: aboutPreview || `Резюме #${id}` };
-              }
-            } catch {}
-            return { ...resume, _displayTitle: `Резюме #${id}` };
-          })
-        );
-
-        projectsList.innerHTML = resumeDetails.map((resume) => {
-          const id = resume && resume.id !== undefined ? String(resume.id) : "";
-          const displayTitle = resume._displayTitle || (id ? `Резюме #${id}` : "Резюме");
-          const currentStatus = resume?.status || "looking_for_job";
-          const isLooking = currentStatus === "looking_for_job";
-          const statusText = statusLabel[currentStatus] || currentStatus;
-          const createdAt = resume?.created_at ? new Date(resume.created_at).toLocaleDateString("ru-RU") : "—";
-          const rType = resume?.employment_intent || typeCache[id] || "";
-          const rTypeLabel = intentLabel[rType] || "";
-
-          return `
-            <div class="project-card" style="display:flex;justify-content:space-between;gap:12px;align-items:center;">
-              <div style="flex:1;min-width:0;">
-                <div class="project-title" title="${esc(displayTitle)}">${esc(displayTitle)}</div>
-                ${rTypeLabel ? `<div class="project-info"><b>Тип:</b> ${esc(rTypeLabel)}</div>` : ""}
-                <div class="project-info"><b>Создано:</b> ${esc(createdAt)}</div>
-              </div>
-              <div style="display:flex;align-items:center;gap:14px;flex-shrink:0;">
-                <label style="display:flex;align-items:center;gap:8px;user-select:none;cursor:pointer;">
-                  <span style="font-size:12px;color:#666;">${isLooking ? "Ищу работу" : "Не ищу"}</span>
-                  <span class="status-toggle">
-                    <input type="checkbox" class="proj-status-check" data-resume-id="${esc(id)}"
-                      data-resume-title="${esc(displayTitle)}" data-current-status="${esc(currentStatus)}"
-                      ${isLooking ? "checked" : ""} />
-                    <span class="status-toggle__track"></span>
-                  </span>
-                </label>
-                <a href="./edit_resume.html?id=${esc(id)}"
-                   class="action-btn"
-                   style="font-size:13px;padding:6px 14px;white-space:nowrap;text-decoration:none;display:inline-block;">
-                  Редактировать
-                </a>
-              </div>
-            </div>
-          `;
-        }).join("");
-
-
-        projectsList.querySelectorAll(".proj-status-check").forEach((checkbox) => {
-          checkbox.addEventListener("click", (e) => {
-            e.preventDefault();
-            const id = checkbox.getAttribute("data-resume-id");
-            const currentStatus = checkbox.getAttribute("data-current-status");
-            const resumeTitle = checkbox.getAttribute("data-resume-title");
-            const newStatus = currentStatus === "looking_for_job" ? "not_looking_for_job" : "looking_for_job";
-            const newLabel = statusLabel[newStatus] || newStatus;
-
-            showConfirm(
-              "Изменить статус резюме",
-              `Установить статус резюме «${resumeTitle}» как «${newLabel}»?`,
-              async () => {
-                try {
-                  const resp = await fetch(API_BASE_URL + "/resumes/" + id, {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    credentials: "include",
-                    body: JSON.stringify({ status: newStatus }),
-                  });
-                  if (resp.ok) {
-                    showToast(`Статус изменён: «${newLabel}»`, "success");
-                    loadMyProjects();
-                  } else {
-                    const err = await resp.json().catch(() => ({}));
-                    showToast("Ошибка: " + (err.detail || "Не удалось изменить статус"), "error");
-                  }
-                } catch {
-                  showToast("Ошибка соединения с сервером", "error");
-                }
-              },
-              { danger: false, okLabel: `Установить «${newLabel}»` }
-            );
-          });
-        });
-
-      } catch (error) {
-        console.error("Ошибка загрузки резюме:", error);
-        projectsList.innerHTML = '<div class="empty-state">Ошибка загрузки данных</div>';
-      }
     }
 
     async function savePersonalData() {
@@ -1164,7 +825,6 @@
         last_name: strip(document.getElementById("last-name").value),
         age: document.getElementById("age").value ? parseInt(document.getElementById("age").value, 10) : null,
         gender: genderRaw || null,
-        city_id: document.getElementById("city").value ? parseInt(document.getElementById("city").value, 10) : null,
         contacts: {
           phone: strip(document.getElementById("phone").value) || null,
           telegram: strip(document.getElementById("telegram").value) || null,
@@ -1173,8 +833,11 @@
       };
 
       const errors = [];
-      if (newData.first_name && !newData.last_name) errors.push("Укажите фамилию");
-      if (!newData.first_name && newData.last_name) errors.push("Укажите имя");
+      if (!newData.first_name) {
+        errors.push("Укажите имя");
+      } else if (!newData.last_name) {
+        errors.push("Укажите фамилию");
+      }
 
       const collapseWs = (s) => (s || "").replace(/\s+/g, " ").trim();
       if (newData.first_name) {
@@ -1234,7 +897,6 @@
             lastName: newData.last_name,
             age: newData.age,
             gender: newData.gender || "",
-            cityId: newData.city_id,
             phone: (newData.contacts && newData.contacts.phone) || "",
             telegram: (newData.contacts && newData.contacts.telegram) || "",
             github: (newData.contacts && newData.contacts.github) || "",
@@ -1243,11 +905,13 @@
           showToast("Личная информация сохранена", "success");
         } else {
           const error = await response.json().catch(() => ({}));
-          const detail = error.detail;
-          const msg = Array.isArray(detail)
-            ? detail.map((d) => d.msg || JSON.stringify(d)).join("; ")
-            : (detail || "Не удалось сохранить");
-          showToast("Ошибка: " + msg, "error");
+          const formatted =
+            typeof window.tpFormatApiDetail === "function" ? window.tpFormatApiDetail(error.detail) : "";
+          const msg =
+            formatted ||
+            (typeof error.detail === "string" ? error.detail : "") ||
+            "Не удалось сохранить";
+          showToast(msg, "error");
         }
       } catch (error) {
         console.error("Ошибка сохранения:", error);
@@ -1265,16 +929,46 @@
         avatarInput.click();
       });
       
-      avatarInput.addEventListener("change", (e) => {
-        const file = e.target.files[0];
-        if (file && file.type.startsWith("image/")) {
-          const previewUrl = URL.createObjectURL(file);
-          document.getElementById("profile-avatar").src = previewUrl;
-          personalData.avatar = previewUrl;
-          showToast("Превью обновлено (сохранение аватара на сервере пока не поддерживается)", "info");
-        } else if (file) {
+      avatarInput.addEventListener("change", async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        if (!file.type.startsWith("image/")) {
           showToast("Пожалуйста, выберите изображение", "warning");
+          avatarInput.value = "";
+          return;
         }
+        const fd = new FormData();
+        fd.append("file", file);
+        try {
+          const response = await fetch(API_BASE_URL + "/profiles/me/avatar", {
+            method: "POST",
+            body: fd,
+            credentials: "include",
+          });
+          if (response.ok) {
+            const data = await response.json();
+            const url = data.avatar;
+            if (url) {
+              document.getElementById("profile-avatar").src =
+                typeof tpMyProfileAvatarSrc === "function" ? tpMyProfileAvatarSrc(url) : url;
+              personalData.avatar = url;
+              showToast("Аватар сохранён", "success");
+            } else {
+              showToast("Аватар сохранён, но URL недоступен — задайте S3_PUBLIC_BASE_URL на сервере", "warning");
+              await loadPersonalData();
+            }
+          } else {
+            const err = await response.json().catch(() => ({}));
+            let msg = "Не удалось загрузить аватар";
+            if (typeof err.detail === "string") msg = err.detail;
+            else if (Array.isArray(err.detail)) msg = err.detail.map((d) => d.msg || d).join("; ");
+            showToast(msg, "error");
+          }
+        } catch (err) {
+          console.error("avatar upload:", err);
+          showToast("Ошибка соединения с сервером", "error");
+        }
+        avatarInput.value = "";
       });
     }
 
@@ -1296,7 +990,7 @@
         roleToggle.querySelectorAll(".role-toggle__btn").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
         if (role === "Ищу сотрудника") {
-          window.location.href = "./account_manager.html";
+          window.location.href = "./employer_projects.html";
         }
       });
     }
@@ -1315,58 +1009,21 @@
       if (!event.target.closest(".header__actions")) closeMenus(); 
     });
 
+    document.querySelectorAll("[data-nav]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const href = btn.getAttribute("data-nav");
+        if (href) window.location.href = href;
+      });
+    });
+
     const changePasswordBtn = document.getElementById("change-password-btn");
     const passwordModal = document.getElementById("password-modal");
     const passwordCancel = document.getElementById("password-cancel");
     const passwordSave = document.getElementById("password-save");
 
-    const createResumeLink = document.getElementById("create-project-link");
-    const resumeTypeModal = document.getElementById("resume-type-modal");
-    const resumeTypeCancel = document.getElementById("resume-type-cancel");
-    const resumeTypeContinue = document.getElementById("resume-type-continue");
-
     if (changePasswordBtn && passwordModal) {
       changePasswordBtn.addEventListener("click", function () { 
         passwordModal.classList.add("open"); 
-      });
-    }
-
-    function openResumeTypeModal() {
-      if (resumeTypeModal) resumeTypeModal.classList.add("open");
-    }
-    function closeResumeTypeModal() {
-      if (resumeTypeModal) resumeTypeModal.classList.remove("open");
-    }
-
-    if (createResumeLink) {
-      createResumeLink.addEventListener("click", async (e) => {
-        e.preventDefault();
-        await refreshMyResumesCount();
-        if (myResumesCount >= TP_RESUMES_MAX) {
-          showToast(
-            "Достигнут лимит резюме (не более " +
-              TP_RESUMES_MAX +
-              "). Удалите резюме или отредактируйте существующее.",
-            "warning",
-          );
-          return;
-        }
-        openResumeTypeModal();
-      });
-    }
-    if (resumeTypeCancel) resumeTypeCancel.addEventListener("click", closeResumeTypeModal);
-    if (resumeTypeContinue) {
-      resumeTypeContinue.addEventListener("click", () => {
-        const selected = document.querySelector('input[name="resume-type"]:checked');
-        const value = selected ? selected.value : "com";
-        try { localStorage.setItem("tp_resume_target", value); } catch (_) {}
-        if (value === "study") window.location.href = "./create_resume_study.html";
-        else window.location.href = "./create_resume_com.html";
-      });
-    }
-    if (resumeTypeModal) {
-      resumeTypeModal.addEventListener("click", (event) => {
-        if (event.target === resumeTypeModal) closeResumeTypeModal();
       });
     }
 
@@ -1453,7 +1110,7 @@
     try {
       const savedRole = localStorage.getItem("tp_role");
       if (savedRole === "Ищу сотрудника") {
-        window.location.replace("./account_manager.html");
+        window.location.replace("./employer_projects.html");
         return;
       }
     } catch (_) {}
@@ -1466,8 +1123,10 @@
       }
     } catch (_) {}
 
-    loadCurrentUser();
-    loadCities().then(() => loadPersonalData());
+    void (async function initAccount() {
+      await loadCurrentUser();
+      await loadPersonalData();
+    })();
   })();
 </script>
 </body>

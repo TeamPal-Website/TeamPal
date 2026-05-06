@@ -9,6 +9,7 @@
   <title>Создание резюме | TeamPal</title>
   <link rel="icon" type="image/png" href="./assets/logo.png">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/notify-banner.css">
   <style>
     :root {
       --bg: #f7f5f2;
@@ -33,63 +34,6 @@
       display: flex;
       flex-direction: column;
     }
-    .notification-container {
-      position: fixed;
-      top: 80px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      width: auto;
-      min-width: 280px;
-      max-width: 500px;
-      pointer-events: none;
-    }
-    .notification {
-      background: #ffffff;
-      border-radius: 8px;
-      padding: 12px 20px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      animation: fadeInDown 0.25s ease-out;
-      pointer-events: auto;
-      border: 1px solid #0000001a;
-      width: 100%;
-    }
-    @keyframes fadeInDown {
-      from { transform: translateY(-20px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-    @keyframes fadeOutUp {
-      from { transform: translateY(0); opacity: 1; }
-      to { transform: translateY(-20px); opacity: 0; }
-    }
-    .notification.error { border-left: 3px solid #e05a2a; background: #fff6f4; }
-    .notification.success { border-left: 3px solid #52c41a; background: #f6ffed; }
-    .notification.warning { border-left: 3px solid #faad14; background: #fffbe6; }
-    .notification-content {
-      flex: 1;
-      font-size: 14px;
-      line-height: 1.4;
-      color: #2d3e56;
-      font-family: "Space Grotesk", system-ui, sans-serif;
-      text-align: center;
-    }
-    .notification-close {
-      cursor: pointer;
-      font-size: 18px;
-      color: #b5b5b5;
-      transition: color 0.2s;
-      line-height: 1;
-      flex-shrink: 0;
-    }
-    .notification-close:hover { color: #F85A0B; }
 
     .header {
       position: fixed;
@@ -136,6 +80,24 @@
       color: #fff;
       box-shadow: 0 2px 8px rgba(248, 90, 11, 0.25);
     }
+    .notify-btn {
+      width: 48px;
+      height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .notify-btn:hover {
+      background: linear-gradient(135deg, #fff5e8, #ffffff);
+      border-color: rgba(248, 90, 11, 0.55);
+      box-shadow: 0 8px 18px rgba(250, 149, 0, 0.18);
+    }
+    .notify-btn svg { width: 22px; height: 22px; display: block; }
     .burger {
       width: 48px;
       height: 48px;
@@ -432,6 +394,12 @@
     .exp-field--date { gap: 4px; }
     .exp-field--date > label:first-of-type { margin-bottom: 0; line-height: 1.35; }
     .exp-field--date > input { margin-top: auto; }
+    .exp-date-opt { font-weight: 500; color: #6b5d4f; font-size: 12px; }
+    .exp-field input[type="date"] {
+      min-height: 44px;
+      padding: 10px 12px;
+      color: #2b2118;
+    }
     .exp-field input,
     .exp-field textarea {
       width: 100%;
@@ -598,15 +566,20 @@
       </div>
     </div>
     <div class="header__actions">
+      <button class="notify-btn" type="button" aria-label="Уведомления" onclick="window.location.href='./applications.html?tab=notifications'">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 4a5 5 0 0 0-5 5v2.6c0 .7-.24 1.38-.68 1.9L5 15h14l-1.32-1.5a3 3 0 0 1-.68-1.9V9a5 5 0 0 0-5-5Z" stroke="#f85a0b" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M10 18a2 2 0 0 0 4 0" stroke="#f85a0b" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
       <button class="burger" id="burger-btn" type="button">
         <span></span><span></span><span></span>
       </button>
       <nav class="header-menu" id="header-menu">
         <div class="header-menu__title">Меню</div>
-        <button class="header-menu__item" type="button">Личный кабинет</button>
-        <button class="header-menu__item" type="button">Мои заявки</button>
-        <button class="header-menu__item" type="button">Каталог</button>
-        <button class="header-menu__item" type="button">Поддержать проект</button>
+        <button class="header-menu__item" type="button" id="hdr-menu-account">Личный кабинет</button>
+        <button class="header-menu__item" type="button" id="hdr-menu-search">Поиск проектов</button>
+        <button class="header-menu__item" type="button" id="hdr-menu-apps">Отклики</button>
         <button class="header-menu__exit" type="button">Выйти</button>
       </nav>
     </div>
@@ -624,12 +597,20 @@
         <div class="section-title">Основное</div>
         <div class="exp-fields">
           <div class="field exp-field-full">
-            <label>Название резюме <span class="req-star" aria-hidden="true">*</span></label>
+            <label for="resumeTitle">Название резюме (видно только вам в списке резюме) <span class="req-star" aria-hidden="true">*</span></label>
             <input id="resumeTitle" type="text" maxlength="255" placeholder="Например: Frontend стажёр" />
           </div>
           <div class="field">
-            <label>Должность <span class="req-star" aria-hidden="true">*</span></label>
-            <input id="desiredPosition" type="text" maxlength="255" placeholder="Frontend-разработчик" />
+            <label for="desiredPosition">Должность <span class="req-star" aria-hidden="true">*</span></label>
+            <select id="desiredPosition">
+              <option value="">Не выбрано</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="resumeCity">Город</label>
+            <select id="resumeCity">
+              <option value="">Не выбрано</option>
+            </select>
           </div>
         </div>
       </div>
@@ -667,6 +648,8 @@
 
 
 <script src="./config.js"></script>
+<script src="./assets/notify-bell.js"></script>
+<script src="./assets/notify-banner.js"></script>
 <script>
 (function () {
   const TP_RESUMES_MAX = 5;
@@ -680,44 +663,95 @@
           "Достигнут лимит резюме (не более " + TP_RESUMES_MAX + "). Удалите резюме или отредактируйте существующее.",
         );
       } catch (e) {}
-      window.location.replace("./account_employee.html");
+      window.location.replace("./employee_resumes.html");
     })
     .catch(function () {});
 })();
 </script>
 <script>
   (function() {
-    const notificationContainer = document.getElementById('notificationContainer');
-
-    function showNotification(message, type = 'error', duration = 5000) {
-      const notification = document.createElement('div');
-      notification.className = `notification ${type}`;
-      notification.innerHTML = `
-        <div class="notification-content">${message}</div>
-        <div class="notification-close">×</div>
-      `;
-      notificationContainer.appendChild(notification);
-      const closeBtn = notification.querySelector('.notification-close');
-      closeBtn.addEventListener('click', () => {
-        notification.style.animation = 'fadeOutUp 0.25s ease-out forwards';
-        setTimeout(() => { notification.remove(); }, 250);
-      });
-      setTimeout(() => {
-        if (notification.parentElement) {
-          notification.style.animation = 'fadeOutUp 0.25s ease-out forwards';
-          setTimeout(() => { notification.remove(); }, 250);
-        }
-      }, duration);
-    }
-
     const yearSpan = document.getElementById("year");
     if (yearSpan) yearSpan.textContent = " " + new Date().getFullYear();
 
 
     let allSkillsList = [];
+    let allRolesFromApi = [];
+    let allCitiesFromApi = [];
     let selectedSkillIds = [];
     const skillsGrid = document.getElementById("skillsGrid");
     const selectedTagsContainer = document.getElementById("selectedSkillsTags");
+
+    function refreshDesiredPositionSelect() {
+      const sel = document.getElementById("desiredPosition");
+      if (!sel) return;
+      const prev = sel.value;
+      sel.innerHTML = '<option value="">Не выбрано</option>' + allRolesFromApi.map(function (r) {
+        return '<option value="' + r.id + '">' + escapeHtml(r.name) + '</option>';
+      }).join("");
+      if (prev && allRolesFromApi.some(function (r) { return String(r.id) === String(prev); })) {
+        sel.value = prev;
+      }
+      sel.disabled = allRolesFromApi.length === 0;
+    }
+
+    async function loadRolesFromApi() {
+      try {
+        const resp = await fetch(API_BASE_URL + "/roles_dictionary", { credentials: "include" });
+        if (resp.ok) {
+          const data = await resp.json();
+          allRolesFromApi = Array.isArray(data) ? data.filter(function (r) { return r.is_active !== false; }) : [];
+        }
+      } catch (_) {}
+      refreshDesiredPositionSelect();
+      if (experiences.length) renderExperiences();
+    }
+
+    function expPositionRoleIdFromText(positionStr) {
+      const p = String(positionStr || "").trim();
+      if (!p) return "";
+      const exact = allRolesFromApi.find(function (r) { return r.name === p; });
+      if (exact) return String(exact.id);
+      const ci = allRolesFromApi.find(function (r) { return r.name.toLowerCase() === p.toLowerCase(); });
+      return ci ? String(ci.id) : "";
+    }
+
+    function expPositionOptionsInnerHtml(storedPosition, roleTypeIdState) {
+      var selId = "";
+      if (roleTypeIdState != null && roleTypeIdState !== "" && allRolesFromApi.some(function (r) { return String(r.id) === String(roleTypeIdState); })) {
+        selId = String(roleTypeIdState);
+      } else {
+        selId = expPositionRoleIdFromText(storedPosition);
+      }
+      let html = '<option value="">Не выбрано</option>';
+      allRolesFromApi.forEach(function (r) {
+        const sel = String(r.id) === selId ? " selected" : "";
+        html += '<option value="' + r.id + '"' + sel + ">" + escapeHtml(r.name) + "</option>";
+      });
+      return html;
+    }
+
+    function refreshResumeCitySelect() {
+      const sel = document.getElementById("resumeCity");
+      if (!sel) return;
+      const prev = sel.value;
+      sel.innerHTML = '<option value="">Не выбрано</option>' + allCitiesFromApi.map(function (c) {
+        return '<option value="' + c.id + '">' + escapeHtml(c.title || '') + '</option>';
+      }).join("");
+      if (prev && allCitiesFromApi.some(function (x) { return String(x.id) === String(prev); })) {
+        sel.value = prev;
+      }
+    }
+
+    async function loadCitiesFromApi() {
+      try {
+        const resp = await fetch(API_BASE_URL + "/cities?_=" + Date.now(), { credentials: "include", cache: "no-store" });
+        if (resp.ok) {
+          const data = await resp.json();
+          allCitiesFromApi = Array.isArray(data) ? data : [];
+        }
+      } catch (_) {}
+      refreshResumeCitySelect();
+    }
 
     async function loadSkillsFromApi() {
       if (!skillsGrid) return;
@@ -837,14 +871,44 @@
       return synonyms.some((ph) => t === ph || t.includes(ph));
     }
 
+    function toDateInputValue(raw) {
+      if (!raw) return "";
+      const s = String(raw).trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+      const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (m) return m[1] + "-" + m[2] + "-" + m[3];
+      if (/^\d{2}\.\d{2}\.\d{4}$/.test(s)) {
+        const parts = s.split(".");
+        return parts[2] + "-" + parts[1].padStart(2, "0") + "-" + parts[0].padStart(2, "0");
+      }
+      return "";
+    }
+
+    function localTodayYmd() {
+      const d = new Date();
+      return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    }
+    function normalizedExpEndYmd(v) {
+      const s = String(v || "").trim();
+      if (!s) return "";
+      if (!isValidDateString(s)) return "";
+      return toDateInputValue(s) || "";
+    }
+    function experienceEndDateIsAfterToday(v) {
+      const ymd = normalizedExpEndYmd(v);
+      if (!ymd) return false;
+      return ymd > localTodayYmd();
+    }
+
     function renderExperiences() {
       if (!experienceListDiv) return;
+      const endDateMax = localTodayYmd();
       if (experiences.length === 0) {
         experienceListDiv.innerHTML = '<div class="exp-list-empty">Нет добавленного опыта работы</div>';
         return;
       }
       experienceListDiv.innerHTML = experiences.map((exp, idx) => {
-        const emptySlot = !(String(exp.company || '').trim()) && !(String(exp.position || '').trim()) && !(String(exp.dateStart || '').trim());
+        const emptySlot = !(String(exp.company || '').trim()) && !exp.role_type_id && !(String(exp.dateStart || '').trim());
         return `
         <div class="exp-entry${emptySlot ? ' is-new' : ''}" data-exp-idx="${idx}">
           <div class="exp-entry-header">
@@ -853,20 +917,20 @@
           </div>
           <div class="exp-grid">
             <div class="exp-field">
-              <label>Компания <span class="req-star" aria-hidden="true">*</span></label>
-              <input type="text" class="exp-company-input" maxlength="255" value="${escapeHtml(exp.company)}" placeholder="ООО Рога и Копыта">
+              <label>Название компании <span class="req-star" aria-hidden="true">*</span></label>
+              <input type="text" class="exp-company-input" maxlength="255" value="${escapeHtml(exp.company)}" placeholder="Юридическое или брендовое название">
             </div>
             <div class="exp-field">
-              <label>Должность <span class="req-star" aria-hidden="true">*</span></label>
-              <input type="text" class="exp-position-input" maxlength="255" value="${escapeHtml(exp.position)}" placeholder="Frontend-разработчик">
+              <label for="exp-pos-idx-${idx}">Должность <span class="req-star" aria-hidden="true">*</span></label>
+              <select id="exp-pos-idx-${idx}" class="exp-position-select"${allRolesFromApi.length === 0 ? " disabled" : ""}>${expPositionOptionsInnerHtml(exp.position, exp.role_type_id)}</select>
             </div>
             <div class="exp-field exp-field--date">
-              <label>Дата прихода <span class="req-star" aria-hidden="true">*</span></label>
-              <input type="text" class="exp-start-input" value="${escapeHtml(exp.dateStart)}" placeholder="ДД.ММ.ГГГГ или ГГГГ-ММ-ДД">
+              <label>Дата начала <span class="req-star" aria-hidden="true">*</span></label>
+              <input type="date" class="exp-start-input" max="2100-12-31" min="1950-01-01" data-exp-idx="${idx}" value="${escapeHtml(toDateInputValue(exp.dateStart))}">
             </div>
             <div class="exp-field exp-field--date">
-              <label>Дата ухода (если не заполнено — по настоящее время)</label>
-              <input type="text" class="exp-end-input" value="${escapeHtml(exp.dateEnd)}" placeholder="ДД.ММ.ГГГГ или оставьте пустым">
+              <label>Дата окончания <span class="exp-date-opt">(если не указана — по настоящее время)</span></label>
+              <input type="date" class="exp-end-input" max="${escapeHtml(endDateMax)}" min="1950-01-01" data-exp-idx="${idx}" value="${escapeHtml(toDateInputValue(exp.dateEnd))}">
             </div>
             <div class="exp-field exp-field-full">
               <label>Описание</label>
@@ -883,14 +947,17 @@
       });
       document.querySelectorAll('.exp-entry').forEach((item, idx) => {
         const companyInput = item.querySelector('.exp-company-input');
-        const positionInput = item.querySelector('.exp-position-input');
+        const positionSelect = item.querySelector('.exp-position-select');
         const startInput = item.querySelector('.exp-start-input');
         const endInput = item.querySelector('.exp-end-input');
         const descInput = item.querySelector('.exp-desc-input');
         function updateExpData() {
           if (experiences[idx]) {
             experiences[idx].company = companyInput.value;
-            experiences[idx].position = positionInput.value;
+            const rid = positionSelect ? positionSelect.value : "";
+            const role = allRolesFromApi.find(function (r) { return String(r.id) === String(rid); });
+            experiences[idx].position = role ? role.name : "";
+            experiences[idx].role_type_id = role ? role.id : null;
             experiences[idx].description = descInput.value;
             experiences[idx].dateStart = startInput.value;
             experiences[idx].dateEnd = endInput.value;
@@ -898,38 +965,45 @@
         }
         function clearExpInvalid() {
           companyInput.classList.remove('inp-invalid');
-          positionInput.classList.remove('inp-invalid');
+          if (positionSelect) positionSelect.classList.remove('inp-invalid');
           startInput.classList.remove('inp-invalid');
           endInput.classList.remove('inp-invalid');
         }
         companyInput.addEventListener('input', () => { clearExpInvalid(); updateExpData(); });
-        positionInput.addEventListener('input', () => { clearExpInvalid(); updateExpData(); });
+        if (positionSelect) positionSelect.addEventListener('change', () => { clearExpInvalid(); updateExpData(); });
         descInput.addEventListener('input', () => { clearExpInvalid(); updateExpData(); });
         startInput.addEventListener('input', () => { clearExpInvalid(); updateExpData(); });
+        startInput.addEventListener('change', () => { clearExpInvalid(); updateExpData(); });
         endInput.addEventListener('input', () => { clearExpInvalid(); updateExpData(); });
+        endInput.addEventListener('change', () => { clearExpInvalid(); updateExpData(); });
         updateExpData();
       });
     }
 
     addExpBtn.addEventListener("click", () => {
-      experiences.push({ company: "", position: "", dateStart: "", dateEnd: "", description: "" });
+      experiences.push({ company: "", position: "", role_type_id: null, dateStart: "", dateEnd: "", description: "" });
       renderExperiences();
     });
 
     const resumeTitleInput = document.getElementById("resumeTitle");
     const desiredPositionInput = document.getElementById("desiredPosition");
+    const resumeCitySelect = document.getElementById("resumeCity");
     const aboutMeTextarea = document.getElementById("aboutMe");
     const cancelBtn = document.getElementById("cancelBtn");
     const publishBtn = document.getElementById("publishBtn");
 
-    [resumeTitleInput, desiredPositionInput, aboutMeTextarea].forEach((el) => {
+    [resumeTitleInput, aboutMeTextarea].forEach((el) => {
       if (!el) return;
       el.addEventListener("input", () => el.classList.remove("inp-invalid"));
     });
+    if (desiredPositionInput) {
+      desiredPositionInput.addEventListener("change", () => desiredPositionInput.classList.remove("inp-invalid"));
+    }
 
     function resetForm() {
       if (resumeTitleInput) resumeTitleInput.value = "";
       if (desiredPositionInput) desiredPositionInput.value = "";
+      if (resumeCitySelect) resumeCitySelect.value = "";
       aboutMeTextarea.value = "";
       selectedSkillIds = [];
       renderSkillsGrid();
@@ -1000,15 +1074,21 @@
 
       const title = (resumeTitleInput?.value || "").trim();
       if (!title) {
-        showNotification('Пожалуйста, заполните поле "Название резюме"', 'error');
+        showNotification('Пожалуйста, заполните название резюме (видно только вам в списке резюме).', 'error');
         return;
       }
 
-      const position = (desiredPositionInput?.value || "").trim();
-      if (!position) {
-        showNotification('Пожалуйста, заполните поле "Должность"', 'error');
+      const roleIdRaw = desiredPositionInput && desiredPositionInput.value ? parseInt(desiredPositionInput.value, 10) : NaN;
+      const roleMatch = Number.isFinite(roleIdRaw) && roleIdRaw > 0
+        ? allRolesFromApi.find(function (x) { return x.id === roleIdRaw; })
+        : null;
+      if (!roleMatch) {
+        showNotification('Выберите должность из списка', 'error');
+        desiredPositionInput?.classList.add("inp-invalid");
+        desiredPositionInput?.scrollIntoView({ behavior: "smooth", block: "center" });
         return;
       }
+      desiredPositionInput?.classList.remove("inp-invalid");
 
       const V255 =
         typeof window.TP_ORM_VARCHAR255 === "number" ? window.TP_ORM_VARCHAR255 : 255;
@@ -1028,7 +1108,7 @@
               return { ok: true, value: v };
             };
 
-      let lenChk = maxCheck(title, V255, "Название резюме");
+      let lenChk = maxCheck(title, V255, "Название резюме (для списка)");
       if (!lenChk.ok) {
         showNotification(lenChk.message, "error", 7000);
         resumeTitleInput?.classList.add("inp-invalid");
@@ -1036,15 +1116,6 @@
         return;
       }
       resumeTitleInput?.classList.remove("inp-invalid");
-
-      lenChk = maxCheck(position, V255, "Должность");
-      if (!lenChk.ok) {
-        showNotification(lenChk.message, "error", 7000);
-        desiredPositionInput?.classList.add("inp-invalid");
-        desiredPositionInput?.scrollIntoView({ behavior: "smooth", block: "center" });
-        return;
-      }
-      desiredPositionInput?.classList.remove("inp-invalid");
 
       const aboutText = (aboutMeTextarea && aboutMeTextarea.value ? aboutMeTextarea.value : "").trim();
       lenChk = maxCheck(aboutText, TMAX, "Поле «О себе»");
@@ -1062,7 +1133,7 @@
 
       document
         .querySelectorAll(
-          ".exp-start-input.inp-invalid, .exp-end-input.inp-invalid, .exp-company-input.inp-invalid, .exp-position-input.inp-invalid, .exp-desc-input.inp-invalid",
+          ".exp-start-input.inp-invalid, .exp-end-input.inp-invalid, .exp-company-input.inp-invalid, .exp-position-select.inp-invalid, .exp-desc-input.inp-invalid",
         )
         .forEach((el) => el.classList.remove("inp-invalid"));
 
@@ -1071,21 +1142,22 @@
         const exp = experiences[idx];
         const row = {
           company: (exp.company || "").trim(),
+          role_type_id: exp.role_type_id,
           position: (exp.position || "").trim(),
           dateStart: (exp.dateStart || "").trim(),
           dateEnd: (exp.dateEnd || "").trim(),
           description: (exp.description || "").trim(),
         };
-        if (!row.company && !row.position && !row.dateStart && !row.dateEnd && !row.description) continue;
+        if (!row.company && !row.role_type_id && !row.dateStart && !row.dateEnd && !row.description) continue;
         const entry = experienceListDiv && experienceListDiv.querySelector(`.exp-entry[data-exp-idx="${idx}"]`);
         if (!row.company) {
-          showNotification('Заполните "Компания" в опыте работы (или удалите пустой блок)', 'error');
+          showNotification('Укажите «Название компании» в опыте работы (или удалите пустой блок)', 'error');
           entry?.querySelector('.exp-company-input')?.classList.add('inp-invalid');
           return;
         }
-        if (!row.position) {
-          showNotification('Заполните "Должность" в опыте работы (или удалите пустой блок)', 'error');
-          entry?.querySelector('.exp-position-input')?.classList.add('inp-invalid');
+        if (!row.role_type_id || !Number.isFinite(Number(row.role_type_id)) || Number(row.role_type_id) <= 0) {
+          showNotification('Выберите должность из справочника в опыте работы (или удалите пустой блок)', 'error');
+          entry?.querySelector('.exp-position-select')?.classList.add('inp-invalid');
           return;
         }
         if (!row.dateStart) {
@@ -1094,26 +1166,24 @@
           return;
         }
         if (!isValidDateString(row.dateStart)) {
-          showNotification('Дата прихода введена неверно. Укажите дату в формате ДД.ММ.ГГГГ или ГГГГ-ММ-ДД.', 'error', 5500);
+          showNotification('Дата начала не выбрана или указана неверно. Выберите дату в календаре.', 'error', 5500);
           entry?.querySelector('.exp-start-input')?.classList.add('inp-invalid');
           return;
         }
         if (row.dateEnd && !isAcceptableEndDateInput(row.dateEnd)) {
-          showNotification('Дата ухода введена неверно. Оставьте поле пустым (по настоящее время) или укажите дату в формате ДД.ММ.ГГГГ или ГГГГ-ММ-ДД.', 'error', 6500);
+          showNotification('Проверьте дату окончания или оставьте поле пустым (по настоящее время).', 'error', 6500);
           entry?.querySelector('.exp-end-input')?.classList.add('inp-invalid');
           return;
         }
-        lenChk = maxCheck(row.company, V255, "Компания в опыте работы");
+        if (row.dateEnd && experienceEndDateIsAfterToday(row.dateEnd)) {
+          showNotification('Дата окончания не может быть позже сегодняшнего дня.', 'error', 6500);
+          entry?.querySelector('.exp-end-input')?.classList.add('inp-invalid');
+          return;
+        }
+        lenChk = maxCheck(row.company, V255, "Название компании в опыте работы");
         if (!lenChk.ok) {
           showNotification(lenChk.message, "error", 7000);
           entry?.querySelector(".exp-company-input")?.classList.add("inp-invalid");
-          entry?.scrollIntoView({ behavior: "smooth", block: "center" });
-          return;
-        }
-        lenChk = maxCheck(row.position, V255, "Должность в опыте работы");
-        if (!lenChk.ok) {
-          showNotification(lenChk.message, "error", 7000);
-          entry?.querySelector(".exp-position-input")?.classList.add("inp-invalid");
           entry?.scrollIntoView({ behavior: "smooth", block: "center" });
           return;
         }
@@ -1141,18 +1211,27 @@
 
 
       const resumeData = {
-        desired_position: position,
+        role_type_id: roleMatch.id,
         about_me: aboutText || null,
         employment_intent: "noncommercial",
         skill_ids: selectedSkillIds,
         experiences: cleanedExperiences.map(exp => ({
           company_name: exp.company,
-          position: exp.position,
+          role_type_id: Number(exp.role_type_id),
           start_date: toISODate(exp.dateStart),
           end_date: isValidDateString(exp.dateEnd) ? toISODate(exp.dateEnd) : null,
           description: exp.description || null,
         })),
       };
+      resumeData.commitment_level = null;
+      resumeData.work_format = null;
+      resumeData.schedule = null;
+      resumeData.salary_type = null;
+      resumeData.contract_type = null;
+      resumeData.salary_amount = null;
+
+      var cityNum = resumeCitySelect && resumeCitySelect.value ? parseInt(resumeCitySelect.value, 10) : NaN;
+      resumeData.city_id = Number.isFinite(cityNum) && cityNum > 0 ? cityNum : null;
 
       try {
         const response = await fetch(API_BASE_URL + "/resumes", {
@@ -1182,7 +1261,7 @@
           showNotification('Резюме успешно создано!', 'success', 3000);
           resetForm();
           setTimeout(() => {
-            window.location.href = "./account_employee.html";
+            window.location.href = "./employee_resumes.html";
           }, 1500);
         } else {
           const error = await response.json().catch(() => ({}));
@@ -1208,6 +1287,19 @@
       if (headerMenu) headerMenu.classList.remove("open");
       if (burgerBtn) burgerBtn.classList.remove("open");
     }
+
+    document.getElementById("hdr-menu-account")?.addEventListener("click", () => {
+      closeMenus();
+      window.location.href = "./employee_resumes.html";
+    });
+    document.getElementById("hdr-menu-search")?.addEventListener("click", () => {
+      closeMenus();
+      window.location.href = "./search_project.html";
+    });
+    document.getElementById("hdr-menu-apps")?.addEventListener("click", () => {
+      closeMenus();
+      window.location.href = "./applications.html";
+    });
     if (roleToggle) {
       roleToggle.addEventListener("click", function(e) {
         const btn = e.target.closest(".role-toggle__btn");
@@ -1217,7 +1309,7 @@
         roleToggle.querySelectorAll(".role-toggle__btn").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
         if (role === "Ищу сотрудника") {
-          window.location.href = "./account_manager.html";
+          window.location.href = "./employer_projects.html";
         }
       });
     }
@@ -1250,7 +1342,7 @@
 
     function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); }
 
-    loadSkillsFromApi();
+    Promise.all([loadSkillsFromApi(), loadRolesFromApi(), loadCitiesFromApi()]).catch(() => {});
     renderSelectedTags();
     renderExperiences();
   })();

@@ -1,11 +1,8 @@
 from pathlib import Path
-from typing import Annotated
-
+from typing import Annotated, Literal
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
-
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 class Settings(BaseSettings):
     DB_HOST: str
@@ -16,26 +13,31 @@ class Settings(BaseSettings):
 
     @property
     def DB_URL(self):
-        return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
-
+        return f'postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}'
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int
+    ALLOWED_ORIGINS: Annotated[list[str], NoDecode] = Field(default_factory=lambda: ['http://localhost:5173'])
 
-    ALLOWED_ORIGINS: Annotated[list[str], NoDecode] = Field(
-        default_factory=lambda: ["http://localhost:5173"]
-    )
-
-    @field_validator("ALLOWED_ORIGINS", mode="before")
+    @field_validator('ALLOWED_ORIGINS', mode='before')
     @classmethod
     def split_allowed_origins(cls, value: str | list[str]) -> list[str] | str:
         if isinstance(value, str):
-            return [origin.strip() for origin in value.split(",") if origin.strip()]
+            return [origin.strip() for origin in value.split(',') if origin.strip()]
         return value
+    REDIS_URL: str | None = None
+    CELERY_BROKER_URL: str | None = None
 
-    model_config = SettingsConfigDict(
-        env_file=BASE_DIR / ".env",
-    )
-
-
+    @property
+    def celery_broker(self) -> str | None:
+        return self.CELERY_BROKER_URL or self.REDIS_URL
+    S3_ENDPOINT_URL: str | None = None
+    S3_ACCESS_KEY_ID: str | None = None
+    S3_SECRET_ACCESS_KEY: str | None = None
+    S3_BUCKET: str | None = None
+    S3_REGION: str = 'us-east-1'
+    S3_PUBLIC_BASE_URL: str | None = None
+    S3_AVATAR_PREFIX: str = 'avatars/'
+    S3_ADDRESSING_STYLE: Literal['path', 'virtual'] = 'path'
+    model_config = SettingsConfigDict(env_file=BASE_DIR / '.env')
 settings = Settings()

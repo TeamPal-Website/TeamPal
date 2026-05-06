@@ -9,12 +9,13 @@
   <title>Создание проекта | TeamPal</title>
   <link rel="icon" type="image/png" href="./assets/logo.png">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/notify-banner.css">
   <style>
     :root {
       --bg: #f7f5f2;
       --header: #eae8e4;
       --panel: #ffffff;
-      --panel-soft: #fffaf3;
+      --panel-soft: #fcf9f4;
       --ink: #1a1a1a;
       --ink2: #3a3a3a;
       --line: rgba(0, 0, 0, 0.09);
@@ -33,63 +34,6 @@
       display: flex;
       flex-direction: column;
     }
-    .notification-container {
-      position: fixed;
-      top: 80px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      width: auto;
-      min-width: 280px;
-      max-width: 500px;
-      pointer-events: none;
-    }
-    .notification {
-      background: #ffffff;
-      border-radius: 8px;
-      padding: 12px 20px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      animation: fadeInDown 0.25s ease-out;
-      pointer-events: auto;
-      border: 1px solid #0000001a;
-      width: 100%;
-    }
-    @keyframes fadeInDown {
-      from { transform: translateY(-20px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-    @keyframes fadeOutUp {
-      from { transform: translateY(0); opacity: 1; }
-      to { transform: translateY(-20px); opacity: 0; }
-    }
-    .notification.error { border-left: 3px solid #e05a2a; background: #fff6f4; }
-    .notification.success { border-left: 3px solid #52c41a; background: #f6ffed; }
-    .notification.warning { border-left: 3px solid #faad14; background: #fffbe6; }
-    .notification-content {
-      flex: 1;
-      font-size: 14px;
-      line-height: 1.4;
-      color: #2d3e56;
-      font-family: "Space Grotesk", system-ui, sans-serif;
-      text-align: center;
-    }
-    .notification-close {
-      cursor: pointer;
-      font-size: 18px;
-      color: #b5b5b5;
-      transition: color 0.2s;
-      line-height: 1;
-      flex-shrink: 0;
-    }
-    .notification-close:hover { color: #F85A0B; }
     .header {
       position: fixed;
       inset: 0 0 auto 0;
@@ -135,6 +79,24 @@
       color: #fff;
       box-shadow: 0 2px 8px rgba(248, 90, 11, 0.25);
     }
+    .notify-btn {
+      width: 48px;
+      height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .notify-btn:hover {
+      background: linear-gradient(135deg, #fff5e8, #ffffff);
+      border-color: rgba(248, 90, 11, 0.55);
+      box-shadow: 0 8px 18px rgba(250, 149, 0, 0.18);
+    }
+    .notify-btn svg { width: 22px; height: 22px; display: block; }
     .burger {
       width: 48px;
       height: 48px;
@@ -243,6 +205,20 @@
       font-family: "Space Grotesk", system-ui, sans-serif;
     }
     .constructor-body { padding: 28px; }
+    .resume-section {
+      background: var(--panel-soft);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+    }
+    .section-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #2d2a24;
+      margin-bottom: 18px;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+    }
     .project-form {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -265,21 +241,14 @@
       padding: 13px 16px;
       font-family: "Space Grotesk", system-ui, sans-serif;
       font-size: 15px;
-      background: white;
+      background: #fff;
       transition: 0.2s;
       min-height: 48px;
     }
     .form-field select {
       appearance: none;
       -webkit-appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 14px center;
-      padding-right: 40px;
-    }
-    .form-field select {
-      appearance: none;
-      -webkit-appearance: none;
+      background-color: #fff;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
       background-position: right 14px center;
@@ -337,13 +306,13 @@
       line-height: 1.55;
     }
     .exp-entry {
-      border: 1px solid var(--line);
+      border: 1px solid rgba(250, 149, 0, 0.35);
       border-radius: 20px;
       padding: 18px;
       margin-bottom: 16px;
-      background: #fff;
+      background: #fffbf5;
     }
-    .exp-entry.is-new { border-color: rgba(250, 149, 0, 0.55); background: #fffbf5; }
+    .exp-entry.is-new { border-color: rgba(250, 149, 0, 0.55); }
     .exp-entry-header {
       display: flex;
       justify-content: space-between;
@@ -397,6 +366,7 @@
       -webkit-appearance: none;
       cursor: pointer;
       padding-right: 40px;
+      background-color: #fff;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
       background-position: right 12px center;
@@ -408,6 +378,79 @@
       border-color: var(--accent-2);
       box-shadow: 0 0 0 3px rgba(248, 90, 11, 0.12);
     }
+    .skills-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px 16px;
+      margin-bottom: 8px;
+      max-height: 280px;
+      overflow-y: auto;
+      padding: 4px 2px;
+    }
+    .skill-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #fff;
+      padding: 8px 14px;
+      border-radius: 40px;
+      border: 1px solid #e8e0d5;
+      cursor: pointer;
+      transition: 0.2s;
+      font-size: 14px;
+      font-weight: 500;
+      color: #3a2e24;
+    }
+    .skill-checkbox:hover { background: #fff7ef; border-color: var(--accent-1); }
+    .skill-checkbox input {
+      width: 18px;
+      height: 18px;
+      min-height: 18px !important;
+      margin: 0;
+      accent-color: var(--accent-2);
+      cursor: pointer;
+      flex-shrink: 0;
+      padding: 0;
+      border: none;
+    }
+    .skill-checkbox span { flex: 1; cursor: pointer; }
+    .skill-checkbox.checked {
+      border-color: var(--accent-2);
+      background: #fff6f0;
+      font-weight: 600;
+    }
+    .selected-skills-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px dashed #e2d8ce;
+      min-height: 32px;
+    }
+    .selected-skill-tag {
+      background: linear-gradient(115deg, #fff0e0, #fff7ef);
+      border-radius: 30px;
+      padding: 5px 12px;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 500;
+      color: var(--accent-2);
+    }
+    .selected-skill-tag button {
+      background: none;
+      border: none;
+      font-size: 14px;
+      cursor: pointer;
+      color: #b78f64;
+      line-height: 1;
+      padding: 0 2px;
+    }
+    .selected-skill-tag button:hover { color: var(--accent-2); }
+    .skills-hint { display: block; margin-top: 8px; color: #8f7e68; font-size: 13px; }
     .btn-add-exp {
       width: 100%;
       padding: 12px;
@@ -476,6 +519,8 @@
       .header__inner { padding: 0 16px; }
       .exp-grid { grid-template-columns: 1fr; }
       .exp-field-full { grid-column: 1; }
+      .skills-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+      .resume-section { padding: 16px; }
     }
   </style>
 </head>
@@ -492,15 +537,20 @@
       </div>
     </div>
     <div class="header__actions">
+      <button class="notify-btn" type="button" aria-label="Уведомления" onclick="window.location.href='./applications.html?tab=notifications'">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 4a5 5 0 0 0-5 5v2.6c0 .7-.24 1.38-.68 1.9L5 15h14l-1.32-1.5a3 3 0 0 1-.68-1.9V9a5 5 0 0 0-5-5Z" stroke="#f85a0b" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M10 18a2 2 0 0 0 4 0" stroke="#f85a0b" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
       <button class="burger" id="burger-btn" type="button">
         <span></span><span></span><span></span>
       </button>
       <nav class="header-menu" id="header-menu">
         <div class="header-menu__title">Меню</div>
-        <button class="header-menu__item" type="button">Личный кабинет</button>
-        <button class="header-menu__item" type="button">Мои заявки</button>
-        <button class="header-menu__item" type="button">Каталог</button>
-        <button class="header-menu__item" type="button">Поддержать проект</button>
+        <button class="header-menu__item" type="button" id="hdr-menu-account">Личный кабинет</button>
+        <button class="header-menu__item" type="button" id="hdr-menu-search">Поиск сотрудников</button>
+        <button class="header-menu__item" type="button" id="hdr-menu-apps">Отклики</button>
         <button class="header-menu__exit" type="button">Выйти</button>
       </nav>
     </div>
@@ -514,7 +564,10 @@
       <span class="constructor-title">Конструктор нового проекта</span>
     </div>
     <div class="constructor-body">
-      <form class="project-form" id="create-project-form" novalidate onsubmit="return false;">
+      <form id="create-project-form" novalidate onsubmit="return false;">
+        <div class="resume-section">
+          <div class="section-title">Проект</div>
+          <div class="project-form">
         <div class="form-field form-field--full">
           <label for="proj-name">Название проекта <span class="req-star" aria-hidden="true">*</span></label>
           <div class="name-with-kind">
@@ -529,7 +582,7 @@
         <div class="form-field">
           <label for="proj-city">Город</label>
           <select id="proj-city">
-            <option value="">Не указан</option>
+            <option value="">Не выбрано</option>
           </select>
         </div>
         <div class="form-field form-field--full">
@@ -540,11 +593,13 @@
           <label for="proj-tasks">Задачи / что предстоит делать</label>
           <textarea id="proj-tasks" placeholder="Кратко опишите задачи проекта…"></textarea>
         </div>
+          </div>
+        </div>
 
         <div class="form-field form-field--full roles-block">
-          <div class="roles-title"><span>Требуемые роли <span class="req-star" aria-hidden="true">*</span></span></div>
+          <div class="roles-title"><span>Вакансии <span class="req-star" aria-hidden="true">*</span></span></div>
           <div class="roles-list" id="roles-list-container"></div>
-          <button type="button" id="add-role-btn" class="btn-add-exp">+ Добавить роль</button>
+          <button type="button" id="add-role-btn" class="btn-add-exp">+ Добавить вакансию</button>
         </div>
 
       </form>
@@ -563,55 +618,43 @@
 
 
 <script src="./config.js"></script>
+<script src="./assets/notify-bell.js"></script>
+<script src="./assets/notify-banner.js"></script>
 <script>
 (function () {
   const TP_PROJECTS_MAX = 10;
-  fetch(API_BASE_URL + "/my_projects", { credentials: "include" })
-    .then(function (r) { return r.ok ? r.json() : []; })
-    .then(function (arr) {
-      if (!Array.isArray(arr) || arr.length < TP_PROJECTS_MAX) return;
+  Promise.all([
+    fetch(API_BASE_URL + "/my_projects", { credentials: "include" }),
+    fetch(API_BASE_URL + "/my_closed_projects", { credentials: "include" }),
+  ])
+    .then(function (responses) {
+      return Promise.all(responses.map(function (r) { return r.ok ? r.json() : []; }));
+    })
+    .then(function (pairs) {
+      const openArr = pairs[0];
+      const closedArr = pairs[1];
+      const n = (Array.isArray(openArr) ? openArr.length : 0) + (Array.isArray(closedArr) ? closedArr.length : 0);
+      if (n < TP_PROJECTS_MAX) return;
       try {
         sessionStorage.setItem(
           "tp_flash_error",
           "Достигнут лимит проектов (не более " + TP_PROJECTS_MAX + "). Удалите проект или отредактируйте существующий.",
         );
       } catch (e) {}
-      window.location.replace("./account_manager.html");
+      window.location.replace("./employer_projects.html");
     })
     .catch(function () {});
 })();
 </script>
 <script>
   (function() {
-    const notificationContainer = document.getElementById('notificationContainer');
-
-    function showNotification(message, type = 'error', duration = 5000) {
-      const notification = document.createElement('div');
-      notification.className = `notification ${type}`;
-      notification.innerHTML = `
-        <div class="notification-content">${message}</div>
-        <div class="notification-close">×</div>
-      `;
-      notificationContainer.appendChild(notification);
-      const closeBtn = notification.querySelector('.notification-close');
-      closeBtn.addEventListener('click', () => {
-        notification.style.animation = 'fadeOutUp 0.25s ease-out forwards';
-        setTimeout(() => { notification.remove(); }, 250);
-      });
-      setTimeout(() => {
-        if (notification.parentElement) {
-          notification.style.animation = 'fadeOutUp 0.25s ease-out forwards';
-          setTimeout(() => { notification.remove(); }, 250);
-        }
-      }, duration);
-    }
-
     const yearSpan = document.getElementById("year");
     if (yearSpan) yearSpan.textContent = " " + new Date().getFullYear();
 
 
     let allRolesFromApi = [];
     let allCities = [];
+    let allSkillsList = [];
     let rolesArray = [];
     const rolesContainer = document.getElementById("roles-list-container");
     const addRoleBtn = document.getElementById("add-role-btn");
@@ -627,7 +670,7 @@
           sel.innerHTML = "";
           const o0 = document.createElement("option");
           o0.value = "";
-          o0.textContent = "Не указан";
+          o0.textContent = "Не выбрано";
           sel.appendChild(o0);
           allCities.forEach((c) => {
             const o = document.createElement("option");
@@ -651,15 +694,84 @@
         if (addRoleBtn) addRoleBtn.disabled = true;
       } else {
         if (addRoleBtn) addRoleBtn.disabled = false;
-        let dl = document.getElementById("roles-datalist");
-        if (!dl) {
-          dl = document.createElement("datalist");
-          dl.id = "roles-datalist";
-          document.body.appendChild(dl);
-        }
-        dl.innerHTML = allRolesFromApi.map(r => `<option value="${escapeHtml(r.name)}"></option>`).join('');
       }
-      renderRolesList();
+      refreshRoleInputsState();
+    }
+
+    async function loadSkillsFromApi() {
+      try {
+        const resp = await fetch(API_BASE_URL + "/skills", { credentials: "include" });
+        if (resp.ok) {
+          const data = await resp.json();
+          allSkillsList = Array.isArray(data) ? data : [];
+        }
+      } catch (_) {}
+    }
+
+    function wireAllRoleSkills() {
+      if (!rolesContainer) return;
+      rolesArray.forEach((role, idx) => {
+        if (!Array.isArray(role.skill_ids)) role.skill_ids = [];
+        const rid = `rp-${idx}`;
+        const grid = document.getElementById(rid + '-skills-grid');
+        const tags = document.getElementById(rid + '-skill-tags');
+        if (!grid || !tags) return;
+
+        function paintRoleSkills() {
+          const ids = role.skill_ids;
+          if (ids.length === 0) {
+            tags.innerHTML = '<div class="skills-empty" style="margin:0;">Выберите навыки в списке ниже</div>';
+          } else {
+            const objs = allSkillsList.filter(s => ids.includes(s.id));
+            tags.innerHTML = objs.map(skill => `
+            <div class="selected-skill-tag">
+              ${escapeHtml(skill.name)}
+              <button type="button" data-skill-remove="${skill.id}" aria-label="Удалить">✕</button>
+            </div>`).join('');
+            tags.querySelectorAll('[data-skill-remove]').forEach(btn => {
+              btn.addEventListener('click', () => {
+                const sid = parseInt(btn.getAttribute('data-skill-remove'), 10);
+                role.skill_ids = role.skill_ids.filter(x => x !== sid);
+                const cb = grid.querySelector('.skill-check[data-sid="' + sid + '"]');
+                if (cb) {
+                  cb.checked = false;
+                  const lab = cb.closest('.skill-checkbox');
+                  if (lab) lab.classList.remove('checked');
+                }
+                paintRoleSkills();
+              });
+            });
+          }
+        }
+
+        if (allSkillsList.length === 0) {
+          grid.innerHTML = '<div class="skills-empty">Навыки не загружены</div>';
+          tags.innerHTML = '<div class="skills-empty" style="margin:0;">Выберите навыки в списке ниже</div>';
+          return;
+        }
+
+        grid.innerHTML = allSkillsList.map(skill => {
+          const c = role.skill_ids.includes(skill.id);
+          return `<label class="skill-checkbox${c ? ' checked' : ''}">
+            <input type="checkbox" class="skill-check" data-sid="${skill.id}" ${c ? 'checked' : ''}>
+            <span>${escapeHtml(skill.name)}</span></label>`;
+        }).join('');
+
+        grid.querySelectorAll('.skill-check').forEach(cb => {
+          cb.addEventListener('change', () => {
+            const sid = parseInt(cb.getAttribute('data-sid'), 10);
+            if (cb.checked) {
+              if (!role.skill_ids.includes(sid)) role.skill_ids.push(sid);
+            } else {
+              role.skill_ids = role.skill_ids.filter(x => x !== sid);
+            }
+            const lab = cb.closest('.skill-checkbox');
+            if (lab) lab.classList.toggle('checked', cb.checked);
+            paintRoleSkills();
+          });
+        });
+        paintRoleSkills();
+      });
     }
 
     function escapeHtml(str) {
@@ -672,46 +784,37 @@
       });
     }
 
-    function roleInputValue(role) {
-      if (role && role.name_label) return escapeHtml(role.name_label);
-      if (role && role.role_type_id) {
-        const r = allRolesFromApi.find(x => x.id === role.role_type_id);
-        if (r) return escapeHtml(r.name);
-      }
-      return "";
+    function optSel(val, cur) {
+      return String(val || '') === String(cur == null ? '' : cur) ? ' selected' : '';
+    }
+
+    function roleTypeSelectHtml(selectedId) {
+      return '<option value="">Не выбрано</option>' + allRolesFromApi.map(function(x) {
+        return '<option value="' + x.id + '"' + optSel(x.id, selectedId) + '>' + escapeHtml(x.name) + '</option>';
+      }).join('');
     }
 
     function roleCardHtml(role, idx) {
       const rid = `rp-${idx}`;
-      const nameVal = roleInputValue(role);
-      const salRaw = role.salary_amount != null && role.salary_amount !== "" ? String(role.salary_amount) : "";
-      const salDisplay =
-        salRaw && typeof window.tpFormatSalaryGroupedForDisplay === "function"
-          ? window.tpFormatSalaryGroupedForDisplay(salRaw)
-          : salRaw;
       return `
         <div class="exp-entry${!role.role_type_id ? " is-new" : ""}" data-role-idx="${idx}">
           <div class="exp-entry-header">
-            <span class="exp-entry-num">Роль ${idx + 1}</span>
+            <span class="exp-entry-num">Вакансия ${idx + 1}</span>
             <button type="button" class="btn-remove-exp" data-remove-idx="${idx}" title="Удалить">✕</button>
           </div>
           <div class="exp-grid">
             <div class="exp-field exp-field-full">
-              <label for="${rid}-name">Название роли <span class="req-star" aria-hidden="true">*</span></label>
-              <input type="text" id="${rid}-name" class="vac-role-input" data-field="name" value="${nameVal}" placeholder="Из справочника" list="roles-datalist" autocomplete="off">
+              <label for="${rid}-role">Должность <span class="req-star" aria-hidden="true">*</span></label>
+              <select id="${rid}-role" class="vac-role-select" data-field="role_type_id">${roleTypeSelectHtml(role.role_type_id)}</select>
             </div>
             <div class="exp-field exp-field-full">
-              <label for="${rid}-resp">Задачи / обязанности</label>
-              <textarea id="${rid}-resp" data-field="responsibilities" rows="3" placeholder="Опишите задачи">${escapeHtml(role.responsibilities || "")}</textarea>
-            </div>
-            <div class="exp-field exp-field-full">
-              <label for="${rid}-req">Требования</label>
-              <textarea id="${rid}-req" data-field="requirements" rows="3" placeholder="Навыки, опыт">${escapeHtml(role.requirements || "")}</textarea>
+              <label for="${rid}-desc">Описание вакансии</label>
+              <textarea id="${rid}-desc" data-field="description" rows="4" placeholder="Описание вакансии">${escapeHtml(role.description || "")}</textarea>
             </div>
             <div class="exp-field">
               <label for="${rid}-exp">Опыт</label>
               <select id="${rid}-exp" data-field="experience">
-                <option value="">— Опыт работы —</option>
+                <option value="">Не выбрано</option>
                 <option value="none"${role.experience === "none" ? " selected" : ""}>Без опыта</option>
                 <option value="<1"${role.experience === "<1" ? " selected" : ""}>До 1 года</option>
                 <option value="1-3"${role.experience === "1-3" ? " selected" : ""}>1–3 года</option>
@@ -719,44 +822,11 @@
                 <option value="6+"${role.experience === "6+" ? " selected" : ""}>6+ лет</option>
               </select>
             </div>
-            <div class="exp-field">
-              <label for="${rid}-fmt">Формат</label>
-              <select id="${rid}-fmt" data-field="work_format">
-                <option value="">— Формат работы —</option>
-                <option value="remote"${role.work_format === "remote" ? " selected" : ""}>Удалённо</option>
-                <option value="office"${role.work_format === "office" ? " selected" : ""}>В офисе</option>
-                <option value="hybrid"${role.work_format === "hybrid" ? " selected" : ""}>Гибрид</option>
-              </select>
-            </div>
-            <div class="exp-field">
-              <label for="${rid}-emp">Занятость</label>
-              <select id="${rid}-emp" data-field="employment">
-                <option value="">— Занятость —</option>
-                <option value="full_time"${role.employment === "full_time" ? " selected" : ""}>Полная занятость</option>
-                <option value="part_time"${role.employment === "part_time" ? " selected" : ""}>Частичная занятость</option>
-                <option value="side_project"${role.employment === "side_project" ? " selected" : ""}>Подработка</option>
-              </select>
-            </div>
-            <div class="exp-field">
-              <label for="${rid}-sal">Заработная плата (в рублях)</label>
-              <input type="text" class="tp-salary-input" id="${rid}-sal" data-field="salary_amount" inputmode="numeric" autocomplete="off" placeholder="Например: 1 200 000" value="${escapeHtml(salDisplay)}">
-            </div>
-            <div class="exp-field">
-              <label for="${rid}-st">Тип зарплаты</label>
-              <select id="${rid}-st" data-field="salary_type">
-                <option value="">— Тип зарплаты —</option>
-                <option value="monthly"${role.salary_type === "monthly" ? " selected" : ""}>В месяц</option>
-                <option value="per_project"${role.salary_type === "per_project" ? " selected" : ""}>За проект</option>
-              </select>
-            </div>
             <div class="exp-field exp-field-full">
-              <label for="${rid}-ct">Тип договора</label>
-              <select id="${rid}-ct" data-field="contract_type">
-                <option value="">— Тип договора —</option>
-                <option value="gph"${role.contract_type === "gph" ? " selected" : ""}>ГПХ</option>
-                <option value="tk"${role.contract_type === "tk" ? " selected" : ""}>ТК</option>
-                <option value="internship"${role.contract_type === "internship" ? " selected" : ""}>Стажировка</option>
-              </select>
+              <label>Стек технологий / Скиллы <span class="req-star" aria-hidden="true">*</span></label>
+              <div class="selected-skills-tags" id="${rid}-skill-tags"></div>
+              <div class="skills-grid" id="${rid}-skills-grid"></div>
+              <small class="skills-hint">✓ Отметьте навыки в списке ниже. Выбранные отображаются выше — снять можно крестиком.</small>
             </div>
           </div>
         </div>`;
@@ -766,32 +836,29 @@
       const card = rolesContainer && rolesContainer.querySelector(`[data-role-idx="${idx}"]`);
       if (!card || !rolesArray[idx]) return;
       const r = rolesArray[idx];
-      const nameInputEl = card.querySelector('[data-field="name"]');
-      const roleText = nameInputEl ? nameInputEl.value.trim() : "";
-      const found = roleText ? allRolesFromApi.find(x => x.name.toLowerCase() === roleText.toLowerCase()) : null;
-      r.role_type_id = found ? found.id : null;
-      r.name_label = found ? found.name : null;
+      const selEl = card.querySelector('[data-field="role_type_id"]');
+      const ridNum = selEl && selEl.value ? parseInt(selEl.value, 10) : NaN;
+      if (Number.isFinite(ridNum) && ridNum > 0) {
+        const found = allRolesFromApi.find(x => x.id === ridNum);
+        r.role_type_id = found ? found.id : null;
+        r.name_label = found ? found.name : null;
+      } else {
+        r.role_type_id = null;
+        r.name_label = null;
+      }
       card.classList.toggle("is-new", !r.role_type_id);
       const get = (sel) => {
         const el = card.querySelector(sel);
         return el ? el.value.trim() : "";
       };
-      r.responsibilities = get('[data-field="responsibilities"]') || null;
-      r.requirements = get('[data-field="requirements"]') || null;
+      r.description = get('[data-field="description"]') || null;
       r.experience = get('[data-field="experience"]') || null;
-      r.work_format = get('[data-field="work_format"]') || null;
-      r.employment = get('[data-field="employment"]') || null;
+      r.work_format = null;
+      r.employment = null;
       r.schedule = null;
-      const salEl = card.querySelector('[data-field="salary_amount"]');
-      const salRaw = salEl ? salEl.value : "";
-      var salFn = window.tpParseAndValidateSalaryRaw;
-      const salParsed =
-        typeof salFn === "function"
-          ? salFn(salRaw)
-          : { ok: true, value: salRaw.trim() ? parseInt(String(salRaw).replace(/[\s\u00a0]/g, ""), 10) : null };
-      r.salary_amount = salParsed && salParsed.ok === true ? salParsed.value : null;
-      r.salary_type = get('[data-field="salary_type"]') || null;
-      r.contract_type = get('[data-field="contract_type"]') || null;
+      r.salary_amount = null;
+      r.salary_type = null;
+      r.contract_type = null;
     }
 
     function syncAllRolesFromDom() {
@@ -800,23 +867,31 @@
 
     function refreshRoleInputsState() {
       if (!rolesContainer) return;
-      rolesContainer.querySelectorAll(".vac-role-input").forEach((inp) => {
-        inp.disabled = allRolesFromApi.length === 0;
-        inp.placeholder = allRolesFromApi.length === 0 ? "Роли ещё не добавлены" : "Из справочника";
+      rolesArray.forEach((role, idx) => {
+        const sel = rolesContainer.querySelector('[data-role-idx="' + idx + '"] [data-field="role_type_id"]');
+        if (!sel || sel.tagName !== 'SELECT') return;
+        syncRoleFromDom(idx);
+        sel.innerHTML = roleTypeSelectHtml(role.role_type_id);
+        if (role.role_type_id != null) {
+          sel.value = String(role.role_type_id);
+          if (sel.value !== String(role.role_type_id)) {
+            role.role_type_id = null;
+            role.name_label = null;
+            sel.innerHTML = roleTypeSelectHtml(null);
+          }
+        }
+        sel.disabled = allRolesFromApi.length === 0;
       });
     }
 
     function renderRolesList() {
       if (!rolesContainer) return;
       if (rolesArray.length === 0) {
-        rolesContainer.innerHTML = '<p class="skills-empty">Нет добавленных ролей</p>';
+        rolesContainer.innerHTML = '<p class="skills-empty">Нет добавленных вакансий</p>';
         refreshRoleInputsState();
         return;
       }
       rolesContainer.innerHTML = rolesArray.map((role, idx) => roleCardHtml(role, idx)).join("");
-      if (typeof window.tpBindSalaryGroupedInput === "function") {
-        rolesContainer.querySelectorAll(".tp-salary-input").forEach((el) => window.tpBindSalaryGroupedInput(el));
-      }
       rolesContainer.querySelectorAll(".btn-remove-exp").forEach((btn) => {
         btn.addEventListener("click", (e) => {
           e.preventDefault();
@@ -827,6 +902,7 @@
           renderRolesList();
         });
       });
+      wireAllRoleSkills();
       refreshRoleInputsState();
     }
 
@@ -835,8 +911,7 @@
       rolesArray.push({
         role_type_id: null,
         name_label: null,
-        responsibilities: null,
-        requirements: null,
+        description: null,
         experience: null,
         work_format: null,
         employment: null,
@@ -844,6 +919,7 @@
         salary_amount: null,
         salary_type: null,
         contract_type: null,
+        skill_ids: [],
       });
       renderRolesList();
     }
@@ -905,44 +981,19 @@
         }
         syncAllRolesFromDom();
         if (rolesArray.length === 0) {
-          showNotification('Добавьте хотя бы одну требуемую роль (кнопка «+ Добавить роль»)', 'warning', 3500);
+          showNotification('Добавьте хотя бы одну вакансию (кнопка «+ Добавить вакансию»)', 'warning', 3500);
           return;
         }
         const missingRole = rolesArray.findIndex((r) => !r.role_type_id);
         if (missingRole !== -1) {
-          showNotification(`Укажите название роли из справочника для блока «Роль ${missingRole + 1}»`, 'warning', 4000);
+          showNotification(`Укажите должность из справочника для блока «Вакансия ${missingRole + 1}»`, 'warning', 4000);
           return;
         }
-        for (let i = 0; i < rolesArray.length; i++) {
-          const card = rolesContainer && rolesContainer.querySelector('[data-role-idx="' + i + '"]');
-          const salEl = card && card.querySelector('[data-field="salary_amount"]');
-          if (salEl && salEl.validity && salEl.validity.badInput) {
-            showNotification(
-              "Роль " + (i + 1) + ": укажите сумму цифрами (можно с пробелами) или оставьте поле пустым.",
-              "error",
-              6000,
-            );
-            salEl.classList.add("inp-invalid");
-            return;
-          }
-          const salRaw = salEl ? salEl.value : "";
-          var salFn2 = window.tpParseAndValidateSalaryRaw;
-          const chk =
-            typeof salFn2 === "function"
-              ? salFn2(salRaw)
-              : { ok: true, value: null };
-          if (!chk || chk.ok !== true) {
-            showNotification(
-              "Роль " + (i + 1) + ": " + ((chk && chk.message) || "Укажите корректную сумму зарплаты или оставьте поле пустым."),
-              "error",
-              6000,
-            );
-            if (salEl) salEl.classList.add("inp-invalid");
-            return;
-          }
-          rolesArray[i].salary_amount = chk.value;
+        const missingSkills = rolesArray.findIndex((r) => !Array.isArray(r.skill_ids) || r.skill_ids.length === 0);
+        if (missingSkills !== -1) {
+          showNotification('В вакансии должен быть хотя бы один навык', 'warning');
+          return;
         }
-
         const isAuth = await checkAuth();
         if (!isAuth) return;
 
@@ -957,15 +1008,15 @@
           tasks: (tasksTextarea ? tasksTextarea.value.trim() : "") || null,
           vacancies: rolesArray.map(r => ({
             role_type_id:     r.role_type_id,
-            responsibilities: r.responsibilities  || null,
-            requirements:     r.requirements      || null,
+            description: r.description  || null,
             experience:       r.experience        || null,
-            work_format:      r.work_format       || null,
-            employment:       r.employment        || null,
+            work_format:      null,
+            commitment_level: null,
             schedule:         null,
-            salary_amount:    r.salary_amount     != null ? r.salary_amount : null,
-            salary_type:      r.salary_type       || null,
-            contract_type:    r.contract_type     || null,
+            salary_amount:    null,
+            salary_type:      null,
+            contract_type:    null,
+            skill_ids:         Array.isArray(r.skill_ids) ? r.skill_ids : [],
           })),
         };
 
@@ -983,7 +1034,7 @@
             showNotification('Проект успешно создан!', 'success', 3000);
             resetForm();
             setTimeout(() => {
-              window.location.href = "./account_manager.html";
+              window.location.href = "./employer_projects.html";
             }, 1500);
           } else {
             const error = await response.json().catch(() => ({}));
@@ -1009,6 +1060,19 @@
       if (burgerBtn) burgerBtn.classList.remove("open");
     }
 
+    document.getElementById("hdr-menu-account")?.addEventListener("click", () => {
+      closeMenus();
+      window.location.href = "./employer_projects.html";
+    });
+    document.getElementById("hdr-menu-search")?.addEventListener("click", () => {
+      closeMenus();
+      window.location.href = "./search_resume.html";
+    });
+    document.getElementById("hdr-menu-apps")?.addEventListener("click", () => {
+      closeMenus();
+      window.location.href = "./applications.html";
+    });
+
     if (roleToggle) {
       roleToggle.addEventListener("click", function(e) {
         const btn = e.target.closest(".role-toggle__btn");
@@ -1018,7 +1082,7 @@
         roleToggle.querySelectorAll(".role-toggle__btn").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
         if (role === "Ищу вакансию") {
-          window.location.href = "./account_employee.html";
+          window.location.href = "./employee_resumes.html";
         }
       });
     }
@@ -1054,9 +1118,10 @@
       });
     }
 
-    loadRolesFromApi();
-    loadCitiesFromApi();
-    renderRolesList();
+    (async function boot() {
+      await Promise.all([loadRolesFromApi(), loadCitiesFromApi(), loadSkillsFromApi()]);
+      renderRolesList();
+    })();
   })();
 </script>
 </body>

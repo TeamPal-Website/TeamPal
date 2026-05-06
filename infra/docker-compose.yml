@@ -16,6 +16,49 @@ services:
       timeout: 5s
       retries: 10
 
+  redis:
+    image: redis:7-alpine
+    container_name: team_pal_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    container_name: team_pal_minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: team_pal_minio_init
+    depends_on:
+      - minio
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        set -e
+        sleep 2
+        for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+          mc alias set local http://minio:9000 minioadmin minioadmin && break
+          sleep 2
+        done
+        mc mb local/teampal --ignore-existing
+        mc anonymous set download local/teampal
+    restart: "no"
+
   app:
     build:
       context: ..
@@ -23,6 +66,43 @@ services:
     container_name: team_pal_app
     depends_on:
       db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASS: postgres
+      DB_NAME: team_pal
+      JWT_SECRET_KEY: team-pal-secret-key
+      JWT_ALGORITHM: HS256
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      ALLOWED_ORIGINS: "http://localhost:8000,http://127.0.0.1:8000"
+      REDIS_URL: redis://redis:6379/0
+      S3_ENDPOINT_URL: http://minio:9000
+      S3_ACCESS_KEY_ID: minioadmin
+      S3_SECRET_ACCESS_KEY: minioadmin
+      S3_BUCKET: teampal
+      S3_REGION: us-east-1
+      S3_ADDRESSING_STYLE: path
+      S3_PUBLIC_BASE_URL: http://localhost:9000/teampal
+    ports:
+      - "8000:8000"
+
+  celery-worker:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    container_name: team_pal_celery
+    working_dir: /app/backend
+    command: ["sh", "-c", "celery -A src.celery_app:celery_app worker --loglevel=info"]
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     environment:
       DB_HOST: db
@@ -34,8 +114,8 @@ services:
       JWT_ALGORITHM: HS256
       JWT_ACCESS_TOKEN_EXPIRE_MINUTES: 30
       ALLOWED_ORIGINS: "http://localhost:8000,http://127.0.0.1:8000"
-    ports:
-      - "8000:8000"
+      REDIS_URL: redis://redis:6379/0
 
 volumes:
   postgres_data:
+  minio_data:

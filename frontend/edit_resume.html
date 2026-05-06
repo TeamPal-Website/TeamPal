@@ -119,6 +119,13 @@
     .exp-field--date { gap: 4px; }
     .exp-field--date > label:first-of-type { margin-bottom: 0; line-height: 1.35; }
     .exp-field--date > input { margin-top: auto; }
+    .exp-date-opt { font-weight: 500; color: #6b5d4f; font-size: 12px; }
+    .exp-field input[type="date"] {
+      min-height: 44px;
+      padding: 10px 12px;
+      font-family: inherit;
+      color: #2b2118;
+    }
     .exp-field input,.exp-field textarea,.exp-field select {
       width:100%; border:1.5px solid #ddd; border-radius:12px; padding:14px 16px; font-family:inherit; font-size:15px; background:#fff;
       transition:border-color .15s, box-shadow .15s; min-height:52px; box-sizing:border-box; line-height:1.45;
@@ -214,7 +221,7 @@
 <main class="page">
   <div class="constructor-card">
     <div class="constructor-header">
-      <a href="./account_employee.html" class="back-link" style="text-decoration:none;">← Назад к резюме</a>
+      <a href="./employee_resumes.html" class="back-link" style="text-decoration:none;">← Назад к резюме</a>
       <span class="constructor-title">Редактирование резюме</span>
     </div>
     <div class="constructor-body" id="main-page">
@@ -236,16 +243,7 @@
 
 
   function formatApiDetail(detail) {
-    if (detail == null) return '';
-    if (typeof detail === 'string') return detail;
-    if (Array.isArray(detail)) {
-      return detail.map(function(item) {
-        if (!item || typeof item !== 'object') return String(item);
-        return item.msg || item.message || JSON.stringify(item);
-      }).join(' ');
-    }
-    if (typeof detail === 'object' && detail.msg) return String(detail.msg);
-    try { return JSON.stringify(detail); } catch { return String(detail); }
+    return typeof window.tpFormatApiDetail === 'function' ? window.tpFormatApiDetail(detail) : '';
   }
 
   const TP_MAX_SAL_SAFE = (typeof window.TP_MAX_SALARY_RUB !== 'undefined' && window.TP_MAX_SALARY_RUB != null) ? window.TP_MAX_SALARY_RUB : 50000000;
@@ -268,9 +266,18 @@
     const icons = { success:'✓', error:'✕', warning:'⚠', info:'ℹ' };
     const c = document.getElementById('toast-container');
     if (!c) return;
+    let displayText = String(msg || '');
+    if (type === 'error') {
+      if (typeof window.tpUserFacingErrorLine === 'function') {
+        displayText = window.tpUserFacingErrorLine(displayText);
+      } else {
+        displayText = displayText.replace(/^\s*ошибка\s*:\s*/i, '').trim();
+        if (displayText) displayText = displayText.charAt(0).toUpperCase() + displayText.slice(1);
+      }
+    }
     const el = document.createElement('div');
     el.className = 'tp-toast ' + type;
-    const safe = String(msg || '').replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+    const safe = displayText.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
     el.innerHTML = `<span class="tp-toast__icon">${icons[type]||'ℹ'}</span><span class="tp-toast__text">${safe}</span><button class="tp-toast__close">×</button>`;
     el.querySelector('.tp-toast__close').onclick = () => el.remove();
     c.appendChild(el);
@@ -297,6 +304,19 @@
     if (!dateStr) return '';
     const m = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
     return m ? `${m[3]}.${m[2]}.${m[1]}` : dateStr;
+  }
+
+  function toDateInputValue(raw) {
+    if (!raw) return '';
+    const s = String(raw).trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+    const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+    if (/^\d{2}\.\d{2}\.\d{4}$/.test(s)) {
+      const [d, mo, y] = s.split('.');
+      return `${y}-${mo.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    }
+    return '';
   }
 
   function isValidDateString(dateStr) {
@@ -338,6 +358,23 @@
     return synonyms.some((ph) => t === ph || t.includes(ph));
   }
 
+  function localTodayYmd() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function normalizedExpEndYmd(v) {
+    const s = String(v || '').trim();
+    if (!s) return '';
+    if (!isValidDateString(s)) return '';
+    const iso = toISO(s);
+    return iso && /^\d{4}-\d{2}-\d{2}$/.test(iso) ? iso : '';
+  }
+  function experienceEndDateIsAfterToday(v) {
+    const ymd = normalizedExpEndYmd(v);
+    if (!ymd) return false;
+    return ymd > localTodayYmd();
+  }
+
 
   function getPosCache() { try { return JSON.parse(localStorage.getItem('tp_resume_positions')||'{}'); } catch { return {}; } }
   function setPosCache(id, pos) {
@@ -352,17 +389,20 @@
   const params = new URLSearchParams(window.location.search);
   const resumeId = params.get('id');
   if (!resumeId) {
-    document.getElementById('main-page').innerHTML = '<div class="loading-state">Резюме не найдено. <a href="./account_employee.html">← Назад</a></div>';
+    document.getElementById('main-page').innerHTML = '<div class="loading-state">Резюме не найдено. <a href="./employee_resumes.html">← Назад</a></div>';
     return;
   }
 
   let allSkills = [];
+  let allRolesFromApi = [];
+  let allCities = [];
   let initialSkillMap = {};
   let currentSkillIds = new Set();
   let initialExpIds = new Set();
 
   let experiences = [];
   let expKeyCounter = 0;
+  const frozenResumeMeta = { status: '', employment_intent: 'commercial' };
 
 
   document.getElementById('confirm-cancel').onclick = () => document.getElementById('confirm-modal').classList.remove('open');
@@ -376,13 +416,33 @@
     if (!authResp.ok) { window.location.href = './authorization_page.html'; return; }
 
 
-    const [resumeResp, skillsResp] = await Promise.all([
+    const [resumeResp, skillsResp, rolesResp, citiesResp] = await Promise.all([
       api('/my_resume/' + resumeId),
       api('/skills'),
+      api('/roles_dictionary'),
+      api('/cities'),
     ]);
 
+    if (citiesResp.ok) {
+      try {
+        const arr = await citiesResp.json();
+        allCities = Array.isArray(arr) ? arr : [];
+      } catch {
+        allCities = [];
+      }
+    }
+
+    if (rolesResp.ok) {
+      try {
+        const arr = await rolesResp.json();
+        allRolesFromApi = Array.isArray(arr) ? arr.filter(function (r) { return r.is_active !== false; }) : [];
+      } catch {
+        allRolesFromApi = [];
+      }
+    }
+
     if (!resumeResp.ok) {
-      document.getElementById('main-page').innerHTML = `<div class="loading-state">${resumeResp.status === 404 ? 'Резюме не найдено.' : 'Ошибка загрузки.'} <a href="./account_employee.html">← Назад</a></div>`;
+      document.getElementById('main-page').innerHTML = `<div class="loading-state">${resumeResp.status === 404 ? 'Резюме не найдено.' : 'Ошибка загрузки.'} <a href="./employee_resumes.html">← Назад</a></div>`;
       return;
     }
 
@@ -391,10 +451,15 @@
       resumeData = await resumeResp.json();
     } catch (parseErr) {
       console.error(parseErr);
-      document.getElementById('main-page').innerHTML = '<div class="loading-state">Не удалось разобрать ответ сервера. <a href="./account_employee.html">← Назад</a></div>';
+      document.getElementById('main-page').innerHTML = '<div class="loading-state">Не удалось разобрать ответ сервера. <a href="./employee_resumes.html">← Назад</a></div>';
       return;
     }
     const resume = resumeData.resume || resumeData;
+    if (resume.status === "looking_for_job") {
+      document.getElementById("main-page").innerHTML =
+        '<div class="loading-state">Редактирование недоступно, пока резюме активно в поиске (переключатель «Ищу работу»). Отключите его в <a href="./employee_resumes.html">личном кабинете</a>.</div>';
+      return;
+    }
     const apiSkills = Array.isArray(resumeData.skills) ? resumeData.skills : [];
     const apiExperiences = Array.isArray(resumeData.experiences) ? resumeData.experiences : [];
 
@@ -430,7 +495,7 @@
       renderPage(resume);
     } catch (renderErr) {
       console.error(renderErr);
-      document.getElementById('main-page').innerHTML = '<div class="loading-state">Ошибка отображения формы. Обновите страницу или откройте <a href="./account_employee.html">← личный кабинет</a>.</div>';
+      document.getElementById('main-page').innerHTML = '<div class="loading-state">Ошибка отображения формы. Обновите страницу или откройте <a href="./employee_resumes.html">← личный кабинет</a>.</div>';
     }
   }
 
@@ -438,56 +503,114 @@
   function renderPage(resume) {
     const posCache = getPosCache();
     const cachedListTitle = posCache[String(resumeId)] || '';
-    const dp = (resume.desired_position != null && String(resume.desired_position)) ? String(resume.desired_position) : '';
+    const dpFromRole =
+      resume.role_type_id != null && allRolesFromApi.length
+        ? (function () {
+            const found = allRolesFromApi.find(function (r) { return r.id === resume.role_type_id; });
+            return found ? found.name : '';
+          })()
+        : '';
+    const dp = dpFromRole || ((resume.desired_position != null && String(resume.desired_position)) ? String(resume.desired_position) : '');
+    const intent = resume.employment_intent != null ? String(resume.employment_intent) : 'commercial';
+    frozenResumeMeta.status = resume.status || 'not_looking_for_job';
+    frozenResumeMeta.employment_intent = intent;
+    const isStudyResume = intent === 'noncommercial';
     const commitmentRaw = resume.commitment_level != null && resume.commitment_level !== '' ? String(resume.commitment_level).trim() : '';
     const commitmentLegacy = { flexible: 'side_project', remote: 'side_project', hybrid: 'side_project' };
     const commitment = commitmentLegacy[commitmentRaw] || commitmentRaw;
+    const workFormat = resume.work_format != null && resume.work_format !== '' ? String(resume.work_format).trim() : '';
+    const scheduleValue = resume.schedule != null && resume.schedule !== '' ? String(resume.schedule).trim() : '';
+    const salaryType = resume.salary_type != null && resume.salary_type !== '' ? String(resume.salary_type).trim() : '';
+    const contractType = resume.contract_type != null && resume.contract_type !== '' ? String(resume.contract_type).trim() : '';
     const salaryVal = resume.salary_amount != null && resume.salary_amount !== '' ? String(resume.salary_amount) : '';
     const salaryDisplay =
       salaryVal && typeof window.tpFormatSalaryGroupedForDisplay === 'function'
         ? window.tpFormatSalaryGroupedForDisplay(salaryVal)
         : salaryVal;
-    const intent = resume.employment_intent != null ? String(resume.employment_intent) : 'commercial';
+
+    var roleTypeIdForSelect = resume.role_type_id;
+    if ((roleTypeIdForSelect == null || roleTypeIdForSelect === '') && dp && allRolesFromApi.length) {
+      var matchName = allRolesFromApi.find(function (r) { return r.name.toLowerCase() === String(dp).toLowerCase(); });
+      if (matchName) roleTypeIdForSelect = matchName.id;
+    }
+    const roleSelectOptionsHtml = '<option value="">Не выбрано</option>' + allRolesFromApi.map(function (r) {
+      var sel = roleTypeIdForSelect != null && String(roleTypeIdForSelect) === String(r.id) ? ' selected' : '';
+      return '<option value="' + r.id + '"' + sel + '>' + esc(r.name) + '</option>';
+    }).join('');
+    const citySelId = resume.city_id != null && resume.city_id !== '' ? String(resume.city_id) : '';
+    const cityOptionsHtml = '<option value="">Не выбрано</option>' + allCities.map(function (c) {
+      var s = citySelId === String(c.id) ? ' selected' : '';
+      return '<option value="' + c.id + '"' + s + '>' + esc(c.title || '') + '</option>';
+    }).join('');
+
+    const commercialFieldsHtml = isStudyResume ? '' : `
+          <div class="field">
+            <label for="f-commitment">График / занятость</label>
+            <select id="f-commitment">
+              <option value=""${!commitment ? ' selected' : ''}>Не выбрано</option>
+              <option value="full_time"${commitment === 'full_time' ? ' selected' : ''}>Полный день</option>
+              <option value="part_time"${commitment === 'part_time' ? ' selected' : ''}>Неполный день</option>
+              <option value="side_project"${commitment === 'side_project' ? ' selected' : ''}>Подработка / гибкий формат</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-work-format">Формат работы</label>
+            <select id="f-work-format">
+              <option value=""${!workFormat ? ' selected' : ''}>Не выбрано</option>
+              <option value="remote"${workFormat === 'remote' ? ' selected' : ''}>Удалённо</option>
+              <option value="office"${workFormat === 'office' ? ' selected' : ''}>В офисе</option>
+              <option value="hybrid"${workFormat === 'hybrid' ? ' selected' : ''}>Гибрид</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-schedule">График</label>
+            <select id="f-schedule">
+              <option value=""${!scheduleValue ? ' selected' : ''}>Не выбрано</option>
+              <option value="5/2"${scheduleValue === '5/2' ? ' selected' : ''}>5/2</option>
+              <option value="2/2"${scheduleValue === '2/2' ? ' selected' : ''}>2/2</option>
+              <option value="4/2"${scheduleValue === '4/2' ? ' selected' : ''}>4/2</option>
+              <option value="3/3"${scheduleValue === '3/3' ? ' selected' : ''}>3/3</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-salary-type">Тип зарплаты</label>
+            <select id="f-salary-type">
+              <option value=""${!salaryType ? ' selected' : ''}>Не выбрано</option>
+              <option value="monthly"${salaryType === 'monthly' ? ' selected' : ''}>В месяц</option>
+              <option value="per_project"${salaryType === 'per_project' ? ' selected' : ''}>За проект</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-contract-type">Тип договора</label>
+            <select id="f-contract-type">
+              <option value=""${!contractType ? ' selected' : ''}>Не выбрано</option>
+              <option value="gph"${contractType === 'gph' ? ' selected' : ''}>ГПХ</option>
+              <option value="tk"${contractType === 'tk' ? ' selected' : ''}>ТК РФ</option>
+              <option value="internship"${contractType === 'internship' ? ' selected' : ''}>Стажировка</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-salary">Заработная плата (в рублях)</label>
+            <input id="f-salary" type="text" class="tp-salary-input" inputmode="numeric" autocomplete="off" placeholder="Например: 1 200 000" value="${esc(salaryDisplay)}" />
+          </div>`;
 
     document.getElementById('main-page').innerHTML = `
       <div class="resume-section" id="card-basic">
         <div class="section-title">Основное</div>
         <div class="exp-fields">
           <div class="field exp-field-full">
-            <label for="f-resume-list-title">Название резюме <span class="req-star" aria-hidden="true">*</span></label>
+            <label for="f-resume-list-title">Название резюме (видно только вам в списке резюме) <span class="req-star" aria-hidden="true">*</span></label>
             <input id="f-resume-list-title" type="text" placeholder="Например: Junior Frontend" maxlength="255" value="${esc(cachedListTitle || dp)}" />
           </div>
           <div class="field">
             <label for="f-desired-position">Желаемая должность <span class="req-star" aria-hidden="true">*</span></label>
-            <input id="f-desired-position" type="text" placeholder="Frontend-разработчик" maxlength="255" value="${esc(dp)}" />
+            <select id="f-desired-position">${roleSelectOptionsHtml}</select>
           </div>
           <div class="field">
-            <label for="f-commitment">График / занятость</label>
-            <select id="f-commitment">
-              <option value=""${!commitment ? ' selected' : ''}>Не указывать</option>
-              <option value="full_time"${commitment === 'full_time' ? ' selected' : ''}>Полный день</option>
-              <option value="part_time"${commitment === 'part_time' ? ' selected' : ''}>Неполный день</option>
-              <option value="side_project"${commitment === 'side_project' ? ' selected' : ''}>Подработка / гибкий формат</option>
-            </select>
+            <label for="f-city">Город</label>
+            <select id="f-city">${cityOptionsHtml}</select>
           </div>
-          <div class="field exp-field-full">
-            <label for="f-salary">Заработная плата (в рублях)</label>
-            <input id="f-salary" type="text" class="tp-salary-input" inputmode="numeric" autocomplete="off" placeholder="Например: 1 200 000" value="${esc(salaryDisplay)}" />
-          </div>
-          <div class="field">
-            <label for="f-employment-intent">Тип резюме <span class="req-star" aria-hidden="true">*</span></label>
-            <select id="f-employment-intent">
-              <option value="commercial"${intent === 'commercial' ? ' selected' : ''}>Коммерческий проект</option>
-              <option value="noncommercial"${intent === 'noncommercial' ? ' selected' : ''}>Учебный проект</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="f-status">Статус поиска работы <span class="req-star" aria-hidden="true">*</span></label>
-            <select id="f-status">
-              <option value="looking_for_job"${resume.status === 'looking_for_job' ? ' selected' : ''}>Ищу работу</option>
-              <option value="not_looking_for_job"${resume.status === 'not_looking_for_job' ? ' selected' : ''}>Не ищу работу</option>
-            </select>
-          </div>
+          ${commercialFieldsHtml}
         </div>
       </div>
 
@@ -517,7 +640,7 @@
       <div class="form-actions">
         <button class="btn btn-danger" id="btn-delete" type="button">Удалить резюме</button>
         <div class="form-actions__right">
-          <a href="./account_employee.html" class="btn btn-secondary">Отмена</a>
+          <a href="./employee_resumes.html" class="btn btn-secondary">Отмена</a>
           <button class="btn btn-primary" id="btn-save" type="button">Сохранить изменения</button>
         </div>
       </div>
@@ -566,6 +689,7 @@
 
   function renderExpList() {
     const visible = experiences.filter(e => !e._deleted);
+    const endDateMax = localTodayYmd();
     if (visible.length === 0) {
       return '<div class="exp-list-empty">Нет добавленного опыта работы</div>';
     }
@@ -578,8 +702,8 @@
         <div class="exp-err-msg" id="exp-err-${exp._key}"></div>
         <div class="exp-grid">
           <div class="exp-field">
-            <label>Компания <span class="req-star" aria-hidden="true">*</span></label>
-            <input type="text" maxlength="255" placeholder="ООО Рога и Копыта"
+            <label>Название компании <span class="req-star" aria-hidden="true">*</span></label>
+            <input type="text" maxlength="255" placeholder="Юридическое или брендовое название"
               value="${esc(exp.company_name)}" data-exp-key="${exp._key}" data-field="company_name" />
           </div>
           <div class="exp-field">
@@ -589,13 +713,13 @@
           </div>
           <div class="exp-field exp-field--date">
             <label>Дата начала <span class="req-star" aria-hidden="true">*</span></label>
-            <input type="text" placeholder="ДД.ММ.ГГГГ или ГГГГ-ММ-ДД"
-              value="${esc(fromISO(exp.start_date))}" data-exp-key="${exp._key}" data-field="start_date" />
+            <input type="date" max="2100-12-31" min="1950-01-01"
+              value="${esc(toDateInputValue(exp.start_date))}" data-exp-key="${exp._key}" data-field="start_date" />
           </div>
           <div class="exp-field exp-field--date">
-            <label>Дата окончания (если не заполнено — по настоящее время)</label>
-            <input type="text" placeholder="ДД.ММ.ГГГГ или ГГГГ-ММ-ДД"
-              value="${esc(fromISO(exp.end_date))}" data-exp-key="${exp._key}" data-field="end_date" />
+            <label>Дата окончания <span class="exp-date-opt">(если не указана — по настоящее время)</span></label>
+            <input type="date" max="${esc(endDateMax)}" min="1950-01-01"
+              value="${esc(toDateInputValue(exp.end_date))}" data-exp-key="${exp._key}" data-field="end_date" />
           </div>
           <div class="exp-field exp-field-full">
             <label>Описание обязанностей</label>
@@ -627,9 +751,7 @@
 
     const desiredEl = document.getElementById('f-desired-position');
     if (desiredEl) {
-      desiredEl.addEventListener('input', () => {
-        desiredEl.classList.remove('inp-invalid');
-      });
+      desiredEl.addEventListener('change', () => desiredEl.classList.remove('inp-invalid'));
     }
     const salaryEl = document.getElementById('f-salary');
     if (salaryEl) {
@@ -645,7 +767,7 @@
 
 
     document.querySelectorAll('[data-exp-key][data-field]').forEach(input => {
-      input.addEventListener('input', () => {
+      const sync = () => {
         const key = parseInt(input.getAttribute('data-exp-key'));
         const field = input.getAttribute('data-field');
         const exp = experiences.find(e => e._key === key);
@@ -656,7 +778,9 @@
         if (errEl && !input.closest('.exp-entry').querySelector('.inp-invalid')) {
           errEl.textContent = ''; errEl.classList.remove('show');
         }
-      });
+      };
+      input.addEventListener('input', sync);
+      if (input.type === 'date') input.addEventListener('change', sync);
     });
 
 
@@ -699,7 +823,7 @@
 
   function bindExpEvents() {
     document.querySelectorAll('[data-exp-key][data-field]').forEach(input => {
-      input.addEventListener('input', () => {
+      const sync = () => {
         const key = parseInt(input.getAttribute('data-exp-key'));
         const field = input.getAttribute('data-field');
         const exp = experiences.find(e => e._key === key);
@@ -710,7 +834,9 @@
         if (errEl && !input.closest('.exp-entry').querySelector('.inp-invalid')) {
           errEl.textContent = ''; errEl.classList.remove('show');
         }
-      });
+      };
+      input.addEventListener('input', sync);
+      if (input.type === 'date') input.addEventListener('change', sync);
     });
     document.querySelectorAll('[data-remove-exp]').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -766,13 +892,17 @@
         entry?.querySelector('[data-field="start_date"]')?.classList.add('inp-invalid');
         ok = false;
       } else if (!isValidDateString(exp.start_date)) {
-        showToast('Дата начала введена неверно. Укажите дату в формате ДД.ММ.ГГГГ или ГГГГ-ММ-ДД.', 'error', 6000);
+        showToast('Дата начала не выбрана. Выберите дату в календаре.', 'error', 6000);
         entry?.querySelector('[data-field="start_date"]')?.classList.add('inp-invalid');
         ok = false;
       }
       const endTrim = (exp.end_date || '').trim();
       if (endTrim && !isAcceptableEndDateInput(exp.end_date)) {
-        showToast('Дата окончания введена неверно. Оставьте поле пустым (по настоящее время) или укажите дату в формате ДД.ММ.ГГГГ или ГГГГ-ММ-ДД.', 'error', 6500);
+        showToast('Проверьте дату окончания или оставьте поле пустым (трудоустройство по настоящее время).', 'error', 6500);
+        entry?.querySelector('[data-field="end_date"]')?.classList.add('inp-invalid');
+        ok = false;
+      } else if (endTrim && experienceEndDateIsAfterToday(exp.end_date)) {
+        showToast('Дата окончания не может быть позже сегодняшнего дня.', 'error', 6500);
         entry?.querySelector('[data-field="end_date"]')?.classList.add('inp-invalid');
         ok = false;
       }
@@ -784,7 +914,7 @@
 
     if (!ok) {
       if (document.querySelector('.exp-err-msg.show')) {
-        showToast('Заполните обязательные поля в опыте работы (компания, должность, дата начала) или удалите пустой блок.', 'warning', 6000);
+        showToast('Заполните обязательные поля в опыте работы (название компании, должность, дата начала) или удалите пустой блок.', 'warning', 6000);
       }
       const scrollTo = document.querySelector('.exp-err-msg.show') || document.querySelector('.exp-entry .inp-invalid');
       if (scrollTo) scrollTo.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -792,49 +922,52 @@
     }
 
     const listTitle = document.getElementById('f-resume-list-title').value.trim();
-    const jobTitle = document.getElementById('f-desired-position').value.trim();
+    const posSel = document.getElementById('f-desired-position');
+    const roleTypeIdVal = posSel && posSel.value ? parseInt(posSel.value, 10) : NaN;
     const aboutMe = document.getElementById('f-about').value.trim();
-    const status = document.getElementById('f-status').value;
-    const commitmentRaw = document.getElementById('f-commitment').value;
-    const salaryEl = document.getElementById('f-salary');
-    const intent = document.getElementById('f-employment-intent').value;
+    const status = frozenResumeMeta.status;
+    const intent = frozenResumeMeta.employment_intent;
+    const isStudySave = intent === 'noncommercial';
 
     if (!listTitle) {
-      showToast('Укажите название резюме — это обязательное поле.', 'error', 5500);
+      showToast('Укажите название резюме (видно только вам в списке резюме) — обязательное поле.', 'error', 5500);
       const lt = document.getElementById('f-resume-list-title');
       lt?.classList.add('inp-invalid');
       lt?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
 
-    if (!jobTitle) {
-      showToast('Укажите желаемую должность — это обязательное поле.', 'error', 5500);
-      const posInp = document.getElementById('f-desired-position');
-      posInp?.classList.add('inp-invalid');
-      posInp?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (!Number.isFinite(roleTypeIdVal) || roleTypeIdVal <= 0) {
+      showToast('Выберите желаемую должность из списка.', 'error', 5500);
+      posSel?.classList.add('inp-invalid');
+      posSel?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
 
-    var salParseFn = window.tpParseAndValidateSalaryRaw;
-    const salChk =
-      typeof salParseFn === 'function'
-        ? salParseFn(salaryEl ? salaryEl.value : '')
-        : tpValidateSalarySafe(
-            salaryEl && String(salaryEl.value).trim() !== ''
-              ? Math.trunc(Number(String(salaryEl.value).replace(/[\s\u00a0]/g, '')))
-              : null,
-          );
-    if (!salChk || salChk.ok !== true) {
-      showToast(
-        (salChk && salChk.message) || 'Укажите корректную сумму заработной платы или оставьте поле пустым.',
-        'error',
-        7000,
-      );
-      salaryEl?.classList.add('inp-invalid');
-      salaryEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      return;
+    let validatedSalary = null;
+    if (!isStudySave) {
+      const salaryEl = document.getElementById('f-salary');
+      var salParseFn = window.tpParseAndValidateSalaryRaw;
+      const salChk =
+        typeof salParseFn === 'function'
+          ? salParseFn(salaryEl ? salaryEl.value : '')
+          : tpValidateSalarySafe(
+              salaryEl && String(salaryEl.value).trim() !== ''
+                ? Math.trunc(Number(String(salaryEl.value).replace(/[\s\u00a0]/g, '')))
+                : null,
+            );
+      if (!salChk || salChk.ok !== true) {
+        showToast(
+          (salChk && salChk.message) || 'Укажите корректную сумму заработной платы или оставьте поле пустым.',
+          'error',
+          7000,
+        );
+        salaryEl?.classList.add('inp-invalid');
+        salaryEl?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+      validatedSalary = salChk.value;
     }
-    const validatedSalary = salChk.value;
 
     saveBtn.disabled = true;
     saveBtn.textContent = 'Сохранение…';
@@ -844,14 +977,35 @@
     const basicPayload = {
       about_me: aboutMe || null,
       status,
-      desired_position: jobTitle,
+      role_type_id: roleTypeIdVal,
       employment_intent: intent,
     };
-    if (commitmentRaw) basicPayload.commitment_level = commitmentRaw;
-    else basicPayload.commitment_level = null;
+    if (isStudySave) {
+      basicPayload.commitment_level = null;
+      basicPayload.work_format = null;
+      basicPayload.schedule = null;
+      basicPayload.salary_type = null;
+      basicPayload.contract_type = null;
+      basicPayload.salary_amount = null;
+    } else {
+      const commitmentRaw = document.getElementById('f-commitment').value;
+      const workFormatRaw = document.getElementById('f-work-format').value;
+      const scheduleRaw = document.getElementById('f-schedule').value;
+      const salaryTypeRaw = document.getElementById('f-salary-type').value;
+      const contractTypeRaw = document.getElementById('f-contract-type').value;
+      if (commitmentRaw) basicPayload.commitment_level = commitmentRaw;
+      else basicPayload.commitment_level = null;
+      basicPayload.work_format = workFormatRaw || null;
+      basicPayload.schedule = scheduleRaw || null;
+      basicPayload.salary_type = salaryTypeRaw || null;
+      basicPayload.contract_type = contractTypeRaw || null;
+      if (validatedSalary == null) basicPayload.salary_amount = null;
+      else basicPayload.salary_amount = validatedSalary;
+    }
 
-    if (validatedSalary == null) basicPayload.salary_amount = null;
-    else basicPayload.salary_amount = validatedSalary;
+    var cityEl = document.getElementById('f-city');
+    var cityNum = cityEl && cityEl.value ? parseInt(cityEl.value, 10) : NaN;
+    basicPayload.city_id = Number.isFinite(cityNum) && cityNum > 0 ? cityNum : null;
 
     try {
       const r = await api('/resumes/' + resumeId, { method:'PATCH', body:JSON.stringify(basicPayload) });
@@ -964,7 +1118,7 @@
     const hasErrors = results.some(r => r.startsWith('✗'));
     if (!hasErrors) {
       showToast('Резюме успешно сохранено', 'success');
-      setTimeout(() => { window.location.href = './account_employee.html'; }, 1300);
+      setTimeout(() => { window.location.href = './employee_resumes.html'; }, 1300);
     } else {
       showToast('Некоторые изменения не удалось сохранить. Проверьте ниже.', 'warning');
       console.warn('Save results:', results);
@@ -981,17 +1135,17 @@
       if (r.ok || r.status === 204) {
         setPosCache(resumeId, null);
         showToast('Резюме удалено', 'success');
-        setTimeout(() => { window.location.href = './account_employee.html'; }, 1200);
+        setTimeout(() => { window.location.href = './employee_resumes.html'; }, 1200);
       } else {
         const err = await r.json().catch(() => ({}));
-        showToast('Ошибка: ' + (err.detail || 'Не удалось удалить'), 'error');
+        showToast(tpFormatApiDetail(err.detail) || 'Не удалось удалить', 'error');
       }
     } catch { showToast('Ошибка соединения', 'error'); }
   }
 
   init().catch(e => {
     console.error(e);
-    document.getElementById('main-page').innerHTML = '<div class="loading-state">Ошибка загрузки. <a href="./account_employee.html">← Назад</a></div>';
+    document.getElementById('main-page').innerHTML = '<div class="loading-state">Ошибка загрузки. <a href="./employee_resumes.html">← Назад</a></div>';
   });
 })();
 </script>
