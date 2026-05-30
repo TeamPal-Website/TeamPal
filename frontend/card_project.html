@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Карточка проекта | TeamPal</title>
+  <link rel="icon" type="image/png" href="./assets/logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f7f5f2;
+      --header: #eae8e4;
+      --panel: #ffffff;
+      --panel-soft: #fffaf3;
+      --ink: #1a1a1a;
+      --ink2: #3a3a3a;
+      --line: rgba(0, 0, 0, 0.09);
+      --accent-1: #fa9500;
+      --accent-2: #f85a0b;
+      --footer: #d4d3cb;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      background: radial-gradient(900px 500px at -10% -25%, rgba(255, 208, 102, 0.28), transparent 70%),
+                  radial-gradient(700px 420px at 110% 0%, rgba(248, 90, 11, 0.14), transparent 68%),
+                  var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .header {
+      position: fixed;
+      inset: 0 0 auto 0;
+      z-index: 1000;
+      height: 72px;
+      background: var(--header);
+      border-bottom: 1px solid var(--line);
+    }
+    .header__inner {
+      height: 100%;
+      padding: 0 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+    .header__left { display: flex; align-items: center; gap: 12px; }
+    .logo { width: 46px; height: 46px; border-radius: 50px; object-fit: cover; }
+    .header__actions { display: flex; align-items: center; gap: 12px; position: relative; }
+    .role-toggle {
+      display: flex;
+      background: #f0ece7;
+      border-radius: 999px;
+      padding: 3px;
+      border: 1px solid var(--line);
+    }
+    .role-toggle__btn {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      background: transparent;
+      color: #7a7060;
+      transition: all 0.25s ease;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    .role-toggle__btn.active {
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(248, 90, 11, 0.25);
+    }
+    .notify-btn {
+      width: 48px;
+      height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .notify-btn:hover {
+      background: linear-gradient(135deg, #fff5e8, #ffffff);
+      border-color: rgba(248, 90, 11, 0.55);
+      box-shadow: 0 8px 18px rgba(250, 149, 0, 0.18);
+    }
+    .notify-btn svg { width: 22px; height: 22px; display: block; }
+    .burger {
+      width: 48px;
+      height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+    .burger span { width: 22px; height: 2.5px; background: linear-gradient(90deg, #5a4a3a, #3a2a1a); border-radius: 4px; display: block; }
+    .header-menu {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 12px);
+      width: 244px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 12px 8px;
+      display: none;
+    }
+    .header-menu.open { display: block; }
+    .header-menu__title { font-size: 12px; font-weight: 500; text-transform: uppercase; color: #8b8b8b; margin-bottom: 12px; padding: 0 10px; }
+    .header-menu__item, .header-menu__exit {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      border-radius: 14px;
+      text-align: left;
+      padding: 10px 14px;
+      margin-bottom: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--ink);
+      font-family: inherit;
+    }
+    .header-menu__item:hover { background: linear-gradient(95deg, #fff5e8, #fffbf5); color: var(--accent-2); }
+    .header-menu__exit { margin-top: 8px; margin-bottom: 0; color: #d14b2a; border-top: 1px solid var(--line); border-radius: 0; padding-top: 12px; }
+    .page { width: 100%; max-width: 1160px; margin: 0 auto; padding: 102px 20px 26px; flex: 1; }
+    .card { border: 1px solid var(--line); border-radius: 18px; background: var(--panel); box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06); }
+    .top { padding: 18px 20px; margin-bottom: 14px; background: linear-gradient(180deg, rgba(255, 208, 102, 0.16), transparent 38%), #fff; }
+    .title { font-size: 28px; color: var(--accent-2); line-height: 1.15; }
+    .sub { margin-top: 6px; color: #6d6155; font-size: 14px; }
+    .grid { margin-top: 14px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+    .field { border: 1px solid #ece9e5; border-radius: 12px; background: #faf9f7; padding: 10px 12px; font-size: 13px; }
+    .field b { color: #6a625b; margin-right: 4px; }
+    .section { padding: 18px 20px; margin-bottom: 14px; }
+    .section h2 { font-size: 20px; margin-bottom: 10px; color: #2d2a24; }
+    .text { white-space: pre-wrap; line-height: 1.5; color: #2e2b27; background: var(--panel-soft); border: 1px solid #f0ebe4; border-radius: 14px; padding: 12px; }
+    .progress {
+      margin-bottom: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #fff4ea;
+      border: 1px solid rgba(248, 90, 11, 0.2);
+      color: #874427;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .vacancies { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    .vacancy { border: 1px solid var(--line); border-radius: 14px; background: #fff; padding: 14px; }
+    .vacancy-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+    .vacancy-title { font-size: 18px; font-weight: 700; color: var(--accent-2); }
+    .badge { border-radius: 10px; font-size: 12px; font-weight: 600; padding: 5px 9px; border: 1px solid #ddd; background: #f2f2f2; color: #494949; white-space: nowrap; }
+    .badge.taken { border-color: rgba(78, 139, 74, 0.3); background: #eaf8ea; color: #2e6f2a; }
+    .badge.open { border-color: rgba(248, 90, 11, 0.3); background: #fff4ea; color: #8b4b1b; }
+    .meta { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: flex-start; }
+    .meta > .field {
+      flex: 0 1 auto;
+      width: fit-content;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+    .taken-users { margin-top: 10px; border-top: 1px dashed #ece5dd; padding-top: 10px; font-size: 13px; color: #3a3a3a; }
+    .users-list { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 8px; }
+    .user-chip { border-radius: 999px; padding: 5px 10px; border: 1px solid #d7e9d5; background: #f3fbf2; font-size: 12px; color: #2d6c2a; text-decoration: none; }
+    .user-chip[href]:hover { border-color: #9bc995; }
+    .occupant-block { display: flex; align-items: center; gap: 14px; margin: 12px 0; padding: 12px 14px; border-radius: 12px; background: #f2fbf1; border: 1px solid #ceeacc; }
+    .occupant-avatar { width: 54px; height: 54px; border-radius: 50%; object-fit: cover; border: 2px solid #b0d9ad; flex-shrink: 0; background: #e8f5e6; }
+    .occupant-hint { font-size: 11px; color: #7a9078; font-weight: 500; margin-bottom: 3px; }
+    .occupant-name { font-size: 20px; font-weight: 700; color: #2d6c2a; text-decoration: none; display: block; line-height: 1.2; }
+    .occupant-name:hover { text-decoration: underline; }
+    .btn-remove-member {
+      margin-top: 10px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-family: inherit;
+      border-radius: 10px;
+      border: 1px solid #f5c0b0;
+      background: #fff5f3;
+      color: #c0392b;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn-remove-member:hover { background: #ffe8e4; border-color: #e57373; }
+    .toast-container {
+      position: fixed; top: 84px; left: 50%; transform: translateX(-50%); z-index: 9999;
+      display: flex; flex-direction: column; gap: 10px; width: min(440px, 92vw); pointer-events: none;
+    }
+    .tp-toast {
+      display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px; border-radius: 14px;
+      pointer-events: auto; animation: tpToastIn 0.28s ease;
+      box-shadow: 0 8px 22px rgba(248, 90, 11, 0.12), 0 4px 14px rgba(0, 0, 0, 0.08);
+      font-family: inherit; border: 1px solid transparent;
+    }
+    .tp-toast.success { background: linear-gradient(135deg, #f3fff6, #fff); border-color: rgba(82, 196, 26, 0.45); }
+    .tp-toast.error { background: linear-gradient(135deg, #fff8f6, #fff); border-color: rgba(255, 77, 79, 0.45); }
+    .tp-toast.warning { background: linear-gradient(135deg, #fffaf0, #fff); border-color: rgba(248, 90, 11, 0.35); }
+    .tp-toast__icon { font-size: 18px; flex-shrink: 0; }
+    .tp-toast.success .tp-toast__icon, .tp-toast.success .tp-toast__text { color: #2d7a2d; }
+    .tp-toast.error .tp-toast__icon, .tp-toast.error .tp-toast__text { color: #c62828; }
+    .tp-toast.warning .tp-toast__icon, .tp-toast.warning .tp-toast__text { color: #a65f00; }
+    .tp-toast.error .tp-toast__text { font-weight: 600; }
+    .tp-toast__text { flex: 1; font-size: 14px; line-height: 1.45; }
+    @keyframes tpToastIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes tpToastOut { to { opacity: 0; transform: translateY(-8px); } }
+    .footer { width: 100%; background: var(--footer); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; font-size: 14px; color: var(--ink2); min-height: 52px; flex-wrap: wrap; }
+    .empty { border: 1px solid var(--line); border-radius: 14px; background: var(--panel-soft); padding: 18px; color: #7a7a7a; text-align: center; }
+    .btn-apply-on-card {
+      margin-top: 12px;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-family: inherit;
+      font-weight: 700;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(248, 90, 11, 0.28);
+    }
+    .btn-apply-on-card:hover { filter: brightness(1.03); }
+    .page-back-row { margin-bottom: 14px; }
+    .page-back-btn {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      padding: 10px 18px;
+      font-family: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--ink2);
+      transition: border-color .2s, color .2s;
+    }
+    .page-back-btn:hover { border-color: var(--accent-2); color: var(--accent-2); }
+    .tp-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2500;
+      padding: 16px;
+    }
+    .tp-modal.open { display: flex; }
+    .tp-modal__card {
+      width: min(92vw, 480px);
+      border-radius: 22px;
+      background: #fff;
+      overflow: hidden;
+      box-shadow: 0 28px 56px rgba(0, 0, 0, 0.18);
+    }
+    .tp-modal__accent { height: 5px; background: linear-gradient(90deg, var(--accent-1), var(--accent-2)); }
+    .tp-modal__body { padding: 20px 22px 16px; }
+    .tp-modal__title { font-size: 22px; font-weight: 700; margin: 0; color: var(--ink); }
+    .tp-modal__sub { margin: 8px 0 0; font-size: 14px; color: #666; line-height: 1.45; }
+    .tp-modal__sub[hidden] { display: none !important; }
+    .tp-modal__footer {
+      padding: 14px 22px 18px;
+      background: linear-gradient(180deg, #faf9f7, #fff);
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .tp-modal .tp-field label { font-size: 13px; color: #4c4c4c; font-weight: 500; display: block; margin-bottom: 6px; }
+    .tp-modal .tp-field select {
+      width: 100%;
+      border: 1px solid #d1d1d1;
+      border-radius: 18px;
+      background: #fff;
+      padding: 10px 18px;
+      padding-right: 40px;
+      min-height: 42px;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--ink);
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='8' viewBox='0 0 14 8' fill='none'%3E%3Cpath d='M1.5 1.5L7 6l5.5-4.5' stroke='%233a3a3a' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      box-sizing: border-box;
+    }
+    .tp-modal .tp-field select:focus {
+      border-color: #bdbdbd;
+      box-shadow: 0 0 0 2px rgba(248, 90, 11, 0.18);
+    }
+    .tp-modal .tp-action {
+      border-radius: 12px;
+      padding: 10px 18px;
+      font-family: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--line);
+      background: #fff;
+      font-size: 14px;
+    }
+    .tp-modal .tp-action--accent {
+      border: none;
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      color: #fff;
+    }
+    /* Подтверждение исключения участника — тот же тип, что «Покинуть проект?» на др. страницах */
+    .confirm-sheet {
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 20, 20, 0.36);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2600;
+      padding: 16px;
+    }
+    .confirm-sheet.open { display: flex; }
+    .confirm-sheet__card {
+      width: min(92vw, 440px);
+      border-radius: 18px;
+      background: #fff;
+      border: 1px solid var(--line);
+      padding: 22px 24px 24px;
+      box-shadow: 0 24px 44px rgba(0, 0, 0, 0.2);
+      font-family: inherit;
+    }
+    .confirm-sheet__title {
+      font-size: 21px;
+      font-weight: 700;
+      margin: 0 0 10px;
+      color: var(--ink);
+      line-height: 1.25;
+    }
+    .confirm-sheet__text { color: #555; font-size: 15px; margin: 0 0 18px; line-height: 1.5; }
+    .confirm-sheet__actions { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+    .confirm-sheet .action-btn {
+      border: 1px solid #d1d1d1;
+      border-radius: 12px;
+      background: #fff;
+      color: #1a1a1a;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+    .confirm-sheet .action-btn:hover { border-color: #bbb; background: #fafafa; }
+    .confirm-sheet .action-btn--danger {
+      background: #fff1f0;
+      color: #c53030;
+      border-color: #f5c2c2;
+    }
+    .confirm-sheet .action-btn--danger:hover { background: #ffe0dc; color: #b91c1c; border-color: #eab3b3; }
+    .confirm-sheet .action-btn--accent {
+      border: none;
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      color: #fff;
+    }
+    .confirm-sheet .action-btn--accent:hover { filter: brightness(1.03); }
+    @media (max-width: 700px) {
+      .header__inner { padding: 0 16px; }
+      .page { padding: 92px 14px 24px; }
+      .role-toggle__btn { padding: 7px 14px; font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+<header class="header">
+  <div class="header__inner">
+    <div class="header__left">
+      <img class="logo" src="./assets/logo.png" alt="Логотип TeamPal">
+      <div class="role-toggle" id="role-toggle">
+        <button class="role-toggle__btn" type="button" data-role="Ищу вакансию">Ищу вакансию</button>
+        <button class="role-toggle__btn" type="button" data-role="Ищу сотрудника">Ищу сотрудника</button>
+      </div>
+    </div>
+    <div class="header__actions">
+      <button class="notify-btn" type="button" aria-label="Уведомления" onclick="window.location.href='./applications.html?tab=notifications'">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 4a5 5 0 0 0-5 5v2.6c0 .7-.24 1.38-.68 1.9L5 15h14l-1.32-1.5a3 3 0 0 1-.68-1.9V9a5 5 0 0 0-5-5Z" stroke="#f85a0b" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M10 18a2 2 0 0 0 4 0" stroke="#f85a0b" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button class="burger" id="burger-btn" type="button" aria-label="Открыть меню"><span></span><span></span><span></span></button>
+      <nav class="header-menu" id="header-menu">
+        <div class="header-menu__title">Меню</div>
+        <div id="header-menu-links"></div>
+        <button class="header-menu__exit" type="button" data-nav="./authorization_page.html">Выйти</button>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <p class="page-back-row"><button type="button" class="page-back-btn" id="page-back-project">← Назад к поиску</button></p>
+  <section class="card top">
+    <h1 class="title" id="project-title">Карточка проекта</h1>
+    <div class="sub" id="project-sub">Загрузка...</div>
+    <div class="grid" id="project-main-fields"></div>
+  </section>
+
+  <section class="card section" id="project-summary-section">
+    <h2>Сводка по проекту</h2>
+    <div class="grid" id="project-extra-fields"></div>
+  </section>
+
+  <section class="card section">
+    <h2>Описание проекта</h2>
+    <div class="text" id="project-description">—</div>
+  </section>
+
+  <section class="card section">
+    <h2>Задачи проекта</h2>
+    <div class="text" id="project-tasks">—</div>
+  </section>
+
+  <section class="card section">
+    <h2>Вакансии</h2>
+    <div class="progress" id="team-progress">В проекте: 0/0</div>
+    <div class="vacancies" id="vacancies-list"></div>
+  </section>
+</main>
+
+<footer class="footer">
+  <span>TeamPal <span id="year"></span></span>
+  <span>обратная связь: teampal@dimple.ru</span>
+</footer>
+
+<div id="toast-container" class="toast-container"></div>
+
+<div class="confirm-sheet" id="confirm-modal" aria-hidden="true">
+  <div class="confirm-sheet__card" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
+    <h2 class="confirm-sheet__title" id="confirm-modal-title">Подтверждение</h2>
+    <p id="confirm-modal-text" class="confirm-sheet__text"></p>
+    <div class="confirm-sheet__actions">
+      <button type="button" class="action-btn" id="confirm-modal-cancel">Отмена</button>
+      <button type="button" class="action-btn action-btn--danger" id="confirm-modal-ok">Подтвердить</button>
+    </div>
+  </div>
+</div>
+
+<div class="tp-modal" id="apply-modal-project" aria-hidden="true">
+  <div class="tp-modal__card" role="dialog" aria-modal="true" aria-label="Откликнуться">
+    <div class="tp-modal__accent"></div>
+    <div class="tp-modal__body">
+      <h2 class="tp-modal__title">Откликнуться</h2>
+      <p id="apply-vacancy-label-project" class="tp-modal__sub" hidden></p>
+      <div class="tp-field" style="margin-top:14px;">
+        <select id="apply-resume-select-project" aria-label="Выберите резюме"></select>
+      </div>
+      <div id="apply-no-resumes-project" style="display:none;margin-top:10px;padding:12px 14px;border-radius:14px;background:#fff8e6;border:1px solid #ffe082;color:#6d4c41;font-size:13px;line-height:1.45;"></div>
+    </div>
+    <div class="tp-modal__footer">
+      <button class="tp-action" id="apply-cancel-project" type="button">Отмена</button>
+      <button class="tp-action tp-action--accent" id="apply-confirm-project" type="button">Откликнуться</button>
+    </div>
+  </div>
+</div>
+
+<script src="./config.js"></script>
+<script src="./assets/notify-bell.js"></script>
+<script>
+  (function () {
+    const yearSpan = document.getElementById("year");
+    if (yearSpan) yearSpan.textContent = " " + new Date().getFullYear();
+
+    const roleToggle = document.getElementById("role-toggle");
+    const burgerBtn = document.getElementById("burger-btn");
+    const headerMenu = document.getElementById("header-menu");
+    const TP_MENU_EMPLOYEE = [
+      ["./account_employee.html", "Личный кабинет"],
+      ["./employee_resumes.html", "Мои резюме"],
+      ["./search_project.html", "Поиск проектов"],
+      ["./applications.html", "Отклики"],
+    ];
+    const TP_MENU_MANAGER = [
+      ["./account_manager.html", "Личный кабинет"],
+      ["./employer_projects.html", "Мои проекты"],
+      ["./search_resume.html", "Поиск сотрудников"],
+      ["./applications.html", "Отклики"],
+    ];
+    function closeMenus() { if (headerMenu) headerMenu.classList.remove("open"); if (burgerBtn) burgerBtn.classList.remove("open"); }
+    function resolveTpRole(defaultRole) {
+      let role = null;
+      try { role = localStorage.getItem("tp_role"); } catch (_) {}
+      if (role !== "Ищу вакансию" && role !== "Ищу сотрудника") role = defaultRole;
+      return role;
+    }
+    function applyRoleToggleVisual(role) {
+      if (!roleToggle) return;
+      roleToggle.querySelectorAll(".role-toggle__btn").forEach((b) => {
+        b.classList.toggle("active", b.getAttribute("data-role") === role);
+      });
+    }
+    function renderHeaderMenuForRole(role) {
+      const el = document.getElementById("header-menu-links");
+      if (!el) return;
+      const rows = role === "Ищу сотрудника" ? TP_MENU_MANAGER : TP_MENU_EMPLOYEE;
+      el.innerHTML = rows.map(([href, label]) =>
+        `<button class="header-menu__item" type="button" data-nav="${href}">${label}</button>`
+      ).join("");
+    }
+    function syncRoleAndMenuFromStorage(defaultRole) {
+      const role = resolveTpRole(defaultRole);
+      applyRoleToggleVisual(role);
+      renderHeaderMenuForRole(role);
+    }
+    syncRoleAndMenuFromStorage("Ищу вакансию");
+    if (roleToggle) {
+      roleToggle.addEventListener("click", function (event) {
+        const btn = event.target.closest(".role-toggle__btn");
+        if (!btn) return;
+        const role = btn.dataset.role || "Ищу сотрудника";
+        try { localStorage.setItem("tp_role", role); } catch (_) {}
+        applyRoleToggleVisual(role);
+        if (role === "Ищу вакансию") window.location.href = "./search_project.html";
+        else renderHeaderMenuForRole(role);
+      });
+    }
+    if (headerMenu) {
+      headerMenu.addEventListener("click", function (e) {
+        const navBtn = e.target.closest("button[data-nav]");
+        if (!navBtn) return;
+        const href = navBtn.getAttribute("data-nav");
+        if (href) window.location.href = href;
+      });
+    }
+    if (burgerBtn && headerMenu) burgerBtn.addEventListener("click", (e) => { e.stopPropagation(); burgerBtn.classList.toggle("open"); headerMenu.classList.toggle("open"); });
+    document.addEventListener("click", (e) => { if (!e.target.closest(".header__actions")) closeMenus(); });
+
+    (function initProjectPageBack() {
+      const params = new URLSearchParams(window.location.search);
+      const fromApps = params.get("from") === "apps";
+      const fromResumes = params.get("from") === "resumes";
+      const fromProjects = params.get("from") === "projects";
+      const btn = document.getElementById("page-back-project");
+      if (!btn) return;
+      if (fromApps) {
+        btn.textContent = "← Назад к откликам";
+        btn.addEventListener("click", () => {
+          const p = new URLSearchParams(window.location.search);
+          const v = p.get("view");
+          window.location.href =
+            v === "manager" || v === "employee"
+              ? "./applications.html?view=" + encodeURIComponent(v)
+              : "./applications.html";
+        });
+      } else if (fromResumes) {
+        btn.textContent = "← Назад к моим резюме";
+        btn.addEventListener("click", () => {
+          window.location.href = "./employee_resumes.html";
+        });
+      } else if (fromProjects) {
+        btn.textContent = "← Назад к моим проектам";
+        btn.addEventListener("click", () => {
+          window.location.href = "./employer_projects.html";
+        });
+      } else {
+        btn.addEventListener("click", () => {
+          if (document.referrer && document.referrer.includes("search_project.html")) history.back();
+          else window.location.href = "./search_project.html";
+        });
+      }
+    })();
+
+    function cpIntentAdjPlural(intent) {
+      return intent === "commercial" ? "коммерческих" : intent === "noncommercial" ? "учебных" : "подходящего типа";
+    }
+    function cpFillApplyNoResumes(el, projectIntent) {
+      if (!el) return;
+      const resumeLink =
+        '<a id="apply-create-resume-link-project" href="./employee_resumes.html" style="color:#f85a0b;font-weight:700;">Мои резюме</a>.';
+      if (projectIntent === "commercial" || projectIntent === "noncommercial") {
+        const adj = cpIntentAdjPlural(projectIntent);
+        el.innerHTML =
+          `Нет активных ${adj} резюме в статусе «Ищу работу». Создайте резюме этого типа или включите поиск работы. ${resumeLink}`;
+      } else {
+        el.innerHTML =
+          `Нет активных резюме в статусе «Ищу работу». Создайте резюме или включите поиск работы. ${resumeLink}`;
+      }
+    }
+
+    let _projectCardEmploymentIntent = "commercial";
+    let _applyVacancyIdProject = null;
+    const applyModalProject = document.getElementById("apply-modal-project");
+    const applyResumeSelectProject = document.getElementById("apply-resume-select-project");
+    const applyNoResumesProject = document.getElementById("apply-no-resumes-project");
+    const applyVacancyLabelProject = document.getElementById("apply-vacancy-label-project");
+
+    async function openApplyModalProject(vacancyId) {
+      _applyVacancyIdProject = vacancyId;
+      if (applyVacancyLabelProject) {
+        applyVacancyLabelProject.textContent = "";
+        applyVacancyLabelProject.hidden = true;
+      }
+      if (applyNoResumesProject) applyNoResumesProject.style.display = "none";
+      const confirmBtn = document.getElementById("apply-confirm-project");
+      if (confirmBtn) confirmBtn.disabled = true;
+      if (applyModalProject) applyModalProject.classList.add("open");
+      try {
+        const resp = await fetch(API_BASE_URL + "/my_resumes", { credentials: "include" });
+        if (resp.status === 401) {
+          showToast("Войдите в аккаунт, чтобы отправить отклик.", "warning");
+          closeApplyModalProject();
+          return;
+        }
+        if (!resp.ok) {
+          if (applyResumeSelectProject) applyResumeSelectProject.innerHTML = '<option value="">Ошибка загрузки</option>';
+          if (confirmBtn) confirmBtn.disabled = true;
+          return;
+        }
+        const resumes = await resp.json();
+        const active = Array.isArray(resumes)
+          ? resumes.filter((r) => r.status === "looking_for_job" && r.employment_intent === _projectCardEmploymentIntent)
+          : [];
+        if (applyResumeSelectProject) {
+          if (active.length === 0) {
+            applyResumeSelectProject.innerHTML = '<option value="">—</option>';
+            if (applyNoResumesProject) {
+              cpFillApplyNoResumes(applyNoResumesProject, _projectCardEmploymentIntent);
+              applyNoResumesProject.style.display = "block";
+            }
+            if (confirmBtn) confirmBtn.disabled = true;
+          } else {
+            applyResumeSelectProject.innerHTML = '<option value="">Выберите резюме</option>';
+            active.forEach((r) => {
+              const opt = document.createElement("option");
+              opt.value = String(r.id);
+              opt.textContent =
+                typeof tpResumeSelectOptionLabel === "function" ? tpResumeSelectOptionLabel(r) : "Резюме №" + r.id;
+              applyResumeSelectProject.appendChild(opt);
+            });
+            if (confirmBtn) confirmBtn.disabled = false;
+          }
+        }
+      } catch (_) {
+        if (applyResumeSelectProject) applyResumeSelectProject.innerHTML = '<option value="">Ошибка соединения</option>';
+      }
+    }
+    function closeApplyModalProject() {
+      if (applyModalProject) applyModalProject.classList.remove("open");
+      _applyVacancyIdProject = null;
+      if (applyVacancyLabelProject) {
+        applyVacancyLabelProject.textContent = "";
+        applyVacancyLabelProject.hidden = true;
+      }
+    }
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      if (applyModalProject && applyModalProject.classList.contains("open")) closeApplyModalProject();
+    });
+    document.getElementById("apply-cancel-project")?.addEventListener("click", closeApplyModalProject);
+    applyModalProject?.addEventListener("click", (e) => { if (e.target === applyModalProject) closeApplyModalProject(); });
+    document.getElementById("apply-confirm-project")?.addEventListener("click", async () => {
+      const resumeId = applyResumeSelectProject ? applyResumeSelectProject.value : "";
+      const confirmBtn = document.getElementById("apply-confirm-project");
+      if (!resumeId || !_applyVacancyIdProject) return;
+      if (confirmBtn) confirmBtn.disabled = true;
+      try {
+        const resp = await fetch(API_BASE_URL + "/applications", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ resume_id: Number(resumeId), vacancy_id: Number(_applyVacancyIdProject) }),
+        });
+        if (resp.ok) {
+          closeApplyModalProject();
+          showToast("Отклик отправлен. Уведомление уйдёт работодателю.", "success");
+        } else {
+          const err = await resp.json().catch(() => ({}));
+          showToast(tpFormatApiDetail(err.detail) || "Не удалось отправить отклик", "error");
+          if (confirmBtn) confirmBtn.disabled = false;
+        }
+      } catch (_) {
+        showToast("Ошибка соединения с сервером", "error");
+        if (confirmBtn) confirmBtn.disabled = false;
+      }
+    });
+
+    function esc(v) { return String(v == null ? "" : v).replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m])); }
+    function showToast(message, type) {
+      type = type || "success";
+      const container = document.getElementById("toast-container");
+      if (!container) return;
+      let raw = String(message || "");
+      if (type === "error") {
+        if (typeof window.tpUserFacingErrorLine === "function") {
+          raw = window.tpUserFacingErrorLine(raw);
+        } else {
+          raw = raw.replace(/^\s*ошибка\s*:\s*/i, "").trim();
+          if (raw) raw = raw.charAt(0).toUpperCase() + raw.slice(1);
+        }
+      }
+      const icons = { success: "✓", error: "✕", warning: "!" };
+      const el = document.createElement("div");
+      el.className = "tp-toast " + type;
+      el.innerHTML = `<span class="tp-toast__icon">${icons[type] || ""}</span><span class="tp-toast__text">${esc(raw)}</span>`;
+      container.appendChild(el);
+      setTimeout(() => {
+        el.style.animation = "tpToastOut .22s ease forwards";
+        setTimeout(() => el.remove(), 240);
+      }, 4200);
+    }
+
+    let _confirmCbProject = null;
+    function showConfirmModal(title, text, onConfirm, { danger = true, okLabel = "Подтвердить" } = {}) {
+      const modal = document.getElementById("confirm-modal");
+      if (!modal) return;
+      const titleEl = document.getElementById("confirm-modal-title");
+      const textEl = document.getElementById("confirm-modal-text");
+      const okBtn = document.getElementById("confirm-modal-ok");
+      if (!titleEl || !textEl || !okBtn) return;
+      titleEl.textContent = title;
+      textEl.textContent = text;
+      okBtn.textContent = okLabel;
+      okBtn.className = "action-btn " + (danger ? "action-btn--danger" : "action-btn--accent");
+      _confirmCbProject = onConfirm;
+      modal.classList.add("open");
+      modal.setAttribute("aria-hidden", "false");
+    }
+    function closeConfirmModalProject() {
+      const modal = document.getElementById("confirm-modal");
+      if (modal) {
+        modal.classList.remove("open");
+        modal.setAttribute("aria-hidden", "true");
+      }
+      _confirmCbProject = null;
+    }
+    document.getElementById("confirm-modal-cancel")?.addEventListener("click", closeConfirmModalProject);
+    document.getElementById("confirm-modal-ok")?.addEventListener("click", () => {
+      const cb = _confirmCbProject;
+      closeConfirmModalProject();
+      if (cb) cb();
+    });
+    document.getElementById("confirm-modal")?.addEventListener("click", (e) => {
+      if (e.target.id === "confirm-modal") closeConfirmModalProject();
+    });
+
+    function mapIntent(v) { return v === "commercial" ? "Коммерческий" : (v === "noncommercial" ? "Некоммерческий" : "—"); }
+    function mapStatus(v) { return ({ active: "Активен", paused: "Не активен", close: "Закрыт", deleted: "Удалён" })[v] || (v || "—"); }
+    function mapExp(v) { return ({ none: "Без опыта", "<1": "До 1 года", "1-3": "1-3 года", "3-6": "3-6 лет", "6+": "6+ лет" })[v] || "—"; }
+    function mapExpCard(v) { return ({ none: "Без опыта", "<1": "До 1 года", "1-3": "1-3 года", "3-6": "3-6 лет", "6+": "6+ лет" })[v] || "Без опыта"; }
+    function isEmptyDisplayField(v) {
+      const s = String(v == null ? "" : v).trim();
+      return s === "" || s === "—";
+    }
+    function mapWork(v) { return ({ remote: "Удалённо", office: "В офисе", hybrid: "Гибрид" })[v] || "—"; }
+    function mapEmployment(v) { return ({ full_time: "Полный день", part_time: "Неполный день", side_project: "Подработка / гибкий формат" })[v] || "—"; }
+    function mapContract(v) { return ({ gph: "ГПХ", tk: "ТК РФ", internship: "Стажировка" })[v] || "—"; }
+
+    function extractUsers(vacancy) {
+      const sources = [];
+      if (vacancy.occupant) sources.push(vacancy.occupant);
+      if (Array.isArray(vacancy.occupied_by_users)) sources.push(...vacancy.occupied_by_users);
+      if (Array.isArray(vacancy.assigned_users)) sources.push(...vacancy.assigned_users);
+      if (Array.isArray(vacancy.members)) sources.push(...vacancy.members);
+      if (Array.isArray(vacancy.participants)) sources.push(...vacancy.participants);
+      if (vacancy.user) sources.push(vacancy.user);
+      if (vacancy.assigned_user) sources.push(vacancy.assigned_user);
+      if (vacancy.resume && vacancy.resume.user) sources.push(vacancy.resume.user);
+      const seen = new Set();
+      return sources.map((u) => {
+        if (!u) return null;
+        if (typeof u === "string") return { name: u, resume_id: null, user_id: null, avatar_url: null };
+        const full = [u.last_name, u.first_name].filter(Boolean).join(" ").trim();
+        return {
+          name: full || u.full_name || u.username || u.email || u.desired_position || (u.resume_id ? "Резюме #" + u.resume_id : ""),
+          resume_id: u.resume_id || u.resume?.id || null,
+          user_id: u.user_id || u.resume?.user_id || null,
+          avatar_url: u.avatar_url || null,
+        };
+      }).filter((u) => {
+        if (!u || !u.name) return false;
+        const key = [u.resume_id || "", u.user_id || "", u.name].join(":");
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
+    function renderUserChip(user) {
+      const label = esc(user.name);
+      const avatarSrc = user.avatar_url ? esc(tpAvatarSrcFromApiField(user.avatar_url)) : "./assets/avatar-default.png";
+      const avatarImg = `<img src="${avatarSrc}" onerror="this.src='./assets/avatar-default.png'" style="width:18px;height:18px;border-radius:50%;object-fit:cover;border:1px solid #d7e9d5;flex-shrink:0;" alt="">`;
+      if (!user.resume_id) return `<span class="user-chip" style="display:flex;align-items:center;gap:5px;">${avatarImg}${label}</span>`;
+      const params = new URLSearchParams({ id: String(user.resume_id) });
+      if (user.user_id) params.set("user_id", String(user.user_id));
+      const pageParams = new URLSearchParams(window.location.search);
+      const fromCtx = pageParams.get("from");
+      if (fromCtx === "resumes" || fromCtx === "projects" || fromCtx === "apps") {
+        params.set("from", fromCtx);
+        if (fromCtx === "apps") {
+          const v = pageParams.get("view");
+          if (v) params.set("view", v);
+        }
+      }
+      return `<a class="user-chip" style="display:flex;align-items:center;gap:5px;" href="./card_resume.html?${params.toString()}">${avatarImg}${label}</a>`;
+    }
+
+    async function loadCitiesMap() {
+      try {
+        const resp = await fetch(API_BASE_URL + "/cities", { credentials: "include" });
+        if (!resp.ok) return {};
+        const arr = await resp.json();
+        const map = {};
+        if (Array.isArray(arr)) arr.forEach((c) => { if (c && c.id != null) map[String(c.id)] = c.title || String(c.id); });
+        return map;
+      } catch (_) { return {}; }
+    }
+
+    async function loadData() {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("id") || params.get("project");
+      const fromApps = params.get("from") === "apps";
+      if (!id) {
+        document.getElementById("project-sub").textContent = "ID проекта не указан";
+        return;
+      }
+      const citiesMap = await loadCitiesMap();
+      let myProfileId = null;
+      let myUserId = null;
+      try {
+        const pm = await fetch(API_BASE_URL + "/profiles/me", { credentials: "include" });
+        if (pm.ok) {
+          const pj = await pm.json();
+          myProfileId = pj.id != null ? Number(pj.id) : null;
+          myUserId = pj.user_id != null ? Number(pj.user_id) : null;
+        }
+      } catch (_) {}
+
+      try {
+        let resp = await fetch(API_BASE_URL + "/projects/" + id, { credentials: "include" });
+        if (!resp.ok) {
+          resp = await fetch(API_BASE_URL + "/my_project/" + id, { credentials: "include" });
+        }
+        if (!resp.ok) throw new Error("Не удалось загрузить проект");
+        const data = await resp.json();
+        const project = data.project || data;
+        _projectCardEmploymentIntent = project.employment_intent === "noncommercial" ? "noncommercial" : "commercial";
+        const vacancies = Array.isArray(data.vacancies) ? data.vacancies : (Array.isArray(project.vacancies) ? project.vacancies : []);
+        const isOwner = myProfileId != null && Number(project.profile_id) === Number(myProfileId);
+        const isParticipant =
+          myUserId != null &&
+          vacancies.some((v) => {
+            const occ = v && v.occupant;
+            return occ != null && occ.user_id != null && Number(occ.user_id) === myUserId;
+          });
+        const allowApplicantApply =
+          project.status === "active" && !isOwner && !isParticipant && !fromApps;
+
+        document.getElementById("project-title").textContent = project.title || "Без названия";
+        document.getElementById("project-sub").textContent = mapIntent(project.employment_intent);
+        document.getElementById("project-description").textContent = project.description || "Описание не заполнено";
+        document.getElementById("project-tasks").textContent = project.tasks || "Задачи не заполнены";
+
+        const mainFieldsAll = [
+          ["Тип проекта", mapIntent(project.employment_intent)],
+          ["Статус", mapStatus(project.status)],
+          ["Город", citiesMap[String(project.city_id)] || "—"],
+          ["План участников", project.planned_members != null ? project.planned_members : "—"],
+          ["Сроки", project.deadline || "—"],
+          ["Создан", project.created_at ? new Date(project.created_at).toLocaleDateString("ru-RU") : "—"],
+          ["Контакт", project.contact_info || project.contact || "—"],
+        ];
+        const hiddenForVisitorLabels = new Set(["Статус", "План участников", "Сроки", "Контакт"]);
+        let mainFields = mainFieldsAll.filter((row) => !hiddenForVisitorLabels.has(row[0]));
+        mainFields = mainFields.filter((row) => {
+          if (row[0] === "Тип проекта") return true;
+          return !isEmptyDisplayField(row[1]);
+        });
+        document.getElementById("project-main-fields").innerHTML = mainFields.map((f) => `<div class="field"><b>${esc(f[0])}:</b>${esc(f[1])}</div>`).join("");
+
+        const summarySection = document.getElementById("project-summary-section");
+        if (summarySection) summarySection.style.display = "none";
+
+        const list = document.getElementById("vacancies-list");
+        const extraEl = document.getElementById("project-extra-fields");
+        const totalSlots = Number.isFinite(Number(project.planned_members)) && Number(project.planned_members) > 0
+          ? Number(project.planned_members)
+          : Math.max(vacancies.length, 1);
+
+        function fillSummary(occupiedCount) {
+          if (!extraEl) return;
+          const rows = [
+            ["ID проекта", "#" + project.id],
+            ["Вакансий в карточке", String(vacancies.length)],
+            ["Занято слотов команды", occupiedCount + " / " + totalSlots],
+          ];
+          if (isOwner) rows.push(["Владелец", "Вы можете исключить участника из проекта — освободится слот для новых откликов (кнопка под карточкой вакансии)."]);
+          else rows.push(["Просмотр", "Ниже — описание вакансий, требования и принятые по откликам участники."]);
+          extraEl.innerHTML = rows.map((f) => `<div class="field"><b>${esc(f[0])}:</b>${esc(f[1])}</div>`).join("");
+        }
+
+        if (vacancies.length === 0) {
+          list.innerHTML = '<div class="empty">По этому проекту пока нет вакансий</div>';
+          document.getElementById("team-progress").textContent = "В проекте: 0/0";
+          fillSummary(0);
+          return;
+        }
+
+        function rubSalaryAmount(va) {
+          if (va == null || va === "") return "—";
+          const n = Number(va);
+          if (!Number.isFinite(n)) return "—";
+          return n.toLocaleString("ru-RU") + " ₽";
+        }
+        function salTypeLabelFn(st) {
+          return st === "per_project" ? "За проект" : (st === "monthly" ? "В месяц" : "—");
+        }
+
+        let occupiedSlots = 0;
+        const projectIsCommercial = project.employment_intent === "commercial";
+        const hideVacancyEmpty = true;
+        list.innerHTML = vacancies.map((v) => {
+          const users = extractUsers(v);
+          const occ = v.occupant;
+          const useResume = !!(occ && occ.resume_id != null);
+          const isTaken = users.length > 0 || v.is_filled === true || v.status === "filled" || v.status === "closed";
+          if (isTaken) occupiedSlots += 1;
+
+          const slotTitle = esc(v.role_name || v.role_type?.name || "Должность");
+          const titleMain = useResume ? esc(occ.desired_position || v.role_name || "Участник") : slotTitle;
+
+          const rawExp = useResume ? occ.computed_experience_level : v.experience;
+          const metaExp = hideVacancyEmpty ? mapExpCard(rawExp) : mapExp(rawExp);
+          const metaWork = mapWork(useResume ? occ.work_format : v.work_format);
+          const metaEmp = mapEmployment(useResume ? occ.commitment_level : (v.commitment_level || v.employment));
+          const metaSchedRaw = (useResume && occ.schedule != null ? occ.schedule : v.schedule) || "";
+          const metaContract = mapContract(useResume ? occ.contract_type : v.contract_type);
+          const commProj = projectIsCommercial;
+          const rubLine = commProj ? rubSalaryAmount(useResume ? occ.salary_amount : v.salary_amount) : "—";
+          const typeLine = commProj ? salTypeLabelFn(useResume ? occ.salary_type : v.salary_type) : "—";
+
+          const roleOrPositionLabel = useResume ? "Желаемая должность" : "Должность";
+          const roleOrPositionVal = useResume
+            ? esc(occ.desired_position || "—")
+            : esc(v.role_name || v.role_type?.name || "—");
+
+          const metaRows = [];
+          metaRows.push(`<div class="field"><b>${roleOrPositionLabel}:</b>${roleOrPositionVal}</div>`);
+          metaRows.push(`<div class="field"><b>Опыт работы:</b>${esc(metaExp)}</div>`);
+          if (commProj) {
+            if (!hideVacancyEmpty || metaWork !== "—") metaRows.push(`<div class="field"><b>Формат работы:</b>${esc(metaWork)}</div>`);
+            if (!hideVacancyEmpty || metaEmp !== "—") metaRows.push(`<div class="field"><b>Занятость:</b>${esc(metaEmp)}</div>`);
+          }
+          const schedPlain = String(metaSchedRaw || "").trim();
+          if (!hideVacancyEmpty || schedPlain)
+            metaRows.push(`<div class="field"><b>График:</b>${esc(hideVacancyEmpty ? schedPlain : metaSchedRaw || "—")}</div>`);
+          if (commProj) {
+            if (!hideVacancyEmpty || rubLine !== "—") metaRows.push(`<div class="field"><b>Заработная плата (в рублях):</b>${esc(rubLine)}</div>`);
+            if (!hideVacancyEmpty || typeLine !== "—") metaRows.push(`<div class="field"><b>Тип зарплаты:</b>${esc(typeLine)}</div>`);
+            if (!hideVacancyEmpty || metaContract !== "—") metaRows.push(`<div class="field"><b>Тип договора:</b>${esc(metaContract)}</div>`);
+          }
+          const metaBlock = `<div class="meta">${metaRows.join("")}</div>`;
+
+          const aboutBlock =
+            useResume && occ.about_me
+              ? `<div class="text" style="margin-top:10px;"><b>О себе:</b> ${esc(occ.about_me)}</div>`
+              : "";
+
+          const descRaw = (() => {
+            if (v.description != null && String(v.description).trim() !== "") return String(v.description).trim();
+            var a = v.responsibilities != null ? String(v.responsibilities).trim() : "";
+            var b = v.requirements != null ? String(v.requirements).trim() : "";
+            if (a && b) return a + "\n\n" + b;
+            return a || b || "";
+          })();
+          const descText = descRaw || "Не указано";
+          const descBlock = `<div class="text" style="margin-top:10px;"><b>Описание вакансии:</b> ${esc(descText)}</div>`;
+
+          const memberLabel =
+            useResume && occ
+              ? ([occ.first_name, occ.last_name].filter(Boolean).join(" ").trim() || occ.desired_position || "Участник")
+              : "";
+          const removeBtn =
+            isOwner && occ && occ.resume_id != null
+              ? `<button type="button" class="btn-remove-member" data-remove-member="${esc(String(occ.resume_id))}" data-member-label="${esc(memberLabel)}">Исключить из проекта</button>`
+              : "";
+          const applyBtnVac =
+            allowApplicantApply && !isTaken
+              ? `<button type="button" class="btn-apply-on-card" data-apply-vacancy="${esc(String(v.id))}" data-apply-role="${esc(v.role_name || "")}">Откликнуться</button>`
+              : "";
+
+          let occupantBlock = "";
+          if (useResume && occ) {
+            const fullName = [occ.first_name, occ.last_name].filter(Boolean).join(" ").trim() || occ.desired_position || "Участник";
+            const avatarSrc = occ.avatar_url ? esc(tpAvatarSrcFromApiField(occ.avatar_url)) : "./assets/avatar-default.png";
+            const resumeParams = new URLSearchParams({ id: String(occ.resume_id) });
+            if (occ.user_id) resumeParams.set("user_id", String(occ.user_id));
+            const fromCtx = params.get("from");
+            if (fromCtx === "resumes" || fromCtx === "projects" || fromCtx === "apps") {
+              resumeParams.set("from", fromCtx);
+              if (fromCtx === "apps") {
+                const v = params.get("view");
+                if (v) resumeParams.set("view", v);
+              }
+            }
+            const nameEl = occ.resume_id
+              ? `<a class="occupant-name" href="./card_resume.html?${resumeParams.toString()}">${esc(fullName)}</a>`
+              : `<span class="occupant-name">${esc(fullName)}</span>`;
+            occupantBlock = `<div class="occupant-block">
+              <img class="occupant-avatar" src="${avatarSrc}" onerror="this.src='./assets/avatar-default.png'" alt="">
+              <div>
+                <div class="occupant-hint">Участник команды</div>
+                ${nameEl}
+              </div>
+            </div>`;
+          } else if (!isTaken) {
+            occupantBlock = `<div class="taken-users"><div><b>Кто занимает вакансию:</b> пока никто</div></div>`;
+          }
+
+          return `
+            <article class="vacancy">
+              <div class="vacancy-head">
+                <div>
+                  <div class="vacancy-title">${slotTitle}</div>
+                </div>
+                <span class="badge ${isTaken ? "taken" : "open"}">${isTaken ? "Занята" : "Свободна"}</span>
+              </div>
+              ${occupantBlock}
+              ${metaBlock}
+              ${descBlock}
+              ${aboutBlock}
+              ${removeBtn}
+              ${applyBtnVac}
+            </article>
+          `;
+        }).join("");
+
+        fillSummary(occupiedSlots);
+        document.getElementById("team-progress").textContent = "В проекте: " + occupiedSlots + "/" + totalSlots;
+      } catch (e) {
+        document.getElementById("project-sub").textContent = "Ошибка загрузки проекта";
+        document.getElementById("vacancies-list").innerHTML = '<div class="empty">Не удалось загрузить данные. Проверьте доступ или попробуйте позже.</div>';
+      }
+    }
+
+    document.getElementById("vacancies-list").addEventListener("click", async (ev) => {
+      const applyBtnEl = ev.target.closest(".btn-apply-on-card");
+      if (applyBtnEl) {
+        const vacancyId = applyBtnEl.getAttribute("data-apply-vacancy");
+        const roleName = applyBtnEl.getAttribute("data-apply-role") || "";
+        const pt = document.getElementById("project-title");
+        openApplyModalProject(vacancyId, roleName, pt ? pt.textContent : "");
+        return;
+      }
+      const btn = ev.target.closest("[data-remove-member]");
+      if (!btn) return;
+      const resumeId = btn.getAttribute("data-remove-member");
+      const label = btn.getAttribute("data-member-label") || "Участник";
+      const params = new URLSearchParams(window.location.search);
+      const pid = params.get("id") || params.get("project");
+      if (!resumeId || !pid) return;
+      showConfirmModal(
+        "Исключить «" + label + "» из проекта?",
+        "Слот станет свободным, участник получит уведомление.",
+        async () => {
+          try {
+            const r = await fetch(API_BASE_URL + "/projects/" + encodeURIComponent(pid) + "/members/" + encodeURIComponent(resumeId), {
+              method: "DELETE",
+              credentials: "include",
+            });
+            if (r.ok) {
+              showToast("Участник исключён из проекта", "success");
+              loadData();
+            } else {
+              const err = await r.json().catch(() => ({}));
+              const msg = typeof err.detail === "string" ? err.detail : "Не удалось исключить";
+              showToast(msg, "error");
+            }
+          } catch {
+            showToast("Ошибка соединения с сервером", "error");
+          }
+        },
+        { danger: true, okLabel: "Исключить" },
+      );
+    });
+
+    loadData();
+  })();
+</script>
+</body>
+</html>
