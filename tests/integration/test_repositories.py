@@ -1,5 +1,5 @@
 import pytest
-from fastapi import HTTPException
+from src.errors.common import AccessDenied, Unauthorized, UserNotFound
 from src.repositories.users import UsersRepository
 from src.repositories.admins import AdminsRepository
 from src.schemas.users import UserAdd
@@ -58,13 +58,13 @@ class TestUsersRepository:
         assert len(result.hashed_password) > 0
 
     async def test_get_user_with_hashed_password_nonexistent(self, db_session):
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(Unauthorized) as exc_info:
             await UsersRepository(db_session).get_user_with_hashed_password(email='ghost@example.com')
         assert exc_info.value.status_code == 401
 
     async def test_get_user_with_hashed_password_blocked(self, db_session):
         await create_test_user(db_session, email='blocked@example.com', is_active=False)
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(AccessDenied) as exc_info:
             await UsersRepository(db_session).get_user_with_hashed_password(email='blocked@example.com')
         assert exc_info.value.status_code == 403
 
@@ -78,7 +78,7 @@ class TestAdminsRepository:
         assert updated.is_active is False
 
     async def test_block_nonexistent_user(self, db_session):
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(UserNotFound) as exc_info:
             await AdminsRepository(db_session).block_user(user_id=99999)
         assert exc_info.value.status_code == 404
 
@@ -90,7 +90,7 @@ class TestAdminsRepository:
         assert updated.is_active is True
 
     async def test_unblock_nonexistent_user(self, db_session):
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(UserNotFound) as exc_info:
             await AdminsRepository(db_session).unblock_user(user_id=99999)
         assert exc_info.value.status_code == 404
 

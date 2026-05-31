@@ -8,12 +8,22 @@ router = APIRouter(tags=['Поиск вакансий'])
 vacancy_service = VacancyService()
 
 
-@router.get('/my_recruiting_vacancies', response_model=list[RecruitingVacancyOption])
+@router.get(
+    '/my_recruiting_vacancies',
+    response_model=list[RecruitingVacancyOption],
+    summary='Мои открытые вакансии',
+    description='Список незанятых вакансий на active/paused проектах текущего пользователя для приглашений.',
+)
 async def my_recruiting_vacancies(db: DBDep, user_id: UserIdDep):
     return await vacancy_service.my_recruiting_vacancies(db, user_id)
 
 
-@router.get('/vacancies', response_model=list[VacancySearchItem])
+@router.get(
+    '/vacancies',
+    response_model=list[VacancySearchItem],
+    summary='Публичный поиск вакансий',
+    description='Поиск открытых вакансий с текстовым запросом, пагинацией и фильтрами по городу, зарплате, опыту и др.',
+)
 async def search_vacancies(
     db: DBDep,
     q: SearchQDep,

@@ -1,3 +1,5 @@
+"""CRUD-операции с вакансиями проектов, принадлежащих пользователю."""
+
 from src.errors.common import RoleNotFound, VacancyNotFound
 from src.errors.project_vacancies import (
     VACANCIES_MAX_PER_PROJECT,
@@ -11,7 +13,22 @@ from src.utils.db_manager import DBManager
 
 
 class ProjectVacancyService:
+    """Управление вакансиями на проектах, принадлежащих вызывающему."""
+
     async def list_project_vacancies(self, db: DBManager, user_id: int, project_id: int):
+        """Получить список вакансий принадлежащего проекта с идентификаторами навыков.
+
+        :param db: Активная сессия менеджера базы данных.
+        :type db: DBManager
+        :param user_id: Идентификатор аутентифицированного пользователя.
+        :type user_id: int
+        :param project_id: Первичный ключ проекта.
+        :type project_id: int
+        :returns: Данные вакансий с дополнительным полем ``skill_ids``.
+        :rtype: list[dict]
+        :raises ProfileNotFound: Если у пользователя нет профиля.
+        :raises ProjectNotFound: Если проект отсутствует, удалён или не принадлежит пользователю.
+        """
         _, project = await require_owned_project(db, user_id, project_id)
         vacancies = await db.project_vacancies.get_filtered(project_id=project.id)
         vids = [v.id for v in vacancies]
@@ -25,6 +42,25 @@ class ProjectVacancyService:
         project_id: int,
         data: ProjectVacancyRequestAdd,
     ):
+        """Создать вакансию на принадлежащем активном или приостановленном проекте.
+
+        :param db: Активная сессия менеджера базы данных.
+        :type db: DBManager
+        :param user_id: Идентификатор аутентифицированного пользователя.
+        :type user_id: int
+        :param project_id: Первичный ключ проекта.
+        :type project_id: int
+        :param data: Поля вакансии и обязательные идентификаторы навыков.
+        :type data: ProjectVacancyRequestAdd
+        :returns: Обёртка со статусом и созданной вакансией.
+        :rtype: dict
+        :raises ProfileNotFound: Если у пользователя нет профиля.
+        :raises ProjectNotFound: Если проект отсутствует, удалён или не принадлежит пользователю.
+        :raises ClosedProjectImmutable: Если проект закрыт.
+        :raises VacancyLimitExceeded: Если достигнут лимит вакансий проекта.
+        :raises RoleNotFound: Если тип роли не существует.
+        :raises SkillNotFound: Если хотя бы один навык не существует.
+        """
         _, project = await require_owned_project(db, user_id, project_id, allow_close=False)
         vacancies_count = await db.project_vacancies.count(project_id=project.id)
         if vacancies_count >= VACANCIES_MAX_PER_PROJECT:
@@ -46,6 +82,28 @@ class ProjectVacancyService:
         vacancy_id: int,
         data: ProjectVacancyPatch,
     ):
+        """Обновить вакансию или заменить связанные с ней навыки.
+
+        :param db: Активная сессия менеджера базы данных.
+        :type db: DBManager
+        :param user_id: Идентификатор аутентифицированного пользователя.
+        :type user_id: int
+        :param project_id: Первичный ключ проекта.
+        :type project_id: int
+        :param vacancy_id: Первичный ключ вакансии.
+        :type vacancy_id: int
+        :param data: Частичные поля вакансии и необязательные идентификаторы навыков.
+        :type data: ProjectVacancyPatch
+        :returns: Обёртка со статусом подтверждения обновления.
+        :rtype: dict
+        :raises ProfileNotFound: Если у пользователя нет профиля.
+        :raises ProjectNotFound: Если проект отсутствует, удалён или не принадлежит пользователю.
+        :raises ClosedProjectImmutable: Если проект закрыт.
+        :raises VacancyNotFound: Если вакансия не принадлежит проекту.
+        :raises OccupiedSlotRoleImmutable: При смене роли на занятом слоте.
+        :raises RoleNotFound: Если новый тип роли не существует.
+        :raises SkillNotFound: Если хотя бы один навык не существует.
+        """
         _, project = await require_owned_project(db, user_id, project_id, allow_close=False)
         vacancy = await db.project_vacancies.get_one_or_none(id=vacancy_id, project_id=project.id)
         if vacancy is None:
@@ -80,6 +138,24 @@ class ProjectVacancyService:
         project_id: int,
         vacancy_id: int,
     ):
+        """Удалить незанятую вакансию с принадлежащего проекта.
+
+        :param db: Активная сессия менеджера базы данных.
+        :type db: DBManager
+        :param user_id: Идентификатор аутентифицированного пользователя.
+        :type user_id: int
+        :param project_id: Первичный ключ проекта.
+        :type project_id: int
+        :param vacancy_id: Первичный ключ вакансии.
+        :type vacancy_id: int
+        :returns: Обёртка со статусом подтверждения удаления.
+        :rtype: dict
+        :raises ProfileNotFound: Если у пользователя нет профиля.
+        :raises ProjectNotFound: Если проект отсутствует, удалён или не принадлежит пользователю.
+        :raises ClosedProjectImmutable: Если проект закрыт.
+        :raises VacancyNotFound: Если вакансия не принадлежит проекту.
+        :raises CannotDeleteOccupiedVacancy: Если на слоте есть активное назначение.
+        """
         _, project = await require_owned_project(db, user_id, project_id, allow_close=False)
         vacancy = await db.project_vacancies.get_one_or_none(id=vacancy_id, project_id=project.id)
         if vacancy is None:

@@ -7,7 +7,11 @@ router = APIRouter(prefix='', tags=['Каталог'])
 catalog_service = CatalogService()
 
 
-@router.get('/vacancies')
+@router.get(
+    '/vacancies',
+    summary='Каталог вакансий',
+    description='Список открытых вакансий на активных проектах с фильтрами по городу, типу, роли, опыту и условиям работы.',
+)
 async def catalog_vacancies(
     db: DBDep,
     _user_id: UserIdDep,
@@ -33,12 +37,20 @@ async def catalog_vacancies(
     )
 
 
-@router.get('/vacancies/{vacancy_id}')
+@router.get(
+    '/vacancies/{vacancy_id}',
+    summary='Детали вакансии в каталоге',
+    description='Вакансия с проектом и признаком доступности слота. Учитываются права просмотра закрытых проектов.',
+)
 async def catalog_vacancy_detail(vacancy_id: int, db: DBDep, user_id: UserIdDep):
     return await catalog_service.catalog_vacancy_detail(db, user_id, vacancy_id)
 
 
-@router.get('/catalog/resumes')
+@router.get(
+    '/catalog/resumes',
+    summary='Каталог резюме',
+    description='Список доступных резюме в статусе «ищу работу», не занятых в проектах, с фильтрами.',
+)
 async def catalog_resumes(
     db: DBDep,
     user_id: UserIdDep,

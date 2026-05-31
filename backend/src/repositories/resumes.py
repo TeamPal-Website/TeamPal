@@ -1,3 +1,5 @@
+"""Доступ к данным резюме."""
+
 from datetime import date, timedelta
 from sqlalchemy import func, or_, select, update
 from sqlalchemy.sql import func as sa_func
@@ -31,10 +33,30 @@ def _compute_experience_level(experiences: list[ResumeExperienceOrm]) -> Project
         return ProjectVacancyExperience.SIX_PLUS
 
 class ResumesRepository(BaseRepository):
+    """Репозиторий для сохранённых записей резюме."""
+
     model = ResumesOrm
     schema = Resume
 
     async def search_public(self, *, q: str | None=None, city_id: int | None=None, employment_intent: EmploymentIntent | None=None, skill_ids: list[int] | None=None, role_type_id: int | None=None, work_format: WorkFormat | None=None, commitment_level: CommitmentLevel | None=None, salary_min: int | None=None, salary_max: int | None=None, computed_experience_level: ProjectVacancyExperience | None=None, created_within_days: int | None=None, limit: int=10, offset: int=0) -> list[ResumeSearchItem]:
+        """Ищет публичные резюме со статусом поиска работы без назначения.
+
+        :param q: Текстовый запрос для поиска по должности, разделу «о себе» и полям опыта.
+        :param city_id: Фильтр по идентификатору города.
+        :param employment_intent: Фильтр по типу занятости.
+        :param skill_ids: Требовать наличие всех указанных навыков в резюме.
+        :param role_type_id: Фильтр по идентификатору желаемой роли.
+        :param work_format: Фильтр по формату работы.
+        :param commitment_level: Фильтр по уровню занятости.
+        :param salary_min: Минимальная сумма зарплаты.
+        :param salary_max: Максимальная сумма зарплаты.
+        :param computed_experience_level: Фильтр по вычисленному уровню опыта.
+        :param created_within_days: Только резюме, созданные за указанное количество дней.
+        :param limit: Максимальное количество возвращаемых строк.
+        :param offset: Количество пропускаемых строк.
+        :returns: Элементы результатов публичного поиска резюме.
+        :rtype: list[ResumeSearchItem]
+        """
         active_resume_ids_sq = select(VacancyAssignmentsOrm.resume_id).where(VacancyAssignmentsOrm.released_at.is_(None)).scalar_subquery()
         filters = [ResumesOrm.status == ResumeStatus.LOOKING_FOR_JOB, ResumesOrm.id.not_in(active_resume_ids_sq)]
         if city_id is not None:
@@ -67,6 +89,10 @@ class ResumesRepository(BaseRepository):
         return [ResumeSearchItem(id=resume.id, user_id=user_id, profile_id=resume.profile_id, city_id=resume.city_id, desired_position=resume.desired_position, employment_intent=resume.employment_intent, commitment_level=resume.commitment_level, work_format=resume.work_format, schedule=resume.schedule, salary_amount=resume.salary_amount, salary_type=resume.salary_type, contract_type=resume.contract_type, computed_experience_level=resume.computed_experience_level, about_me=resume.about_me, skills_count=int(skills_count or 0), status=resume.status, created_at=resume.created_at, avatar_url=client_avatar_url(profile_avatar, user_id)) for resume, user_id, profile_avatar, skills_count in result.all()]
 
     async def recompute_experience_level(self, resume_id: int) -> None:
+        """Пересчитывает и сохраняет вычисленный уровень опыта на основе истории работы.
+
+        :param resume_id: Первичный ключ резюме.
+        """
         query = select(ResumeExperienceOrm).where(ResumeExperienceOrm.resume_id == resume_id)
         result = await self.session.execute(query)
         experiences = result.scalars().all()
@@ -74,14 +100,31 @@ class ResumesRepository(BaseRepository):
         await self.session.execute(update(ResumesOrm).where(ResumesOrm.id == resume_id).values(computed_experience_level=level.value))
 
     async def has_active_assignment(self, resume_id: int) -> bool:
+        """Проверяет, есть ли у резюме активное назначение на вакансию.
+
+        :param resume_id: Первичный ключ резюме.
+        :returns: ``True``, если резюме назначено на вакансию.
+        :rtype: bool
+        """
         sq = select(VacancyAssignmentsOrm.id).where(VacancyAssignmentsOrm.resume_id == resume_id, VacancyAssignmentsOrm.released_at.is_(None)).exists()
         result = await self.session.execute(select(sq))
         return result.scalar()
 
     async def set_status(self, resume_id: int, status: ResumeStatus) -> None:
+        """Обновляет жизненный цикл резюме.
+
+        :param resume_id: Первичный ключ резюме.
+        :param status: Новое значение статуса резюме.
+        """
         await self.session.execute(update(ResumesOrm).where(ResumesOrm.id == resume_id).values(status=status.value))
 
     async def get_active_project_briefs_by_resume_ids(self, resume_ids: list[int]) -> dict[int, ActiveProjectBrief]:
+        """Загружает сводки активных проектов для резюме с открытыми назначениями.
+
+        :param resume_ids: Идентификаторы резюме для поиска.
+        :returns: Отображение идентификатора резюме в краткую сводку активного проекта.
+        :rtype: dict[int, ActiveProjectBrief]
+        """
         if not resume_ids:
             return {}
         query = select(ResumesOrm.id, ProjectsOrm.id, ProjectsOrm.title, ProjectsOrm.employment_intent, ApplicationsOrm.id).select_from(ResumesOrm).join(VacancyAssignmentsOrm, VacancyAssignmentsOrm.resume_id == ResumesOrm.id).join(ProjectVacancyOrm, ProjectVacancyOrm.id == VacancyAssignmentsOrm.vacancy_id).join(ProjectsOrm, ProjectsOrm.id == ProjectVacancyOrm.project_id).outerjoin(ApplicationsOrm, (ApplicationsOrm.resume_id == VacancyAssignmentsOrm.resume_id) & (ApplicationsOrm.vacancy_id == VacancyAssignmentsOrm.vacancy_id) & (ApplicationsOrm.status == ApplicationStatus.ACCEPTED)).where(ResumesOrm.id.in_(resume_ids), VacancyAssignmentsOrm.released_at.is_(None), ProjectsOrm.status != ProjectsStatus.DELETED)

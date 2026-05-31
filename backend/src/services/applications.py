@@ -1,3 +1,5 @@
+"""Жизненный цикл откликов: подача, приглашение, принятие, отклонение и отзыв."""
+
 from src.enums import ApplicationStatus, CancelReason, NotificationEvent, ProjectsStatus, ResumeStatus
 from src.errors.applications import (
     ActiveParticipationNotFound,
@@ -31,14 +33,31 @@ from src.utils.db_manager import DBManager
 
 
 def _require_resume_project_intent_match(resume, project) -> None:
+    """Выбросить исключение, если намерения по занятости резюме и проекта не совпадают.
+
+    :param resume: Экземпляр ORM резюме.
+    :param project: Экземпляр ORM проекта.
+    :raises ResumeProjectIntentMismatch: Если намерения не совпадают.
+    """
     if resume.employment_intent != project.employment_intent:
         raise ResumeProjectIntentMismatch()
 
 
 class ApplicationService:
+    """Управление откликами на вакансии между резюме и вакансиями проектов."""
 
     @staticmethod
     async def badge_counts(db: DBManager, user_id: int) -> ApplicationsBadgeCounts:
+        """Вернуть количество ожидающих откликов для вызывающего пользователя.
+
+        :param db: Активная сессия менеджера базы данных.
+        :type db: DBManager
+        :param user_id: Идентификатор аутентифицированного пользователя.
+        :type user_id: int
+        :returns: Количество исходящих и входящих ожидающих откликов.
+        :rtype: ApplicationsBadgeCounts
+        :raises ProfileNotFound: Если у пользователя нет профиля.
+        """
         profile = await require_profile(db, user_id)
         outgoing = await db.applications.count_my_pending(profile.id)
         incoming = await db.applications.count_incoming_pending_for_owner(profile.id)
@@ -46,6 +65,31 @@ class ApplicationService:
 
     @staticmethod
     async def employer_invite_resume(db: DBManager, user_id: int, vacancy_id: int, data: EmployerInviteResume):
+        """Пригласить резюме на вакансию в проекте, принадлежащем вызывающему.
+
+        :param db: Активная сессия менеджера базы данных.
+        :type db: DBManager
+        :param user_id: Идентификатор аутентифицированного работодателя.
+        :type user_id: int
+        :param vacancy_id: Идентификатор целевой вакансии.
+        :type vacancy_id: int
+        :param data: Данные приглашения с идентификатором резюме.
+        :type data: EmployerInviteResume
+        :returns: Обёртка со статусом и созданным экземпляром ORM отклика.
+        :rtype: dict
+        :raises ProfileNotFound: Если у работодателя нет профиля.
+        :raises VacancyNotFound: Если вакансия не существует.
+        :raises VacancyAccessDenied: Если вызывающий не владеет проектом.
+        :raises ProjectNotActive: Если проект не активен.
+        :raises ResumeNotFound: Если резюме не существует.
+        :raises ApplicantProfileNotFound: Если профиль владельца резюме отсутствует.
+        :raises CannotInviteOwnResume: При попытке пригласить собственное резюме работодателя.
+        :raises ResumeInactive: Если резюме не находится в поиске работы.
+        :raises ResumeAlreadyInProject: Если у резюме есть активное назначение на проект.
+        :raises SlotAlreadyTaken: Если место на вакансии уже занято.
+        :raises BlockingApplicationForVacancyEmployer: Если существует блокирующий отклик.
+        :raises ResumeProjectIntentMismatch: Если намерения по занятости не совпадают.
+        """
         employer_profile = await require_profile(db, user_id)
         vacancy = await db.project_vacancies.get_one_or_none(id=vacancy_id)
         if vacancy is None:
@@ -80,6 +124,27 @@ class ApplicationService:
 
     @staticmethod
     async def create_application(db: DBManager, user_id: int, data: ApplicationCreate):
+        """Подать отклик с резюме вызывающего на вакансию.
+
+        :param db: Активная сессия менеджера базы данных.
+        :type db: DBManager
+        :param user_id: Идентификатор аутентифицированного соискателя.
+        :type user_id: int
+        :param data: Данные для создания отклика.
+        :type data: ApplicationCreate
+        :returns: Обёртка со статусом и созданным экземпляром ORM отклика.
+        :rtype: dict
+        :raises ProfileNotFound: Если у пользователя нет профиля.
+        :raises ResumeNotFound: Если резюме отсутствует или не принадлежит вызывающему.
+        :raises ResumeInactive: Если резюме не находится в поиске работы.
+        :raises ResumeAlreadyInProject: Если у резюме есть активное назначение на проект.
+        :raises VacancyNotFound: Если вакансия не существует.
+        :raises ProjectNotActive: Если проект отсутствует или не активен.
+        :raises CannotApplyToOwnProject: При попытке откликнуться на собственный проект.
+        :raises SlotAlreadyTaken: Если место на вакансии уже занято.
+        :raises BlockingApplicationForVacancy: Если существует блокирующий отклик.
+        :raises ResumeProjectIntentMismatch: Если намерения по занятости не совпадают.
+        """
         profile = await require_profile(db, user_id)
         resume = await db.resumes.get_one_or_none(id=data.resume_id, profile_id=profile.id)
         if resume is None:
@@ -111,11 +176,46 @@ class ApplicationService:
 
     @staticmethod
     async def get_my_applications(db: DBManager, user_id: int, status: ApplicationStatus | None = None, resume_id: int | None = None, page: int = 1, per_page: int = 20):
+        """Получить список откликов, поданных с резюме вызывающего.
+
+        :param db: Активная сессия менеджера базы данных.
+        :type db: DBManager
+        :param user_id: Идентификатор аутентифицированного пользователя.
+        :type user_id: int
+        :param status: Необязательный фильтр по статусу отклика.
+        :type status: ApplicationStatus | None
+        :param resume_id: Необязательный фильтр по идентификатору резюме.
+        :type resume_id: int | None
+        :param page: Номер страницы, начиная с единицы.
+        :type page: int
+        :param per_page: Максимальное количество результатов на странице.
+        :type per_page: int
+        :returns: Постраничный список откликов для вызывающего.
+        :rtype: object
+        :raises ProfileNotFound: Если у пользователя нет профиля.
+        """
         profile = await require_profile(db, user_id)
         return await db.applications.get_my_applications(profile_id=profile.id, status=status, resume_id=resume_id, limit=per_page, offset=per_page * (page - 1))
 
     @staticmethod
     async def withdraw_application(db: DBManager, user_id: int, application_id: int):
+        """Отозвать отклик или отменить приглашение от имени соискателя или работодателя.
+
+        :param db: Активная сессия менеджера базы данных.
+        :type db: DBManager
+        :param user_id: Идентификатор аутентифицированного пользователя.
+        :type user_id: int
+        :param application_id: Идентификатор целевого отклика.
+        :type application_id: int
+        :returns: Обёртка со статусом, подтверждающая выполнение операции.
+        :rtype: dict
+        :raises ProfileNotFound: Если у пользователя нет профиля.
+        :raises ApplicationNotFound: Если отклик не существует.
+        :raises ActiveParticipationNotFound: При выходе без активного назначения на проект.
+        :raises ApplicationFinalStatus: Если отклик нельзя отозвать.
+        :raises AccessDenied: Если у вызывающего нет прав.
+        :raises VacancyNotFound: Если вакансия отсутствует при отмене приглашения работодателем.
+        """
         profile = await require_profile(db, user_id)
         application = await db.applications.get_one_or_none(id=application_id)
         if application is None:
@@ -162,6 +262,24 @@ class ApplicationService:
 
     @staticmethod
     async def list_employer_applications(db: DBManager, user_id: int, project_id: int | None = None, status: ApplicationStatus | None = None, page: int = 1, per_page: int = 50):
+        """Получить список откликов на проекты, принадлежащие вызывающему.
+
+        :param db: Активная сессия менеджера базы данных.
+        :type db: DBManager
+        :param user_id: Идентификатор аутентифицированного работодателя.
+        :type user_id: int
+        :param project_id: Необязательный фильтр по идентификатору проекта.
+        :type project_id: int | None
+        :param status: Необязательный фильтр по статусу отклика.
+        :type status: ApplicationStatus | None
+        :param page: Номер страницы, начиная с единицы.
+        :type page: int
+        :param per_page: Максимальное количество результатов на странице.
+        :type per_page: int
+        :returns: Постраничный список откликов на принадлежащие проекты.
+        :rtype: object
+        :raises ProfileNotFound: Если у пользователя нет профиля.
+        """
         profile = await require_profile(db, user_id)
         applications = await db.applications.get_for_profile_owned_projects(owner_profile_id=profile.id, project_id=project_id, status=status, limit=per_page, offset=per_page * (page - 1))
         if project_id is not None:
@@ -174,6 +292,25 @@ class ApplicationService:
 
     @staticmethod
     async def list_project_applications(db: DBManager, user_id: int, project_id: int, status: ApplicationStatus | None = None, page: int = 1, per_page: int = 50):
+        """Получить список откликов на один принадлежащий проект и отметить их просмотренными.
+
+        :param db: Активная сессия менеджера базы данных.
+        :type db: DBManager
+        :param user_id: Идентификатор аутентифицированного работодателя.
+        :type user_id: int
+        :param project_id: Идентификатор целевого проекта.
+        :type project_id: int
+        :param status: Необязательный фильтр по статусу отклика.
+        :type status: ApplicationStatus | None
+        :param page: Номер страницы, начиная с единицы.
+        :type page: int
+        :param per_page: Максимальное количество результатов на странице.
+        :type per_page: int
+        :returns: Постраничный список откликов для проекта.
+        :rtype: object
+        :raises ProfileNotFound: Если у пользователя нет профиля.
+        :raises ProjectNotFound: Если проект отсутствует или не принадлежит вызывающему.
+        """
         profile = await require_profile(db, user_id)
         project = await db.projects.get_one_or_none(id=project_id, profile_id=profile.id)
         if project is None:
@@ -186,6 +323,19 @@ class ApplicationService:
 
     @staticmethod
     async def get_project_applications_new_count(db: DBManager, user_id: int, project_id: int):
+        """Вернуть количество ещё не просмотренных откликов для проекта.
+
+        :param db: Активная сессия менеджера базы данных.
+        :type db: DBManager
+        :param user_id: Идентификатор аутентифицированного работодателя.
+        :type user_id: int
+        :param project_id: Идентификатор целевого проекта.
+        :type project_id: int
+        :returns: Словарь с количеством новых откликов.
+        :rtype: dict
+        :raises ProfileNotFound: Если у пользователя нет профиля.
+        :raises ProjectNotFound: Если проект отсутствует или не принадлежит вызывающему.
+        """
         profile = await require_profile(db, user_id)
         project = await db.projects.get_one_or_none(id=project_id, profile_id=profile.id)
         if project is None:
@@ -195,6 +345,22 @@ class ApplicationService:
 
     @staticmethod
     async def get_application_detail(db: DBManager, user_id: int, project_id: int, application_id: int):
+        """Вернуть подробные данные отклика для владельца проекта.
+
+        :param db: Активная сессия менеджера базы данных.
+        :type db: DBManager
+        :param user_id: Идентификатор аутентифицированного работодателя.
+        :type user_id: int
+        :param project_id: Идентификатор целевого проекта.
+        :type project_id: int
+        :param application_id: Идентификатор целевого отклика.
+        :type application_id: int
+        :returns: Подробные данные отклика для владельца.
+        :rtype: object
+        :raises ProfileNotFound: Если у пользователя нет профиля.
+        :raises ProjectNotFound: Если проект отсутствует или не принадлежит вызывающему.
+        :raises ApplicationNotFound: Если отклик отсутствует или не относится к проекту.
+        """
         profile = await require_profile(db, user_id)
         project = await db.projects.get_one_or_none(id=project_id, profile_id=profile.id)
         if project is None:
@@ -209,6 +375,26 @@ class ApplicationService:
 
     @staticmethod
     async def accept_application(db: DBManager, user_id: int, application_id: int):
+        """Принять ожидающий отклик и назначить резюме на вакансию.
+
+        :param db: Активная сессия менеджера базы данных.
+        :type db: DBManager
+        :param user_id: Идентификатор аутентифицированного работодателя.
+        :type user_id: int
+        :param application_id: Идентификатор целевого отклика.
+        :type application_id: int
+        :returns: Обёртка со статусом, подтверждающая принятие.
+        :rtype: dict
+        :raises ProfileNotFound: Если у пользователя нет профиля.
+        :raises ApplicationNotFound: Если отклик не существует.
+        :raises VacancyNotFound: Если вакансия не существует.
+        :raises AccessDenied: Если вызывающий не владеет проектом.
+        :raises ApplicationNotPending: Если отклик не находится в ожидании.
+        :raises SlotAlreadyTaken: Если место на вакансии уже занято.
+        :raises ResumeAlreadyInProject: Если у резюме есть активное назначение на проект.
+        :raises ResumeNotFound: Если резюме не существует.
+        :raises ResumeProjectIntentMismatch: Если намерения по занятости не совпадают.
+        """
         profile = await require_profile(db, user_id)
         application = await db.applications.get_one_or_none(id=application_id)
         if application is None:
@@ -252,6 +438,27 @@ class ApplicationService:
 
     @staticmethod
     async def accept_invitation_as_applicant(db: DBManager, user_id: int, application_id: int):
+        """Принять приглашение работодателя от имени владельца резюме.
+
+        :param db: Активная сессия менеджера базы данных.
+        :type db: DBManager
+        :param user_id: Идентификатор аутентифицированного соискателя.
+        :type user_id: int
+        :param application_id: Идентификатор целевого отклика.
+        :type application_id: int
+        :returns: Обёртка со статусом, подтверждающая принятие.
+        :rtype: dict
+        :raises ProfileNotFound: Если у пользователя нет профиля.
+        :raises ApplicationNotFound: Если отклик не существует.
+        :raises NotEmployerInvitation: Если отклик не был инициирован работодателем.
+        :raises ApplicationAccessDenied: Если резюме не принадлежит вызывающему.
+        :raises VacancyNotFound: Если вакансия не существует.
+        :raises ProjectNotActive: Если проект отсутствует или не активен.
+        :raises ApplicationNotPending: Если отклик не находится в ожидании.
+        :raises SlotAlreadyTaken: Если место на вакансии уже занято.
+        :raises ResumeAlreadyInProject: Если у резюме есть активное назначение на проект.
+        :raises ResumeProjectIntentMismatch: Если намерения по занятости не совпадают.
+        """
         profile = await require_profile(db, user_id)
         application = await db.applications.get_one_or_none(id=application_id)
         if application is None:
@@ -297,6 +504,22 @@ class ApplicationService:
 
     @staticmethod
     async def reject_application(db: DBManager, user_id: int, application_id: int):
+        """Отклонить ожидающий отклик от имени владельца проекта.
+
+        :param db: Активная сессия менеджера базы данных.
+        :type db: DBManager
+        :param user_id: Идентификатор аутентифицированного работодателя.
+        :type user_id: int
+        :param application_id: Идентификатор целевого отклика.
+        :type application_id: int
+        :returns: Обёртка со статусом, подтверждающая отклонение.
+        :rtype: dict
+        :raises ProfileNotFound: Если у пользователя нет профиля.
+        :raises ApplicationNotFound: Если отклик не существует.
+        :raises VacancyNotFound: Если вакансия не существует.
+        :raises AccessDenied: Если вызывающий не владеет проектом.
+        :raises ApplicationNotPending: Если отклик не находится в ожидании.
+        """
         profile = await require_profile(db, user_id)
         application = await db.applications.get_one_or_none(id=application_id)
         if application is None:

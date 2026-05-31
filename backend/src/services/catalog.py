@@ -1,3 +1,5 @@
+"""Просмотр каталога открытых вакансий и доступных резюме."""
+
 from sqlalchemy import exists, select
 
 from src.enums import (
@@ -22,6 +24,17 @@ from src.utils.db_manager import DBManager
 
 
 async def can_view_project(db: DBManager, project: ProjectsOrm, viewer_profile_id: int) -> bool:
+    """Проверить, может ли профиль просматривать проект с учётом статуса и ACL.
+
+    :param db: Активная сессия менеджера базы данных.
+    :type db: DBManager
+    :param project: Экземпляр ORM проекта для проверки.
+    :type project: ProjectsOrm
+    :param viewer_profile_id: Идентификатор профиля просматривающего.
+    :type viewer_profile_id: int
+    :returns: ``True``, если проект виден просматривающему.
+    :rtype: bool
+    """
     if project.status == ProjectsStatus.DELETED:
         return False
     if project.status in (ProjectsStatus.ACTIVE, ProjectsStatus.PAUSED):
@@ -39,6 +52,8 @@ async def can_view_project(db: DBManager, project: ProjectsOrm, viewer_profile_i
 
 
 class CatalogService:
+    """Список и детали записей каталога вакансий и резюме."""
+
     async def catalog_vacancies(
         self,
         db: DBManager,
@@ -52,6 +67,29 @@ class CatalogService:
         commitment_level: CommitmentLevel | None = None,
         salary_type: SalaryType | None = None,
     ):
+        """Получить список открытых вакансий на активных проектах с необязательными фильтрами.
+
+        :param db: Активная сессия менеджера базы данных.
+        :type db: DBManager
+        :param city_id: Фильтр по идентификатору города проекта.
+        :type city_id: int | None
+        :param employment_intent: Фильтр по типу занятости проекта.
+        :type employment_intent: EmploymentIntent | None
+        :param role_type_id: Фильтр по идентификатору роли вакансии из справочника.
+        :type role_type_id: int | None
+        :param experience: Фильтр по требуемому уровню опыта.
+        :type experience: ProjectVacancyExperience | None
+        :param work_format: Фильтр по формату работы.
+        :type work_format: WorkFormat | None
+        :param schedule: Фильтр по графику работы.
+        :type schedule: Schedule | None
+        :param commitment_level: Фильтр по уровню занятости.
+        :type commitment_level: CommitmentLevel | None
+        :param salary_type: Фильтр по типу зарплаты.
+        :type salary_type: SalaryType | None
+        :returns: Пары вакансия-проект для незанятых слотов.
+        :rtype: list[dict]
+        """
         filled = exists(
             select(VacancyAssignmentOrm.id).where(
                 VacancyAssignmentOrm.vacancy_id == ProjectVacancyOrm.id,
@@ -91,6 +129,20 @@ class CatalogService:
         return out
 
     async def catalog_vacancy_detail(self, db: DBManager, user_id: int, vacancy_id: int):
+        """Вернуть вакансию с проектом и доступностью слота.
+
+        :param db: Активная сессия менеджера базы данных.
+        :type db: DBManager
+        :param user_id: Идентификатор аутентифицированного пользователя.
+        :type user_id: int
+        :param vacancy_id: Первичный ключ вакансии.
+        :type vacancy_id: int
+        :returns: Вакансия, проект и признак открытости слота.
+        :rtype: dict
+        :raises ProfileNotFound: Если у пользователя нет профиля.
+        :raises VacancyNotFound: Если вакансия отсутствует или недоступна для просмотра.
+        :raises ProjectNotFound: Если родительский проект отсутствует.
+        """
         profile = await require_profile(db, user_id)
         vacancy = await db.session.get(ProjectVacancyOrm, vacancy_id)
         if vacancy is None:
@@ -127,6 +179,30 @@ class CatalogService:
         salary_type: SalaryType | None = None,
         city_id: int | None = None,
     ):
+        """Получить список доступных резюме со статусом поиска работы.
+
+        :param db: Активная сессия менеджера базы данных.
+        :type db: DBManager
+        :param user_id: Идентификатор аутентифицированного пользователя.
+        :type user_id: int
+        :param employment_intent: Фильтр по типу занятости.
+        :type employment_intent: EmploymentIntent | None
+        :param experience_band: Фильтр по вычисленному уровню опыта.
+        :type experience_band: ProjectVacancyExperience | None
+        :param work_format: Фильтр по формату работы.
+        :type work_format: WorkFormat | None
+        :param schedule: Фильтр по графику работы.
+        :type schedule: Schedule | None
+        :param commitment_level: Фильтр по уровню занятости.
+        :type commitment_level: CommitmentLevel | None
+        :param salary_type: Фильтр по типу зарплаты.
+        :type salary_type: SalaryType | None
+        :param city_id: Фильтр по идентификатору города.
+        :type city_id: int | None
+        :returns: Резюме без активного назначения на проект.
+        :rtype: list[Resume]
+        :raises ProfileNotFound: Если у пользователя нет профиля.
+        """
         profile = await require_profile(db, user_id)
         q = select(ResumesOrm).where(ResumesOrm.status == ResumeStatus.LOOKING_FOR_JOB)
         if employment_intent is not None:

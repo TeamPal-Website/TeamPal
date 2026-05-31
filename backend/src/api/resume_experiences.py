@@ -7,17 +7,29 @@ router = APIRouter(prefix='/resumes', tags=['Опыт в резюме'])
 resume_experience_service = ResumeExperienceService()
 
 
-@router.get('/{resume_id}/experiences')
+@router.get(
+    '/{resume_id}/experiences',
+    summary='Опыт работы в резюме',
+    description='Список записей опыта работы для собственного резюме пользователя.',
+)
 async def list_resume_experiences(resume_id: int, db: DBDep, user_id: UserIdDep):
     return await resume_experience_service.list_resume_experiences(db, user_id, resume_id)
 
 
-@router.post('/{resume_id}/experiences')
+@router.post(
+    '/{resume_id}/experiences',
+    summary='Добавление опыта',
+    description='Добавляет запись опыта работы и пересчитывает уровень опыта резюме.',
+)
 async def create_resume_experience(resume_id: int, db: DBDep, user_id: UserIdDep, data: ResumeExperienceRequestAdd):
     return await resume_experience_service.create_resume_experience(db, user_id, resume_id, data)
 
 
-@router.patch('/{resume_id}/experiences/{experience_id}')
+@router.patch(
+    '/{resume_id}/experiences/{experience_id}',
+    summary='Обновление опыта',
+    description='Частичное обновление записи опыта работы с пересчётом уровня опыта.',
+)
 async def update_resume_experience(
     resume_id: int,
     experience_id: int,
@@ -28,6 +40,10 @@ async def update_resume_experience(
     return await resume_experience_service.update_resume_experience(db, user_id, resume_id, experience_id, data)
 
 
-@router.delete('/{resume_id}/experiences/{experience_id}')
+@router.delete(
+    '/{resume_id}/experiences/{experience_id}',
+    summary='Удаление опыта',
+    description='Удаляет запись опыта работы и пересчитывает уровень опыта резюме.',
+)
 async def delete_resume_experience(resume_id: int, experience_id: int, db: DBDep, user_id: UserIdDep):
     return await resume_experience_service.delete_resume_experience(db, user_id, resume_id, experience_id)

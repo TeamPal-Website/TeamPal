@@ -1,8 +1,8 @@
 from datetime import timedelta, datetime, timezone
 import jwt as pyjwt
 import pytest
-from fastapi import HTTPException
 from src.config import settings
+from src.errors.auth import TokenExpired, TokenInvalidJwt, TokenInvalidSignature
 from src.services.auth import AuthService
 
 class TestPasswordHashing:
@@ -100,29 +100,29 @@ class TestTokenDecoding:
     def test_decode_expired_token(self):
         service = AuthService()
         token = service.create_access_token({'user_id': 1}, expires_delta=timedelta(seconds=-10))
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(TokenExpired) as exc_info:
             service.decode_token(token)
         assert exc_info.value.status_code == 401
         assert 'истек' in exc_info.value.detail.lower()
 
     def test_decode_token_wrong_secret_key(self):
         token = pyjwt.encode({'user_id': 1, 'exp': datetime.now(timezone.utc) + timedelta(hours=1)}, 'x' * 32, algorithm=settings.JWT_ALGORITHM)
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(TokenInvalidSignature) as exc_info:
             AuthService().decode_token(token)
         assert exc_info.value.status_code == 401
 
     def test_decode_garbage_token(self):
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(TokenInvalidJwt) as exc_info:
             AuthService().decode_token('this.is.not.a.valid.jwt')
         assert exc_info.value.status_code == 401
 
     def test_decode_empty_string(self):
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(TokenInvalidJwt) as exc_info:
             AuthService().decode_token('')
         assert exc_info.value.status_code == 401
 
     def test_decode_token_wrong_algorithm(self):
         token = pyjwt.encode({'user_id': 1, 'exp': datetime.now(timezone.utc) + timedelta(hours=1)}, 'k' * 48, algorithm='HS384')
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(TokenInvalidJwt) as exc_info:
             AuthService().decode_token(token)
         assert exc_info.value.status_code == 401

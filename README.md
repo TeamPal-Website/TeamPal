@@ -351,40 +351,27 @@ Frontend находится в `frontend/` и раздается backend чер�
 
 ## Переменные окружения
 
-Файл: `backend/.env`
+Файл: `.env` в корне репозитория. Docker Compose подставляет из него секреты в `infra/docker-compose.yml` (через симлинк `infra/.env` → `../.env`); backend без Docker читает тот же файл.
+
+Секреты (не хранятся в compose):
 
 ```env
-DB_HOST=localhost
-DB_PORT=5433
-DB_USER=postgres
-DB_PASS=postgres
-DB_NAME=team_pal
-
-JWT_SECRET_KEY=super-secret-key
-JWT_ALGORITHM=HS256
-JWT_ACCESS_TOKEN_EXPIRE_MINUTES=30
-
-ALLOWED_ORIGINS=http://localhost:8000,http://127.0.0.1:8000,http://localhost:5173
-
-# при полном профиле docker compose (infra/docker-compose.yml) также задаются
-REDIS_URL=redis://localhost:6379/0
-
-# объектное хранилище совместимо с протоколом S3 для файлов профилей
-S3_ENDPOINT_URL=http://127.0.0.1:9000
+POSTGRES_PASSWORD=postgres
+JWT_SECRET_KEY=team-pal-secret-key
+MINIO_ROOT_USER=minioadmin
+MINIO_ROOT_PASSWORD=minioadmin
 S3_ACCESS_KEY_ID=minioadmin
 S3_SECRET_ACCESS_KEY=minioadmin
-S3_BUCKET=teampal
-S3_REGION=us-east-1
-S3_ADDRESSING_STYLE=path
-S3_PUBLIC_BASE_URL=http://127.0.0.1:9000/teampal
 ```
+
+Для локального запуска backend (не в контейнере) в том же `.env` также задаются `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASS`, `DB_NAME`, `JWT_*`, `ALLOWED_ORIGINS`, `REDIS_URL`, `S3_*` — см. файл `.env` в корне.
 
 Примечания:
 
 - при запуске базы через `infra/docker-compose.yml` PostgreSQL доступен с хоста на порту `5433`;
+- `DB_PASS` для локального backend должен совпадать с `POSTGRES_PASSWORD`;
 - `ALLOWED_ORIGINS` задается строкой со списком origin через запятую;
-- приложение считывает `REDIS_URL` и параметры хранилища `S3_*` при сборке конфигурации; для голого локального процесса достаточно поднять MinIO или указать уже существующий S3-бакет теми же ключами окружения;
-- не добавляйте в `backend/.env` переменные вроде `COMPOSE_FILE`, потому что они не входят в схему настроек приложения.
+- для pytest используется отдельный `backend/.env.test` (подключается через `pytest.ini`).
 
 ## Локальный запуск
 
@@ -405,7 +392,7 @@ pip install -r backend/requirements.txt
 
 ### 3. Подготовить `.env`
 
-Создайте `backend/.env` по примеру выше и проверьте, что PostgreSQL доступен.
+Скопируйте или проверьте `.env` в корне репозитория и убедитесь, что PostgreSQL доступен.
 
 ### 4. Применить миграции
 
