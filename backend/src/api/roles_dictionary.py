@@ -1,40 +1,43 @@
-from fastapi import APIRouter, HTTPException
-from sqlalchemy.exc import IntegrityError
+from fastapi import APIRouter
 from src.api.dependencies import DBDep
-from src.catalog_cache import cached_json_list, schedule_catalog_invalidate
 from src.schemas.roles_dictionary import RoleDictionaryAdd
+from src.services.roles_dictionary import RoleDictionaryService
+
 router = APIRouter(prefix='/roles_dictionary', tags=['Роли (справочник)'])
+role_dictionary_service = RoleDictionaryService()
 
-@router.get('')
+
+@router.get(
+    '',
+    summary='Список ролей',
+    description='Возвращает справочник должностей/ролей (с кешированием).',
+)
 async def list_roles(db: DBDep):
-    return await cached_json_list('roles', db.roles_dictionary.get_all)
+    return await role_dictionary_service.list_roles(db)
 
-@router.get('/{role_id}')
+
+@router.get(
+    '/{role_id}',
+    summary='Роль по идентификатору',
+    description='Возвращает одну запись справочника ролей.',
+)
 async def get_role(role_id: int, db: DBDep):
-    role = await db.roles_dictionary.get_one_or_none(id=role_id)
-    if role is None:
-        raise HTTPException(status_code=404, detail='Роль не найдена')
-    return role
+    return await role_dictionary_service.get_role(db, role_id)
 
-@router.post('')
+
+@router.post(
+    '',
+    summary='Создание роли',
+    description='Добавляет роль в справочник и инвалидирует кеш каталога.',
+)
 async def create_role(db: DBDep, data: RoleDictionaryAdd):
-    try:
-        role = await db.roles_dictionary.add(data)
-        await db.commit()
-    except IntegrityError:
-        raise HTTPException(status_code=409, detail='Роль с таким названием уже существует')
-    schedule_catalog_invalidate(['roles'])
-    return {'status': 'OK', 'data': role}
+    return await role_dictionary_service.create_role(db, data)
 
-@router.delete('/{role_id}')
+
+@router.delete(
+    '/{role_id}',
+    summary='Удаление роли',
+    description='Удаляет роль, если она не используется в проектах.',
+)
 async def delete_role(role_id: int, db: DBDep):
-    role = await db.roles_dictionary.get_one_or_none(id=role_id)
-    if role is None:
-        raise HTTPException(status_code=404, detail='Роль не найдена')
-    try:
-        await db.roles_dictionary.delete(id=role_id)
-        await db.commit()
-    except IntegrityError:
-        raise HTTPException(status_code=409, detail='Роль используется в проекте и не может быть удалена')
-    schedule_catalog_invalidate(['roles'])
-    return {'status': 'OK'}
+    return await role_dictionary_service.delete_role(db, role_id)

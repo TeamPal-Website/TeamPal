@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Уведомления | TeamPal</title>
+  <link rel="icon" type="image/png" href="./assets/logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f7f5f2; --header: #eae8e4; --panel: #ffffff; --line: rgba(0,0,0,.09);
+      --accent-1: #fa9500; --accent-2: #f85a0b; --footer: #d4d3cb; --ink: #1a1a1a; --ink2: #3a3a3a;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      background: radial-gradient(900px 500px at -10% -25%, rgba(255, 208, 102, 0.28), transparent 70%),
+                  radial-gradient(700px 420px at 110% 0%, rgba(248, 90, 11, 0.14), transparent 68%), var(--bg);
+      color: var(--ink); min-height: 100vh; display: flex; flex-direction: column;
+    }
+    .header { position: fixed; inset: 0 0 auto 0; z-index: 1000; height: 72px; background: var(--header); border-bottom: 1px solid var(--line); }
+    .header__inner { height: 100%; padding: 0 28px; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+    .header__left { display: flex; align-items: center; gap: 12px; }
+    .header-nav-btn {
+      width: 46px; height: 46px; border-radius: 14px; border: 1px solid var(--line); background: #fff;
+      display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+      transition: all .2s ease; flex-shrink: 0;
+    }
+    .header-nav-btn:hover {
+      border-color: rgba(248, 90, 11, .55); box-shadow: 0 8px 18px rgba(250, 149, 0, .14);
+    }
+    .header-nav-btn svg { width: 22px; height: 22px; display: block; }
+    .logo { width: 46px; height: 46px; border-radius: 50px; object-fit: cover; }
+    .header__actions { display: flex; align-items: center; gap: 12px; position: relative; }
+    .notify-btn, .burger {
+      width: 48px; height: 48px; border: 1px solid var(--line); border-radius: 16px; background: #fff;
+      display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all .2s ease;
+    }
+    .notify-btn.active { border-color: rgba(248, 90, 11, 0.55); background: linear-gradient(135deg, #fff5e8, #ffffff); }
+    .notify-btn svg { width: 22px; height: 22px; display: block; }
+    .burger { flex-direction: column; gap: 6px; }
+    .burger span { width: 22px; height: 2.5px; background: linear-gradient(90deg, #5a4a3a, #3a2a1a); border-radius: 4px; display: block; }
+    .header-menu { position: absolute; right: 0; top: calc(100% + 12px); width: 244px; background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 12px 8px; display: none; }
+    .header-menu.open { display: block; }
+    .header-menu__title { font-size: 12px; font-weight: 500; text-transform: uppercase; color: #8b8b8b; margin-bottom: 12px; padding: 0 10px; }
+    .header-menu__item, .header-menu__exit { width: 100%; border: 0; background: transparent; border-radius: 14px; text-align: left; padding: 10px 14px; margin-bottom: 4px; cursor: pointer; font-size: 14px; color: var(--ink); font-family: inherit; }
+    .header-menu__exit { margin-top: 8px; margin-bottom: 0; color: #d14b2a; border-top: 1px solid var(--line); border-radius: 0; padding-top: 12px; }
+    .page { width: 100%; max-width: 1100px; margin: 0 auto; padding: 102px 20px 26px; flex: 1; }
+    .card { border: 1px solid var(--line); border-radius: 18px; background: var(--panel); box-shadow: 0 12px 30px rgba(0,0,0,.06); padding: 18px; }
+    .title { font-size: 28px; margin-bottom: 12px; color: var(--accent-2); }
+    .empty { border: 1px dashed #dfd7cf; border-radius: 14px; padding: 22px; color: #7a7a7a; text-align: center; background: #fffaf3; }
+    .card-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+    .mark-btn { border: 1px solid var(--line); border-radius: 12px; background: #fff; padding: 10px 14px; cursor: pointer; font-family: inherit; font-weight: 700; color: var(--ink); }
+    .mark-btn:hover { border-color: rgba(248, 90, 11, .55); color: var(--accent-2); }
+    .notification-list { display: grid; gap: 10px; }
+    .notification-item { border: 1px solid var(--line); border-radius: 14px; padding: 14px; background: #fff; display: grid; gap: 6px; }
+    .notification-item--neutral {
+      border: 1px solid #64b5f6;
+      background: #e3f2fd;
+    }
+    .notification-item--success {
+      border: 1px solid #4caf50;
+      background: #e8f5e9;
+    }
+    .notification-item--danger {
+      border: 1px solid #f5c0b0;
+      background: #fff0ee;
+    }
+    .notification-item[data-notification-id] { cursor: pointer; }
+    .notification-item.is-unread { position: relative; padding-left: 20px; }
+    .notification-item.is-unread::before {
+      content: "";
+      position: absolute;
+      left: 10px;
+      top: 20px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent-2);
+    }
+    .notification-title { font-size: 16px; font-weight: 800; }
+    .notification-new {
+      display: inline-block;
+      margin-left: 8px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      vertical-align: middle;
+    }
+    .notification-meta { color: #6a5a4a; font-size: 13px; line-height: 1.35; }
+    .notification-link { color: var(--accent-2); font-weight: 800; text-decoration: none; width: fit-content; }
+    .notification-link:hover { text-decoration: underline; }
+    .footer { width: 100%; background: var(--footer); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; font-size: 14px; color: var(--ink2); min-height: 52px; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+<header class="header">
+  <div class="header__inner">
+    <div class="header__left">
+      <button class="header-nav-btn" type="button" id="nav-back" aria-label="Назад в личный кабинет" title="Личный кабинет">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 6l-6 6 6 6" stroke="#f85a0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <img class="logo" src="./assets/logo.png" alt="Логотип TeamPal">
+    </div>
+    <div class="header__actions">
+      <button class="notify-btn" type="button" aria-label="Уведомления" onclick="window.location.href='./applications.html?tab=notifications'" title="Уведомления">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 4a5 5 0 0 0-5 5v2.6c0 .7-.24 1.38-.68 1.9L5 15h14l-1.32-1.5a3 3 0 0 1-.68-1.9V9a5 5 0 0 0-5-5Z" stroke="#f85a0b" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M10 18a2 2 0 0 0 4 0" stroke="#f85a0b" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button class="burger" id="burger-btn" type="button" aria-label="Открыть меню"><span></span><span></span><span></span></button>
+      <nav class="header-menu" id="header-menu">
+        <div class="header-menu__title">Меню</div>
+        <button class="header-menu__item" type="button" id="menu-account">Личный кабинет</button>
+        <button class="header-menu__item" type="button" id="menu-search">Поиск проектов</button>
+        <button class="header-menu__item" type="button" data-nav="./applications.html">Отклики</button>
+        <button class="header-menu__exit" type="button" data-nav="./authorization_page.html">Выйти</button>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <section class="card">
+    <div class="card-head">
+      <h1 class="title">Уведомления</h1>
+      <button class="mark-btn" id="mark-all" type="button">Отметить прочитанными</button>
+    </div>
+    <div id="notifications-list" class="notification-list">
+      <div class="empty">Загрузка…</div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <span>TeamPal <span id="year"></span></span>
+  <span>обратная связь: teampal@dimple.ru</span>
+</footer>
+
+<script src="./config.js"></script>
+<script src="./assets/notify-bell.js"></script>
+<script>
+  (function () {
+    const year = document.getElementById("year");
+    if (year) year.textContent = " " + new Date().getFullYear();
+    const burgerBtn = document.getElementById("burger-btn");
+    const headerMenu = document.getElementById("header-menu");
+    if (burgerBtn && headerMenu) {
+      burgerBtn.addEventListener("click", function (event) {
+        event.stopPropagation();
+        headerMenu.classList.toggle("open");
+      });
+    }
+    document.addEventListener("click", function (event) {
+      if (!event.target.closest(".header__actions") && headerMenu) headerMenu.classList.remove("open");
+    });
+    const menuSearch = document.getElementById("menu-search");
+    if (menuSearch) {
+      let role = "Ищу вакансию";
+      try {
+        role = localStorage.getItem("tp_role") || role;
+      } catch (_) {}
+      const manager = role === "Ищу сотрудника";
+      menuSearch.textContent = manager ? "Поиск сотрудников" : "Поиск проектов";
+      menuSearch.addEventListener("click", () => {
+        window.location.href = manager ? "./search_resume.html" : "./search_project.html";
+      });
+    }
+
+    document.querySelectorAll("[data-nav]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const href = btn.getAttribute("data-nav");
+        if (href) window.location.href = href;
+      });
+    });
+
+    function resolveAccountHref() {
+      try {
+        return localStorage.getItem("tp_role") === "Ищу сотрудника"
+          ? "./account_manager.html"
+          : "./account_employee.html";
+      } catch (_) {
+        return "./account_employee.html";
+      }
+    }
+
+    const navBack = document.getElementById("nav-back");
+    if (navBack) navBack.addEventListener("click", () => { window.location.href = resolveAccountHref(); });
+
+    const menuAccount = document.getElementById("menu-account");
+    if (menuAccount) menuAccount.addEventListener("click", () => { window.location.href = resolveAccountHref(); });
+
+    const list = document.getElementById("notifications-list");
+    const markAll = document.getElementById("mark-all");
+
+    function esc(v) {
+      return String(v == null ? "" : v).replace(/[&<>"']/g, (ch) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      })[ch]);
+    }
+
+    function applicationsPageDeepLink(applicationId, projectId) {
+      if (applicationId == null || projectId == null) return "";
+      const a = String(applicationId).trim();
+      const p = String(projectId).trim();
+      if (!a || !p) return "";
+      let view = "employee";
+      try {
+        if (localStorage.getItem("tp_role") === "Ищу сотрудника") view = "manager";
+      } catch (_) {}
+      return (
+        "./applications.html?view=" +
+        encodeURIComponent(view) +
+        "&open_application=" +
+        encodeURIComponent(a) +
+        "&project=" +
+        encodeURIComponent(p)
+      );
+    }
+
+    function notificationTone(item) {
+      const ev = item.event || "";
+      if (ev === "application_accepted") return "success";
+      if (ev === "application_rejected") return "danger";
+      if (ev === "application_cancelled") return "danger";
+      if (ev === "application_received" || ev === "employer_invited") return "neutral";
+      return "neutral";
+    }
+
+    function eventTitle(item) {
+      const p = item.payload || {};
+      if (item.event === "application_received") return "Новый отклик";
+      if (item.event === "employer_invited") return "Приглашение от работодателя";
+      if (item.event === "application_accepted") return "Отклик принят";
+      if (item.event === "application_rejected") return "Отклик отклонён";
+      if (item.event === "application_cancelled") {
+        if (p.reason === "resume_updated") return "Отклик отменён: резюме обновлено";
+        if (p.reason === "user_withdrawn") return "Отклик отозван";
+        if (p.reason === "user_left") return "Участник вышел из проекта";
+        if (p.reason === "removed_by_owner") return "Участник снят с проекта";
+        if (p.reason === "project_closed") return "Проект закрыт";
+        return "Отклик отменён";
+      }
+      return "Уведомление";
+    }
+
+    function eventText(item) {
+      const p = item.payload || {};
+      const parts = [];
+      if (p.project_title) parts.push(p.project_title);
+      if (p.role_name) parts.push(p.role_name);
+      if (p.vacancy_id && !p.role_name) parts.push("Вакансия #" + p.vacancy_id);
+      if (p.resume_id) parts.push("Резюме #" + p.resume_id);
+      return parts.length ? parts.join(" · ") : "Событие по отклику";
+    }
+
+    function formatDate(value) {
+      if (!value) return "";
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return "";
+      return d.toLocaleString("ru-RU", { dateStyle: "short", timeStyle: "short" });
+    }
+
+    function notificationDotUnread(item) {
+      return item && item.is_read === false;
+    }
+
+    function flushUnreadOnNotificationsPage() {
+      if (!list) return;
+      const cards = list.querySelectorAll(".notification-item.is-unread[data-notification-id]");
+      const ids = [];
+      cards.forEach((c) => {
+        const id = parseInt(c.getAttribute("data-notification-id"), 10);
+        if (Number.isFinite(id)) ids.push(id);
+      });
+      if (!ids.length) return;
+      try {
+        fetch(API_BASE_URL + "/notifications/read", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ notification_ids: ids }),
+          keepalive: true,
+        }).catch(() => {});
+      } catch (_) {}
+    }
+
+    if (!document.documentElement.dataset.tpNotifPageLeave) {
+      document.documentElement.dataset.tpNotifPageLeave = "1";
+      window.addEventListener("pagehide", flushUnreadOnNotificationsPage);
+    }
+
+    function render(items) {
+      if (!list) return;
+      if (!Array.isArray(items) || items.length === 0) {
+        list.innerHTML = '<div class="empty">Новых уведомлений пока нет.</div>';
+        return;
+      }
+      list.innerHTML = items.map((item) => {
+        const p = item.payload || {};
+        const aid = item.application_id != null ? item.application_id : p.application_id;
+        const pidTop = item.project_id != null ? item.project_id : p.project_id;
+        const appRepliesHref = applicationsPageDeepLink(aid, pidTop);
+        const projectHref = p.project_id
+          ? "./card_project.html?project=" +
+            encodeURIComponent(p.project_id) +
+            (p.vacancy_id ? "&vacancy=" + encodeURIComponent(p.vacancy_id) : "")
+          : "";
+        const tone = notificationTone(item);
+        const unread = notificationDotUnread(item) ? " is-unread" : "";
+        const nid = item.id != null ? String(item.id) : "";
+        const newBadge = notificationDotUnread(item) ? '<span class="notification-new" aria-hidden="true">Новое</span>' : "";
+        const linkHtml = appRepliesHref
+          ? `<a class="notification-link" href="${esc(appRepliesHref)}">Открыть отклик</a>`
+          : projectHref
+            ? `<a class="notification-link" href="${esc(projectHref)}">Открыть проект</a>`
+            : "";
+        return `
+          <article class="notification-item notification-item--${tone}${unread}" data-notification-id="${esc(nid)}">
+            <div class="notification-title">${esc(eventTitle(item))}${newBadge}</div>
+            <div class="notification-meta">${esc(eventText(item))}</div>
+            <div class="notification-meta">${esc(formatDate(item.created_at))}</div>
+            ${linkHtml}
+          </article>
+        `;
+      }).join("");
+    }
+
+    async function loadNotifications() {
+      try {
+        const resp = await fetch(API_BASE_URL + "/notifications?per_page=100", { credentials: "include" });
+        if (resp.status === 401) {
+          window.location.href = "./authorization_page.html";
+          return;
+        }
+        const data = resp.ok ? await resp.json() : [];
+        render(data);
+      } catch (_) {
+        if (list) list.innerHTML = '<div class="empty">Не удалось загрузить уведомления.</div>';
+      }
+    }
+
+    if (markAll) {
+      markAll.addEventListener("click", async () => {
+        markAll.disabled = true;
+        try {
+          await fetch(API_BASE_URL + "/notifications/read", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ mark_all: true }),
+          });
+          await loadNotifications();
+        } finally {
+          markAll.disabled = false;
+        }
+      });
+    }
+
+    if (list && !list.dataset.tpNotifReadBound) {
+      list.dataset.tpNotifReadBound = "1";
+      list.addEventListener("click", async (e) => {
+        if (e.target.closest("a[href]")) return;
+        const card = e.target.closest(".notification-item[data-notification-id]");
+        if (!card || !card.classList.contains("is-unread")) return;
+        const raw = card.getAttribute("data-notification-id");
+        const nid = raw ? parseInt(raw, 10) : NaN;
+        if (!Number.isFinite(nid)) return;
+        try {
+          const r = await fetch(API_BASE_URL + "/notifications/read", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ notification_ids: [nid] }),
+          });
+          if (r.ok) {
+            card.classList.remove("is-unread");
+            card.querySelectorAll(".notification-new").forEach((x) => x.remove());
+          }
+        } catch (_) {}
+      });
+    }
+
+    loadNotifications();
+  })();
+</script>
+</body>
+</html>

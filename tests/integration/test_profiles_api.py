@@ -156,18 +156,18 @@ class TestPatchProfile:
 class TestAvatarUpload:
 
     async def test_upload_avatar_requires_auth(self, client: AsyncClient):
-        with patch('src.api.profiles.is_object_storage_configured', return_value=True):
+        with patch('src.services.profiles.is_object_storage_configured', return_value=True):
             response = await client.post('/profiles/me/avatar', files={'file': ('t.png', b'\x89PNG\r\n\x1a\n', 'image/png')})
         assert response.status_code == 401
 
     async def test_upload_avatar_503_when_storage_not_configured(self, authenticated_client: AsyncClient):
-        with patch('src.api.profiles.is_object_storage_configured', return_value=False):
+        with patch('src.services.profiles.is_object_storage_configured', return_value=False):
             response = await authenticated_client.post('/profiles/me/avatar', files={'file': ('t.png', b'x', 'image/png')})
         assert response.status_code == 503
 
-    @patch('src.api.profiles.delete_avatar_key', new_callable=AsyncMock)
-    @patch('src.api.profiles.upload_avatar', new_callable=AsyncMock)
-    @patch('src.api.profiles.is_object_storage_configured', return_value=True)
+    @patch('src.services.profiles.delete_avatar_key', new_callable=AsyncMock)
+    @patch('src.services.profiles.upload_avatar', new_callable=AsyncMock)
+    @patch('src.services.profiles.is_object_storage_configured', return_value=True)
     async def test_upload_avatar_persists_key_and_returns_proxy_path(self, _configured, mock_upload, mock_delete, authenticated_client: AsyncClient):
         mock_upload.return_value = 'avatars/1/a1b2c3d4e5f6.jpg'
         response = await authenticated_client.post('/profiles/me/avatar', files={'file': ('t.png', b'x', 'image/png')})
@@ -185,10 +185,10 @@ class TestAvatarUpload:
         response = await client.get('/profiles/me/avatar/file')
         assert response.status_code == 401
 
-    @patch('src.api.profiles.get_object_bytes', new_callable=AsyncMock)
-    @patch('src.api.profiles.delete_avatar_key', new_callable=AsyncMock)
-    @patch('src.api.profiles.upload_avatar', new_callable=AsyncMock)
-    @patch('src.api.profiles.is_object_storage_configured', return_value=True)
+    @patch('src.services.profiles.get_object_bytes', new_callable=AsyncMock)
+    @patch('src.services.profiles.delete_avatar_key', new_callable=AsyncMock)
+    @patch('src.services.profiles.upload_avatar', new_callable=AsyncMock)
+    @patch('src.services.profiles.is_object_storage_configured', return_value=True)
     async def test_get_my_avatar_file_streams_bytes(self, _configured, mock_upload, mock_delete, mock_get_bytes, authenticated_client: AsyncClient):
         mock_upload.return_value = 'avatars/1/stream.jpg'
         mock_get_bytes.return_value = (b'\xff\xd8\xff', 'image/jpeg')
@@ -199,10 +199,10 @@ class TestAvatarUpload:
         assert response.content == b'\xff\xd8\xff'
         assert response.headers.get('content-type', '').startswith('image/jpeg')
 
-    @patch('src.api.profiles.get_object_bytes', new_callable=AsyncMock)
-    @patch('src.api.profiles.delete_avatar_key', new_callable=AsyncMock)
-    @patch('src.api.profiles.upload_avatar', new_callable=AsyncMock)
-    @patch('src.api.profiles.is_object_storage_configured', return_value=True)
+    @patch('src.services.profiles.get_object_bytes', new_callable=AsyncMock)
+    @patch('src.services.profiles.delete_avatar_key', new_callable=AsyncMock)
+    @patch('src.services.profiles.upload_avatar', new_callable=AsyncMock)
+    @patch('src.services.profiles.is_object_storage_configured', return_value=True)
     async def test_get_user_avatar_file_streams_without_auth(self, _configured, mock_upload, mock_delete, mock_get_bytes, client: AsyncClient, authenticated_client: AsyncClient):
         mock_upload.return_value = 'avatars/1/byuserid.jpg'
         mock_get_bytes.return_value = (b'\xff\xd8\xff', 'image/jpeg')
@@ -213,10 +213,10 @@ class TestAvatarUpload:
         assert response.status_code == 200
         assert response.content == b'\xff\xd8\xff'
 
-    @patch('src.api.profiles.get_object_bytes', new_callable=AsyncMock)
-    @patch('src.api.profiles.delete_avatar_key', new_callable=AsyncMock)
-    @patch('src.api.profiles.upload_avatar', new_callable=AsyncMock)
-    @patch('src.api.profiles.is_object_storage_configured', return_value=True)
+    @patch('src.services.profiles.get_object_bytes', new_callable=AsyncMock)
+    @patch('src.services.profiles.delete_avatar_key', new_callable=AsyncMock)
+    @patch('src.services.profiles.upload_avatar', new_callable=AsyncMock)
+    @patch('src.services.profiles.is_object_storage_configured', return_value=True)
     async def test_get_my_avatar_file_404_when_missing_in_storage(self, _configured, mock_upload, mock_delete, mock_get_bytes, authenticated_client: AsyncClient):
         mock_upload.return_value = 'avatars/1/miss.jpg'
         up = await authenticated_client.post('/profiles/me/avatar', files={'file': ('t.png', b'x', 'image/png')})

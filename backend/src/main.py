@@ -3,8 +3,10 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from fastapi.staticfiles import StaticFiles
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from src.errors.base import AppError
 import uvicorn
 from src.api.auth import router as router_auth
 from src.api.admins import router as router_admins
@@ -28,6 +30,13 @@ async def lifespan(app: FastAPI):
     yield
     await close_redis()
 app = FastAPI(lifespan=lifespan)
+
+
+@app.exception_handler(AppError)
+async def app_error_handler(_request: Request, exc: AppError):
+    return JSONResponse(status_code=exc.status_code, content={'detail': exc.detail})
+
+
 app.add_middleware(CORSMiddleware, allow_origins=settings.ALLOWED_ORIGINS, allow_credentials=True, allow_methods=['*'], allow_headers=['*'])
 app.include_router(router_auth)
 app.include_router(router_admins)

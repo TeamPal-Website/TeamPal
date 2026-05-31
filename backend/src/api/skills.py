@@ -1,40 +1,43 @@
-from fastapi import APIRouter, HTTPException
-from sqlalchemy.exc import IntegrityError
+from fastapi import APIRouter
 from src.api.dependencies import DBDep
-from src.catalog_cache import cached_json_list, schedule_catalog_invalidate
 from src.schemas.skills import SkillAdd
+from src.services.skills import SkillService
+
 router = APIRouter(prefix='/skills', tags=['Навыки (справочник)'])
+skill_service = SkillService()
 
-@router.get('')
+
+@router.get(
+    '',
+    summary='Список навыков',
+    description='Возвращает справочник навыков (с кешированием).',
+)
 async def list_skills(db: DBDep):
-    return await cached_json_list('skills', db.skills.get_all)
+    return await skill_service.list_skills(db)
 
-@router.get('/{skill_id}')
+
+@router.get(
+    '/{skill_id}',
+    summary='Навык по идентификатору',
+    description='Возвращает одну запись справочника навыков.',
+)
 async def get_skill(skill_id: int, db: DBDep):
-    skill = await db.skills.get_one_or_none(id=skill_id)
-    if skill is None:
-        raise HTTPException(status_code=404, detail='Навык не найден')
-    return skill
+    return await skill_service.get_skill(db, skill_id)
 
-@router.post('')
+
+@router.post(
+    '',
+    summary='Создание навыка',
+    description='Добавляет навык в справочник и инвалидирует кеш каталога.',
+)
 async def create_skill(db: DBDep, data: SkillAdd):
-    try:
-        skill = await db.skills.add(data)
-        await db.commit()
-    except IntegrityError:
-        raise HTTPException(status_code=409, detail='Навык с таким названием уже существует')
-    schedule_catalog_invalidate(['skills'])
-    return {'status': 'OK', 'data': skill}
+    return await skill_service.create_skill(db, data)
 
-@router.delete('/{skill_id}')
+
+@router.delete(
+    '/{skill_id}',
+    summary='Удаление навыка',
+    description='Удаляет навык, если он не используется в резюме.',
+)
 async def delete_skill(skill_id: int, db: DBDep):
-    skill = await db.skills.get_one_or_none(id=skill_id)
-    if skill is None:
-        raise HTTPException(status_code=404, detail='Навык не найден')
-    try:
-        await db.skills.delete(id=skill_id)
-        await db.commit()
-    except IntegrityError:
-        raise HTTPException(status_code=409, detail='Навык используется в резюме и не может быть удалён')
-    schedule_catalog_invalidate(['skills'])
-    return {'status': 'OK'}
+    return await skill_service.delete_skill(db, skill_id)

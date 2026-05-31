@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Поиск вакансий | TeamPal</title>
+  <link rel="icon" type="image/png" href="./assets/logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/notify-banner.css">
+  <style>
+    :root {
+      --bg: #f7f5f2;
+      --header: #eae8e4;
+      --panel: #ffffff;
+      --panel-soft: #fffaf3;
+      --ink: #1a1a1a;
+      --ink2: #3a3a3a;
+      --line: rgba(0, 0, 0, 0.09);
+      --accent-1: #fa9500;
+      --accent-2: #f85a0b;
+      --accent-3: #eb6424;
+      --footer: #d4d3cb;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      background: radial-gradient(900px 500px at -10% -25%, rgba(255, 208, 102, 0.28), transparent 70%),
+                  radial-gradient(700px 420px at 110% 0%, rgba(248, 90, 11, 0.14), transparent 68%),
+                  var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      position: fixed;
+      inset: 0 0 auto 0;
+      z-index: 1000;
+      height: 72px;
+      background: var(--header);
+      border-bottom: 1px solid var(--line);
+    }
+    .header__inner {
+      height: 100%;
+      padding: 0 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+    .header__left { display: flex; align-items: center; gap: 12px; }
+    .logo { width: 46px; height: 46px; border-radius: 50px; object-fit: cover; }
+    .header__actions { display: flex; align-items: center; gap: 12px; position: relative; }
+    .role-toggle {
+      display: flex;
+      background: #f0ece7;
+      border-radius: 999px;
+      padding: 3px;
+      border: 1px solid var(--line);
+    }
+    .role-toggle__btn {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      background: transparent;
+      color: #7a7060;
+      transition: all 0.25s ease;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    .role-toggle__btn:hover { color: var(--ink); }
+    .role-toggle__btn.active {
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(248, 90, 11, 0.25);
+    }
+    .catalog-mode-toggle {
+      display: flex;
+      background: linear-gradient(180deg, #f5f1eb 0%, #ebe6df 100%);
+      border-radius: 999px;
+      padding: 4px;
+      border: 1px solid rgba(58, 42, 26, 0.16);
+      box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.07),
+        0 1px 0 rgba(255, 255, 255, 0.65) inset;
+      width: fit-content;
+      max-width: 100%;
+      margin-top: 10px;
+      margin-bottom: 22px;
+    }
+    .catalog-mode-toggle__btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      background: transparent;
+      color: #7a7060;
+      transition: all 0.25s ease;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    .catalog-mode-toggle__btn:hover { color: var(--ink); }
+    .catalog-mode-toggle__btn.active {
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(248, 90, 11, 0.22);
+    }
+    .notify-btn {
+      width: 48px;
+      height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    .notify-btn:hover {
+      background: linear-gradient(135deg, #fff5e8, #ffffff);
+      border-color: rgba(248, 90, 11, 0.55);
+      box-shadow: 0 8px 18px rgba(250, 149, 0, 0.18);
+    }
+    .notify-btn svg { width: 22px; height: 22px; display: block; }
+    .burger {
+      width: 48px;
+      height: 48px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .burger:hover {
+      background: linear-gradient(135deg, #fff9f0, #ffffff);
+      border-color: var(--accent-2);
+      box-shadow: 0 4px 12px rgba(248, 90, 11, 0.15);
+      transform: scale(0.98);
+    }
+    .burger span {
+      width: 22px;
+      height: 2.5px;
+      background: linear-gradient(90deg, #5a4a3a, #3a2a1a);
+      display: block;
+      border-radius: 4px;
+      transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      transform-origin: center;
+    }
+    .burger.open span:nth-child(1) { transform: translateY(8.5px) rotate(45deg); width: 24px; background: linear-gradient(90deg, var(--accent-2), var(--accent-1)); }
+    .burger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+    .burger.open span:nth-child(3) { transform: translateY(-8.5px) rotate(-45deg); width: 24px; background: linear-gradient(90deg, var(--accent-2), var(--accent-1)); }
+    .burger.open {
+      border-color: var(--accent-2);
+      background: linear-gradient(135deg, #fff5e8, #ffffff);
+      box-shadow: 0 6px 16px rgba(248, 90, 11, 0.2);
+    }
+    .header-menu {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 12px);
+      width: 244px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 12px 8px;
+      display: none;
+      animation: menuFadeIn 0.2s ease;
+    }
+    @keyframes menuFadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+    .header-menu.open { display: block; }
+    .header-menu__title { font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; color: #8b8b8b; margin-bottom: 12px; padding: 0 10px; }
+    .header-menu__item, .header-menu__exit {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      border-radius: 14px;
+      text-align: left;
+      padding: 10px 14px;
+      margin-bottom: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      color: var(--ink);
+      font-family: inherit;
+    }
+    .header-menu__item:hover { background: linear-gradient(95deg, #fff5e8, #fffbf5); color: var(--accent-2); transform: translateX(4px); }
+    .header-menu__exit { margin-top: 8px; margin-bottom: 0; color: #d14b2a; border-top: 1px solid var(--line); border-radius: 0; padding-top: 12px; }
+    .header-menu__exit:hover { background: #fff0ea; color: #c0391c; }
+
+    .page {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 102px 20px 26px;
+      flex: 1;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--panel);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
+    }
+
+    .top-title {
+      font-size: 26px;
+      margin-bottom: 14px;
+      letter-spacing: 0.2px;
+    }
+
+    .search-card {
+      padding: 16px;
+      background: linear-gradient(180deg, rgba(255, 208, 102, 0.16), transparent 38%), #fff;
+      margin-bottom: 16px;
+    }
+
+    .search-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .search-input {
+      width: 100%;
+      border: 2px solid #dfdfdf;
+      border-radius: 999px;
+      background: #fff;
+      font-size: 14px;
+      padding: 11px 14px;
+      font-family: inherit;
+    }
+    .search-input:focus {
+      outline: 2px solid rgba(248, 90, 11, 0.24);
+      border-color: #f85a0b;
+    }
+
+    .icon-btn {
+      width: 46px;
+      height: 46px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .icon-btn:hover {
+      background: linear-gradient(135deg, #fff5e8, #ffffff);
+      border-color: rgba(248, 90, 11, 0.55);
+      box-shadow: 0 8px 18px rgba(250, 149, 0, 0.18);
+      transform: translateY(-1px);
+    }
+    .icon-btn svg { width: 22px; height: 22px; }
+
+    .action-btn {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: #2e2e2e;
+      padding: 11px 18px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+      height: 46px;
+      white-space: nowrap;
+    }
+    .action-btn--accent {
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 10px 20px rgba(250, 149, 0, 0.22);
+    }
+    .action-btn--accent:hover { transform: scale(0.99); opacity: 0.96; }
+
+    .hint {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #6a6a6a;
+    }
+    .search-pager {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 14px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+    .search-pager__nums {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      max-width: min(100%, 560px);
+    }
+    .search-pager__ellipsis {
+      font-size: 13px;
+      color: #888;
+      padding: 0 6px;
+      user-select: none;
+    }
+    .search-pager__page {
+      min-width: 40px;
+      height: 40px;
+      padding: 0 10px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      color: #2e2e2e;
+      transition: background .2s, border-color .2s, box-shadow .2s;
+    }
+    .search-pager__page:hover:not(:disabled) {
+      border-color: rgba(248, 90, 11, 0.45);
+      background: #fff9f4;
+    }
+    .search-pager__page.is-current {
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      color: #fff;
+      border-color: transparent;
+      cursor: default;
+      box-shadow: 0 6px 14px rgba(250, 149, 0, 0.22);
+    }
+
+    .vacancies {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .vacancy-card {
+      padding: 12px 14px;
+      background: #fff;
+    }
+    .vacancy-head {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: start;
+      margin-bottom: 8px;
+    }
+    .vacancy-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--accent-2);
+      line-height: 1.2;
+    }
+    .vacancy-meta {
+      margin-top: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 10px;
+      align-items: flex-start;
+    }
+    .meta-item {
+      flex: 0 1 auto;
+      width: fit-content;
+      max-width: 100%;
+      box-sizing: border-box;
+      background: #faf9f7;
+      border: 1px solid #ece9e5;
+      border-radius: 10px;
+      padding: 6px 8px;
+      font-size: 12px;
+      color: #3a3a3a;
+    }
+    .meta-item b {
+      color: #6a625b;
+      font-weight: 600;
+      margin-right: 4px;
+    }
+    .type-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #efefef;
+      color: #444;
+      border: 1px solid #dfdfdf;
+      border-radius: 8px;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+    }
+
+    .vacancy-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .vacancy-actions .action-btn {
+      border-radius: 12px;
+      height: 40px;
+      padding: 9px 16px;
+    }
+
+    .empty-state {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--panel-soft);
+      padding: 22px;
+      text-align: center;
+      color: #777;
+      grid-column: 1 / -1;
+    }
+
+    .footer {
+      width: 100%;
+      background: var(--footer);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      font-size: 14px;
+      color: var(--ink2);
+      min-height: 52px;
+      flex-wrap: wrap;
+    }
+    @media (max-width: 860px) {
+      .footer { flex-direction: column; height: auto; padding: 12px 20px; gap: 4px; text-align: center; }
+    }
+    @media (max-width: 900px) {
+      .vacancies { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 700px) {
+      .header__inner { padding: 0 16px; }
+      .page { padding: 92px 14px 24px; }
+      .role-toggle__btn { padding: 7px 14px; font-size: 12px; }
+      .search-row { grid-template-columns: 1fr auto; }
+      .action-btn--accent { grid-column: 1 / -1; }
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 20, 20, 0.36);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1100;
+    }
+    .modal.open { display: flex; }
+    .modal__card {
+      width: min(92vw, 520px);
+      border-radius: 16px;
+      background: #fff;
+      border: 1px solid var(--line);
+      padding: 18px;
+      box-shadow: 0 24px 44px rgba(0, 0, 0, 0.2);
+    }
+    .modal__title { font-family: "Space Grotesk", sans-serif; font-size: 24px; margin-bottom: 12px; }
+    .modal__grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px 16px;
+      align-items: start;
+    }
+    .modal__grid-sub {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px 16px;
+      align-items: start;
+    }
+    .modal__grid-sub[hidden] {
+      display: none !important;
+    }
+    .modal__grid > .field--full-row,
+    .modal__grid-sub > .field--full-row {
+      grid-column: 1 / -1;
+    }
+    .field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+    .field label {
+      font-size: 13px;
+      line-height: 1.32;
+      color: #4c4c4c;
+      font-weight: 500;
+      min-height: 2.75em;
+      display: flex;
+      align-items: flex-end;
+    }
+    .field select, .field input {
+      width: 100%;
+      border: 1px solid #d1d1d1;
+      border-radius: 18px;
+      background: #fff;
+      font-size: 14px;
+      padding: 10px 18px;
+      min-height: 42px;
+      font-family: inherit;
+      color: var(--ink);
+      outline: none;
+      box-sizing: border-box;
+    }
+    .field select {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      padding-right: 40px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='8' viewBox='0 0 14 8' fill='none'%3E%3Cpath d='M1.5 1.5L7 6l5.5-4.5' stroke='%233a3a3a' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+    }
+    .field input::placeholder {
+      color: #9a9a9a;
+    }
+    .field select:focus, .field input:focus {
+      outline: none;
+      border-color: #bdbdbd;
+      box-shadow: 0 0 0 2px rgba(248, 90, 11, 0.18);
+    }
+    .modal__actions { margin-top: 12px; display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+    .modal__actions .action-btn { border-radius: 12px; height: auto; }
+
+    .modal__card--premium {
+      width: min(92vw, 480px);
+      border-radius: 22px;
+      padding: 0;
+      overflow: hidden;
+      border: none;
+      background: #fff;
+      box-shadow: 0 28px 56px rgba(0, 0, 0, 0.18);
+    }
+    .modal__accent-strip {
+      height: 5px;
+      background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
+    }
+    .modal__body { padding: 20px 22px 16px; }
+    .modal__title-lg { font-size: 22px; font-weight: 700; margin: 0; color: var(--ink); letter-spacing: -0.02em; }
+    .modal__subtitle { margin: 8px 0 0; font-size: 14px; color: #666; line-height: 1.45; }
+    .modal__subtitle[hidden] { display: none !important; }
+    .modal__footer-bar {
+      padding: 14px 22px 18px;
+      background: linear-gradient(180deg, #faf9f7, #fff);
+      border-top: 1px solid var(--line);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+<div class="notification-container" id="notificationContainer"></div>
+<header class="header">
+  <div class="header__inner">
+    <div class="header__left">
+      <img class="logo" src="./assets/logo.png" alt="Логотип TeamPal">
+      <div class="role-toggle" id="role-toggle">
+        <button class="role-toggle__btn active" type="button" data-role="Ищу вакансию">Ищу вакансию</button>
+        <button class="role-toggle__btn" type="button" data-role="Ищу сотрудника">Ищу сотрудника</button>
+      </div>
+    </div>
+    <div class="header__actions">
+      <button class="notify-btn" type="button" aria-label="Уведомления" onclick="window.location.href='./applications.html?tab=notifications'">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 4a5 5 0 0 0-5 5v2.6c0 .7-.24 1.38-.68 1.9L5 15h14l-1.32-1.5a3 3 0 0 1-.68-1.9V9a5 5 0 0 0-5-5Z" stroke="#f85a0b" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M10 18a2 2 0 0 0 4 0" stroke="#f85a0b" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <button class="burger" id="burger-btn" type="button" aria-label="Открыть меню">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="header-menu" id="header-menu">
+        <div class="header-menu__title">Меню</div>
+        <button class="header-menu__item" type="button" data-nav="./account_employee.html">Личный кабинет</button>
+        <button class="header-menu__item" type="button" data-nav="./employee_resumes.html">Мои резюме</button>
+        <button class="header-menu__item" type="button" data-nav="./search_project.html">Поиск проектов</button>
+        <button class="header-menu__item" type="button" data-nav="./applications.html">Отклики</button>
+        <button class="header-menu__exit" type="button" data-nav="./authorization_page.html">Выйти</button>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <h1 class="top-title">Поиск проектов</h1>
+  <div class="catalog-mode-toggle" id="catalog-mode-toggle" role="tablist" aria-label="Тип проектов в каталоге">
+    <button type="button" class="catalog-mode-toggle__btn active" data-mode="commercial" role="tab" aria-selected="true">Коммерческий</button>
+    <button type="button" class="catalog-mode-toggle__btn" data-mode="noncommercial" role="tab" aria-selected="false">Учебный</button>
+  </div>
+
+  <section class="card search-card" aria-label="Поиск вакансий">
+    <div class="search-row">
+      <input class="search-input" id="q" type="text" placeholder="Введите название вакансии, например: Frontend" autocomplete="off">
+      <button class="icon-btn" id="open-filters" type="button" aria-label="Открыть фильтры">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M4 6h16M7 12h10M10 18h4" stroke="url(#g)" stroke-width="2" stroke-linecap="round"/>
+          <defs>
+            <linearGradient id="g" x1="4" y1="6" x2="20" y2="18" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#f85a0b"/>
+              <stop offset="1" stop-color="#fa9500"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </button>
+      <button class="action-btn action-btn--accent" id="find" type="button">Найти</button>
+    </div>
+  </section>
+
+  <section class="vacancies" id="vacancies" aria-label="Список вакансий"></section>
+  <div class="search-pager" id="search-pager" role="navigation" aria-label="Страницы результатов">
+    <button type="button" class="action-btn" id="pager-prev">Назад</button>
+    <div class="search-pager__nums" id="pager-pages" aria-label="Номера страниц"></div>
+    <button type="button" class="action-btn action-btn--accent" id="pager-next">Дальше</button>
+  </div>
+</main>
+
+<footer class="footer">
+  <span>TeamPal<span id="year"></span></span>
+  <span>обратная связь: teampal@dimple.ru</span>
+</footer>
+
+<div class="modal" id="filters-modal" aria-hidden="true">
+  <div class="modal__card modal__card--premium" role="dialog" aria-modal="true" aria-label="Фильтры вакансий">
+    <div class="modal__accent-strip"></div>
+    <div class="modal__body">
+      <h2 class="modal__title-lg">Фильтры</h2>
+      <div class="modal__grid" style="margin-top:14px;">
+        <div class="field">
+          <label for="f-role">Должность</label>
+          <select id="f-role">
+            <option value="">Любая</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-city">Город</label>
+          <select id="f-city">
+            <option value="">Любой</option>
+          </select>
+        </div>
+        <div class="field field--full-row">
+          <label for="f-exp-vacancy" id="label-f-exp-vacancy">Требуемый опыт</label>
+          <select id="f-exp-vacancy">
+            <option value="">Любой</option>
+            <option value="none">Без опыта</option>
+            <option value="<1">До 1 года</option>
+            <option value="1-3">1–3 года</option>
+            <option value="3-6">3–6 лет</option>
+            <option value="6+">6+ лет</option>
+          </select>
+        </div>
+        <div id="filters-project-commercial" class="modal__grid-sub">
+          <div class="field">
+            <label for="f-format">Формат работы</label>
+            <select id="f-format">
+              <option value="">Любой</option>
+              <option value="remote">Только удалённо</option>
+              <option value="office">Только офис</option>
+              <option value="hybrid">Гибрид</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-commitment">Занятость</label>
+            <select id="f-commitment">
+              <option value="">Любая</option>
+              <option value="full_time">Полная</option>
+              <option value="part_time">Частичная</option>
+              <option value="side_project">Подработка</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-salary-min">Заработная плата от (в рублях)</label>
+            <input id="f-salary-min" type="text" inputmode="numeric" autocomplete="off" placeholder="например 120 000">
+          </div>
+          <div class="field">
+            <label for="f-salary-max">Заработная плата до (в рублях)</label>
+            <input id="f-salary-max" type="text" inputmode="numeric" autocomplete="off" placeholder="не задано">
+          </div>
+          <div class="field field--full-row">
+            <label for="f-contract">Тип договора</label>
+            <select id="f-contract">
+              <option value="">Любой</option>
+              <option value="tk">ТК РФ</option>
+              <option value="gph">ГПХ</option>
+              <option value="internship">Стажировка</option>
+            </select>
+          </div>
+        </div>
+        <div class="field field--full-row">
+          <label for="f-posted">Дата публикации</label>
+          <select id="f-posted">
+            <option value="">За всё время</option>
+            <option value="7">За последние 7 дней</option>
+            <option value="14">За последние 14 дней</option>
+            <option value="30">За последние 30 дней</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal__footer-bar">
+      <button class="action-btn" id="filters-reset" type="button">Сбросить</button>
+      <button class="action-btn action-btn--accent" id="filters-apply" type="button">Применить</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="apply-modal" aria-hidden="true">
+  <div class="modal__card modal__card--premium" role="dialog" aria-modal="true" aria-label="Откликнуться">
+    <div class="modal__accent-strip"></div>
+    <div class="modal__body">
+      <h2 class="modal__title-lg">Откликнуться</h2>
+      <p id="apply-vacancy-label" class="modal__subtitle" hidden></p>
+      <div class="field" style="margin-top:14px;">
+        <select id="apply-resume-select" aria-label="Выберите резюме"></select>
+      </div>
+      <div id="apply-no-resumes" style="display:none;margin-top:10px;padding:12px 14px;border-radius:14px;background:#fff8e6;border:1px solid #ffe082;color:#6d4c41;font-size:13px;line-height:1.45;"></div>
+    </div>
+    <div class="modal__footer-bar">
+      <button class="action-btn" id="apply-cancel" type="button">Отмена</button>
+      <button class="action-btn action-btn--accent" id="apply-confirm" type="button">Откликнуться</button>
+    </div>
+  </div>
+</div>
+
+<script src="./config.js"></script>
+<script src="./assets/notify-bell.js"></script>
+<script src="./assets/notify-banner.js"></script>
+<script>
+  (function () {
+    const yearSpan = document.getElementById("year");
+    if (yearSpan) yearSpan.textContent = " " + new Date().getFullYear();
+
+    const roleToggle = document.getElementById("role-toggle");
+    const burgerBtn = document.getElementById("burger-btn");
+    const headerMenu = document.getElementById("header-menu");
+
+    function closeMenus() { if (headerMenu) headerMenu.classList.remove("open"); if (burgerBtn) burgerBtn.classList.remove("open"); }
+    if (roleToggle) {
+      roleToggle.addEventListener("click", function (event) {
+        const btn = event.target.closest(".role-toggle__btn");
+        if (!btn) return;
+        const role = btn.dataset.role || "Ищу вакансию";
+        try { localStorage.setItem("tp_role", role); } catch (_) {}
+        roleToggle.querySelectorAll(".role-toggle__btn").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        if (role === "Ищу сотрудника") window.location.href = "./search_resume.html";
+      });
+    }
+    if (burgerBtn && headerMenu) burgerBtn.addEventListener("click", function (event) { event.stopPropagation(); this.classList.toggle("open"); headerMenu.classList.toggle("open"); });
+    document.addEventListener("click", function (event) { if (!event.target.closest(".header__actions")) closeMenus(); });
+    document.querySelectorAll("[data-nav]").forEach((btn) => btn.addEventListener("click", () => { const href = btn.getAttribute("data-nav"); if (href) window.location.href = href; }));
+
+    try {
+      const savedRole = localStorage.getItem("tp_role");
+      if (savedRole && roleToggle) roleToggle.querySelectorAll(".role-toggle__btn").forEach((b) => b.classList.toggle("active", b.dataset.role === savedRole));
+      if (savedRole === "Ищу сотрудника") { window.location.replace("./search_resume.html"); return; }
+    } catch (_) {}
+
+    function esc(str) { return String(str ?? "").replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m])); }
+
+    function digitsGroupedSP(raw) {
+      const d = String(raw || "").replace(/\D/g, "");
+      if (!d) return "";
+      return d.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    }
+    function bindGroupedSalarySP(id) {
+      const el = document.getElementById(id);
+      if (!el || el.dataset.tpGroupedBound) return;
+      el.dataset.tpGroupedBound = "1";
+      el.addEventListener("input", () => {
+        el.value = digitsGroupedSP(el.value.replace(/\D/g, ""));
+      });
+      el.addEventListener("blur", () => {
+        el.value = digitsGroupedSP(el.value.replace(/\D/g, ""));
+      });
+    }
+
+    function spIntentAdjPlural(intent) {
+      return intent === "commercial" ? "коммерческих" : intent === "noncommercial" ? "учебных" : "подходящего типа";
+    }
+    function spFillApplyNoResumes(el, catalogMode) {
+      if (!el) return;
+      const resumeLink =
+        '<a id="apply-create-resume-link" href="./employee_resumes.html" style="color:#f85a0b;font-weight:700;">Мои резюме</a>.';
+      if (catalogMode === "commercial" || catalogMode === "noncommercial") {
+        const adj = spIntentAdjPlural(catalogMode);
+        el.innerHTML =
+          `Нет активных ${adj} резюме в статусе «Ищу работу». Создайте резюме этого типа или включите поиск работы. ${resumeLink}`;
+      } else {
+        el.innerHTML =
+          `Нет активных резюме в статусе «Ищу работу». Создайте резюме или включите поиск работы. ${resumeLink}`;
+      }
+    }
+    const EXP_LABELS = { none: "Без опыта", "<1": "До 1 года", "1-3": "1–3 года", "3-6": "3–6 лет", "6+": "6+ лет" };
+    const WORK_LABELS = { remote: "Удалённо", office: "В офисе", hybrid: "Гибрид" };
+    const INTENT_LABELS = { commercial: "Коммерческий", noncommercial: "Учебный" };
+    const POSTED_LABELS = { "7": "за 7 дн.", "14": "за 14 дн.", "30": "за 30 дн." };
+
+    function vacancySalaryRub(amount) {
+      if (amount == null || !Number.isFinite(Number(amount))) return "—";
+      return Number(amount).toLocaleString("ru-RU") + " ₽";
+    }
+    function vacancySalaryType(t) {
+      return t === "per_project" ? "За проект" : t === "monthly" ? "В месяц" : "—";
+    }
+
+    let _citiesMap = {};
+    let _rolesMap = {};
+    let _vacancies = [];
+
+    const LS_PROJECT_CATALOG_MODE = "tp_search_project_catalog_mode";
+
+    function defaultFiltersEduProject() {
+      return { city_id: "", role_type_id: "", experience_vacancy: "", posted_within_days: "" };
+    }
+    function defaultFiltersComProject() {
+      return {
+        city_id: "",
+        role_type_id: "",
+        experience_vacancy: "",
+        posted_within_days: "",
+        work_format: "",
+        commitment_level: "",
+        salary_min: "",
+        salary_max: "",
+        contract_type: "",
+      };
+    }
+
+    const state = {
+      q: "",
+      page: 1,
+      catalogMode: "commercial",
+      filtersEdu: defaultFiltersEduProject(),
+      filtersCom: defaultFiltersComProject(),
+    };
+
+    function activeProjectFilters() {
+      return state.catalogMode === "commercial" ? state.filtersCom : state.filtersEdu;
+    }
+
+    function initProjectCatalogModeFromStorage() {
+      try {
+        const raw = localStorage.getItem(LS_PROJECT_CATALOG_MODE);
+        if (raw === "commercial" || raw === "noncommercial") state.catalogMode = raw;
+      } catch (_) {}
+    }
+
+    const catalogModeToggle = document.getElementById("catalog-mode-toggle");
+    const expVacancyLabel = document.getElementById("label-f-exp-vacancy");
+
+    function syncProjectCatalogToggleUI() {
+      if (catalogModeToggle) {
+        catalogModeToggle.querySelectorAll(".catalog-mode-toggle__btn").forEach((b) => {
+          const on = (b.getAttribute("data-mode") || "") === state.catalogMode;
+          b.classList.toggle("active", on);
+          b.setAttribute("aria-selected", on ? "true" : "false");
+        });
+      }
+      const comWrap = document.getElementById("filters-project-commercial");
+      if (comWrap) comWrap.hidden = state.catalogMode !== "commercial";
+      if (expVacancyLabel) {
+        expVacancyLabel.textContent = state.catalogMode === "commercial" ? "Требуемый опыт" : "Опыт в резюме";
+      }
+    }
+
+    if (catalogModeToggle) {
+      catalogModeToggle.addEventListener("click", (event) => {
+        const btn = event.target.closest(".catalog-mode-toggle__btn");
+        if (!btn) return;
+        const mode = btn.getAttribute("data-mode");
+        if (mode !== "commercial" && mode !== "noncommercial") return;
+        state.catalogMode = mode;
+        try {
+          localStorage.setItem(LS_PROJECT_CATALOG_MODE, mode);
+        } catch (_) {}
+        state.page = 1;
+        syncProjectCatalogToggleUI();
+        fetchVacancies();
+      });
+    }
+
+    const VACANCY_PAGE_SIZE = 15;
+    const PAGER_RADIUS = 2;
+    let lastVacancyPageCount = 0;
+
+    function initProjectPagerPages() {
+      const pagesEl = document.getElementById("pager-pages");
+      if (!pagesEl || pagesEl.dataset.tpDelegated) return;
+      pagesEl.dataset.tpDelegated = "1";
+      pagesEl.addEventListener("click", (e) => {
+        const btn = e.target.closest("button[data-page-num]");
+        if (!btn || btn.disabled) return;
+        const n = parseInt(btn.getAttribute("data-page-num"), 10);
+        if (!Number.isFinite(n) || n < 1 || n === state.page) return;
+        state.page = n;
+        void fetchVacancies();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    }
+
+    const qInput = document.getElementById("q");
+    const findBtn = document.getElementById("find");
+    const listEl = document.getElementById("vacancies");
+    const filtersModal = document.getElementById("filters-modal");
+    const openFiltersBtn = document.getElementById("open-filters");
+    const applyFiltersBtn = document.getElementById("filters-apply");
+    const resetFiltersBtn = document.getElementById("filters-reset");
+
+    async function loadDictionaries() {
+      try {
+        const [citiesResp, rolesResp] = await Promise.all([
+          fetch(API_BASE_URL + "/cities", { credentials: "include" }),
+          fetch(API_BASE_URL + "/roles_dictionary", { credentials: "include" }),
+        ]);
+        const citySelect = document.getElementById("f-city");
+        if (citySelect) citySelect.innerHTML = '<option value="">Любой</option>';
+        _citiesMap = {};
+        if (citiesResp.ok) {
+          const cities = await citiesResp.json();
+          if (Array.isArray(cities) && citySelect) {
+            cities.forEach((c) => {
+              if (c && c.id != null) {
+                _citiesMap[String(c.id)] = c.title || String(c.id);
+                const opt = document.createElement("option");
+                opt.value = String(c.id);
+                opt.textContent = c.title || String(c.id);
+                citySelect.appendChild(opt);
+              }
+            });
+          }
+        }
+        const roleSelect = document.getElementById("f-role");
+        if (roleSelect) roleSelect.innerHTML = '<option value="">Любая</option>';
+        _rolesMap = {};
+        if (rolesResp.ok) {
+          const roles = await rolesResp.json();
+          if (Array.isArray(roles) && roleSelect) {
+            roles.forEach((r) => {
+              if (r && r.id != null) {
+                _rolesMap[String(r.id)] = r.name || String(r.id);
+                const opt = document.createElement("option");
+                opt.value = String(r.id);
+                opt.textContent = r.name || String(r.id);
+                roleSelect.appendChild(opt);
+              }
+            });
+          }
+        }
+      } catch (_) {}
+    }
+
+    async function fetchVacancies() {
+      if (listEl) listEl.innerHTML = '<div class="empty-state" style="color:#aaa;">Загрузка…</div>';
+      const params = new URLSearchParams();
+      const f = activeProjectFilters();
+      if (state.q) params.set("q", state.q);
+      params.set("employment_intent", state.catalogMode);
+      if (f.city_id) params.set("city_id", f.city_id);
+      if (f.role_type_id) params.set("role_type_id", f.role_type_id);
+      if (f.experience_vacancy) params.set("experience", f.experience_vacancy);
+      if (f.posted_within_days) params.set("posted_within_days", f.posted_within_days);
+      if (state.catalogMode === "commercial") {
+        if (f.work_format) params.set("work_format", f.work_format);
+        if (f.commitment_level) params.set("commitment_level", f.commitment_level);
+        if (f.contract_type) params.set("contract_type", f.contract_type);
+        const sminRaw = f.salary_min != null ? String(f.salary_min).trim().replace(/\s/g, "") : "";
+        const smaxRaw = f.salary_max != null ? String(f.salary_max).trim().replace(/\s/g, "") : "";
+        const smin = sminRaw === "" ? NaN : parseInt(sminRaw, 10);
+        const smax = smaxRaw === "" ? NaN : parseInt(smaxRaw, 10);
+        if (Number.isFinite(smin) && smin >= 0) params.set("salary_min", String(smin));
+        if (Number.isFinite(smax) && smax >= 0) params.set("salary_max", String(smax));
+      }
+      params.set("per_page", String(VACANCY_PAGE_SIZE));
+      params.set("page", String(state.page));
+      try {
+        const resp = await fetch(API_BASE_URL + "/vacancies?" + params.toString(), { credentials: "include" });
+        if (resp.ok) {
+          _vacancies = await resp.json();
+        } else {
+          _vacancies = [];
+        }
+      } catch (_) { _vacancies = []; }
+      lastVacancyPageCount = Array.isArray(_vacancies) ? _vacancies.length : 0;
+      if (lastVacancyPageCount === 0 && state.page > 1) {
+        state.page -= 1;
+        return fetchVacancies();
+      }
+      render(_vacancies);
+      updateVacancyPager();
+    }
+
+    function updateVacancyPager() {
+      const wrap = document.getElementById("search-pager");
+      const prev = document.getElementById("pager-prev");
+      const next = document.getElementById("pager-next");
+      const pagesEl = document.getElementById("pager-pages");
+      if (!wrap || !prev || !next || !pagesEl) return;
+      if (lastVacancyPageCount === 0) {
+        wrap.hidden = true;
+        pagesEl.innerHTML = "";
+        return;
+      }
+      wrap.hidden = false;
+      const hasMore = lastVacancyPageCount >= VACANCY_PAGE_SIZE;
+      const p = state.page;
+      const minShown = Math.max(1, p - PAGER_RADIUS);
+      const maxShown = hasMore ? p + 1 : p;
+
+      const segments = [];
+      if (minShown > 1) {
+        segments.push({ t: "n", v: 1 });
+        if (minShown > 2) segments.push({ t: "e" });
+      }
+      for (let n = minShown; n <= maxShown; n++) segments.push({ t: "n", v: n });
+
+      pagesEl.innerHTML = segments
+        .map((s) => {
+          if (s.t === "e") return '<span class="search-pager__ellipsis" aria-hidden="true">…</span>';
+          const cur = s.v === p;
+          return (
+            `<button type="button" class="search-pager__page${cur ? " is-current" : ""}" data-page-num="${s.v}"` +
+            (cur ? ' disabled aria-current="page"' : "") +
+            `>${s.v}</button>`
+          );
+        })
+        .join("");
+
+      prev.disabled = p <= 1;
+      next.disabled = !hasMore;
+    }
+
+    function render(list) {
+      if (!listEl) return;
+      if (!Array.isArray(list) || list.length === 0) {
+        listEl.innerHTML = '<div class="empty-state">Ничего не найдено. Попробуйте изменить запрос или фильтры.</div>';
+        return;
+      }
+      listEl.innerHTML = list.map((v) => {
+        const roleName = _rolesMap[String(v.role_type_id)] || "Должность #" + v.role_type_id;
+        const cityName = _citiesMap[String(v.project_city_id)] || "";
+        const commProj = v.project_employment_intent === "commercial";
+        const expLabel = EXP_LABELS[v.experience] || EXP_LABELS.none;
+        const metaItems = [];
+        if (commProj) {
+          const salaryRub = vacancySalaryRub(v.salary_amount);
+          const salaryTyp = vacancySalaryType(v.salary_type);
+          let salaryVal = null;
+          if (salaryRub !== "—") salaryVal = salaryTyp !== "—" ? salaryRub + " · " + salaryTyp : salaryRub;
+          else if (salaryTyp !== "—") salaryVal = salaryTyp;
+          if (salaryVal) metaItems.push(["Заработная плата", salaryVal]);
+          const wf = WORK_LABELS[v.work_format];
+          if (wf) metaItems.push(["Формат работы", wf]);
+          if (String(cityName || "").trim()) metaItems.push(["Город", String(cityName).trim()]);
+        } else if (String(cityName || "").trim()) {
+          metaItems.push(["Город", String(cityName).trim()]);
+        }
+        metaItems.push(["Опыт работы", expLabel]);
+        return `
+          <article class="card vacancy-card">
+            <div class="vacancy-head">
+              <div>
+                <div class="vacancy-title">${esc(roleName)}</div>
+                <div style="font-size:13px;color:#6a5a4a;margin-top:3px;">${esc(v.project_title)}${v.project_company_name ? " · " + esc(v.project_company_name) : ""}</div>
+              </div>
+              <div style="display:flex;justify-content:flex-end;">
+                <span class="type-badge">${esc(INTENT_LABELS[v.project_employment_intent] || v.project_employment_intent)}</span>
+              </div>
+            </div>
+            <div class="vacancy-meta">
+              ${metaItems.map(([k, val]) => `<div class="meta-item"><b>${esc(k)}:</b>${esc(val)}</div>`).join("")}
+            </div>
+            <div class="vacancy-actions">
+              <button class="action-btn" type="button" data-view-vacancy="${esc(String(v.vacancy_id))}" data-view-project="${esc(String(v.project_id))}">Просмотреть проект</button>
+              <button class="action-btn action-btn--accent" type="button" data-apply-vacancy="${esc(String(v.vacancy_id))}" data-apply-role="${esc(roleName)}" data-apply-project="${esc(v.project_title)}">Откликнуться</button>
+            </div>
+          </article>`;
+      }).join("");
+
+      listEl.querySelectorAll("[data-view-vacancy]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const vacancyId = btn.getAttribute("data-view-vacancy");
+          const projectId = btn.getAttribute("data-view-project");
+          const vacancyData = list.find((v) => String(v.vacancy_id) === vacancyId);
+          if (vacancyData) {
+            try { sessionStorage.setItem("tp_vacancy_view_" + vacancyId, JSON.stringify(vacancyData)); } catch (_) {}
+          }
+          window.location.href =
+            "./card_project.html?vacancy=" +
+            encodeURIComponent(vacancyId) +
+            "&project=" +
+            encodeURIComponent(projectId) +
+            "&catalog=1";
+        });
+      });
+
+      listEl.querySelectorAll("[data-apply-vacancy]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const vacancyId = btn.getAttribute("data-apply-vacancy");
+          const roleName = btn.getAttribute("data-apply-role");
+          const projectTitle = btn.getAttribute("data-apply-project");
+          openApplyModal(vacancyId, roleName, projectTitle);
+        });
+      });
+    }
+
+    function doSearch() {
+      state.q = qInput ? qInput.value.trim() : "";
+      state.page = 1;
+      fetchVacancies();
+    }
+
+    function openFilters() {
+      if (!filtersModal) return;
+      const f = activeProjectFilters();
+      const sync = (id, val) => { const el = document.getElementById(id); if (el) el.value = val != null ? String(val) : ""; };
+      sync("f-city", f.city_id);
+      sync("f-role", f.role_type_id);
+      sync("f-format", f.work_format || "");
+      sync("f-commitment", f.commitment_level || "");
+      sync("f-salary-min", f.salary_min || "");
+      sync("f-salary-max", f.salary_max || "");
+      sync("f-exp-vacancy", f.experience_vacancy);
+      sync("f-contract", f.contract_type || "");
+      sync("f-posted", f.posted_within_days);
+      bindGroupedSalarySP("f-salary-min");
+      bindGroupedSalarySP("f-salary-max");
+      syncProjectCatalogToggleUI();
+      filtersModal.classList.add("open");
+    }
+    function closeFilters() { if (filtersModal) filtersModal.classList.remove("open"); }
+
+    if (openFiltersBtn) openFiltersBtn.addEventListener("click", openFilters);
+    if (filtersModal) filtersModal.addEventListener("click", (e) => { if (e.target === filtersModal) closeFilters(); });
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      if (applyModal && applyModal.classList.contains("open")) {
+        closeApplyModal();
+        return;
+      }
+      closeFilters();
+    });
+    if (applyFiltersBtn) {
+      applyFiltersBtn.addEventListener("click", () => {
+        const f = activeProjectFilters();
+        f.city_id = document.getElementById("f-city") ? document.getElementById("f-city").value : "";
+        f.role_type_id = document.getElementById("f-role") ? document.getElementById("f-role").value : "";
+        f.experience_vacancy = document.getElementById("f-exp-vacancy") ? document.getElementById("f-exp-vacancy").value : "";
+        f.posted_within_days = document.getElementById("f-posted") ? document.getElementById("f-posted").value : "";
+        if (state.catalogMode === "commercial") {
+          f.work_format = document.getElementById("f-format") ? document.getElementById("f-format").value : "";
+          f.commitment_level = document.getElementById("f-commitment") ? document.getElementById("f-commitment").value : "";
+          f.salary_min = document.getElementById("f-salary-min") ? document.getElementById("f-salary-min").value : "";
+          f.salary_max = document.getElementById("f-salary-max") ? document.getElementById("f-salary-max").value : "";
+          f.contract_type = document.getElementById("f-contract") ? document.getElementById("f-contract").value : "";
+        }
+        closeFilters();
+        doSearch();
+      });
+    }
+    if (resetFiltersBtn) {
+      resetFiltersBtn.addEventListener("click", () => {
+        if (state.catalogMode === "commercial") {
+          state.filtersCom = defaultFiltersComProject();
+        } else {
+          state.filtersEdu = defaultFiltersEduProject();
+        }
+        ["f-city", "f-role", "f-format", "f-commitment", "f-salary-min", "f-salary-max", "f-exp-vacancy", "f-contract", "f-posted"].forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) el.value = "";
+        });
+        syncProjectCatalogToggleUI();
+        closeFilters();
+        doSearch();
+      });
+    }
+    if (findBtn) findBtn.addEventListener("click", doSearch);
+    if (qInput) qInput.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); doSearch(); } });
+
+    document.getElementById("pager-prev")?.addEventListener("click", () => {
+      if (state.page <= 1) return;
+      state.page -= 1;
+      void fetchVacancies().then(() => window.scrollTo({ top: 0, behavior: "smooth" }));
+    });
+    document.getElementById("pager-next")?.addEventListener("click", () => {
+      if (lastVacancyPageCount < VACANCY_PAGE_SIZE) return;
+      state.page += 1;
+      void fetchVacancies().then(() => window.scrollTo({ top: 0, behavior: "smooth" }));
+    });
+
+    let _applyVacancyId = null;
+    const applyModal = document.getElementById("apply-modal");
+    const applyResumeSelect = document.getElementById("apply-resume-select");
+    const applyNoResumes = document.getElementById("apply-no-resumes");
+    const applyCancelBtn = document.getElementById("apply-cancel");
+    const applyConfirmBtn = document.getElementById("apply-confirm");
+    const applyVacancyLabel = document.getElementById("apply-vacancy-label");
+
+    async function openApplyModal(vacancyId) {
+      _applyVacancyId = vacancyId;
+      if (applyVacancyLabel) {
+        applyVacancyLabel.textContent = "";
+        applyVacancyLabel.hidden = true;
+      }
+      if (applyResumeSelect) applyResumeSelect.innerHTML = '<option value="">Загрузка…</option>';
+      if (applyNoResumes) applyNoResumes.style.display = "none";
+      if (applyConfirmBtn) applyConfirmBtn.disabled = true;
+      if (applyModal) applyModal.classList.add("open");
+
+      try {
+        const resp = await fetch(API_BASE_URL + "/my_resumes", { credentials: "include" });
+        if (resp.status === 401) {
+          showNotification("Войдите в аккаунт, чтобы отправить отклик.", "warning", 4500);
+          closeApplyModal();
+          return;
+        }
+        if (!resp.ok) {
+          if (applyResumeSelect) applyResumeSelect.innerHTML = '<option value="">Ошибка загрузки</option>';
+          if (applyConfirmBtn) applyConfirmBtn.disabled = true;
+          return;
+        }
+        const resumes = await resp.json();
+        const active = Array.isArray(resumes)
+          ? resumes.filter((r) => r.status === "looking_for_job" && r.employment_intent === state.catalogMode)
+          : [];
+        if (applyResumeSelect) {
+          if (active.length === 0) {
+            applyResumeSelect.innerHTML = '<option value="">—</option>';
+            if (applyNoResumes) {
+              spFillApplyNoResumes(applyNoResumes, state.catalogMode);
+              applyNoResumes.style.display = "block";
+            }
+            if (applyConfirmBtn) applyConfirmBtn.disabled = true;
+          } else {
+            applyResumeSelect.innerHTML = '<option value="">Выберите резюме</option>';
+            active.forEach((r) => {
+              const opt = document.createElement("option");
+              opt.value = String(r.id);
+              opt.textContent =
+                typeof tpResumeSelectOptionLabel === "function" ? tpResumeSelectOptionLabel(r) : "Резюме №" + r.id;
+              applyResumeSelect.appendChild(opt);
+            });
+            if (applyConfirmBtn) applyConfirmBtn.disabled = false;
+          }
+        }
+      } catch (_) {
+        if (applyResumeSelect) applyResumeSelect.innerHTML = '<option value="">Ошибка соединения</option>';
+      }
+    }
+
+    function closeApplyModal() {
+      if (applyModal) applyModal.classList.remove("open");
+      _applyVacancyId = null;
+      if (applyVacancyLabel) {
+        applyVacancyLabel.textContent = "";
+        applyVacancyLabel.hidden = true;
+      }
+    }
+    if (applyCancelBtn) applyCancelBtn.addEventListener("click", closeApplyModal);
+    if (applyModal) applyModal.addEventListener("click", (e) => { if (e.target === applyModal) closeApplyModal(); });
+
+    if (applyConfirmBtn) {
+      applyConfirmBtn.addEventListener("click", async () => {
+        const resumeId = applyResumeSelect ? applyResumeSelect.value : "";
+        if (!resumeId || !_applyVacancyId) return;
+        applyConfirmBtn.disabled = true;
+        try {
+          const resp = await fetch(API_BASE_URL + "/applications", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ resume_id: Number(resumeId), vacancy_id: Number(_applyVacancyId) }),
+          });
+          if (resp.ok) {
+            closeApplyModal();
+            showNotification("Отклик отправлен. Уведомление уйдёт работодателю.", "success", 4000);
+            if (typeof window.tpRefreshUnreadBell === "function") window.tpRefreshUnreadBell();
+          } else {
+            const err = await resp.json().catch(() => ({}));
+            showNotification(err.detail || "Не удалось отправить отклик", "error", 4000);
+            applyConfirmBtn.disabled = false;
+          }
+        } catch (_) {
+          showNotification("Ошибка соединения с сервером", "error", 4000);
+          applyConfirmBtn.disabled = false;
+        }
+      });
+    }
+
+    initProjectCatalogModeFromStorage();
+    syncProjectCatalogToggleUI();
+    initProjectPagerPages();
+    loadDictionaries().then(() => {
+      bindGroupedSalarySP("f-salary-min");
+      bindGroupedSalarySP("f-salary-max");
+      fetchVacancies();
+    });
+  })();
+</script>
+</body>
+</html>
