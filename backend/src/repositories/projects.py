@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import or_, select, update
+from sqlalchemy import func, or_, select, update
 from src.enums import EmploymentIntent, ProjectsStatus
 from src.models.profiles import ProfilesOrm
 from src.models.projects import ProjectsOrm, ProjectVacancyOrm
@@ -20,6 +20,14 @@ class ProjectsRepository(BaseRepository):
         query = select(self.model).where(ProjectsOrm.profile_id == profile_id, ProjectsOrm.status.in_((ProjectsStatus.ACTIVE, ProjectsStatus.PAUSED))).order_by(ProjectsOrm.created_at.desc(), ProjectsOrm.id.desc())
         result = await self.session.execute(query)
         return [Project.model_validate(row, from_attributes=True) for row in result.scalars().all()]
+
+    async def count_open_for_profile(self, profile_id: int) -> int:
+        query = select(func.count(ProjectsOrm.id)).where(
+            ProjectsOrm.profile_id == profile_id,
+            ProjectsOrm.status.in_((ProjectsStatus.ACTIVE, ProjectsStatus.PAUSED)),
+        )
+        result = await self.session.execute(query)
+        return result.scalar_one()
 
     async def get_closed_for_profile(self, profile_id: int) -> list[Project]:
         query = select(self.model).where(ProjectsOrm.profile_id == profile_id, ProjectsOrm.status == ProjectsStatus.CLOSE).order_by(ProjectsOrm.closed_at.desc().nullslast(), ProjectsOrm.created_at.desc(), ProjectsOrm.id.desc())

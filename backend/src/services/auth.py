@@ -1,8 +1,8 @@
 from datetime import datetime, timezone, timedelta
 import jwt
-from fastapi import HTTPException
 from pwdlib import PasswordHash
 from src.config import settings
+from src.errors.auth import TokenExpired, TokenInvalidJwt, TokenInvalidSignature
 
 class AuthService:
     password_hash = PasswordHash.recommended()
@@ -27,8 +27,8 @@ class AuthService:
         try:
             return jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
         except jwt.ExpiredSignatureError:
-            raise HTTPException(status_code=401, detail='Токен истек')
+            raise TokenExpired()
         except jwt.InvalidSignatureError:
-            raise HTTPException(status_code=401, detail='Неверная подпись токена')
+            raise TokenInvalidSignature()
         except jwt.InvalidTokenError:
-            raise HTTPException(status_code=401, detail='Неверный JWT токен')
+            raise TokenInvalidJwt()

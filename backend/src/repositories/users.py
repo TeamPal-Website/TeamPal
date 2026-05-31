@@ -1,6 +1,6 @@
-from fastapi import HTTPException
 from pydantic import EmailStr
 from sqlalchemy import select
+from src.errors.common import AccessDenied, Unauthorized, UserNotFound
 from src.models.users import UsersOrm
 from src.repositories.base import BaseRepository
 from src.schemas.users import User, UserWithHashedPassword
@@ -14,9 +14,9 @@ class UsersRepository(BaseRepository):
         result = await self.session.execute(query)
         model = result.scalars().one_or_none()
         if model is None:
-            raise HTTPException(status_code=401, detail='Пользователь не найден')
+            raise Unauthorized('Пользователь не найден')
         if not model.is_active:
-            raise HTTPException(status_code=403, detail='Пользователь заблокирован')
+            raise AccessDenied('Пользователь заблокирован')
         return UserWithHashedPassword.model_validate(model, from_attributes=True)
 
     async def get_user_with_hashed_password_by_id(self, user_id: int):
@@ -24,7 +24,7 @@ class UsersRepository(BaseRepository):
         result = await self.session.execute(query)
         model = result.scalars().one_or_none()
         if model is None:
-            raise HTTPException(status_code=404, detail='Пользователь не найден')
+            raise UserNotFound()
         if not model.is_active:
-            raise HTTPException(status_code=403, detail='Пользователь заблокирован')
+            raise AccessDenied('Пользователь заблокирован')
         return UserWithHashedPassword.model_validate(model, from_attributes=True)
