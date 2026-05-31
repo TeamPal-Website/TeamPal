@@ -2,8 +2,8 @@ node_modules/
 vendor/
 
 backend/.env
+infra/.env
 .env
-!infra/.env
 *.local
 secrets.json
 
