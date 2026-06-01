@@ -51,5 +51,11 @@ app.include_router(router_roles_dictionary)
 app.include_router(router_applications)
 app.include_router(router_vacancies)
 app.include_router(router_notifications)
+
+_frontend_dir = Path(__file__).resolve().parent.parent.parent / 'frontend'
+if _frontend_dir.is_dir():
+    from fastapi.staticfiles import StaticFiles
+    app.mount('/', StaticFiles(directory=str(_frontend_dir), html=True), name='frontend')
+
 if __name__ == '__main__':
     uvicorn.run('main:app', host='127.0.0.1', port=8000, reload=True)

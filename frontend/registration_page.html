@@ -151,6 +151,9 @@ body {
     font-size: 14px;
     line-height: 1.4;
     color: #555;
+}
+
+.consent-text label {
     cursor: pointer;
 }
 
@@ -270,10 +273,9 @@ button {
             <div class="consent_wrapper">
                 <div class="consent-checkbox">
                     <input type="checkbox" id="consent" name="consent" required>
-                    <label for="consent" class="consent-text">
-                        Я даю согласие на обработку моих персональных данных в соответствии с 
-                        <a href="#" target="_blank">Политикой конфиденциальности</a>
-                    </label>
+                    <span class="consent-text">
+                        <label for="consent">Я даю согласие на обработку моих персональных данных в соответствии с </label><a href="./assets/privacy-policy.pdf" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">Политикой конфиденциальности</a>
+                    </span>
                 </div>
             </div>
             <button class="login_button" type="submit" id="submitBtn">Зарегистрироваться</button>
