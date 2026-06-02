@@ -1,5 +1,3 @@
-"""Tests for hybrid recommendation scoring."""
-
 from src.services.recommendation_scoring import (
     calibrate_embedding_sim,
     hybrid_match_score,

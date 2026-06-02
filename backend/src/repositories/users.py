@@ -1,5 +1,3 @@
-"""Доступ к данным учётных записей пользователей."""
-
 from pydantic import EmailStr
 from sqlalchemy import select
 from src.errors.common import AccessDenied, Unauthorized, UserNotFound
@@ -48,3 +46,28 @@ class UsersRepository(BaseRepository):
         if not model.is_active:
             raise AccessDenied('Пользователь заблокирован')
         return UserWithHashedPassword.model_validate(model, from_attributes=True)
+
+    async def get_orm_by_email(self, email: EmailStr) -> UsersOrm | None:
+        """Загружает ORM-объект пользователя по email для последующей мутации.
+
+        Возвращает привязанный к сессии ORM-объект (а не схему), так как
+        вызывающий сервис меняет поля (например, ``is_verified``) и коммитит.
+
+        :param email: Адрес электронной почты пользователя.
+        :returns: ORM-объект пользователя или ``None``, если не найден.
+        :rtype: UsersOrm | None
+        """
+        query = select(self.model).filter_by(email=email)
+        result = await self.session.execute(query)
+        return result.scalars().one_or_none()
+
+    async def get_orm_by_id(self, user_id: int) -> UsersOrm | None:
+        """Загружает ORM-объект пользователя по id для последующей мутации.
+
+        :param user_id: Первичный ключ пользователя.
+        :returns: ORM-объект пользователя или ``None``, если не найден.
+        :rtype: UsersOrm | None
+        """
+        query = select(self.model).filter_by(id=user_id)
+        result = await self.session.execute(query)
+        return result.scalars().one_or_none()

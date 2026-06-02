@@ -1,5 +1,3 @@
-"""Типы ошибок справочника ролей."""
-
 from src.errors.common import Conflict
 
 

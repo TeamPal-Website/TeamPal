@@ -1,5 +1,3 @@
-"""Жизненный цикл откликов: подача, приглашение, принятие, отклонение и отзыв."""
-
 from src.enums import ApplicationStatus, CancelReason, NotificationEvent, ProjectsStatus, ResumeStatus
 from src.errors.applications import (
     ActiveParticipationNotFound,

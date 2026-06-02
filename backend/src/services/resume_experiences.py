@@ -1,11 +1,9 @@
-"""CRUD-операции с опытом работы в принадлежащих резюме."""
-
 from src.errors.common import ExperienceNotFound, ResumeNotFound
 from src.errors.resumes import ResumeLockedInProject
 from src.schemas.resume_experiences import ResumeExperienceAdd, ResumeExperiencePatch, ResumeExperienceRequestAdd
 from src.services.common import require_active_role, require_profile
 from src.services.resumes import raise_if_resume_locked_for_editing
-from src.services.embedding import schedule_embedding_recompute
+from src.services.embedding_scheduler import schedule_embedding_recompute
 from src.utils.db_manager import DBManager
 
 

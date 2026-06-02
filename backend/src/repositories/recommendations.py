@@ -1,7 +1,3 @@
-"""Ранжирование рекомендаций по гибридному score после hard filters."""
-
-from sqlalchemy import select
-
 from src.constants.recommendations import RECOMMENDATION_CANDIDATE_MAX, RECOMMENDATION_CANDIDATE_MULTIPLIER
 from src.enums import WorkFormat
 from src.models.embeddings import ResumeEmbeddingOrm, VacancyEmbeddingOrm
@@ -10,7 +6,7 @@ from src.repositories.project_vacancy_skills import ProjectVacancySkillsReposito
 from src.repositories.resume_skills import ResumeSkillsRepository
 from src.schemas.recommendations import RecommendedResumeItem, RecommendedVacancyItem
 from src.schemas.search_public import ResumeSearchItem, VacancySearchItem
-from src.services.matching_filters import (
+from src.repositories.recommendation_filters import (
     resume_recommendation_base_query,
     resume_recommendation_filters,
     vacancy_recommendation_base_query,

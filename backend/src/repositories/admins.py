@@ -1,5 +1,3 @@
-"""Административные операции над учётными записями пользователей."""
-
 from sqlalchemy import update
 from src.errors.common import UserNotFound
 from src.models.users import UsersOrm

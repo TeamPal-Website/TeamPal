@@ -1,5 +1,3 @@
-"""Доступ к данным назначений на вакансии."""
-
 from datetime import datetime
 from sqlalchemy import select, update
 from src.models.applications import VacancyAssignmentsOrm

@@ -1,5 +1,3 @@
-"""Доступ к данным вакансий проекта."""
-
 from datetime import timedelta
 from sqlalchemy import and_, or_, select
 from sqlalchemy.sql import func as sa_func

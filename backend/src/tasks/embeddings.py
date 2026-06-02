@@ -1,10 +1,9 @@
-"""Celery-задачи пересчёта векторных представлений."""
-
 import asyncio
 
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.pool import NullPool
 
+from src.catalog_cache import close_redis
 from src.celery_app import celery_app
 from src.config import settings
 from src.repositories.embeddings import EmbeddingsRepository
@@ -12,19 +11,14 @@ from src.services.embedding import recompute_resume_embedding_db, recompute_vaca
 from src.services.recommendations import invalidate_recommendation_cache
 from src.utils.db_manager import DBManager
 
-# NullPool — каждый asyncio.run() получает свежее соединение, не привязанное
-# к старому event loop. Обязателен для Celery-воркеров с asyncio.run().
 _worker_engine = create_async_engine(settings.DB_URL, poolclass=NullPool)
 _worker_session_maker = async_sessionmaker(bind=_worker_engine, expire_on_commit=False)
 
 
 async def _with_db(coro):
-    from src.catalog_cache import close_redis
     async with DBManager(session_factory=_worker_session_maker) as db:
         result = await coro(db)
         await db.commit()
-    # Сбрасываем синглтон Redis — следующий asyncio.run() создаст клиент
-    # в новом event loop, а не попытается переиспользовать клиент от старого.
     await close_redis()
     return result
 

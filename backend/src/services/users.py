@@ -1,11 +1,7 @@
-"""Регистрация, аутентификация и управление учётными записями пользователей."""
-
-from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from src.errors.auth import EmailAlreadyRegistered, WrongCurrentPassword, WrongPassword
 from src.errors.common import AccessDenied, Unauthorized, UserNotFound
-from src.models.users import UsersOrm
 from src.schemas.profiles import ProfileAdd
 from src.schemas.users import UserAdd, UserChangePasswordRequest, UserHashedPasswordUpdate, UserLoginRequest, UserRequestAdd, VerifyEmailRequest
 from src.services.auth import AuthService
@@ -59,8 +55,7 @@ class UserService:
         :raises Unauthorized: Если пользователь не найден.
         :raises AccessDenied: Если код неверный или истёк.
         """
-        result = await db.session.execute(select(UsersOrm).filter_by(email=data.email))
-        user = result.scalars().one_or_none()
+        user = await db.users.get_orm_by_email(data.email)
         if user is None:
             raise Unauthorized('Пользователь не найден')
 
@@ -86,8 +81,7 @@ class UserService:
         :raises Unauthorized: Если пользователь не найден.
         :raises AccessDenied: Если email уже подтверждён.
         """
-        result = await db.session.execute(select(UsersOrm).filter_by(email=email))
-        user = result.scalars().one_or_none()
+        user = await db.users.get_orm_by_email(email)
         if user is None:
             raise Unauthorized('Пользователь не найден')
         if user.is_verified:
@@ -110,8 +104,7 @@ class UserService:
         :raises AccessDenied: Если учётная запись неактивна или email не подтверждён.
         :raises WrongPassword: Если пароль не совпадает.
         """
-        result = await db.session.execute(select(UsersOrm).filter_by(email=data.email))
-        user = result.scalars().one_or_none()
+        user = await db.users.get_orm_by_email(data.email)
         if user is None:
             raise Unauthorized('Пользователь не найден')
         if not user.is_active:
@@ -154,8 +147,7 @@ class UserService:
         :raises AccessDenied: Если учётная запись неактивна.
         :raises WrongCurrentPassword: Если текущий пароль указан неверно.
         """
-        result = await db.session.execute(select(UsersOrm).filter_by(id=user_id))
-        user = result.scalars().one_or_none()
+        user = await db.users.get_orm_by_id(user_id)
         if user is None:
             raise UserNotFound()
         if not user.is_active:

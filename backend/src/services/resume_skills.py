@@ -1,5 +1,3 @@
-"""CRUD-операции со связями навыков в принадлежащих резюме."""
-
 from sqlalchemy.exc import IntegrityError
 
 from src.errors.common import ProfileNotFound, ResumeNotFound, ResumeSkillInResumeNotFound, ResumeSkillLinkNotFound
@@ -7,7 +5,7 @@ from src.errors.resumes import ResumeLockedInProject, ResumeSkillAlreadyAdded
 from src.schemas.resume_skills import ResumeSkillAdd, ResumeSkillCreate, ResumeSkillPatch
 from src.services.common import require_profile, require_skill
 from src.services.resumes import raise_if_resume_locked_for_editing
-from src.services.embedding import schedule_embedding_recompute
+from src.services.embedding_scheduler import schedule_embedding_recompute
 from src.utils.db_manager import DBManager
 
 

@@ -1,5 +1,3 @@
-"""Получение, редактирование профилей и операции с хранением аватаров."""
-
 from sqlalchemy.exc import IntegrityError
 
 from src.errors.common import MyProfileNotFound, ProfileNotFound, ValidationError

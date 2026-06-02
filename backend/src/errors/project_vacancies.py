@@ -1,5 +1,3 @@
-"""Типы ошибок слотов вакансий проекта."""
-
 from src.errors.common import Conflict
 
 

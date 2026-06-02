@@ -1,5 +1,3 @@
-"""Доступ к данным профилей пользователей."""
-
 from src.models.profiles import ProfilesOrm
 from src.repositories.base import BaseRepository
 from src.schemas.profiles import Profile

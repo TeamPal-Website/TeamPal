@@ -1,5 +1,3 @@
-"""Доступ к справочным данным ролей."""
-
 from sqlalchemy import func, select
 from src.models.roles_dictionary import RolesDictionaryOrm
 from src.repositories.base import BaseRepository

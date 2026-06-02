@@ -18,5 +18,5 @@ celery_app.conf.beat_schedule = {
     },
 }
 
-import src.tasks.catalog  # noqa: F401
-import src.tasks.embeddings  # noqa: F401
+import src.tasks.catalog  # noqa: F401, E402
+import src.tasks.embeddings  # noqa: F401, E402

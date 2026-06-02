@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import Field
 
 from src.schemas.search_public import ResumeSearchItem, VacancySearchItem
 

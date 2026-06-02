@@ -1,5 +1,3 @@
-"""Доступ к данным связей резюме и навыков."""
-
 from sqlalchemy import select
 
 from src.models.resumes import ResumeSkillOrm

@@ -1,6 +1,4 @@
-"""Типы ошибок откликов и процесса приглашений."""
-
-from src.errors.common import BadRequest, Conflict, ValidationError
+from src.errors.common import BadRequest, Conflict
 
 
 class ResumeProjectIntentMismatch(BadRequest):

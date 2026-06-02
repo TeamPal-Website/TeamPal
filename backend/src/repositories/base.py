@@ -1,5 +1,3 @@
-"""Обобщённый асинхронный слой репозитория SQLAlchemy."""
-
 from enum import Enum
 from pydantic import BaseModel
 from sqlalchemy import insert, select, update, delete, func

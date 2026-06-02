@@ -1,5 +1,3 @@
-"""Общие типы HTTP-ошибок, используемые в нескольких доменах."""
-
 from src.errors.base import AppError
 
 

@@ -1,5 +1,3 @@
-"""Типы ошибок профиля и аватара."""
-
 from src.errors.common import Conflict, ServiceUnavailable, ValidationError
 
 

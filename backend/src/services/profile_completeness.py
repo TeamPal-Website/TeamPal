@@ -8,7 +8,16 @@ _GH_RE = re.compile(r"^https?://.+")
 PROFILE_INCOMPLETE_MSG = "Заполните полностью данные в Личном кабинете"
 
 
-def profile_incomplete_message(profile):
+def profile_incomplete_message(profile) -> str | None:
+    """Проверить полноту профиля и вернуть текст ошибки либо ``None``.
+
+    Профиль считается полным, если заданы корректные имя и фамилия (кириллица),
+    возраст 16–100, пол и контакты (телефон, Telegram, GitHub) в валидном формате.
+
+    :param profile: Экземпляр ORM/схемы профиля либо ``None``.
+    :returns: Сообщение об ошибке, если профиль неполон, иначе ``None``.
+    :rtype: str | None
+    """
     if profile is None:
         return PROFILE_INCOMPLETE_MSG
     fn = profile.first_name

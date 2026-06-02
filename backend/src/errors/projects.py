@@ -1,5 +1,3 @@
-"""Типы ошибок жизненного цикла и состояния проекта."""
-
 from src.errors.common import Conflict
 
 

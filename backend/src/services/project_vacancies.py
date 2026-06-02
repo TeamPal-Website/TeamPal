@@ -1,5 +1,3 @@
-"""CRUD-операции с вакансиями проектов, принадлежащих пользователю."""
-
 from src.errors.common import RoleNotFound, VacancyNotFound
 from src.errors.project_vacancies import (
     VACANCIES_MAX_PER_PROJECT,
@@ -9,7 +7,7 @@ from src.errors.project_vacancies import (
 )
 from src.schemas.project_vacancies import ProjectVacancyAdd, ProjectVacancyPatch, ProjectVacancyRequestAdd
 from src.services.common import require_owned_project, require_role, require_skills
-from src.services.embedding import schedule_embedding_recompute
+from src.services.embedding_scheduler import schedule_embedding_recompute
 from src.utils.db_manager import DBManager
 
 

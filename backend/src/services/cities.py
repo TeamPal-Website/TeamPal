@@ -1,5 +1,3 @@
-"""CRUD-операции со справочником городов."""
-
 from sqlalchemy.exc import IntegrityError
 
 from src.errors.cities import CityAlreadyExists, CityInUse

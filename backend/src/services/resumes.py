@@ -1,5 +1,3 @@
-"""CRUD резюме, публичный поиск и вспомогательные функции видимости контактов."""
-
 from sqlalchemy.exc import IntegrityError
 
 from src.enums import (
@@ -31,9 +29,9 @@ from src.schemas.resume_skills import ResumeSkillAdd
 from src.schemas.resumes import ResumeAdd, ResumePatch, ResumeRequestAdd, ResumeWithActiveProject
 from src.schemas.search_public import ResumeSearchItem
 from src.services.common import require_active_role, require_city, require_profile, require_skill
-from src.services.embedding import schedule_embedding_recompute
+from src.services.embedding_scheduler import schedule_embedding_recompute
 from src.utils.db_manager import DBManager
-from src.utils.profile_completeness import profile_incomplete_message
+from src.services.profile_completeness import profile_incomplete_message
 
 
 def resume_contacts_for_viewer(profile_contacts_obj) -> dict:

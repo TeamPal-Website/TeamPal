@@ -1,5 +1,3 @@
-"""Типы ошибок справочника навыков."""
-
 from src.errors.common import Conflict
 
 

@@ -1,8 +1,6 @@
 from fastapi import APIRouter, Body
 
 from src.api.dependencies import UserIdDep, DBDep
-from src.database import async_session_maker
-from src.repositories.admins import AdminsRepository
 
 router = APIRouter(prefix="/admins", tags=["Администрирование"])
 

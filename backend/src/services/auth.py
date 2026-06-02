@@ -1,5 +1,3 @@
-"""Утилиты JWT-токенов и хеширования паролей."""
-
 from datetime import datetime, timezone, timedelta
 import jwt
 from pwdlib import PasswordHash

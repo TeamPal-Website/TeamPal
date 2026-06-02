@@ -1,7 +1,3 @@
-"""Гибридный score: семантика + роль + навыки."""
-
-from __future__ import annotations
-
 from src.constants.recommendations import (
     EMBEDDING_SIM_CEIL,
     EMBEDDING_SIM_FLOOR,

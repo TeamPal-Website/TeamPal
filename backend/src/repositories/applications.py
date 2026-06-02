@@ -1,5 +1,3 @@
-"""Доступ к данным откликов на вакансии."""
-
 from datetime import datetime
 from sqlalchemy import func, select, update
 from sqlalchemy.orm import aliased

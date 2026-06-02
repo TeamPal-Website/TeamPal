@@ -1,5 +1,3 @@
-"""Типы ошибок уведомлений."""
-
 from src.errors.common import ValidationError
 
 

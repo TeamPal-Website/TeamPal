@@ -1,5 +1,3 @@
-"""Доступ к справочным данным городов."""
-
 from sqlalchemy import select
 from src.models.cities import CitiesOrm
 from src.repositories.base import BaseRepository

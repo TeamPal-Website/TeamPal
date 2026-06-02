@@ -1,5 +1,3 @@
-"""Доступ к данным проектов."""
-
 from datetime import datetime
 from sqlalchemy import func, or_, select, update
 from src.enums import EmploymentIntent, ProjectsStatus

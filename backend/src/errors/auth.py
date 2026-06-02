@@ -1,6 +1,4 @@
-"""Типы ошибок аутентификации и авторизации."""
-
-from src.errors.common import BadRequest, Conflict, Unauthorized, UserNotFound, ValidationError
+from src.errors.common import Conflict, Unauthorized
 
 
 class EmailAlreadyRegistered(Conflict):

@@ -1,5 +1,3 @@
-"""Генерация и проверка кодов подтверждения email через Redis."""
-
 import random
 from src.catalog_cache import get_redis
 
