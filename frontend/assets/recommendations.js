@@ -114,6 +114,48 @@
     return r.json();
   }
 
+  function matchBadgeHtml(score, peerScores) {
+    return (
+      '<span class="rec-match-badge" title="' +
+      esc(MATCH_SCORE_TITLE) +
+      '">' +
+      esc(formatMatchScore(score, peerScores)) +
+      "</span>"
+    );
+  }
+
+  function headBadgesHtml(intentText, score, peerScores) {
+    return (
+      '<div class="vacancy-head-badges">' +
+      matchBadgeHtml(score, peerScores) +
+      '<span class="type-badge">' +
+      esc(intentText) +
+      "</span></div>"
+    );
+  }
+
+  function buildVacancyMetaItems(v, citiesMap) {
+    const cityName = citiesMap[String(v.project_city_id)] || "";
+    const commProj = v.project_employment_intent === "commercial";
+    const expLabel = EXP_LABELS[v.experience] || EXP_LABELS.none;
+    const metaItems = [];
+    if (commProj) {
+      const salaryRub = vacancySalaryRub(v.salary_amount);
+      const salaryTyp = vacancySalaryType(v.salary_type);
+      let salaryVal = null;
+      if (salaryRub !== "—") salaryVal = salaryTyp !== "—" ? salaryRub + " · " + salaryTyp : salaryRub;
+      else if (salaryTyp !== "—") salaryVal = salaryTyp;
+      if (salaryVal) metaItems.push(["Заработная плата", salaryVal]);
+      const wf = WORK_LABELS[v.work_format];
+      if (wf) metaItems.push(["Формат работы", wf]);
+      if (String(cityName || "").trim()) metaItems.push(["Город", String(cityName).trim()]);
+    } else if (String(cityName || "").trim()) {
+      metaItems.push(["Город", String(cityName).trim()]);
+    }
+    metaItems.push(["Опыт работы", expLabel]);
+    return metaItems;
+  }
+
   function renderVacancyCards(list, container, options) {
     const el = typeof container === "string" ? document.getElementById(container) : container;
     if (!el) return;
@@ -123,7 +165,7 @@
 
     if (!Array.isArray(list) || list.length === 0) {
       el.innerHTML =
-        '<div class="rec-empty">' +
+        '<div class="empty-state">' +
         esc(opts.emptyText || "Пока нет подходящих вакансий. Обновите резюме или загляните позже — подбор пересчитывается автоматически.") +
         "</div>";
       return;
@@ -131,66 +173,41 @@
 
     const peerScores = list.map((v) => v.match_score);
 
-    el.innerHTML =
-      '<div class="rec-list">' +
-      list
-        .map((v) => {
-          const roleName = rolesMap[String(v.role_type_id)] || "Должность #" + v.role_type_id;
-          const cityName = citiesMap[String(v.project_city_id)] || "";
-          const commProj = v.project_employment_intent === "commercial";
-          const metaItems = [];
-          if (commProj) {
-            const salaryRub = vacancySalaryRub(v.salary_amount);
-            const salaryTyp = vacancySalaryType(v.salary_type);
-            let salaryVal = null;
-            if (salaryRub !== "—") salaryVal = salaryTyp !== "—" ? salaryRub + " · " + salaryTyp : salaryRub;
-            else if (salaryTyp !== "—") salaryVal = salaryTyp;
-            if (salaryVal) metaItems.push(["Зарплата", salaryVal]);
-            const wf = WORK_LABELS[v.work_format];
-            if (wf) metaItems.push(["Формат", wf]);
-            if (String(cityName || "").trim()) metaItems.push(["Город", String(cityName).trim()]);
-          } else if (String(cityName || "").trim()) {
-            metaItems.push(["Город", String(cityName).trim()]);
-          }
-          metaItems.push(["Опыт", EXP_LABELS[v.experience] || EXP_LABELS.none]);
-
-          return (
-            '<article class="rec-card" data-vacancy-id="' +
-            esc(String(v.vacancy_id)) +
-            '">' +
-            '<div class="rec-card-head">' +
-            '<div><div class="rec-card-title">' +
-            esc(roleName) +
-            '</div><div class="rec-card-sub">' +
-            esc(v.project_title) +
-            (v.project_company_name ? " · " + esc(v.project_company_name) : "") +
-            "</div></div>" +
-            '<span class="rec-score" title="' +
-            esc(MATCH_SCORE_TITLE) +
-            '">' +
-            esc(formatMatchScore(v.match_score, peerScores)) +
-            "</span></div>" +
-            '<div class="rec-meta">' +
-            metaItems.map(([k, val]) => '<span class="rec-meta-item"><b>' + esc(k) + ":</b>" + esc(val) + "</span>").join("") +
-            '<span class="rec-meta-item"><b>Тип:</b>' +
-            esc(INTENT_LABELS[v.project_employment_intent] || v.project_employment_intent) +
-            "</span></div>" +
-            '<div class="rec-actions">' +
-            '<button type="button" class="action-btn" data-rec-view-vacancy="' +
-            esc(String(v.vacancy_id)) +
-            '" data-rec-view-project="' +
-            esc(String(v.project_id)) +
-            '">Проект</button>' +
-            (opts.showApply !== false
-              ? '<button type="button" class="action-btn action-btn--accent" data-rec-apply-vacancy="' +
-                esc(String(v.vacancy_id)) +
-                '">Откликнуться</button>'
-              : "") +
-            "</div></article>"
-          );
-        })
-        .join("") +
-      "</div>";
+    el.innerHTML = list
+      .map((v) => {
+        const roleName = rolesMap[String(v.role_type_id)] || "Должность #" + v.role_type_id;
+        const metaItems = buildVacancyMetaItems(v, citiesMap);
+        const intentText = INTENT_LABELS[v.project_employment_intent] || v.project_employment_intent;
+        return (
+          '<article class="card vacancy-card vacancy-card--recommended">' +
+          '<div class="vacancy-head">' +
+          "<div>" +
+          '<div class="vacancy-title">' +
+          esc(roleName) +
+          "</div>" +
+          '<div style="font-size:13px;color:#6a5a4a;margin-top:3px;">' +
+          esc(v.project_title) +
+          (v.project_company_name ? " · " + esc(v.project_company_name) : "") +
+          "</div></div>" +
+          headBadgesHtml(intentText, v.match_score, peerScores) +
+          '<div class="vacancy-meta">' +
+          metaItems.map(([k, val]) => '<div class="meta-item"><b>' + esc(k) + ":</b>" + esc(val) + "</div>").join("") +
+          "</div>" +
+          '<div class="vacancy-actions">' +
+          '<button class="action-btn" type="button" data-rec-view-vacancy="' +
+          esc(String(v.vacancy_id)) +
+          '" data-rec-view-project="' +
+          esc(String(v.project_id)) +
+          '">Просмотреть проект</button>' +
+          (opts.showApply !== false
+            ? '<button class="action-btn action-btn--accent" type="button" data-rec-apply-vacancy="' +
+              esc(String(v.vacancy_id)) +
+              '">Откликнуться</button>'
+            : "") +
+          "</div></article>"
+        );
+      })
+      .join("");
 
     el.querySelectorAll("[data-rec-view-vacancy]").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -242,14 +259,50 @@
     });
   }
 
+  function intentLabel(intent) {
+    return intent === "commercial" ? "Коммерческий" : intent === "noncommercial" ? "Учебный" : "—";
+  }
+
+  function resumeSalaryRub(amount) {
+    if (amount == null || !Number.isFinite(Number(amount))) return "—";
+    return Number(amount).toLocaleString("ru-RU") + " ₽";
+  }
+
+  function resumeSalaryType(t) {
+    return t === "per_project" ? "За проект" : t === "monthly" ? "В месяц" : "—";
+  }
+
+  function buildResumeMetaItems(r, citiesMap) {
+    const cityName = r.city_id != null && r.city_id !== "" ? citiesMap[String(r.city_id)] || "" : "";
+    const commResume = r.employment_intent === "commercial";
+    const expLabel = EXP_LABELS[r.computed_experience_level] || EXP_LABELS.none;
+    const metaItems = [];
+    if (commResume) {
+      const salaryRub = resumeSalaryRub(r.salary_amount);
+      const salaryTyp = resumeSalaryType(r.salary_type);
+      let salaryVal = null;
+      if (salaryRub !== "—") salaryVal = salaryTyp !== "—" ? salaryRub + " · " + salaryTyp : salaryRub;
+      else if (salaryTyp !== "—") salaryVal = salaryTyp;
+      if (salaryVal) metaItems.push(["Заработная плата", salaryVal]);
+      const wf = WORK_LABELS[r.work_format];
+      if (wf) metaItems.push(["Формат работы", wf]);
+      if (String(cityName || "").trim()) metaItems.push(["Город", String(cityName).trim()]);
+    } else if (String(cityName || "").trim()) {
+      metaItems.push(["Город", String(cityName).trim()]);
+    }
+    metaItems.push(["Опыт работы", expLabel]);
+    return metaItems;
+  }
+
   function renderResumeCards(list, container, options) {
     const el = typeof container === "string" ? document.getElementById(container) : container;
     if (!el) return;
     const opts = options || {};
+    const citiesMap = opts.citiesMap || {};
 
     if (!Array.isArray(list) || list.length === 0) {
       el.innerHTML =
-        '<div class="rec-empty">' +
+        '<div class="empty-state">' +
         esc(opts.emptyText || "Пока нет подходящих резюме. Попробуйте позже или расширьте требования вакансии.") +
         "</div>";
       return;
@@ -257,50 +310,55 @@
 
     const peerScores = list.map((r) => r.match_score);
 
-    el.innerHTML =
-      '<div class="rec-list">' +
-      list
-        .map((r) => {
-          const avatar =
-            r.avatar_url && typeof global.tpAvatarSrcFromApiField === "function"
-              ? global.tpAvatarSrcFromApiField(r.avatar_url)
-              : "./assets/avatar-default.png";
-          const params = new URLSearchParams({ id: String(r.id) });
-          if (r.user_id) params.set("user_id", String(r.user_id));
-          params.set("from", "projects");
-          return (
-            '<article class="rec-card">' +
-            '<div class="rec-resume-row">' +
-            '<img class="rec-resume-avatar" src="' +
-            esc(avatar) +
-            '" alt="" onerror="this.src=\'./assets/avatar-default.png\'">' +
-            '<div class="rec-resume-main">' +
-            '<div class="rec-card-head">' +
-            '<div><div class="rec-card-title">' +
-            esc(r.desired_position || "Резюме") +
-            '</div><div class="rec-card-sub">' +
-            esc(INTENT_LABELS[r.employment_intent] || r.employment_intent) +
-            (r.skills_count ? " · навыков: " + esc(String(r.skills_count)) : "") +
-            "</div></div>" +
-            '<span class="rec-score" title="' +
-            esc(MATCH_SCORE_TITLE) +
-            '">' +
-            esc(formatMatchScore(r.match_score, peerScores)) +
-            "</span></div>" +
-            '<div class="rec-actions">' +
-            '<button type="button" class="action-btn" data-rec-view-resume="' +
-            esc(params.toString()) +
-            '">Резюме</button>' +
-            (opts.showInvite !== false
-              ? '<button type="button" class="action-btn action-btn--accent" data-rec-invite-resume="' +
-                esc(String(r.id)) +
-                '">Пригласить</button>'
-              : "") +
-            "</div></div></div></article>"
-          );
-        })
-        .join("") +
-      "</div>";
+    el.innerHTML = list
+      .map((r) => {
+        const avatar =
+          r.avatar_url && typeof global.tpAvatarSrcFromApiField === "function"
+            ? global.tpAvatarSrcFromApiField(r.avatar_url)
+            : "./assets/avatar-default.png";
+        const aboutRaw = r.about_me ? String(r.about_me).replace(/\s+/g, " ").trim() : "";
+        const aboutBlock = aboutRaw
+          ? '<div class="vacancy-about-snippet">' +
+            esc(aboutRaw.slice(0, 220)) +
+            (aboutRaw.length >= 220 ? "…" : "") +
+            "</div>"
+          : "";
+        const metaItems = buildResumeMetaItems(r, citiesMap);
+        const params = new URLSearchParams({ id: String(r.id) });
+        if (r.user_id) params.set("user_id", String(r.user_id));
+        params.set("from", "projects");
+        const intentText = intentLabel(r.employment_intent);
+        return (
+          '<article class="card vacancy-card vacancy-card--recommended">' +
+          '<div class="vacancy-head">' +
+          '<div class="vacancy-head-inner">' +
+          '<img class="resume-card-avatar" src="' +
+          esc(avatar) +
+          '" alt="" onerror="this.onerror=null;this.src=\'./assets/avatar-default.png\'">' +
+          "<div>" +
+          '<div class="vacancy-title">' +
+          esc(r.desired_position || "Резюме") +
+          "</div></div></div>" +
+          headBadgesHtml(intentText, r.match_score, peerScores) +
+          '<div class="vacancy-meta">' +
+          metaItems.map(([k, val]) => '<div class="meta-item"><b>' + esc(k) + ":</b>" + esc(val) + "</div>").join("") +
+          "</div>" +
+          aboutBlock +
+          '<div class="vacancy-actions">' +
+          '<button class="action-btn" type="button" data-rec-view-resume="' +
+          esc(params.toString()) +
+          '">Просмотреть резюме</button>' +
+          (opts.showInvite !== false
+            ? '<button class="action-btn action-btn--accent" type="button" data-rec-invite-resume="' +
+              esc(String(r.id)) +
+              '" data-rec-invite-intent="' +
+              esc(String(r.employment_intent || "")) +
+              '">Откликнуться</button>'
+            : "") +
+          "</div></article>"
+        );
+      })
+      .join("");
 
     el.querySelectorAll("[data-rec-view-resume]").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -314,7 +372,7 @@
         const vacancyId = opts.vacancyId;
         if (!resumeId || vacancyId == null) return;
         if (typeof opts.onInvite === "function") {
-          opts.onInvite(resumeId, btn);
+          opts.onInvite(resumeId, btn.getAttribute("data-rec-invite-intent") || "");
           return;
         }
         btn.disabled = true;

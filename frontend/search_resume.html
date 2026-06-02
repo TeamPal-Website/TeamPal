@@ -795,16 +795,14 @@
   </div>
 
   <div id="recommended-view" hidden>
-    <section class="card for-you-section" id="for-you-section" aria-label="Рекомендованные вам резюме">
-      <div class="rec-section-head">
-        <h2 class="for-you-title">Рекомендованные вам резюме</h2>
-        <div class="for-you-controls">
-          <label class="rec-toggle"><input type="checkbox" id="for-you-role-match"> Только роль вакансии</label>
-          <select id="for-you-vacancy-select" class="rec-select" hidden aria-label="Вакансия для подбора"></select>
-        </div>
+    <section class="card rec-toolbar" aria-label="Настройки рекомендаций">
+      <div class="rec-toolbar__row">
+        <label class="rec-toggle"><input type="checkbox" id="for-you-role-match"> Только роль вакансии</label>
+        <select id="for-you-vacancy-select" class="rec-select" hidden aria-label="Вакансия для подбора рекомендаций"></select>
       </div>
-      <p class="rec-hint">Семантический подбор кандидатов под вашу открытую вакансию. Переключайте «Коммерческий / Учебный», если проекты разного типа.</p>
-      <div id="for-you-list"><div class="rec-loading">Загрузка…</div></div>
+    </section>
+    <section class="vacancies" id="for-you-list" aria-label="Рекомендованные резюме">
+      <div class="empty-state" style="color:#aaa;">Загрузка…</div>
     </section>
   </div>
 </main>
@@ -921,6 +919,7 @@
 
 <script src="./config.js"></script>
 <script src="./assets/recommendations.js"></script>
+<script src="./assets/rec-entity-picker.js"></script>
 <script src="./assets/notify-bell.js"></script>
 <script src="./assets/notify-banner.js"></script>
 <script>
@@ -1764,7 +1763,7 @@
     async function refreshForYouRecommendations() {
       const listEl = document.getElementById("for-you-list");
       if (!listEl || _forYouVacancyId == null || typeof tpFetchRecommendedResumes !== "function") return;
-      listEl.innerHTML = '<div class="rec-loading">Загрузка подборки…</div>';
+      listEl.innerHTML = '<div class="empty-state" style="color:#aaa;">Загрузка подборки…</div>';
       const roleMatch = document.getElementById("for-you-role-match");
       try {
         const list = await tpFetchRecommendedResumes(_forYouVacancyId, {
@@ -1773,16 +1772,21 @@
         });
         tpRenderRecommendedResumeCards(list, listEl, {
           vacancyId: _forYouVacancyId,
+          citiesMap: _citiesMap,
+          onInvite: (resumeId, intent) => {
+            const numId = parseInt(resumeId, 10);
+            if (Number.isFinite(numId)) openInviteModal(numId, intent || "commercial");
+          },
           emptyText:
             "Пока нет персональных рекомендаций. Обновите описание вакансии или переключите «Коммерческий / Учебный».",
         });
       } catch (e) {
         if (e && e.code === 401) {
           listEl.innerHTML =
-            '<div class="rec-empty">Войдите в аккаунт организатора, чтобы увидеть рекомендации резюме.</div>';
+            '<div class="empty-state">Войдите в аккаунт организатора, чтобы увидеть рекомендации резюме.</div>';
           return;
         }
-        listEl.innerHTML = '<div class="rec-empty">Не удалось загрузить рекомендации. Попробуйте позже.</div>';
+        listEl.innerHTML = '<div class="empty-state">Не удалось загрузить рекомендации. Попробуйте позже.</div>';
       }
     }
 
@@ -1791,22 +1795,22 @@
       if (!listEl) return;
 
       if (typeof tpFetchRecommendedResumes !== "function") {
-        listEl.innerHTML = '<div class="rec-empty">Модуль рекомендаций недоступен.</div>';
+        listEl.innerHTML = '<div class="empty-state">Модуль рекомендаций недоступен.</div>';
         return;
       }
 
-      listEl.innerHTML = '<div class="rec-loading">Загрузка…</div>';
+      listEl.innerHTML = '<div class="empty-state" style="color:#aaa;">Загрузка…</div>';
 
       try {
         const r = await fetch(API_BASE_URL + "/my_recruiting_vacancies", { credentials: "include" });
         if (r.status === 401) {
           listEl.innerHTML =
-            '<div class="rec-empty">Войдите в аккаунт организатора, чтобы увидеть рекомендации резюме.</div>';
+            '<div class="empty-state">Войдите в аккаунт организатора, чтобы увидеть рекомендации резюме.</div>';
           return;
         }
         if (!r.ok) {
           _forYouVacancyId = null;
-          listEl.innerHTML = '<div class="rec-empty">Не удалось загрузить ваши вакансии.</div>';
+          listEl.innerHTML = '<div class="empty-state">Не удалось загрузить ваши вакансии.</div>';
           return;
         }
         const opts = await r.json();
@@ -1817,11 +1821,14 @@
           _forYouVacancyId = null;
           const modeLabel = state.catalogMode === "noncommercial" ? "учебных" : "коммерческих";
           listEl.innerHTML =
-            '<div class="rec-empty">Нет открытых ' +
+            '<div class="empty-state">Нет открытых ' +
             modeLabel +
             ' вакансий в ваших проектах. Создайте проект с вакансией или переключите вкладку «Коммерческий / Учебный».</div>';
           const sel = document.getElementById("for-you-vacancy-select");
-          if (sel) sel.hidden = true;
+          if (sel) {
+            sel.hidden = true;
+            if (typeof tpSyncRecEntityPicker === "function") tpSyncRecEntityPicker(sel);
+          }
           return;
         }
         const sel = document.getElementById("for-you-vacancy-select");
@@ -1839,15 +1846,19 @@
               _forYouVacancyId = Number(vacancies[0].vacancy_id);
             }
             sel.value = String(_forYouVacancyId);
+            if (typeof tpSyncRecEntityPicker === "function") tpSyncRecEntityPicker(sel);
           }
         } else {
-          if (sel) sel.hidden = true;
+          if (sel) {
+            sel.hidden = true;
+            if (typeof tpSyncRecEntityPicker === "function") tpSyncRecEntityPicker(sel);
+          }
           _forYouVacancyId = Number(vacancies[0].vacancy_id);
         }
         await refreshForYouRecommendations();
       } catch (_) {
         _forYouVacancyId = null;
-        listEl.innerHTML = '<div class="rec-empty">Не удалось загрузить рекомендации. Попробуйте позже.</div>';
+        listEl.innerHTML = '<div class="empty-state">Не удалось загрузить рекомендации. Попробуйте позже.</div>';
       }
     }
 
@@ -1856,6 +1867,7 @@
       const roleMatch = document.getElementById("for-you-role-match");
       if (sel && !sel.dataset.bound) {
         sel.dataset.bound = "1";
+        if (typeof tpBindRecEntityPicker === "function") tpBindRecEntityPicker(sel);
         sel.addEventListener("change", () => {
           _forYouVacancyId = Number(sel.value) || null;
           void refreshForYouRecommendations();
