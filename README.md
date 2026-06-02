@@ -61,8 +61,10 @@ openssl rand -hex 32
 
 ### 3. Запустить
 
+> **Важно:** в репозитории есть `docker-compose.override.yml` для продакшена (HTTPS, порт 80). При локальной разработке его нужно исключить явным флагом `-f`, иначе `APP_PORT` из `.env` игнорируется.
+
 ```bash
-docker compose up --build
+docker compose -f docker-compose.yml up -d --build
 ```
 
 После запуска доступны:
@@ -72,6 +74,12 @@ docker compose up --build
 | Веб-интерфейс | http://localhost:8080 |
 | API документация (Swagger) | http://localhost:8080/docs |
 | MinIO Console | http://localhost:9001 |
+
+Если нужен другой порт — поменяй `APP_PORT` в `.env`:
+
+```env
+APP_PORT=9090
+```
 
 ### 4. Заполнить справочники
 
@@ -203,7 +211,6 @@ TeamPal/
 git clone https://github.com/TeamPal-Website/TeamPal.git
 cd TeamPal/infra
 cp .env.example .env
-# Заполнить .env, указав домен в ALLOWED_ORIGINS и S3_PUBLIC_BASE_URL
 nano .env
 docker compose up -d --build
 ```
