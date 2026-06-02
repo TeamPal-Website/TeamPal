@@ -19,20 +19,19 @@ def calibrate_embedding_sim(raw: float) -> float:
     return (raw - EMBEDDING_SIM_FLOOR) / (EMBEDDING_SIM_CEIL - EMBEDDING_SIM_FLOOR)
 
 
-def role_match_score(resume_role_id: int | None, vacancy_role_id: int | None) -> float:
-    if resume_role_id is not None and vacancy_role_id is not None:
-        return 1.0 if resume_role_id == vacancy_role_id else 0.0
-    return 0.5
+def role_match_score(resume_role_id: int, vacancy_role_id: int) -> float:
+    return 1.0 if resume_role_id == vacancy_role_id else 0.0
 
 
 def skill_overlap_score(resume_skill_ids: set[int], vacancy_skill_ids: set[int]) -> float:
-    if not resume_skill_ids and not vacancy_skill_ids:
-        return 0.5
-    if not resume_skill_ids or not vacancy_skill_ids:
-        return 0.0
+    """Recall: какую долю требований вакансии покрывает резюме.
+
+    Jaccard штрафует широкие профили (30 навыков vs 5 нужных → 5/30=0.17).
+    Recall справедливее: если резюме покрывает все 5 нужных навыков → 5/5=1.0,
+    независимо от того сколько ещё навыков есть в резюме.
+    """
     intersection = len(resume_skill_ids & vacancy_skill_ids)
-    union = len(resume_skill_ids | vacancy_skill_ids)
-    return intersection / union if union else 0.0
+    return intersection / len(vacancy_skill_ids)
 
 
 def hybrid_match_score(

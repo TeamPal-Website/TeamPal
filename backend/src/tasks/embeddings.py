@@ -2,18 +2,31 @@
 
 import asyncio
 
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.pool import NullPool
+
 from src.celery_app import celery_app
-from src.database import async_session_maker
+from src.config import settings
 from src.repositories.embeddings import EmbeddingsRepository
 from src.services.embedding import recompute_resume_embedding_db, recompute_vacancy_embedding_db
+from src.services.recommendations import invalidate_recommendation_cache
 from src.utils.db_manager import DBManager
+
+# NullPool — каждый asyncio.run() получает свежее соединение, не привязанное
+# к старому event loop. Обязателен для Celery-воркеров с asyncio.run().
+_worker_engine = create_async_engine(settings.DB_URL, poolclass=NullPool)
+_worker_session_maker = async_sessionmaker(bind=_worker_engine, expire_on_commit=False)
 
 
 async def _with_db(coro):
-    async with DBManager(session_factory=async_session_maker) as db:
+    from src.catalog_cache import close_redis
+    async with DBManager(session_factory=_worker_session_maker) as db:
         result = await coro(db)
         await db.commit()
-        return result
+    # Сбрасываем синглтон Redis — следующий asyncio.run() создаст клиент
+    # в новом event loop, а не попытается переиспользовать клиент от старого.
+    await close_redis()
+    return result
 
 
 def _run_async(coro_factory):
@@ -22,12 +35,22 @@ def _run_async(coro_factory):
 
 @celery_app.task
 def recompute_resume_embedding(resume_id: int) -> bool:
-    return _run_async(lambda db: recompute_resume_embedding_db(db, resume_id))
+    async def _inner(db):
+        updated = await recompute_resume_embedding_db(db, resume_id)
+        if updated:
+            await invalidate_recommendation_cache('resume', resume_id)
+        return updated
+    return _run_async(_inner)
 
 
 @celery_app.task
 def recompute_vacancy_embedding(vacancy_id: int) -> bool:
-    return _run_async(lambda db: recompute_vacancy_embedding_db(db, vacancy_id))
+    async def _inner(db):
+        updated = await recompute_vacancy_embedding_db(db, vacancy_id)
+        if updated:
+            await invalidate_recommendation_cache('vacancy', vacancy_id)
+        return updated
+    return _run_async(_inner)
 
 
 @celery_app.task

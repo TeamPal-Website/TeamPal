@@ -44,7 +44,7 @@ def vacancy_recommendation_filters(
         ProjectsOrm.employment_intent == resume.employment_intent,
         ~blocking_application_exists(resume.id, ProjectVacancyOrm.id),
     ]
-    if role_match_only and resume.role_type_id is not None:
+    if role_match_only:
         filters.append(ProjectVacancyOrm.role_type_id == resume.role_type_id)
     if city_id is not None:
         filters.append(ProjectsOrm.city_id == city_id)
@@ -81,6 +81,14 @@ def resume_recommendation_filters(
         filters.append(ResumesOrm.city_id == city_id)
     if work_format is not None:
         filters.append(ResumesOrm.work_format == work_format)
+    elif vacancy.work_format == WorkFormat.OFFICE:
+        # Офисная вакансия — не показываем удалённых кандидатов
+        filters.append(
+            or_(
+                ResumesOrm.work_format != WorkFormat.REMOTE,
+                ResumesOrm.work_format.is_(None),
+            )
+        )
     return filters
 
 

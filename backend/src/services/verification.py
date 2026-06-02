@@ -14,12 +14,10 @@ def _key(email: str) -> str:
 async def generate_and_save_code(email: str) -> str:
     """Сгенерировать 6-значный код и сохранить в Redis."""
     code = str(random.randint(100000, 999999))
+    print(f'[DEV] Код подтверждения для {email}: {code}')
     r = await get_redis()
     if r:
         await r.set(_key(email), code, ex=CODE_TTL)
-    else:
-        # Fallback если Redis недоступен — просто вернём код (для dev)
-        print(f'[DEV] Redis недоступен. Код: {code}')
     return code
 
 

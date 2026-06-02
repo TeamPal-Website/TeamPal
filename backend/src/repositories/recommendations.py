@@ -1,11 +1,10 @@
 """Ранжирование рекомендаций по гибридному score после hard filters."""
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 
 from src.constants.recommendations import RECOMMENDATION_CANDIDATE_MAX, RECOMMENDATION_CANDIDATE_MULTIPLIER
 from src.enums import WorkFormat
 from src.models.embeddings import ResumeEmbeddingOrm, VacancyEmbeddingOrm
-from src.models.resumes import ResumeSkillOrm
 from src.repositories.base import BaseRepository
 from src.repositories.project_vacancy_skills import ProjectVacancySkillsRepository
 from src.repositories.resume_skills import ResumeSkillsRepository
@@ -23,7 +22,7 @@ from src.utils.avatar_url import client_avatar_url
 
 class RecommendationsRepository(BaseRepository):
     def _candidate_limit(self, limit: int) -> int:
-        return min(max(limit * RECOMMENDATION_CANDIDATE_MULTIPLIER, limit), RECOMMENDATION_CANDIDATE_MAX)
+        return min(limit * RECOMMENDATION_CANDIDATE_MULTIPLIER, RECOMMENDATION_CANDIDATE_MAX)
 
     async def recommend_vacancies_for_resume(
         self,
@@ -128,16 +127,6 @@ class RecommendationsRepository(BaseRepository):
             (await ProjectVacancySkillsRepository(self.session).map_for_vacancies([vacancy.id])).get(vacancy.id, [])
         )
 
-        skills_count_map: dict[int, int] = {}
-        if resume_ids:
-            skills_q = (
-                select(ResumeSkillOrm.resume_id, func.count(ResumeSkillOrm.id))
-                .where(ResumeSkillOrm.resume_id.in_(resume_ids))
-                .group_by(ResumeSkillOrm.resume_id)
-            )
-            skills_result = await self.session.execute(skills_q)
-            skills_count_map = {rid: int(cnt) for rid, cnt in skills_result.all()}
-
         scored: list[tuple[float, object, object, object, object]] = []
         for resume, user_id, profile_avatar, embedding_score in rows:
             hybrid = hybrid_match_score(
@@ -170,7 +159,7 @@ class RecommendationsRepository(BaseRepository):
                         contract_type=resume.contract_type,
                         computed_experience_level=resume.computed_experience_level,
                         about_me=resume.about_me,
-                        skills_count=skills_count_map.get(resume.id, 0),
+                        skills_count=len(resume_skills_map.get(resume.id, [])),
                         status=resume.status,
                         created_at=resume.created_at,
                         avatar_url=client_avatar_url(profile_avatar, user_id),
