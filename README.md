@@ -86,7 +86,7 @@ APP_PORT=9090
 
 ### 4. Заполнить справочники
 
-После первого запуска добавьте базовые данные через API:
+После первого запуска миграции уже создают базовые города, навыки и роли. При необходимости добавьте свои значения через API:
 
 ```bash
 # Города
@@ -141,20 +141,20 @@ docker exec team_pal_celery_embeddings celery -A src.celery_app:celery_app call 
 
 ### Соискатель (участник команды)
 
-- Регистрация и вход по email и паролю
+- Регистрация и вход по email и паролю; подтверждение email кодом из письма
 - Создание профиля: имя, возраст, город, аватар, контакты (Telegram, GitHub, телефон)
 - До 5 резюме в двух форматах: **коммерческое** (зарплата, тип договора) и **учебное**
 - Добавление навыков из каталога и опыта работы
-- Поиск проектов по навыкам, ролям и ключевым словам
+- Поиск проектов по навыкам, ролям и ключевым словам; вкладка **рекомендованных** вакансий под резюме
 - Отклик на вакансию в проекте
 - Просмотр статусов своих заявок
 - Уведомления о принятии, отклонении и приглашениях
 
 ### Организатор (инициатор проекта)
 
-- Создание проектов в двух форматах: **коммерческий** и **некоммерческий/учебный**
+- Создание проектов в двух форматах: **коммерческий** и **некоммерческий/учебный** (до 10 проектов на аккаунт)
 - До 10 вакансий на проект с описанием роли, навыков и условий
-- Поиск резюме и приглашение кандидатов напрямую
+- Поиск резюме и приглашение кандидатов напрямую; **рекомендованные** резюме под вакансию
 - Просмотр заявок с контактами соискателей
 - Принятие и отклонение заявок
 - Управление участниками: снятие с вакансии
@@ -185,6 +185,168 @@ TeamPal/
 
 ---
 
+## Разработка
+
+### Требования
+
+- **Python 3.11**
+- **Docker** и **Docker Compose** (основной способ поднять БД, Redis, MinIO, API, Celery и nginx)
+- Для тестов локально: зависимости из `backend/requirements.txt`
+
+### Сервисы при `docker compose` (из `infra/`)
+
+| Сервис | Контейнер | Назначение | С хоста |
+|--------|-----------|------------|---------|
+| `nginx` | `team_pal_nginx` | Статика `frontend/`, прокси на API | http://localhost:8080 (`APP_PORT`) |
+| `app` | `team_pal_app` | FastAPI; при старте выполняет `alembic upgrade head` | через nginx → `/docs` |
+| `db` | `team_pal_db` | PostgreSQL 16 + pgvector | `localhost:5433` |
+| `redis` | `team_pal_redis` | Брокер Celery, кэш, коды email | `localhost:6379` |
+| `minio` | — | Аватары (S3) | консоль :9001 |
+| `celery-worker` | `team_pal_celery` | Очередь `celery` — инвалидация кэша справочников | — |
+| `celery-embeddings` | `team_pal_celery_embeddings` | Очередь `embeddings` — пересчёт векторов | — |
+| `celery-beat` | `team_pal_celery_beat` | Расписание (ночной пересчёт stale embeddings) | — |
+
+Перезапуск после правок backend-образа:
+
+```bash
+cd infra
+docker compose -f docker-compose.yml up -d --build app celery-worker celery-embeddings celery-beat
+```
+
+Логи:
+
+```bash
+docker logs team_pal_app -f
+docker logs team_pal_celery_embeddings -f
+```
+
+### Слои backend
+
+Запрос проходит цепочку:
+
+```
+api/          # роутеры FastAPI, зависимости (auth, DBManager)
+  → services/ # бизнес-логика, оркестрация, Redis, email, постановка Celery-задач
+    → repositories/  # доступ к PostgreSQL (CRUD и сложные выборки)
+```
+
+Точка входа: `backend/src/main.py`. Новый эндпоинт: роутер в `api/` → сервис в `services/` → при необходимости метод в `repositories/`.
+
+Документация по модулям (генерируется из docstring):
+
+- [docs/index.md](docs/index.md) — оглавление
+- [docs/services.md](docs/services.md), [docs/repositories.md](docs/repositories.md), [docs/errors.md](docs/errors.md)
+
+### Миграции и справочники
+
+Миграции Alembic лежат в `backend/src/migrations/`. В Docker они применяются при старте контейнера `app`.
+
+Вручную (из каталога `backend/`, нужны переменные окружения из `.env`):
+
+```bash
+cd backend
+alembic -c alembic.ini upgrade head
+```
+
+Миграция `seed_roles_and_skills` заполняет базовые **города, навыки и роли** — шаг с `curl` из быстрого старта нужен только если хотите добавить свои значения.
+
+Создание новой миграции после изменения моделей:
+
+```bash
+cd backend
+alembic -c alembic.ini revision --autogenerate -m "описание"
+```
+
+### Frontend
+
+Статические страницы в `frontend/` (HTML/CSS/JS без сборщика). В Docker каталог монтируется в nginx — после сохранения файла достаточно обновить страницу в браузере.
+
+API вызывается с того же origin (`http://localhost:8080`), cookie `access_token` для авторизации.
+
+### Email в dev
+
+Если в `infra/.env` не заданы `SMTP_USER` / `SMTP_PASSWORD`, код подтверждения выводится в лог контейнера `app` (`[DEV] Код подтверждения...`). Для реальной отправки скопируйте блок SMTP из `infra/.env.example`.
+
+### Celery и рекомендации
+
+- API ставит задачи в Redis (`schedule_catalog_invalidate`, `schedule_embedding_recompute`).
+- Воркеры забирают задачи из очередей `celery` и `embeddings`.
+- Рекомендации в HTTP отдаются из API с кэшем в Redis; embeddings пересчитываются в фоне.
+
+После появления резюме и вакансий для локальной проверки рекомендаций — пересчёт embeddings (см. шаг 5 в разделе «Быстрый старт»).
+
+### Тесты
+
+CI на ветке `main` запускает:
+
+```bash
+pip install -r backend/requirements.txt
+pytest tests/ --tb=short --cov=backend/src --cov-report=term-missing
+```
+
+Локально из **корня репозитория** (интеграционные тесты используют SQLite in-memory, Postgres в Docker не обязателен):
+
+```bash
+python -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r backend/requirements.txt
+pytest tests/ --tb=short
+```
+
+Дополнительные unit-тесты scoring: `pytest backend/tests/`.
+
+### Backend на хосте + инфраструктура в Docker
+
+Удобно для отладки API в IDE без пересборки образа `app`:
+
+1. Поднять только зависимости:
+
+```bash
+cd infra
+docker compose -f docker-compose.yml up -d db redis minio minio-init
+```
+
+2. Скопировать переменные в `.env` в **корне репозитория** (его читает `backend/src/config.py`):
+
+```bash
+cp infra/.env .env
+```
+
+3. В `.env` для доступа с хоста указать:
+
+```env
+DB_HOST=localhost
+DB_PORT=5433
+REDIS_URL=redis://localhost:6379/0
+S3_ENDPOINT_URL=http://localhost:9000
+ALLOWED_ORIGINS=http://localhost:8080
+```
+
+4. Миграции и запуск API:
+
+```bash
+cd backend
+pip install -r requirements.txt
+alembic -c alembic.ini upgrade head
+uvicorn src.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+5. Проверка API: http://127.0.0.1:8000/docs. UI с cookie авторизацией — через полный compose и nginx на `:8080` (см. быстрый старт).
+
+> Обычно достаточно полного `docker compose` и логов `team_pal_app`. Запуск uvicorn на хосте — для отладки backend в IDE.
+
+### Полезные команды
+
+```bash
+# Остановить всё
+cd infra && docker compose -f docker-compose.yml down
+
+# Сбросить данные БД (осторожно)
+cd infra && docker compose -f docker-compose.yml down -v
+```
+
+---
+
 ## Советы пользователям
 
 ### Для организаторов проектов
@@ -207,13 +369,17 @@ TeamPal/
 
 ## Дальнейшее развитие
 
-После успешного MVP планируется:
+Уже в текущей версии:
 
-- **Рекомендательная система** — подбор проектов и участников на основе совпадения навыков и описаний.
-- **Подтверждение email** при регистрации для защиты от фейковых аккаунтов.
-- **Рейтинг и отзывы** участников по завершении проекта.
-- **Расширение каталога** — добавление хакатон-формата и большего числа ролей.
-- **Масштабирование инфраструктуры** под рост числа пользователей.
+- **Рекомендации** — гибридный подбор (семантика embeddings + роли + навыки), кэш в Redis, пересчёт векторов в Celery.
+- **Подтверждение email** — код по SMTP (или вывод в лог API в dev без SMTP).
+
+Планируется дальше:
+
+- **Рейтинг и отзывы** участников после завершения проекта.
+- **Расширение форматов** — отдельный тип «хакатон», больше пресетов ролей и навыков.
+- **Улучшение рекомендаций** — тонкая настройка весов, A/B, обратная связь от пользователей.
+- **Масштабирование** — вынос очередей и воркеров, мониторинг, отдельный кластер БД при росте нагрузки.
 
 ---
 
