@@ -560,6 +560,8 @@
       <div class="user-mail" id="user-mail">Почта загружается</div>
       <button class="side-btn" id="change-password-btn" type="button">Сменить пароль</button>
     </aside>
+    <script src="./assets/tp-profile-cache.js"></script>
+    <script>if (typeof tpProfileCacheApplySidebar === "function") tpProfileCacheApplySidebar();</script>
 
     <section class="card workspace">
       <div class="tabs">
@@ -652,8 +654,7 @@
   (function () {
     const yearSpan = document.getElementById("year");
     if (yearSpan) yearSpan.textContent = " " + new Date().getFullYear();
-
-
+    if (typeof tpProfileCacheApplySidebar === "function") tpProfileCacheApplySidebar();
 
 
     function showToast(message, type = "success", duration = 5000) {
@@ -738,6 +739,9 @@
 
         const user = await response.json();
         if (userMailSpan) userMailSpan.textContent = user.email || "";
+        if (typeof tpProfileCacheSave === "function") {
+          tpProfileCacheSave(personalData, user.email || "");
+        }
         updateUserNameDisplay();
       } catch (error) {
         console.error(error);
@@ -786,7 +790,9 @@
       github: "",
       avatar: ""
     };
-    
+    if (typeof tpProfileCacheMergeInto === "function") tpProfileCacheMergeInto(personalData);
+    if (typeof tpProfileCacheApplySidebar === "function") tpProfileCacheApplySidebar();
+
     const TP_PROJECTS_MAX = 10;
     let myProjectsCount = 0;
     async function refreshMyProjectsCount() {
@@ -841,6 +847,12 @@
                   ? tpMyProfileAvatarSrc(personalData.avatar)
                   : personalData.avatar;
             }
+          }
+          if (typeof tpProfileCacheSave === "function") {
+            tpProfileCacheSave(
+              personalData,
+              userMailSpan ? userMailSpan.textContent : ""
+            );
           }
         } else if (response.status === 404) {
         } else {
@@ -1187,6 +1199,12 @@
         roleToggle.querySelectorAll(".role-toggle__btn").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
         if (role === "Ищу вакансию") {
+          if (typeof tpProfileCacheSave === "function") {
+            tpProfileCacheSave(
+              personalData,
+              userMailSpan ? userMailSpan.textContent : ""
+            );
+          }
           window.location.href = "./employee_resumes.html";
         }
       });
