@@ -1,3 +1,5 @@
+"""Связь вакансия — навыки."""
+
 from sqlalchemy import delete, select
 from src.models.projects import ProjectVacancySkillOrm
 

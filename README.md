@@ -232,10 +232,7 @@ api/          # роутеры FastAPI, зависимости (auth, DBManager)
 
 Точка входа: `backend/src/main.py`. Новый эндпоинт: роутер в `api/` → сервис в `services/` → при необходимости метод в `repositories/`.
 
-Документация по модулям (генерируется из docstring):
-
-- [docs/index.md](docs/index.md) — оглавление
-- [docs/services.md](docs/services.md), [docs/repositories.md](docs/repositories.md), [docs/errors.md](docs/errors.md)
+Документация backend (Markdown, вручную): [docs/index.md](docs/index.md) — сервисы, репозитории, ошибки.
 
 ### Миграции и справочники
 

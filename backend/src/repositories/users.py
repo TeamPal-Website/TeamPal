@@ -1,3 +1,5 @@
+"""Учётные записи пользователей."""
+
 from pydantic import EmailStr
 from sqlalchemy import select
 from src.errors.common import AccessDenied, Unauthorized, UserNotFound

@@ -1,3 +1,5 @@
+"""Ошибки справочника ролей."""
+
 from src.errors.common import Conflict
 
 

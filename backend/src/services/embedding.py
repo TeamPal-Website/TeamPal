@@ -1,3 +1,5 @@
+"""Построение канонического текста резюме/вакансии, расчёт embeddings и постановка задач Celery на пересчёт."""
+
 import hashlib
 
 from src.constants.embeddings import EMBEDDING_MODEL_VERSION

@@ -1,3 +1,5 @@
+"""Ошибки справочника городов."""
+
 from src.errors.common import Conflict
 
 

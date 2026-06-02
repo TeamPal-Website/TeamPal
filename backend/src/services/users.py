@@ -1,3 +1,5 @@
+"""Регистрация, вход, подтверждение email, смена пароля."""
+
 from sqlalchemy.exc import IntegrityError
 
 from src.errors.auth import EmailAlreadyRegistered, WrongCurrentPassword, WrongPassword

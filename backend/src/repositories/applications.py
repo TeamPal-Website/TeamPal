@@ -1,3 +1,5 @@
+"""Запросы к таблице откликов и связанному контексту проекта/вакансии."""
+
 from datetime import datetime
 from sqlalchemy import func, select, update
 from sqlalchemy.orm import aliased

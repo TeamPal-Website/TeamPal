@@ -1,3 +1,5 @@
+"""API рекомендаций: подбор вакансий для резюме и резюме для вакансии с кэшем в Redis."""
+
 import hashlib
 import json
 
@@ -12,12 +14,22 @@ _REC_CACHE_TTL = 600  # 10 минут
 
 
 def _cache_key(prefix: str, entity_id: int, **params) -> str:
+    """Строит ключ Redis с учётом параметров запроса (limit, фильтры).
+
+    :param prefix: ``vacancies`` или ``resumes``.
+    :param entity_id: id резюме или вакансии.
+    :returns: Ключ вида ``tp:rec:{prefix}:{id}:{hash}``.
+    """
     params_str = json.dumps(params, sort_keys=True, default=str)
     params_hash = hashlib.md5(params_str.encode()).hexdigest()[:10]
     return f'tp:rec:{prefix}:{entity_id}:{params_hash}'
 
 
 async def _cache_get(key: str) -> list | None:
+    """Читает закэшированный список рекомендаций из Redis.
+
+    :returns: Список dict или ``None``, если кэша нет или Redis недоступен.
+    """
     r = await get_redis()
     if r is None:
         return None
@@ -26,6 +38,7 @@ async def _cache_get(key: str) -> list | None:
 
 
 async def _cache_set(key: str, items: list) -> None:
+    """Сохраняет список рекомендаций в Redis с TTL 10 минут."""
     r = await get_redis()
     if r is None:
         return
@@ -45,6 +58,8 @@ async def invalidate_recommendation_cache(entity_type: str, entity_id: int) -> N
 
 
 class RecommendationService:
+    """Сервис выдачи рекомендаций с кэшированием и проверкой владения сущностями."""
+
     async def recommend_vacancies_for_resume(
         self,
         db: DBManager,
@@ -56,6 +71,18 @@ class RecommendationService:
         city_id: int | None = None,
         work_format: WorkFormat | None = None,
     ) -> list[RecommendedVacancyItem]:
+        """Рекомендует вакансии для резюме соискателя.
+
+        :param db: Сессия БД.
+        :param user_id: Владелец резюме.
+        :param resume_id: id резюме.
+        :param limit: Максимум результатов.
+        :param role_match_only: Только вакансии с той же ролью.
+        :param city_id: Фильтр по городу.
+        :param work_format: Фильтр по формату работы.
+        :returns: Список вакансий с score и кратким контекстом.
+        :raises ResumeNotFound: Резюме не найдено или чужое.
+        """
         profile = await require_profile(db, user_id)
         resume = await db.resumes.get_one_or_none(id=resume_id, profile_id=profile.id)
         if resume is None:
@@ -93,6 +120,18 @@ class RecommendationService:
         city_id: int | None = None,
         work_format: WorkFormat | None = None,
     ) -> list[RecommendedResumeItem]:
+        """Рекомендует резюме для вакансии организатора.
+
+        :param db: Сессия БД.
+        :param user_id: Владелец проекта.
+        :param vacancy_id: id вакансии.
+        :param limit: Максимум результатов.
+        :param role_match_only: Только резюме с той же ролью.
+        :param city_id: Фильтр по городу.
+        :param work_format: Фильтр по формату работы.
+        :returns: Список резюме с score.
+        :raises VacancyNotFound: Вакансия не найдена.
+        """
         vacancy = await db.project_vacancies.get_one_or_none(id=vacancy_id)
         if vacancy is None:
             raise VacancyNotFound()

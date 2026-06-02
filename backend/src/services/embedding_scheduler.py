@@ -1,3 +1,5 @@
+"""Обёртки для постановки задач пересчёта embeddings в очередь Celery."""
+
 from typing import Literal
 
 from src.celery_app import celery_app

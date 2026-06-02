@@ -1,3 +1,5 @@
+"""Загрузка и удаление аватаров в S3/MinIO."""
+
 import asyncio
 import io
 import uuid

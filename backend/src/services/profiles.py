@@ -1,3 +1,5 @@
+"""Профиль пользователя: просмотр, редактирование, аватар."""
+
 from sqlalchemy.exc import IntegrityError
 
 from src.errors.common import MyProfileNotFound, ProfileNotFound, ValidationError

@@ -1,3 +1,5 @@
+"""Ошибки вакансий проекта."""
+
 from src.errors.common import Conflict
 
 

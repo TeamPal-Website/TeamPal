@@ -1,3 +1,5 @@
+"""Навыки, привязанные к резюме."""
+
 from sqlalchemy import select
 
 from src.models.resumes import ResumeSkillOrm

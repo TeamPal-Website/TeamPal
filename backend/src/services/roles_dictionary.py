@@ -1,3 +1,5 @@
+"""CRUD справочника ролей (должностей)."""
+
 from sqlalchemy.exc import IntegrityError
 
 from src.catalog_cache import cached_json_list, schedule_catalog_invalidate

@@ -1,3 +1,5 @@
+"""Уведомления пользователя в БД."""
+
 from sqlalchemy import select, update
 from src.enums import NotificationEvent
 from src.models.applications import NotificationsOrm

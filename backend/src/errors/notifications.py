@@ -1,3 +1,5 @@
+"""Ошибки уведомлений."""
+
 from src.errors.common import ValidationError
 
 

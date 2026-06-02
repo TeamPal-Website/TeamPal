@@ -1,3 +1,5 @@
+"""Проекты организатора: CRUD, поиск, закрытие, участники, ACL закрытых проектов."""
+
 from src.enums import (
     ApplicationStatus,
     CancelReason,

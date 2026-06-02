@@ -1,3 +1,5 @@
+"""Резюме и поиск по каталогу."""
+
 from datetime import date, timedelta
 from sqlalchemy import func, or_, select, update
 from sqlalchemy.sql import func as sa_func

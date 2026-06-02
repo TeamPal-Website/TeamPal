@@ -1,3 +1,5 @@
+"""Публичный каталог вакансий и карточка вакансии."""
+
 from src.enums import CommitmentLevel, ContractType, EmploymentIntent, ProjectVacancyExperience, WorkFormat
 from src.errors.resumes import SalaryRangeInvalid
 from src.schemas.search_public import RecruitingVacancyOption, VacancySearchItem

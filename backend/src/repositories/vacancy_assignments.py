@@ -1,3 +1,5 @@
+"""Назначения соискателей на вакансии (принятые в команду)."""
+
 from datetime import datetime
 from sqlalchemy import select, update
 from src.models.applications import VacancyAssignmentsOrm

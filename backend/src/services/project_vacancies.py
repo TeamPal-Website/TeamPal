@@ -1,3 +1,5 @@
+"""Вакансии внутри проекта: создание, изменение, удаление."""
+
 from src.errors.common import RoleNotFound, VacancyNotFound
 from src.errors.project_vacancies import (
     VACANCIES_MAX_PER_PROJECT,

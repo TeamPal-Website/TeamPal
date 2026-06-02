@@ -1,3 +1,5 @@
+"""Базовый асинхронный CRUD-репозиторий SQLAlchemy + Pydantic."""
+
 from enum import Enum
 from pydantic import BaseModel
 from sqlalchemy import insert, select, update, delete, func

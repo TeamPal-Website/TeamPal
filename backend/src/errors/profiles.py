@@ -1,3 +1,5 @@
+"""Ошибки профиля."""
+
 from src.errors.common import Conflict, ServiceUnavailable, ValidationError
 
 

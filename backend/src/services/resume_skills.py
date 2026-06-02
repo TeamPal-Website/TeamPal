@@ -1,3 +1,5 @@
+"""Навыки резюме: привязка к справочнику skills."""
+
 from sqlalchemy.exc import IntegrityError
 
 from src.errors.common import ProfileNotFound, ResumeNotFound, ResumeSkillInResumeNotFound, ResumeSkillLinkNotFound

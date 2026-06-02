@@ -1,3 +1,5 @@
+"""Резюме соискателя: CRUD, публикация, публичный поиск."""
+
 from sqlalchemy.exc import IntegrityError
 
 from src.enums import (

@@ -1,3 +1,5 @@
+"""Гибридный score рекомендаций: семантика (embedding), совпадение роли и навыков."""
+
 from src.constants.recommendations import (
     EMBEDDING_SIM_CEIL,
     EMBEDDING_SIM_FLOOR,
@@ -8,6 +10,12 @@ from src.constants.recommendations import (
 
 
 def calibrate_embedding_sim(raw: float) -> float:
+    """Нормализует сырое косинусное сходство embedding в диапазон [0, 1].
+
+    :param raw: Сходство из pgvector (1 - distance).
+    :returns: Откалиброванное значение; ниже FLOOR → 0, выше CEIL → 1.
+    :rtype: float
+    """
     if raw <= EMBEDDING_SIM_FLOOR:
         return 0.0
     if raw >= EMBEDDING_SIM_CEIL:
@@ -16,6 +24,12 @@ def calibrate_embedding_sim(raw: float) -> float:
 
 
 def role_match_score(resume_role_id: int, vacancy_role_id: int) -> float:
+    """Возвращает 1.0 при точном совпадении role_type_id, иначе 0.0.
+
+    :param resume_role_id: Роль из резюме.
+    :param vacancy_role_id: Роль вакансии.
+    :rtype: float
+    """
     return 1.0 if resume_role_id == vacancy_role_id else 0.0
 
 
@@ -38,6 +52,16 @@ def hybrid_match_score(
     resume_skill_ids: set[int],
     vacancy_skill_ids: set[int],
 ) -> float:
+    """Итоговый гибридный score: взвешенная сумма embedding, роли и навыков.
+
+    :param embedding_sim: Сырое семантическое сходство.
+    :param resume_role_id: Роль резюме (может быть None).
+    :param vacancy_role_id: Роль вакансии (может быть None).
+    :param resume_skill_ids: Набор id навыков резюме.
+    :param vacancy_skill_ids: Набор id навыков вакансии.
+    :returns: Число от 0.0 до 1.0.
+    :rtype: float
+    """
     embedding_part = calibrate_embedding_sim(float(embedding_sim))
     role_part = role_match_score(resume_role_id, vacancy_role_id)
     skills_part = skill_overlap_score(resume_skill_ids, vacancy_skill_ids)

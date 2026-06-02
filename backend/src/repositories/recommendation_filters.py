@@ -1,3 +1,5 @@
+"""SQL-фильтры и базовые запросы для ранжирования рекомендаций."""
+
 from sqlalchemy import or_, select
 from sqlalchemy.sql import Select
 

@@ -1,3 +1,5 @@
+"""Общие ошибки: не найдено, доступ запрещён, конфликт."""
+
 from src.errors.base import AppError
 
 

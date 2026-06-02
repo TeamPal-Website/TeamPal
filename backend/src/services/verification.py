@@ -1,3 +1,5 @@
+"""Коды подтверждения email в Redis (TTL 10 минут)."""
+
 import random
 from src.catalog_cache import get_redis
 
@@ -6,6 +8,7 @@ KEY_PREFIX = 'tp:email_verify:'
 
 
 def _key(email: str) -> str:
+    """Ключ Redis для кода подтверждения указанного email."""
     return f'{KEY_PREFIX}{email}'
 
 

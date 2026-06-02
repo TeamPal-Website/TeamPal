@@ -1,3 +1,5 @@
+"""Ошибки проектов и лимитов."""
+
 from src.errors.common import Conflict
 
 

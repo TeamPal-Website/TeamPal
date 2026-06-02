@@ -1,3 +1,5 @@
+"""Опыт работы в резюме: добавление, изменение, удаление."""
+
 from src.errors.common import ExperienceNotFound, ResumeNotFound
 from src.errors.resumes import ResumeLockedInProject
 from src.schemas.resume_experiences import ResumeExperienceAdd, ResumeExperiencePatch, ResumeExperienceRequestAdd

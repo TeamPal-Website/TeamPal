@@ -1,3 +1,5 @@
+"""JWT access-токены и хеширование паролей (Argon2)."""
+
 from datetime import datetime, timezone, timedelta
 import jwt
 from pwdlib import PasswordHash

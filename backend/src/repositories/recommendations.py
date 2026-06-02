@@ -1,3 +1,5 @@
+"""Ранжирование кандидатов по гибридному score после hard filters."""
+
 from src.constants.recommendations import RECOMMENDATION_CANDIDATE_MAX, RECOMMENDATION_CANDIDATE_MULTIPLIER
 from src.enums import WorkFormat
 from src.models.embeddings import ResumeEmbeddingOrm, VacancyEmbeddingOrm

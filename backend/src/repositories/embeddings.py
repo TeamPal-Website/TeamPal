@@ -1,3 +1,5 @@
+"""Чтение и запись векторных представлений резюме и вакансий."""
+
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 

@@ -1,3 +1,5 @@
+"""Общие проверки доступа: профиль, проект, роль, навык, город, видимость закрытых проектов."""
+
 from src.utils.db_manager import DBManager
 from src.errors.common import (
     CityNotFound,

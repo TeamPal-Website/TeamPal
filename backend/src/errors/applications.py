@@ -1,3 +1,5 @@
+"""HTTP-ошибки модуля откликов и приглашений."""
+
 from src.errors.common import BadRequest, Conflict
 
 

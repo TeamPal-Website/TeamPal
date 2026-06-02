@@ -1,3 +1,5 @@
+"""In-app уведомления: список, счётчик непрочитанных, пометка прочитанным."""
+
 from src.errors.notifications import NotificationsMarkReadInvalid
 from src.schemas.notifications import NotificationsMarkRead, UnreadCount
 from src.utils.db_manager import DBManager

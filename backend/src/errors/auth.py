@@ -1,3 +1,5 @@
+"""Ошибки регистрации и аутентификации."""
+
 from src.errors.common import Conflict, Unauthorized
 
 
