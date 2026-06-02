@@ -6,6 +6,7 @@
   <title>Карточка проекта | TeamPal</title>
   <link rel="icon" type="image/png" href="./assets/logo.png">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/recommendations.css">
   <style>
     :root {
       --bg: #f7f5f2;
@@ -473,6 +474,7 @@
 </div>
 
 <script src="./config.js"></script>
+<script src="./assets/recommendations.js"></script>
 <script src="./assets/notify-bell.js"></script>
 <script>
   (function () {
@@ -823,6 +825,32 @@
       } catch (_) { return {}; }
     }
 
+    async function loadOwnerVacancyRecommendations(vacancies) {
+      if (typeof tpFetchRecommendedResumes !== "function") return;
+      const open = (Array.isArray(vacancies) ? vacancies : []).filter((v) => {
+        const users = extractUsers(v);
+        const occ = v.occupant;
+        const isTaken = users.length > 0 || v.is_filled === true || v.status === "filled" || v.status === "closed";
+        return !isTaken && v.id != null;
+      });
+      await Promise.all(
+        open.map(async (v) => {
+          const listEl = document.querySelector('[data-rec-vacancy-list="' + String(v.id) + '"]');
+          if (!listEl) return;
+          try {
+            const list = await tpFetchRecommendedResumes(v.id, { limit: 5 });
+            tpRenderRecommendedResumeCards(list, listEl, { vacancyId: v.id });
+          } catch (e) {
+            if (e && e.code === 401) {
+              listEl.innerHTML = '<div class="rec-empty">Войдите как организатор проекта.</div>';
+              return;
+            }
+            listEl.innerHTML = '<div class="rec-empty">Рекомендации временно недоступны.</div>';
+          }
+        })
+      );
+    }
+
     async function loadData() {
       const params = new URLSearchParams(window.location.search);
       const id = params.get("id") || params.get("project");
@@ -1038,12 +1066,14 @@
               ${aboutBlock}
               ${removeBtn}
               ${applyBtnVac}
+              ${isOwner && !isTaken ? `<div class="rec-resumes-block" data-rec-vacancy-block="${esc(String(v.id))}"><h4>Рекомендуемые кандидаты</h4><div data-rec-vacancy-list="${esc(String(v.id))}"><div class="rec-loading">Загрузка…</div></div></div>` : ""}
             </article>
           `;
         }).join("");
 
         fillSummary(occupiedSlots);
         document.getElementById("team-progress").textContent = "В проекте: " + occupiedSlots + "/" + totalSlots;
+        if (isOwner) loadOwnerVacancyRecommendations(vacancies);
       } catch (e) {
         document.getElementById("project-sub").textContent = "Ошибка загрузки проекта";
         document.getElementById("vacancies-list").innerHTML = '<div class="empty">Не удалось загрузить данные. Проверьте доступ или попробуйте позже.</div>';

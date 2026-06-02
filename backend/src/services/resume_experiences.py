@@ -5,6 +5,7 @@ from src.errors.resumes import ResumeLockedInProject
 from src.schemas.resume_experiences import ResumeExperienceAdd, ResumeExperiencePatch, ResumeExperienceRequestAdd
 from src.services.common import require_active_role, require_profile
 from src.services.resumes import raise_if_resume_locked_for_editing
+from src.services.embedding import schedule_embedding_recompute
 from src.utils.db_manager import DBManager
 
 
@@ -115,6 +116,7 @@ class ResumeExperienceService:
         experience = await db.resume_experiences.add(to_add)
         await db.resumes.recompute_experience_level(resume_id)
         await db.commit()
+        schedule_embedding_recompute('resume', resume_id)
         return {'status': 'OK', 'data': experience}
 
     async def update_resume_experience(
@@ -168,6 +170,7 @@ class ResumeExperienceService:
             raise ExperienceNotFound()
         await db.resumes.recompute_experience_level(resume_id)
         await db.commit()
+        schedule_embedding_recompute('resume', resume_id)
         return {'status': 'OK'}
 
     async def delete_resume_experience(
@@ -208,4 +211,5 @@ class ResumeExperienceService:
         await db.resume_experiences.delete(id=experience_id)
         await db.resumes.recompute_experience_level(resume_id)
         await db.commit()
+        schedule_embedding_recompute('resume', resume_id)
         return {'status': 'OK'}

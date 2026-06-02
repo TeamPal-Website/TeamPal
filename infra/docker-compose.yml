@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:16-alpine
+    image: pgvector/pgvector:pg16
     container_name: team_pal_db
     environment:
       POSTGRES_DB: ${DB_NAME}
@@ -105,10 +105,56 @@ services:
       dockerfile: infra/Dockerfile
     container_name: team_pal_celery
     working_dir: /app/backend
-    command: ["sh", "-c", "celery -A src.celery_app:celery_app worker --loglevel=info"]
+    command: ["sh", "-c", "celery -A src.celery_app:celery_app worker --loglevel=info -Q celery"]
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      DB_NAME: ${DB_NAME}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_ALGORITHM: ${JWT_ALGORITHM}
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: ${JWT_ACCESS_TOKEN_EXPIRE_MINUTES}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+      REDIS_URL: redis://redis:6379/0
+
+  celery-embeddings:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    container_name: team_pal_celery_embeddings
+    working_dir: /app/backend
+    command: ["sh", "-c", "celery -A src.celery_app:celery_app worker --loglevel=info -Q embeddings -c 1"]
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      DB_NAME: ${DB_NAME}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_ALGORITHM: ${JWT_ALGORITHM}
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: ${JWT_ACCESS_TOKEN_EXPIRE_MINUTES}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+      REDIS_URL: redis://redis:6379/0
+
+  celery-beat:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    container_name: team_pal_celery_beat
+    working_dir: /app/backend
+    command: ["sh", "-c", "celery -A src.celery_app:celery_app beat --loglevel=info"]
+    depends_on:
       redis:
         condition: service_healthy
     environment:

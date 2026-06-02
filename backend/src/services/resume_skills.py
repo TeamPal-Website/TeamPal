@@ -7,6 +7,7 @@ from src.errors.resumes import ResumeLockedInProject, ResumeSkillAlreadyAdded
 from src.schemas.resume_skills import ResumeSkillAdd, ResumeSkillCreate, ResumeSkillPatch
 from src.services.common import require_profile, require_skill
 from src.services.resumes import raise_if_resume_locked_for_editing
+from src.services.embedding import schedule_embedding_recompute
 from src.utils.db_manager import DBManager
 
 
@@ -72,6 +73,7 @@ class ResumeSkillService:
             await db.commit()
         except IntegrityError:
             raise ResumeSkillAlreadyAdded()
+        schedule_embedding_recompute('resume', resume_id)
         return {'status': 'OK', 'data': res}
 
     async def update_resume_skill(
@@ -123,6 +125,7 @@ class ResumeSkillService:
             await db.commit()
         except IntegrityError:
             raise ResumeSkillAlreadyAdded()
+        schedule_embedding_recompute('resume', resume.id)
         return {'status': 'OK'}
 
     async def delete_resume_skill(self, db: DBManager, user_id: int, resume_skill_id: int):
@@ -154,4 +157,5 @@ class ResumeSkillService:
         raise_if_resume_locked_for_editing(resume)
         await db.resume_skills.delete(id=resume_skill_id)
         await db.commit()
+        schedule_embedding_recompute('resume', resume.id)
         return {'status': 'OK'}

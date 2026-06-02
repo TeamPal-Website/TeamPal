@@ -126,3 +126,7 @@ wcwidth==0.2.13
 websockets==16.0
 yarl==1.22.0
 aiosmtplib==3.0.2
+numpy==2.2.6
+pgvector==0.4.1
+sentence-transformers==4.1.0
+torch==2.7.1

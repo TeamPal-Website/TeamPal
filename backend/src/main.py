@@ -21,6 +21,7 @@ from src.api.roles_dictionary import router as router_roles_dictionary
 from src.api.applications import router as router_applications
 from src.api.vacancies import router as router_vacancies
 from src.api.notifications import router as router_notifications
+from src.api.recommendations import router as router_recommendations
 from src.catalog_cache import close_redis
 from src.config import settings
 
@@ -51,6 +52,7 @@ app.include_router(router_roles_dictionary)
 app.include_router(router_applications)
 app.include_router(router_vacancies)
 app.include_router(router_notifications)
+app.include_router(router_recommendations)
 
 _frontend_dir = Path(__file__).resolve().parent.parent.parent / 'frontend'
 if _frontend_dir.is_dir():
