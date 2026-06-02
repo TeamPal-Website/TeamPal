@@ -93,6 +93,24 @@ curl -X POST http://localhost:8080/roles_dictionary -H "Content-Type: applicatio
 curl -X POST http://localhost:8080/roles_dictionary -H "Content-Type: application/json" -d '{"name":"UI/UX-дизайнер"}'
 ```
 
+### 5. Пересчитать эмбеддинги для рекомендаций
+
+После добавления резюме и вакансий запустите пересчёт векторных представлений (первый запуск загружает модель ~300 МБ, занимает 1–2 минуты):
+
+```bash
+docker exec team_pal_app python -c "
+from src.tasks.embeddings import recompute_all_embeddings
+recompute_all_embeddings.apply_async(queue='embeddings')
+print('Задача поставлена в очередь')
+"
+```
+
+Прогресс можно отслеживать:
+
+```bash
+docker logs team_pal_celery_embeddings -f
+```
+
 ---
 
 ## Функции по ролям
