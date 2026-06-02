@@ -8,6 +8,7 @@ WORKDIR /app/backend
 COPY ./backend/requirements.txt /app/backend/requirements.txt
 
 RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir torch==2.7.1 --index-url https://download.pytorch.org/whl/cpu && \
     pip install --no-cache-dir -r /app/backend/requirements.txt
 
 COPY backend /app/backend
