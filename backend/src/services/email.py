@@ -9,7 +9,6 @@ from src.config import settings
 async def send_verification_email(to_email: str, code: str) -> None:
     """Отправить письмо с кодом подтверждения."""
     if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
-        # В dev-режиме просто печатаем код в консоль
         print(f'[DEV] Код подтверждения для {to_email}: {code}')
         return
 

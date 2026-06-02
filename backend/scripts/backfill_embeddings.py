@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-"""Первичный backfill embeddings (запускать из /app/backend в Docker или локально)."""
-
 import sys
 from pathlib import Path
 

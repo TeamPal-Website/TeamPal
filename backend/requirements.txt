@@ -129,4 +129,3 @@ aiosmtplib==3.0.2
 numpy==2.2.6
 pgvector==0.4.1
 sentence-transformers==4.1.0
-# torch устанавливается отдельно в Dockerfile с CPU-индексом (без CUDA ~300MB вместо ~3GB)

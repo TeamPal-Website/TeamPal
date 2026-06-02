@@ -10,7 +10,7 @@ from src.schemas.recommendations import RecommendedResumeItem, RecommendedVacanc
 from src.services.common import require_owned_project, require_profile
 from src.utils.db_manager import DBManager
 
-_REC_CACHE_TTL = 600  # 10 минут
+_REC_CACHE_TTL = 600
 
 
 def _cache_key(prefix: str, entity_id: int, **params) -> str:

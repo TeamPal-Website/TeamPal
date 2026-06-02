@@ -149,7 +149,7 @@ class ProjectService:
         :rtype: list
         :raises ProfileNotFound: Если у пользователя нет профиля.
         """
-        await require_profile(db, user_id)  # гарантирует наличие профиля
+        await require_profile(db, user_id)
         return await db.projects.closed_participations_for_user(user_id)
 
     async def search_projects(

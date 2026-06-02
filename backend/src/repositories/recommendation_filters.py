@@ -118,7 +118,6 @@ def resume_recommendation_filters(
     if work_format is not None:
         filters.append(ResumesOrm.work_format == work_format)
     elif vacancy.work_format == WorkFormat.OFFICE:
-        # Офисная вакансия — не показываем удалённых кандидатов
         filters.append(
             or_(
                 ResumesOrm.work_format != WorkFormat.REMOTE,

@@ -3,7 +3,7 @@
 import random
 from src.catalog_cache import get_redis
 
-CODE_TTL = 600  # 10 минут
+CODE_TTL = 600
 KEY_PREFIX = 'tp:email_verify:'
 
 

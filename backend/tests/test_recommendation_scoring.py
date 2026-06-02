@@ -7,10 +7,6 @@ from src.services.recommendation_scoring import (
 from src.constants.recommendations import EMBEDDING_SIM_FLOOR, EMBEDDING_SIM_CEIL
 
 
-# ---------------------------------------------------------------------------
-# calibrate_embedding_sim
-# ---------------------------------------------------------------------------
-
 def test_calibrate_below_floor():
     assert calibrate_embedding_sim(EMBEDDING_SIM_FLOOR - 0.01) == 0.0
 
@@ -26,12 +22,8 @@ def test_calibrate_at_ceil():
 def test_calibrate_midpoint():
     mid = (EMBEDDING_SIM_FLOOR + EMBEDDING_SIM_CEIL) / 2
     score = calibrate_embedding_sim(mid)
-    assert 0.45 < score < 0.55  # близко к 0.5
+    assert 0.45 < score < 0.55
 
-
-# ---------------------------------------------------------------------------
-# role_match_score
-# ---------------------------------------------------------------------------
 
 def test_role_match_same():
     assert role_match_score(1, 1) == 1.0
@@ -40,13 +32,7 @@ def test_role_match_different():
     assert role_match_score(1, 2) == 0.0
 
 
-
-# ---------------------------------------------------------------------------
-# skill_overlap_score (recall)
-# ---------------------------------------------------------------------------
-
 def test_skills_full_coverage():
-    # Резюме покрывает все навыки вакансии → 1.0
     assert skill_overlap_score({1, 2, 3, 4, 5}, {1, 2, 3}) == 1.0
 
 def test_skills_partial_coverage():
@@ -58,16 +44,10 @@ def test_skills_no_overlap():
 
 
 def test_skills_broad_resume_scores_well():
-    # Широкий профиль (30 навыков) vs вакансия (5 навыков) — все покрыты → 1.0
-    # Jaccard дал бы 5/30=0.17, recall даёт 1.0
     big_resume = set(range(30))
     vacancy = {0, 1, 2, 3, 4}
     assert skill_overlap_score(big_resume, vacancy) == 1.0
 
-
-# ---------------------------------------------------------------------------
-# hybrid_match_score
-# ---------------------------------------------------------------------------
 
 def test_role_mismatch_lowers_score():
     matched = hybrid_match_score(

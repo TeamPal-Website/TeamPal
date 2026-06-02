@@ -13,12 +13,10 @@ depends_on = None
 
 
 def upgrade() -> None:
-    # HNSW индекс на resume_embeddings — заменяет полный перебор O(n) на ANN-поиск
     op.execute(
         'CREATE INDEX IF NOT EXISTS resume_embeddings_embedding_hnsw '
         'ON resume_embeddings USING hnsw (embedding vector_cosine_ops)'
     )
-    # HNSW индекс на vacancy_embeddings
     op.execute(
         'CREATE INDEX IF NOT EXISTS vacancy_embeddings_embedding_hnsw '
         'ON vacancy_embeddings USING hnsw (embedding vector_cosine_ops)'
