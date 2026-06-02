@@ -9,7 +9,7 @@ class EmailAlreadyRegistered(Conflict):
     HTTP status: 409.
     """
 
-    detail = 'Пользователь с таким email уже существует'
+    detail = 'Пользователь с такой почтой уже существует'
 
 
 class WrongPassword(Unauthorized):

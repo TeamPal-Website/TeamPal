@@ -125,3 +125,4 @@ watchfiles==1.1.1
 wcwidth==0.2.13
 websockets==16.0
 yarl==1.22.0
+aiosmtplib==3.0.2

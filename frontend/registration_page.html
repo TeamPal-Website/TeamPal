@@ -226,9 +226,9 @@ button {
     background-color: #e64e00;
 }
 
-.login_button:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
+.consent-checkbox input[type="checkbox"].error {
+    outline: 2px solid #dc2626;
+    outline-offset: 1px;
 }
 
 @media (max-width: 768px) {
@@ -242,7 +242,7 @@ button {
 <body class="page">
     <div class="notification-container" id="notificationContainer"></div>
     
-    <form class="form" id="registerForm" action="" method="post">
+    <form class="form" id="registerForm" action="" method="post" novalidate>
         <div class="wrapper">
             <h1 class="title">TeamPal</h1>
             
@@ -253,7 +253,7 @@ button {
             
             <p class="subtitle">Введите ваши данные для регистрации</p>
             <div class="login_wrapper">
-                <label for="email">Логин</label>
+                <label for="email">Почта</label>
                 <div class="login_input">
                     <input type="email" id="email" name="email" placeholder="Введите почту" required>
                 </div>
@@ -282,6 +282,21 @@ button {
         </div>
     </form>
 
+    <div class="form" id="verifyForm" style="display:none;">
+        <div class="wrapper">
+            <h1 class="title">TeamPal</h1>
+            <p class="subtitle">Введите код, отправленный на вашу почту</p>
+            <div class="login_wrapper">
+                <label for="verifyCode">Код подтверждения</label>
+                <div class="login_input">
+                    <input type="text" id="verifyCode" placeholder="6-значный код" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
+                </div>
+            </div>
+            <button class="login_button" type="button" id="verifyBtn">Подтвердить</button>
+            <button class="login_button" type="button" id="resendBtn" style="margin-top:8px; background: transparent; color: #b5b5b5; border: 1px solid #b5b5b5; cursor: not-allowed;">Отправить повторно через 60 с</button>
+        </div>
+    </div>
+
     <script src="./config.js"></script>
     <script src="./assets/notify-banner.js"></script>
     <script>
@@ -303,8 +318,6 @@ button {
                 return './account_manager.html';
             }
             
-            submitBtn.disabled = true;
-
             function isNetworkError(error) {
                 const msg = error && error.message ? error.message : String(error);
                 return (
@@ -318,7 +331,7 @@ button {
             function validateEmail(email) {
                 const emailRegex = /^[^\s@]+@([^\s@]+\.)+[^\s@]+$/;
                 if (!email) return 'Поле почты обязательно для заполнения';
-                if (!emailRegex.test(email)) return 'Введите корректный email адрес';
+                if (!emailRegex.test(email)) return 'Введите корректный адрес почты';
                 return null;
             }
 
@@ -439,9 +452,9 @@ button {
             });
             
             consentCheckbox.addEventListener('change', function() {
-                submitBtn.disabled = !this.checked;
+                if (this.checked) this.classList.remove('error');
             });
-            
+
             const loginTab = document.getElementById('loginTab');
             const registerTab = document.getElementById('registerTab');
             
@@ -454,89 +467,150 @@ button {
                 e.preventDefault();
             });
             
+            let registeredEmail = '';
+
             registerForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
-                
+
                 const validation = validateForm();
                 if (!validation.isValid) {
                     showNotification(validation.error, 'error');
                     return;
                 }
-                
+
                 if (!consentCheckbox.checked) {
+                    consentCheckbox.classList.add('error');
                     showNotification('Подтвердите согласие на обработку персональных данных', 'warning');
                     return;
                 }
-                
+                consentCheckbox.classList.remove('error');
+
                 submitBtn.disabled = true;
-                
+
                 try {
                     const baseUrl = typeof window !== "undefined" && window.API_BASE_URL ? window.API_BASE_URL : (typeof API_BASE_URL !== "undefined" ? API_BASE_URL : undefined);
                     if (!baseUrl) {
-                        showNotification('Ошибка конфигурации: API_BASE_URL не определен. Откройте сайт через сервер TeamPal и проверьте ./config.js.', 'error');
-                        submitBtn.disabled = !consentCheckbox.checked;
+                        showNotification('Ошибка конфигурации: API_BASE_URL не определен.', 'error');
+                        submitBtn.disabled = false;
                         return;
                     }
 
-                    const email = emailInput.value.trim();
+                    registeredEmail = emailInput.value.trim();
                     const password = passwordInput.value;
 
                     const registerResponse = await fetch(baseUrl + '/auth/register', {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
+                        headers: { 'Content-Type': 'application/json' },
                         credentials: 'include',
-                        body: JSON.stringify({
-                            email: email,
-                            password: password,
-                        }),
+                        body: JSON.stringify({ email: registeredEmail, password }),
                     });
-                    
+
                     if (!registerResponse.ok) {
                         const errorText = await getErrorText(registerResponse);
                         showNotification(errorText, 'error');
-                        submitBtn.disabled = !consentCheckbox.checked;
+                        submitBtn.disabled = false;
                         return;
                     }
-                    
-                    showNotification('Регистрация успешна. Выполняется вход...', 'success', 3000);
-                    
-                    const loginResponse = await fetch(baseUrl + '/auth/login', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        credentials: 'include',
-                        body: JSON.stringify({
-                            email: email,
-                            password: password,
-                        }),
-                    });
-                    
-                    if (!loginResponse.ok) {
-                        showNotification('Регистрация успешна. Пожалуйста, войдите в систему.', 'success', 4000);
-                        setTimeout(() => {
-                            window.location.href = './authorization_page.html';
-                        }, 1500);
-                        return;
-                    }
-                    
-                    setTimeout(() => {
-                        window.location.href = accountPageUrl();
-                    }, 1000);
-                    
+
+                    // Показываем форму ввода кода
+                    registerForm.style.display = 'none';
+                    document.getElementById('verifyForm').style.display = 'flex';
+                    showNotification('Код отправлен на ' + registeredEmail, 'success', 4000);
+                    startResendCooldown(60);
+
                 } catch (error) {
                     console.error('Registration error:', error);
                     if (isNetworkError(error)) {
-                        showNotification('Не удалось подключиться к серверу. Проверьте, что бэкенд запущен.', 'error');
+                        showNotification('Не удалось подключиться к серверу.', 'error');
                     } else {
                         showNotification('Не удалось выполнить регистрацию. Попробуйте позже.', 'error');
                     }
-                } finally {
-                    setTimeout(() => {
-                        submitBtn.disabled = !consentCheckbox.checked;
-                    }, 500);
+                    submitBtn.disabled = false;
+                }
+            });
+
+            // Подтверждение кода
+            document.getElementById('verifyBtn').addEventListener('click', async function() {
+                const code = document.getElementById('verifyCode').value.trim();
+                if (code.length !== 6) {
+                    showNotification('Введите 6-значный код', 'error');
+                    return;
+                }
+
+                this.disabled = true;
+
+                try {
+                    const baseUrl = window.API_BASE_URL || API_BASE_URL;
+                    const res = await fetch(baseUrl + '/auth/verify-email', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ email: registeredEmail, code }),
+                    });
+
+                    if (!res.ok) {
+                        const errorText = await getErrorText(res);
+                        showNotification(errorText, 'error');
+                        this.disabled = false;
+                        return;
+                    }
+
+                    showNotification('Почта подтверждена! Выполняется вход...', 'success', 2000);
+                    setTimeout(() => { window.location.href = accountPageUrl(); }, 1500);
+
+                } catch (error) {
+                    showNotification('Ошибка. Попробуйте ещё раз.', 'error');
+                    this.disabled = false;
+                }
+            });
+
+            // Кулдаун на повторную отправку кода
+            const resendBtn = document.getElementById('resendBtn');
+            let resendCooldownTimer = null;
+
+            function startResendCooldown(seconds) {
+                if (resendCooldownTimer) clearInterval(resendCooldownTimer);
+                let remaining = seconds;
+                resendBtn.disabled = true;
+                resendBtn.style.color = '#b5b5b5';
+                resendBtn.style.borderColor = '#b5b5b5';
+                resendBtn.style.cursor = 'not-allowed';
+                resendBtn.textContent = 'Отправить повторно через ' + remaining + ' с';
+
+                resendCooldownTimer = setInterval(function() {
+                    remaining--;
+                    if (remaining <= 0) {
+                        clearInterval(resendCooldownTimer);
+                        resendCooldownTimer = null;
+                        resendBtn.disabled = false;
+                        resendBtn.style.color = '#F85A0B';
+                        resendBtn.style.borderColor = '#F85A0B';
+                        resendBtn.style.cursor = 'pointer';
+                        resendBtn.textContent = 'Отправить код повторно';
+                    } else {
+                        resendBtn.textContent = 'Отправить повторно через ' + remaining + ' с';
+                    }
+                }, 1000);
+            }
+
+            // Повторная отправка кода
+            resendBtn.addEventListener('click', async function() {
+                if (resendBtn.disabled) return;
+                try {
+                    const baseUrl = window.API_BASE_URL || API_BASE_URL;
+                    const res = await fetch(baseUrl + '/auth/resend-code?email=' + encodeURIComponent(registeredEmail), {
+                        method: 'POST',
+                        credentials: 'include',
+                    });
+                    if (res.ok) {
+                        showNotification('Новый код отправлен на ' + registeredEmail, 'success', 3000);
+                        startResendCooldown(60);
+                    } else {
+                        const errorText = await getErrorText(res);
+                        showNotification(errorText, 'error');
+                    }
+                } catch (e) {
+                    showNotification('Ошибка соединения.', 'error');
                 }
             });
         });
