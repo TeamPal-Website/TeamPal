@@ -61,21 +61,24 @@ openssl rand -hex 32
 
 ### 3. Запустить
 
-> **Важно:** в репозитории есть `docker-compose.override.yml` для продакшена (HTTPS, порт 80). При локальной разработке его нужно исключить явным флагом `-f`, иначе `APP_PORT` из `.env` игнорируется.
+> **Локальная разработка:** в репозитории есть `docker-compose.override.yml` для продакшена (порт 80, HTTPS). При локальной разработке его нужно исключить флагом `-f`, иначе `APP_PORT` из `.env` игнорируется.
 
 ```bash
+# Локально (порт из APP_PORT в .env, по умолчанию 8080)
 docker compose -f docker-compose.yml up -d --build
+
+# На сервере (override.yml подхватывается автоматически, порт 80)
+docker compose up -d --build
 ```
 
 После запуска доступны:
 
-| Сервис | Адрес |
-|---|---|
-| Веб-интерфейс | http://localhost:8080 |
-| API документация (Swagger) | http://localhost:8080/docs |
-| MinIO Console | http://localhost:9001 |
+| Режим | Веб-интерфейс | API docs | MinIO |
+|---|---|---|---|
+| Локально | http://localhost:8080 | http://localhost:8080/docs | http://localhost:9001 |
+| Сервер | http://localhost | http://localhost/docs | http://localhost:9001 |
 
-Если нужен другой порт — поменяй `APP_PORT` в `.env`:
+Если нужен другой порт при локальной разработке — поменяй `APP_PORT` в `.env`:
 
 ```env
 APP_PORT=9090
@@ -103,20 +106,33 @@ curl -X POST http://localhost:8080/roles_dictionary -H "Content-Type: applicatio
 
 ### 5. Пересчитать эмбеддинги для рекомендаций
 
-После добавления резюме и вакансий запустите пересчёт векторных представлений (первый запуск загружает модель ~300 МБ, занимает 1–2 минуты):
+После добавления резюме и вакансий запустите пересчёт. При первом запуске воркер скачает модель (~300 МБ) с HuggingFace — это занимает 1–2 минуты:
 
 ```bash
-docker exec team_pal_app python -c "
-from src.tasks.embeddings import recompute_all_embeddings
-recompute_all_embeddings.apply_async(queue='embeddings')
-print('Задача поставлена в очередь')
-"
+docker exec team_pal_celery_embeddings celery -A src.celery_app:celery_app call \
+  src.tasks.embeddings.recompute_all_embeddings --queue=embeddings
 ```
 
-Прогресс можно отслеживать:
+Прогресс:
 
 ```bash
 docker logs team_pal_celery_embeddings -f
+```
+
+**Если модель не скачивается** (ошибка сети или повреждённый кэш):
+
+```bash
+# Проверить доступность HuggingFace
+docker exec team_pal_celery_embeddings python -c \
+  "import urllib.request; print(urllib.request.urlopen('https://huggingface.co', timeout=10).status)"
+
+# Очистить кэш и перезапустить воркер
+docker exec team_pal_celery_embeddings rm -rf /root/.cache/huggingface/hub/models--intfloat--multilingual-e5-small
+docker compose restart celery-embeddings
+
+# Повторить пересчёт
+docker exec team_pal_celery_embeddings celery -A src.celery_app:celery_app call \
+  src.tasks.embeddings.recompute_all_embeddings --queue=embeddings
 ```
 
 ---
