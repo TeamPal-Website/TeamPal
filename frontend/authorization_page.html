@@ -209,7 +209,7 @@ button {
 <body class="page">
     <div class="notification-container" id="notificationContainer"></div>
     
-    <form class="form" id="loginForm" action="" method="post">
+    <form class="form" id="loginForm" action="" method="post" novalidate>
         <div class="wrapper">
             <h1 class="title">TeamPal</h1>
             
@@ -220,15 +220,15 @@ button {
             
             <p class="subtitle">Введите ваши данные для входа в систему</p>
             <div class="login_wrapper">
-                <label for="email">Email</label>
+                <label for="email">Почта</label>
                 <div class="login_input">
-                    <input type="email" id="email" name="email" placeholder="Введите ваш email" required>
+                    <input type="email" id="email" name="email" placeholder="Введите почту">
                 </div>
             </div>
             <div class="password_wrapper">
                 <label for="password">Пароль</label>
                 <div class="password_input">
-                    <input type="password" id="password" name="password" placeholder="Введите ваш пароль" required>
+                    <input type="password" id="password" name="password" placeholder="Введите ваш пароль">
                 </div>
             </div>
             <button class="login_button" id="submitBtn" type="submit">Войти</button>
@@ -268,8 +268,8 @@ button {
 
             function validateEmail(email) {
                 const emailRegex = /^[^\s@]+@([^\s@]+\.)+[^\s@]+$/;
-                if (!email) return 'Поле email обязательно для заполнения';
-                if (!emailRegex.test(email)) return 'Введите корректный email адрес';
+                if (!email) return 'Поле почты обязательно для заполнения';
+                if (!emailRegex.test(email)) return 'Введите корректный адрес почты';
                 return null;
             }
 

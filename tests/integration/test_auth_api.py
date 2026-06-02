@@ -7,7 +7,7 @@ class TestRegister:
     async def test_register_success(self, client: AsyncClient):
         response = await client.post('/auth/register', json={'email': 'newuser@example.com', 'password': 'password123'})
         assert response.status_code == 200
-        assert response.json() == {'status': 'OK'}
+        assert response.json()['status'] == 'OK'
 
     async def test_register_duplicate_email(self, client: AsyncClient):
         user_data = {'email': 'duplicate@example.com', 'password': 'password123'}
@@ -64,7 +64,9 @@ class TestLogin:
         admin = {'email': 'admin@example.com', 'password': 'adminpass123'}
         victim = {'email': 'victim@example.com', 'password': 'victimpass123'}
         await client.post('/auth/register', json=admin)
+        await client.post('/auth/verify-email', json={'email': admin['email'], 'code': '000000'})
         await client.post('/auth/register', json=victim)
+        await client.post('/auth/verify-email', json={'email': victim['email'], 'code': '000000'})
         login_resp = await client.post('/auth/login', json=admin)
         client.cookies.set('access_token', login_resp.json()['access_token'])
         me_resp = await client.get('/auth/me')

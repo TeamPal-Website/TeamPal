@@ -1,4 +1,4 @@
-"""CRUD-операции со справочником навыков с кешированием ответов."""
+"""CRUD справочника навыков."""
 
 from sqlalchemy.exc import IntegrityError
 

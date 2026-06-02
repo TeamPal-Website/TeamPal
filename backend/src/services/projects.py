@@ -1,4 +1,4 @@
-"""CRUD проектов, поиск, жизненный цикл и управление участниками."""
+"""Проекты организатора: CRUD, поиск, закрытие, участники, ACL закрытых проектов."""
 
 from src.enums import (
     ApplicationStatus,
@@ -30,8 +30,9 @@ from src.services.common import (
     require_role,
     require_skills,
 )
+from src.services.embedding_scheduler import schedule_embedding_recompute, schedule_vacancy_embeddings_for_project
 from src.utils.db_manager import DBManager
-from src.utils.profile_completeness import profile_incomplete_message
+from src.services.profile_completeness import profile_incomplete_message
 
 
 class ProjectService:
@@ -148,7 +149,7 @@ class ProjectService:
         :rtype: list
         :raises ProfileNotFound: Если у пользователя нет профиля.
         """
-        profile = await require_profile(db, user_id)
+        await require_profile(db, user_id)
         return await db.projects.closed_participations_for_user(user_id)
 
     async def search_projects(
@@ -270,6 +271,8 @@ class ProjectService:
             await db.project_vacancy_skills.replace_for_vacancy(vacancy.id, skill_ids)
             vacancies.append(vacancy)
         await db.commit()
+        for vacancy in vacancies:
+            schedule_embedding_recompute('vacancy', vacancy.id)
         return {'status': 'OK', 'data': {'project': project, 'vacancies': vacancies}}
 
     async def update_project(
@@ -335,6 +338,9 @@ class ProjectService:
         if res == 0:
             raise ProjectNotFound()
         await db.commit()
+        embedding_fields = {'title', 'description', 'tasks', 'company_name', 'employment_intent'}
+        if embedding_fields & set(payload.keys()):
+            schedule_vacancy_embeddings_for_project(project_id)
         return {'status': 'OK'}
 
     async def close_project(self, db: DBManager, user_id: int, project_id: int):

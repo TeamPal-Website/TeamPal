@@ -1,4 +1,4 @@
-"""Получение уведомлений пользователя и управление статусом прочтения."""
+"""In-app уведомления: список, счётчик непрочитанных, пометка прочитанным."""
 
 from src.errors.notifications import NotificationsMarkReadInvalid
 from src.schemas.notifications import NotificationsMarkRead, UnreadCount

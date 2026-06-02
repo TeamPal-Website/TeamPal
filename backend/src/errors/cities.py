@@ -1,6 +1,6 @@
-"""Типы ошибок справочника городов."""
+"""Ошибки справочника городов."""
 
-from src.errors.common import Conflict, ValidationError
+from src.errors.common import Conflict
 
 
 class CityAlreadyExists(Conflict):

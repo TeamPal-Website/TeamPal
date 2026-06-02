@@ -1,4 +1,4 @@
-"""Жизненный цикл откликов: подача, приглашение, принятие, отклонение и отзыв."""
+"""Бизнес-логика откликов и приглашений: подача заявки соискателем, приглашение организатором, принятие, отклонение и отзыв."""
 
 from src.enums import ApplicationStatus, CancelReason, NotificationEvent, ProjectsStatus, ResumeStatus
 from src.errors.applications import (

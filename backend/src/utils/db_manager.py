@@ -1,11 +1,13 @@
 from src.repositories.admins import AdminsRepository
 from src.repositories.applications import ApplicationsRepository
 from src.repositories.cities import CitiesRepository
+from src.repositories.embeddings import EmbeddingsRepository
 from src.repositories.notifications import NotificationsRepository
 from src.repositories.profiles import ProfilesRepository
 from src.repositories.project_vacancies import ProjectVacanciesRepository
 from src.repositories.project_vacancy_skills import ProjectVacancySkillsRepository
 from src.repositories.projects import ProjectsRepository
+from src.repositories.recommendations import RecommendationsRepository
 from src.repositories.resume_experiences import ResumeExperienceRepository
 from src.repositories.resume_skills import ResumeSkillsRepository
 from src.repositories.resumes import ResumesRepository
@@ -36,6 +38,8 @@ class DBManager:
         self.applications = ApplicationsRepository(self.session)
         self.vacancy_assignments = VacancyAssignmentsRepository(self.session)
         self.notifications = NotificationsRepository(self.session)
+        self.embeddings = EmbeddingsRepository(self.session)
+        self.recommendations = RecommendationsRepository(self.session)
         return self
 
     async def __aexit__(self, *args):

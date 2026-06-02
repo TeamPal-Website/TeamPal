@@ -15,6 +15,8 @@ from src.models.applications import NotificationsOrm  # noqa: F401
 from src.models.applications import VacancyAssignmentsOrm  # noqa: F401
 from src.models.cities import CitiesOrm  # noqa: F401
 from src.models.profiles import ProfilesOrm  # noqa: F401
+from src.models.embeddings import ResumeEmbeddingOrm  # noqa: F401
+from src.models.embeddings import VacancyEmbeddingOrm  # noqa: F401
 from src.models.projects import ProjectVacancyOrm  # noqa: F401
 from src.models.projects import ProjectsOrm  # noqa: F401
 from src.models.resumes import ResumeExperienceOrm  # noqa: F401

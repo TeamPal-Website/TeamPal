@@ -1,4 +1,4 @@
-"""Доступ к данным опыта работы в резюме."""
+"""Записи опыта работы в резюме."""
 
 from src.models.resumes import ResumeExperienceOrm
 from src.repositories.base import BaseRepository

@@ -1,10 +1,10 @@
-"""Общие вспомогательные функции авторизации и поиска сущностей для слоя сервисов."""
+"""Общие проверки доступа: профиль, проект, роль, навык, город, видимость закрытых проектов."""
 
 from src.utils.db_manager import DBManager
 from src.errors.common import (
-    AccessDenied,
     CityNotFound,
     ClosedProjectAccessDenied,
+    MyProfileNotFound,
     PositionNotFound,
     ProfileNotFound,
     ProjectAccessDenied,
@@ -12,6 +12,7 @@ from src.errors.common import (
     RoleNotFound,
     SkillNotFound,
 )
+from src.errors.projects import ClosedProjectImmutable
 from src.enums import ProjectsStatus
 
 
@@ -43,8 +44,6 @@ async def require_my_profile(db: DBManager, user_id: int):
     :rtype: object
     :raises MyProfileNotFound: Если у пользователя нет записи профиля.
     """
-    from src.errors.common import MyProfileNotFound
-
     profile = await db.profiles.get_one_or_none(user_id=user_id)
     if profile is None:
         raise MyProfileNotFound()
@@ -73,8 +72,6 @@ async def require_owned_project(db: DBManager, user_id: int, project_id: int, *,
     if project is None or project.status == ProjectsStatus.DELETED:
         raise ProjectNotFound()
     if not allow_close and project.status == ProjectsStatus.CLOSE:
-        from src.errors.projects import ClosedProjectImmutable
-
         raise ClosedProjectImmutable()
     return profile, project
 

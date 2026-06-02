@@ -1,10 +1,9 @@
 from httpx import AsyncClient
+from tests.conftest import register_and_verify
 
 async def setup_admin_and_target(client: AsyncClient):
-    admin_data = {'email': 'admin@example.com', 'password': 'adminpass123'}
-    target_data = {'email': 'target@example.com', 'password': 'targetpass123'}
-    await client.post('/auth/register', json=admin_data)
-    await client.post('/auth/register', json=target_data)
+    admin_data = await register_and_verify(client, 'admin@example.com', 'adminpass123')
+    target_data = await register_and_verify(client, 'target@example.com', 'targetpass123')
     login_resp = await client.post('/auth/login', json=admin_data)
     token = login_resp.json()['access_token']
     client.cookies.set('access_token', token)

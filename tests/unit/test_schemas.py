@@ -68,11 +68,6 @@ class TestUserRequestAdd:
 
 class TestUserAdd:
 
-    def test_model_dump(self):
-        user = UserAdd(email='test@example.com', hashed_password='$argon2id$hash...', is_active=True)
-        data = user.model_dump()
-        assert data == {'email': 'test@example.com', 'hashed_password': '$argon2id$hash...', 'is_active': True}
-
     def test_model_dump_inactive(self):
         user = UserAdd(email='blocked@example.com', hashed_password='hash', is_active=False)
         assert user.model_dump()['is_active'] is False

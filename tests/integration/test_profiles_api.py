@@ -1,5 +1,6 @@
 from unittest.mock import AsyncMock, patch
 from httpx import AsyncClient
+from tests.conftest import register_and_verify
 
 class TestGetMyProfile:
 
@@ -38,8 +39,8 @@ class TestGetMyProfile:
         assert data['gender'] is None
 
     async def test_profile_created_automatically_on_register(self, client: AsyncClient):
-        await client.post('/auth/register', json={'email': 'newuser@example.com', 'password': 'password123'})
-        login = await client.post('/auth/login', json={'email': 'newuser@example.com', 'password': 'password123'})
+        user_data = await register_and_verify(client, 'newuser@example.com', 'password123')
+        login = await client.post('/auth/login', json=user_data)
         client.cookies.set('access_token', login.json()['access_token'])
         response = await client.get('/profiles/me')
         assert response.status_code == 200

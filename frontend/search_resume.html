@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./assets/notify-banner.css">
+  <link rel="stylesheet" href="./assets/recommendations.css">
   <style>
     :root {
       --bg: #f7f5f2;
@@ -111,6 +112,37 @@
       background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
       color: #fff;
       box-shadow: 0 2px 8px rgba(248, 90, 11, 0.22);
+    }
+    .search-view-toggle {
+      display: flex;
+      background: #fff;
+      border-radius: 999px;
+      padding: 4px;
+      border: 1px solid rgba(58, 42, 26, 0.14);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+      width: fit-content;
+      max-width: 100%;
+      margin-top: 10px;
+      margin-bottom: 14px;
+    }
+    .search-view-toggle__btn {
+      padding: 9px 18px;
+      border: none;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      background: transparent;
+      color: #7a7060;
+      transition: all 0.25s ease;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    .search-view-toggle__btn:hover { color: var(--ink); }
+    .search-view-toggle__btn.active {
+      background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(248, 90, 11, 0.24);
     }
     .notify-btn {
       width: 48px;
@@ -661,6 +693,34 @@
     .invite-preview-grid[hidden] {
       display: none !important;
     }
+    .for-you-section {
+      padding: 16px 18px;
+      margin-bottom: 14px;
+      background: linear-gradient(180deg, rgba(255, 208, 102, 0.12), #fff 42%);
+    }
+    .for-you-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--accent-2);
+      margin: 0;
+    }
+    .for-you-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px 14px;
+    }
+    .for-you-vacancy-select {
+      border: 1px solid #d1d1d1;
+      border-radius: 14px;
+      background: #fff;
+      padding: 8px 14px;
+      min-height: 38px;
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--ink);
+      max-width: min(100%, 320px);
+    }
   </style>
 </head>
 <body>
@@ -698,11 +758,16 @@
 
 <main class="page">
   <h1 class="top-title">Поиск сотрудников</h1>
-  <div class="catalog-mode-toggle" id="catalog-mode-toggle" role="tablist" aria-label="Тип резюме в каталоге">
+  <div class="search-view-toggle" id="search-view-toggle" role="tablist" aria-label="Режим поиска">
+    <button type="button" class="search-view-toggle__btn active" data-view="catalog" role="tab" aria-selected="true">Каталог</button>
+    <button type="button" class="search-view-toggle__btn" data-view="recommended" role="tab" aria-selected="false">Рекомендованные</button>
+  </div>
+  <div class="catalog-mode-toggle" id="catalog-mode-toggle" role="tablist" aria-label="Тип резюме">
     <button type="button" class="catalog-mode-toggle__btn active" data-mode="commercial" role="tab" aria-selected="true">Коммерческий</button>
     <button type="button" class="catalog-mode-toggle__btn" data-mode="noncommercial" role="tab" aria-selected="false">Учебный</button>
   </div>
 
+  <div id="catalog-view">
   <section class="card search-card" aria-label="Поиск сотрудников">
     <div class="search-row">
       <input class="search-input" id="q" type="text" placeholder="Введите должность, например: Frontend" autocomplete="off">
@@ -726,6 +791,19 @@
     <button type="button" class="action-btn" id="pager-prev">Назад</button>
     <div class="search-pager__nums" id="pager-pages" aria-label="Номера страниц"></div>
     <button type="button" class="action-btn action-btn--accent" id="pager-next">Дальше</button>
+  </div>
+  </div>
+
+  <div id="recommended-view" hidden>
+    <section class="card rec-toolbar" aria-label="Настройки рекомендаций">
+      <div class="rec-toolbar__row">
+        <label class="rec-toggle"><input type="checkbox" id="for-you-role-match"> Только роль вакансии</label>
+        <select id="for-you-vacancy-select" class="rec-select" hidden aria-label="Вакансия для подбора рекомендаций"></select>
+      </div>
+    </section>
+    <section class="vacancies" id="for-you-list" aria-label="Рекомендованные резюме">
+      <div class="empty-state" style="color:#aaa;">Загрузка…</div>
+    </section>
   </div>
 </main>
 
@@ -840,6 +918,8 @@
 </div>
 
 <script src="./config.js"></script>
+<script src="./assets/recommendations.js"></script>
+<script src="./assets/rec-entity-picker.js"></script>
 <script src="./assets/notify-bell.js"></script>
 <script src="./assets/notify-banner.js"></script>
 <script>
@@ -917,6 +997,7 @@
     const resetFiltersBtn = document.getElementById("filters-reset");
 
     const LS_RESUME_CATALOG_MODE = "tp_search_resume_catalog_mode";
+    const LS_RESUME_SEARCH_VIEW = "tp_search_resume_search_view";
 
     function defaultFiltersEduResume() {
       return { role_type_id: "", city_id: "", computed_exp: "", created_within_days: "", skill_ids: [] };
@@ -939,6 +1020,7 @@
       q: "",
       page: 1,
       catalogMode: "commercial",
+      searchView: "catalog",
       filtersEdu: defaultFiltersEduResume(),
       filtersCom: defaultFiltersComResume(),
     };
@@ -952,6 +1034,55 @@
         const raw = localStorage.getItem(LS_RESUME_CATALOG_MODE);
         if (raw === "commercial" || raw === "noncommercial") state.catalogMode = raw;
       } catch (_) {}
+    }
+
+    const searchViewToggle = document.getElementById("search-view-toggle");
+    const catalogViewEl = document.getElementById("catalog-view");
+    const recommendedViewEl = document.getElementById("recommended-view");
+
+    function initSearchViewFromStorage() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const urlView = params.get("view");
+        if (urlView === "recommended" || urlView === "catalog") {
+          state.searchView = urlView;
+          return;
+        }
+        const raw = localStorage.getItem(LS_RESUME_SEARCH_VIEW);
+        if (raw === "recommended" || raw === "catalog") state.searchView = raw;
+      } catch (_) {}
+    }
+
+    function syncSearchViewUI() {
+      const onCatalog = state.searchView !== "recommended";
+      if (catalogViewEl) catalogViewEl.hidden = !onCatalog;
+      if (recommendedViewEl) recommendedViewEl.hidden = onCatalog;
+      if (searchViewToggle) {
+        searchViewToggle.querySelectorAll(".search-view-toggle__btn").forEach((b) => {
+          const on = (b.getAttribute("data-view") || "") === state.searchView;
+          b.classList.toggle("active", on);
+          b.setAttribute("aria-selected", on ? "true" : "false");
+        });
+      }
+    }
+
+    function switchSearchView(view) {
+      if (view !== "catalog" && view !== "recommended") return;
+      if (state.searchView === view) return;
+      state.searchView = view;
+      try {
+        localStorage.setItem(LS_RESUME_SEARCH_VIEW, view);
+      } catch (_) {}
+      syncSearchViewUI();
+      if (view === "recommended") loadForYouBlock();
+    }
+
+    if (searchViewToggle) {
+      searchViewToggle.addEventListener("click", (event) => {
+        const btn = event.target.closest(".search-view-toggle__btn");
+        if (!btn) return;
+        switchSearchView(btn.getAttribute("data-view") || "catalog");
+      });
     }
 
     const resumeCatalogModeToggle = document.getElementById("catalog-mode-toggle");
@@ -984,6 +1115,7 @@
           await fetchResumesFromApi();
           render(vacanciesList);
           updateResumePager();
+          if (state.searchView === "recommended") loadForYouBlock();
         })();
       });
     }
@@ -1614,6 +1746,8 @@
     void (async () => {
       initResumePagerPages();
       initResumeCatalogModeFromStorage();
+      initSearchViewFromStorage();
+      syncSearchViewUI();
       syncResumeCatalogToggleUI();
       await loadResumeFilterDicts();
       bindGroupedSalary("f-salary-min");
@@ -1621,6 +1755,128 @@
       await fetchResumesFromApi();
       render(vacanciesList);
       updateResumePager();
+      if (state.searchView === "recommended") loadForYouBlock();
+    })();
+
+    let _forYouVacancyId = null;
+
+    async function refreshForYouRecommendations() {
+      const listEl = document.getElementById("for-you-list");
+      if (!listEl || _forYouVacancyId == null || typeof tpFetchRecommendedResumes !== "function") return;
+      listEl.innerHTML = '<div class="empty-state" style="color:#aaa;">Загрузка подборки…</div>';
+      const roleMatch = document.getElementById("for-you-role-match");
+      try {
+        const list = await tpFetchRecommendedResumes(_forYouVacancyId, {
+          limit: 10,
+          role_match_only: !!(roleMatch && roleMatch.checked),
+        });
+        tpRenderRecommendedResumeCards(list, listEl, {
+          vacancyId: _forYouVacancyId,
+          citiesMap: _citiesMap,
+          onInvite: (resumeId, intent) => {
+            const numId = parseInt(resumeId, 10);
+            if (Number.isFinite(numId)) openInviteModal(numId, intent || "commercial");
+          },
+          emptyText:
+            "Пока нет персональных рекомендаций. Обновите описание вакансии или переключите «Коммерческий / Учебный».",
+        });
+      } catch (e) {
+        if (e && e.code === 401) {
+          listEl.innerHTML =
+            '<div class="empty-state">Войдите в аккаунт организатора, чтобы увидеть рекомендации резюме.</div>';
+          return;
+        }
+        listEl.innerHTML = '<div class="empty-state">Не удалось загрузить рекомендации. Попробуйте позже.</div>';
+      }
+    }
+
+    async function loadForYouBlock() {
+      const listEl = document.getElementById("for-you-list");
+      if (!listEl) return;
+
+      if (typeof tpFetchRecommendedResumes !== "function") {
+        listEl.innerHTML = '<div class="empty-state">Модуль рекомендаций недоступен.</div>';
+        return;
+      }
+
+      listEl.innerHTML = '<div class="empty-state" style="color:#aaa;">Загрузка…</div>';
+
+      try {
+        const r = await fetch(API_BASE_URL + "/my_recruiting_vacancies", { credentials: "include" });
+        if (r.status === 401) {
+          listEl.innerHTML =
+            '<div class="empty-state">Войдите в аккаунт организатора, чтобы увидеть рекомендации резюме.</div>';
+          return;
+        }
+        if (!r.ok) {
+          _forYouVacancyId = null;
+          listEl.innerHTML = '<div class="empty-state">Не удалось загрузить ваши вакансии.</div>';
+          return;
+        }
+        const opts = await r.json();
+        const vacancies = Array.isArray(opts)
+          ? opts.filter((o) => o && o.project_employment_intent === state.catalogMode)
+          : [];
+        if (vacancies.length === 0) {
+          _forYouVacancyId = null;
+          const modeLabel = state.catalogMode === "noncommercial" ? "учебных" : "коммерческих";
+          listEl.innerHTML =
+            '<div class="empty-state">Нет открытых ' +
+            modeLabel +
+            ' вакансий в ваших проектах. Создайте проект с вакансией или переключите вкладку «Коммерческий / Учебный».</div>';
+          const sel = document.getElementById("for-you-vacancy-select");
+          if (sel) {
+            sel.hidden = true;
+            if (typeof tpSyncRecEntityPicker === "function") tpSyncRecEntityPicker(sel);
+          }
+          return;
+        }
+        const sel = document.getElementById("for-you-vacancy-select");
+        if (vacancies.length > 1) {
+          if (sel) {
+            sel.hidden = false;
+            sel.innerHTML = vacancies
+              .map((o) => {
+                const vid = Number(o.vacancy_id);
+                const label = (o.project_title || "Проект") + " · " + (o.role_name || "Должность");
+                return `<option value="${escapeHtml(String(vid))}">${escapeHtml(label)}</option>`;
+              })
+              .join("");
+            if (!_forYouVacancyId || !vacancies.some((o) => Number(o.vacancy_id) === Number(_forYouVacancyId))) {
+              _forYouVacancyId = Number(vacancies[0].vacancy_id);
+            }
+            sel.value = String(_forYouVacancyId);
+            if (typeof tpSyncRecEntityPicker === "function") tpSyncRecEntityPicker(sel);
+          }
+        } else {
+          if (sel) {
+            sel.hidden = true;
+            if (typeof tpSyncRecEntityPicker === "function") tpSyncRecEntityPicker(sel);
+          }
+          _forYouVacancyId = Number(vacancies[0].vacancy_id);
+        }
+        await refreshForYouRecommendations();
+      } catch (_) {
+        _forYouVacancyId = null;
+        listEl.innerHTML = '<div class="empty-state">Не удалось загрузить рекомендации. Попробуйте позже.</div>';
+      }
+    }
+
+    (function bindForYouControls() {
+      const sel = document.getElementById("for-you-vacancy-select");
+      const roleMatch = document.getElementById("for-you-role-match");
+      if (sel && !sel.dataset.bound) {
+        sel.dataset.bound = "1";
+        if (typeof tpBindRecEntityPicker === "function") tpBindRecEntityPicker(sel);
+        sel.addEventListener("change", () => {
+          _forYouVacancyId = Number(sel.value) || null;
+          void refreshForYouRecommendations();
+        });
+      }
+      if (roleMatch && !roleMatch.dataset.bound) {
+        roleMatch.dataset.bound = "1";
+        roleMatch.addEventListener("change", () => void refreshForYouRecommendations());
+      }
     })();
   })();
 </script>

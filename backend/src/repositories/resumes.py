@@ -1,4 +1,4 @@
-"""Доступ к данным резюме."""
+"""Резюме и поиск по каталогу."""
 
 from datetime import date, timedelta
 from sqlalchemy import func, or_, select, update

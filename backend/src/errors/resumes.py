@@ -1,4 +1,4 @@
-"""Типы ошибок жизненного цикла и валидации резюме."""
+"""Ошибки резюме и лимитов."""
 
 from src.errors.common import Conflict, ValidationError
 

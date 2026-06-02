@@ -1,4 +1,4 @@
-"""Доступ к данным вакансий проекта."""
+"""Вакансии проектов и публичный поиск."""
 
 from datetime import timedelta
 from sqlalchemy import and_, or_, select

@@ -1,11 +1,10 @@
 from httpx import AsyncClient
 from tests.common import COMPLETE_PROFILE_JSON
+from tests.conftest import register_and_verify
 
 async def _register(client: AsyncClient, prefix: str) -> str:
     client.cookies.clear()
-    credentials = {'email': f'{prefix}@example.com', 'password': 'password123'}
-    response = await client.post('/auth/register', json=credentials)
-    assert response.status_code == 200
+    credentials = await register_and_verify(client, f'{prefix}@example.com', 'password123')
     response = await client.post('/auth/login', json=credentials)
     assert response.status_code == 200
     return response.json()['access_token']

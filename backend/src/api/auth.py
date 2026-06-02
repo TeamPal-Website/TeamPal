@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Response
 
 from src.api.dependencies import UserIdDep, DBDep
-from src.schemas.users import UserChangePasswordRequest, UserLoginRequest, UserRequestAdd
+from pydantic import EmailStr
+from src.schemas.users import UserChangePasswordRequest, UserLoginRequest, UserRequestAdd, VerifyEmailRequest
 from src.services.users import UserService
 
 router = APIRouter(prefix='/auth', tags=['Авторизация и аутентификация'])
@@ -50,6 +51,26 @@ async def get_me(db: DBDep, user_id: UserIdDep):
 async def logout(response: Response):
     response.delete_cookie('access_token')
     return {'status': 'OK'}
+
+
+@router.post(
+    '/verify-email',
+    summary='Подтверждение email по коду',
+    description='Принимает email и 6-значный код. При успехе устанавливает cookie и возвращает JWT-токен.',
+)
+async def verify_email(db: DBDep, data: VerifyEmailRequest, response: Response):
+    result = await user_service.verify_email(db, data)
+    response.set_cookie('access_token', result['access_token'], httponly=True, samesite='lax')
+    return result
+
+
+@router.post(
+    '/resend-code',
+    summary='Повторная отправка кода подтверждения',
+    description='Отправляет новый код на указанный email. Email должен быть зарегистрирован, но не подтверждён.',
+)
+async def resend_code(db: DBDep, email: EmailStr):
+    return await user_service.resend_verification_code(db, email)
 
 
 @router.post(

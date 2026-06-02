@@ -1,4 +1,4 @@
-"""Доступ к данным связей вакансий проекта и навыков."""
+"""Связь вакансия — навыки."""
 
 from sqlalchemy import delete, select
 from src.models.projects import ProjectVacancySkillOrm

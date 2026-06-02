@@ -40,5 +40,12 @@ class Settings(BaseSettings):
     S3_PUBLIC_BASE_URL: str | None = None
     S3_AVATAR_PREFIX: str = 'avatars/'
     S3_ADDRESSING_STYLE: Literal['path', 'virtual'] = 'path'
+
+    SMTP_HOST: str = 'smtp.gmail.com'
+    SMTP_PORT: int = 587
+    SMTP_USER: str | None = None
+    SMTP_PASSWORD: str | None = None
+    SMTP_FROM: str | None = None
+
     model_config = SettingsConfigDict(env_file=ROOT_DIR / '.env', extra='ignore')
 settings = Settings()
