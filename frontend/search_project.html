@@ -698,16 +698,14 @@
   </div>
 
   <div id="recommended-view" hidden>
-    <section class="card for-you-section" id="for-you-section" aria-label="Рекомендованные вам вакансии">
-      <div class="rec-section-head">
-        <h2 class="for-you-title">Рекомендованные вам вакансии</h2>
-        <div class="for-you-controls">
-          <label class="rec-toggle"><input type="checkbox" id="for-you-role-match"> Только моя роль</label>
-          <select id="for-you-resume-select" class="rec-select" hidden aria-label="Резюме для подбора"></select>
-        </div>
+    <section class="card rec-toolbar" aria-label="Настройки рекомендаций">
+      <div class="rec-toolbar__row">
+        <label class="rec-toggle"><input type="checkbox" id="for-you-role-match"> Только моя роль</label>
+        <select id="for-you-resume-select" class="rec-select" hidden aria-label="Резюме для подбора рекомендаций"></select>
       </div>
-      <p class="rec-hint">Семантический подбор вакансий по выбранному резюме. Переключайте «Коммерческий / Учебный», если у вас несколько резюме.</p>
-      <div id="for-you-list"><div class="rec-loading">Загрузка…</div></div>
+    </section>
+    <section class="vacancies" id="for-you-list" aria-label="Рекомендованные вакансии">
+      <div class="empty-state" style="color:#aaa;">Загрузка…</div>
     </section>
   </div>
 </main>
@@ -821,6 +819,7 @@
 
 <script src="./config.js"></script>
 <script src="./assets/recommendations.js"></script>
+<script src="./assets/rec-entity-picker.js"></script>
 <script src="./assets/notify-bell.js"></script>
 <script src="./assets/notify-banner.js"></script>
 <script>
@@ -1442,7 +1441,7 @@
     async function refreshForYouRecommendations() {
       const listEl = document.getElementById("for-you-list");
       if (!listEl || _forYouResumeId == null || typeof tpFetchRecommendedVacancies !== "function") return;
-      listEl.innerHTML = '<div class="rec-loading">Загрузка подборки…</div>';
+      listEl.innerHTML = '<div class="empty-state" style="color:#aaa;">Загрузка подборки…</div>';
       const roleMatch = document.getElementById("for-you-role-match");
       try {
         const list = await tpFetchRecommendedVacancies(_forYouResumeId, {
@@ -1460,10 +1459,10 @@
       } catch (e) {
         if (e && e.code === 401) {
           listEl.innerHTML =
-            '<div class="rec-empty">Войдите в аккаунт, чтобы увидеть рекомендации вакансий.</div>';
+            '<div class="empty-state">Войдите в аккаунт, чтобы увидеть рекомендации вакансий.</div>';
           return;
         }
-        listEl.innerHTML = '<div class="rec-empty">Не удалось загрузить рекомендации. Попробуйте позже.</div>';
+        listEl.innerHTML = '<div class="empty-state">Не удалось загрузить рекомендации. Попробуйте позже.</div>';
       }
     }
 
@@ -1472,22 +1471,22 @@
       if (!listEl) return;
 
       if (typeof tpFetchRecommendedVacancies !== "function") {
-        listEl.innerHTML = '<div class="rec-empty">Модуль рекомендаций недоступен.</div>';
+        listEl.innerHTML = '<div class="empty-state">Модуль рекомендаций недоступен.</div>';
         return;
       }
 
-      listEl.innerHTML = '<div class="rec-loading">Загрузка…</div>';
+      listEl.innerHTML = '<div class="empty-state" style="color:#aaa;">Загрузка…</div>';
 
       try {
         const r = await fetch(API_BASE_URL + "/my_resumes", { credentials: "include" });
         if (r.status === 401) {
           listEl.innerHTML =
-            '<div class="rec-empty">Войдите в аккаунт, чтобы увидеть рекомендации вакансий.</div>';
+            '<div class="empty-state">Войдите в аккаунт, чтобы увидеть рекомендации вакансий.</div>';
           return;
         }
         if (!r.ok) {
           _forYouResumeId = null;
-          listEl.innerHTML = '<div class="rec-empty">Не удалось загрузить ваши резюме.</div>';
+          listEl.innerHTML = '<div class="empty-state">Не удалось загрузить ваши резюме.</div>';
           return;
         }
         const resumes = await r.json();
@@ -1504,11 +1503,14 @@
           _forYouResumeId = null;
           const modeLabel = state.catalogMode === "noncommercial" ? "учебное" : "коммерческое";
           listEl.innerHTML =
-            '<div class="rec-empty">Нет активного ' +
+            '<div class="empty-state">Нет активного ' +
             modeLabel +
             ' резюме в статусе «Ищу работу». Создайте или включите поиск работы в «Мои резюме», либо смените вкладку «Коммерческий / Учебный».</div>';
           const sel = document.getElementById("for-you-resume-select");
-          if (sel) sel.hidden = true;
+          if (sel) {
+            sel.hidden = true;
+            if (typeof tpSyncRecEntityPicker === "function") tpSyncRecEntityPicker(sel);
+          }
           return;
         }
         const sel = document.getElementById("for-you-resume-select");
@@ -1528,15 +1530,19 @@
               _forYouResumeId = Number(active[0].id);
             }
             sel.value = String(_forYouResumeId);
+            if (typeof tpSyncRecEntityPicker === "function") tpSyncRecEntityPicker(sel);
           }
         } else {
-          if (sel) sel.hidden = true;
+          if (sel) {
+            sel.hidden = true;
+            if (typeof tpSyncRecEntityPicker === "function") tpSyncRecEntityPicker(sel);
+          }
           _forYouResumeId = Number(active[0].id);
         }
         await refreshForYouRecommendations();
       } catch (_) {
         _forYouResumeId = null;
-        listEl.innerHTML = '<div class="rec-empty">Не удалось загрузить рекомендации. Попробуйте позже.</div>';
+        listEl.innerHTML = '<div class="empty-state">Не удалось загрузить рекомендации. Попробуйте позже.</div>';
       }
     }
 
@@ -1545,6 +1551,7 @@
       const roleMatch = document.getElementById("for-you-role-match");
       if (sel && !sel.dataset.bound) {
         sel.dataset.bound = "1";
+        if (typeof tpBindRecEntityPicker === "function") tpBindRecEntityPicker(sel);
         sel.addEventListener("change", () => {
           _forYouResumeId = Number(sel.value) || null;
           void refreshForYouRecommendations();
