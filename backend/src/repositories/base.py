@@ -1,4 +1,4 @@
-"""Обобщённый асинхронный слой репозитория SQLAlchemy."""
+"""Базовый асинхронный CRUD-репозиторий SQLAlchemy + Pydantic."""
 
 from enum import Enum
 from pydantic import BaseModel

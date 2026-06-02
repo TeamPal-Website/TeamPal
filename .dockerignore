@@ -25,3 +25,7 @@ env/
 tests/
 
 *.md
+
+backend/venv/
+backend/env/
+backend/.venv/

@@ -1,4 +1,4 @@
-"""Доступ к справочным данным городов."""
+"""Доступ к справочнику городов."""
 
 from sqlalchemy import select
 from src.models.cities import CitiesOrm

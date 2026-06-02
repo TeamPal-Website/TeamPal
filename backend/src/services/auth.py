@@ -1,4 +1,4 @@
-"""Утилиты JWT-токенов и хеширования паролей."""
+"""JWT access-токены и хеширование паролей (Argon2)."""
 
 from datetime import datetime, timezone, timedelta
 import jwt

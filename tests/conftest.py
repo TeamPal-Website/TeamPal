@@ -28,6 +28,26 @@ def _stub_catalog_invalidate_schedule(monkeypatch):
     monkeypatch.setattr('src.catalog_cache.schedule_catalog_invalidate', lambda names: None)
 
 @pytest.fixture(autouse=True)
+def _stub_email_verification(monkeypatch):
+    _codes: dict[str, str] = {}
+
+    async def fake_generate(email: str) -> str:
+        _codes[email] = '000000'
+        return '000000'
+
+    async def fake_verify(email: str, code: str) -> bool:
+        if _codes.get(email) == code:
+            _codes.pop(email)
+            return True
+        return False
+
+    async def fake_delete(email: str) -> None:
+        _codes.pop(email, None)
+
+    monkeypatch.setattr('src.services.users.generate_and_save_code', fake_generate)
+    monkeypatch.setattr('src.services.users.verify_code', fake_verify)
+
+@pytest.fixture(autouse=True)
 async def setup_database():
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -46,11 +66,15 @@ async def client():
         async with AsyncClient(transport=ASGITransport(app=app), base_url='http://test') as ac:
             yield ac
 
+async def register_and_verify(client: AsyncClient, email: str, password: str) -> dict:
+    user_data = {'email': email, 'password': password}
+    await client.post('/auth/register', json=user_data)
+    await client.post('/auth/verify-email', json={'email': email, 'code': '000000'})
+    return user_data
+
 @pytest.fixture
 async def registered_user(client: AsyncClient):
-    user_data = {'email': 'test@example.com', 'password': 'password123'}
-    await client.post('/auth/register', json=user_data)
-    return user_data
+    return await register_and_verify(client, 'test@example.com', 'password123')
 
 @pytest.fixture
 async def auth_token(client: AsyncClient, registered_user: dict):

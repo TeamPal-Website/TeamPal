@@ -2,8 +2,9 @@ node_modules/
 vendor/
 
 backend/.env
+infra/.env
+infra/docker-compose.override.yml
 .env
-!infra/.env
 *.local
 secrets.json
 

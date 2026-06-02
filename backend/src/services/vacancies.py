@@ -1,4 +1,4 @@
-"""Публичный поиск вакансий и список вакансий для рекрутинга."""
+"""Публичный каталог вакансий и карточка вакансии."""
 
 from src.enums import CommitmentLevel, ContractType, EmploymentIntent, ProjectVacancyExperience, WorkFormat
 from src.errors.resumes import SalaryRangeInvalid

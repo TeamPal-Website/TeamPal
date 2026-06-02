@@ -4,6 +4,7 @@ class UserAdd(BaseModel):
     email: EmailStr = Field(max_length=200)
     hashed_password: str = Field(min_length=1, max_length=200)
     is_active: bool
+    is_verified: bool = False
 
 class UserRequestAdd(BaseModel):
     email: EmailStr = Field(description='Email пользователя', examples=['user@example.com'], min_length=6, max_length=200)
@@ -35,3 +36,7 @@ class User(BaseModel):
 
 class UserWithHashedPassword(User):
     hashed_password: str
+
+class VerifyEmailRequest(BaseModel):
+    email: EmailStr
+    code: str = Field(min_length=6, max_length=6, description='6-значный код подтверждения')

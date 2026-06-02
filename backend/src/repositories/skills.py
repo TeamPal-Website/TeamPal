@@ -1,4 +1,4 @@
-"""Доступ к справочным данным навыков."""
+"""Справочник навыков."""
 
 from src.models.skills import SkillsOrm
 from src.repositories.base import BaseRepository

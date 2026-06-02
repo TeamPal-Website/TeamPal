@@ -1,4 +1,4 @@
-"""Административные операции над учётными записями пользователей."""
+"""Административные операции над учётными записями (блокировка)."""
 
 from sqlalchemy import update
 from src.errors.common import UserNotFound

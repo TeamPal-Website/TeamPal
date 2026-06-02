@@ -1,4 +1,4 @@
-"""Доступ к данным назначений на вакансии."""
+"""Назначения соискателей на вакансии (принятые в команду)."""
 
 from datetime import datetime
 from sqlalchemy import select, update

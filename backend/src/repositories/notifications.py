@@ -1,4 +1,4 @@
-"""Доступ к данным уведомлений в приложении."""
+"""Уведомления пользователя в БД."""
 
 from sqlalchemy import select, update
 from src.enums import NotificationEvent

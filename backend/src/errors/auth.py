@@ -1,6 +1,6 @@
-"""Типы ошибок аутентификации и авторизации."""
+"""Ошибки регистрации и аутентификации."""
 
-from src.errors.common import BadRequest, Conflict, Unauthorized, UserNotFound, ValidationError
+from src.errors.common import Conflict, Unauthorized
 
 
 class EmailAlreadyRegistered(Conflict):
@@ -9,7 +9,7 @@ class EmailAlreadyRegistered(Conflict):
     HTTP status: 409.
     """
 
-    detail = 'Пользователь с таким email уже существует'
+    detail = 'Пользователь с такой почтой уже существует'
 
 
 class WrongPassword(Unauthorized):

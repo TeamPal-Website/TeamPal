@@ -1,4 +1,4 @@
-"""CRUD-операции с вакансиями проектов, принадлежащих пользователю."""
+"""Вакансии внутри проекта: создание, изменение, удаление."""
 
 from src.errors.common import RoleNotFound, VacancyNotFound
 from src.errors.project_vacancies import (
@@ -9,6 +9,7 @@ from src.errors.project_vacancies import (
 )
 from src.schemas.project_vacancies import ProjectVacancyAdd, ProjectVacancyPatch, ProjectVacancyRequestAdd
 from src.services.common import require_owned_project, require_role, require_skills
+from src.services.embedding_scheduler import schedule_embedding_recompute
 from src.utils.db_manager import DBManager
 
 
@@ -72,6 +73,7 @@ class ProjectVacancyService:
         )
         await db.project_vacancy_skills.replace_for_vacancy(res.id, data.skill_ids)
         await db.commit()
+        schedule_embedding_recompute('vacancy', res.id)
         return {'status': 'OK', 'data': res}
 
     async def update_project_vacancy(
@@ -129,6 +131,7 @@ class ProjectVacancyService:
         if skill_ids is not None:
             await db.project_vacancy_skills.replace_for_vacancy(vacancy_id, skill_ids)
         await db.commit()
+        schedule_embedding_recompute('vacancy', vacancy_id)
         return {'status': 'OK'}
 
     async def delete_project_vacancy(

@@ -1,4 +1,4 @@
-"""CRUD резюме, публичный поиск и вспомогательные функции видимости контактов."""
+"""Резюме соискателя: CRUD, публикация, публичный поиск."""
 
 from sqlalchemy.exc import IntegrityError
 
@@ -31,8 +31,9 @@ from src.schemas.resume_skills import ResumeSkillAdd
 from src.schemas.resumes import ResumeAdd, ResumePatch, ResumeRequestAdd, ResumeWithActiveProject
 from src.schemas.search_public import ResumeSearchItem
 from src.services.common import require_active_role, require_city, require_profile, require_skill
+from src.services.embedding_scheduler import schedule_embedding_recompute
 from src.utils.db_manager import DBManager
-from src.utils.profile_completeness import profile_incomplete_message
+from src.services.profile_completeness import profile_incomplete_message
 
 
 def resume_contacts_for_viewer(profile_contacts_obj) -> dict:
@@ -375,6 +376,7 @@ class ResumeService:
             except IntegrityError:
                 raise ResumeSkillAlreadyAdded()
         await db.commit()
+        schedule_embedding_recompute('resume', resume.id)
         return {'status': 'OK', 'data': {'resume': resume, 'experiences': experiences}}
 
     async def update_resume(self, db: DBManager, user_id: int, resume_id: int, data: ResumePatch):
@@ -424,6 +426,7 @@ class ResumeService:
             if res == 0:
                 raise ResumeNotFound()
             await db.commit()
+            schedule_embedding_recompute('resume', resume_id)
             return {'status': 'OK'}
         cancelled_ids = await db.applications.cancel_pending_for_resume(resume_id, CancelReason.RESUME_UPDATED)
         for application_id in cancelled_ids:
@@ -456,6 +459,7 @@ class ResumeService:
         if res == 0:
             raise ResumeNotFound()
         await db.commit()
+        schedule_embedding_recompute('resume', resume_id)
         return {'status': 'OK'}
 
     async def delete_resume(self, db: DBManager, user_id: int, resume_id: int):

@@ -6,6 +6,7 @@
   <title>Карточка резюме | TeamPal</title>
   <link rel="icon" type="image/png" href="./assets/logo.png">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/recommendations.css">
   <style>
     :root {
       --bg: #f7f5f2; --header: #eae8e4; --panel: #ffffff; --panel-soft: #fffaf3;
@@ -277,6 +278,16 @@
     <div class="exp-list" id="resume-experiences"></div>
   </section>
 
+  <section class="card section" id="resume-recommendations-section" hidden>
+    <a id="recommendations" style="position:relative;top:-96px;display:block;height:0;overflow:hidden;" aria-hidden="true"></a>
+    <div class="rec-section-head">
+      <h2>Рекомендуемые вакансии</h2>
+      <label class="rec-toggle"><input type="checkbox" id="rec-role-match-only"> Только моя роль</label>
+    </div>
+    <p class="rec-hint">Семантический подбор среди открытых вакансий с тем же типом занятости, что и ваше резюме.</p>
+    <div id="resume-recommendations-list"><div class="rec-loading">Загрузка подборки…</div></div>
+  </section>
+
   <section class="card section" id="resume-contacts-section">
     <h2>Контакты</h2>
     <div class="grid" id="resume-contacts"></div>
@@ -316,6 +327,7 @@
 </footer>
 
 <script src="./config.js"></script>
+<script src="./assets/recommendations.js"></script>
 <script src="./assets/notify-bell.js"></script>
 <script>
   (function () {
@@ -875,6 +887,7 @@
       let resumeData = null;
       let activeProject = undefined;
       let contactsFromPayload = undefined;
+      let loadedViaMyResume = false;
       const paths = [];
       if (userId) paths.push("/profiles/" + encodeURIComponent(userId) + "/resumes/" + encodeURIComponent(id));
       paths.push("/my_resume/" + encodeURIComponent(id));
@@ -884,6 +897,7 @@
           const r = await fetch(API_BASE_URL + path, { credentials: "include" });
           if (r.ok) {
             const data = await r.json();
+            if (path.indexOf("/my_resume/") === 0) loadedViaMyResume = true;
             if (Object.prototype.hasOwnProperty.call(data, "contacts")) {
               contactsFromPayload = data.contacts;
             }
@@ -1045,6 +1059,50 @@
       } else if (contactsEl) {
         contactsEl.innerHTML = "";
       }
+
+      await loadResumeRecommendations(id, resumeData, loadedViaMyResume, activeProject);
+    }
+
+    async function loadResumeRecommendations(resumeId, resumeData, isOwn, activeProject) {
+      const section = document.getElementById("resume-recommendations-section");
+      const listEl = document.getElementById("resume-recommendations-list");
+      const roleToggle = document.getElementById("rec-role-match-only");
+      if (!section || !listEl || !isOwn) return;
+      const looking = (resumeData.status || "looking_for_job") === "looking_for_job";
+      const inProject = !!(activeProject && activeProject.project_id != null);
+      if (!looking || inProject) {
+        section.hidden = true;
+        return;
+      }
+      section.hidden = false;
+
+      async function refresh() {
+        listEl.innerHTML = '<div class="rec-loading">Загрузка подборки…</div>';
+        try {
+          const dicts = typeof tpRecLoadDictionaries === "function" ? await tpRecLoadDictionaries() : { rolesMap: {}, citiesMap: {} };
+          const list = await tpFetchRecommendedVacancies(resumeId, {
+            limit: 10,
+            role_match_only: !!(roleToggle && roleToggle.checked),
+          });
+          tpRenderRecommendedVacancyCards(list, listEl, {
+            resumeId: Number(resumeId),
+            rolesMap: dicts.rolesMap,
+            citiesMap: dicts.citiesMap,
+          });
+        } catch (e) {
+          if (e && e.code === 401) {
+            listEl.innerHTML = '<div class="rec-empty">Войдите в аккаунт, чтобы увидеть рекомендации.</div>';
+            return;
+          }
+          listEl.innerHTML = '<div class="rec-empty">Не удалось загрузить рекомендации. Попробуйте позже.</div>';
+        }
+      }
+
+      if (roleToggle && !roleToggle.dataset.bound) {
+        roleToggle.dataset.bound = "1";
+        roleToggle.addEventListener("change", refresh);
+      }
+      await refresh();
     }
 
     loadResume();

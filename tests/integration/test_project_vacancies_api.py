@@ -1,9 +1,9 @@
 from httpx import AsyncClient
 from tests.common import COMPLETE_PROFILE_JSON
+from tests.conftest import register_and_verify
 
 async def setup_project_with_vacancy(client: AsyncClient):
-    user_data = {'email': 'vacancy_owner@example.com', 'password': 'password123'}
-    await client.post('/auth/register', json=user_data)
+    user_data = await register_and_verify(client, 'vacancy_owner@example.com', 'password123')
     login_resp = await client.post('/auth/login', json=user_data)
     token = login_resp.json()['access_token']
     client.cookies.set('access_token', token)

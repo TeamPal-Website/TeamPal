@@ -1,4 +1,4 @@
-"""CRUD-операции со справочником городов."""
+"""CRUD справочника городов."""
 
 from sqlalchemy.exc import IntegrityError
 

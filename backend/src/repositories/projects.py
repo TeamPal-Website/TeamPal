@@ -1,4 +1,4 @@
-"""Доступ к данным проектов."""
+"""Проекты и публичный поиск проектов."""
 
 from datetime import datetime
 from sqlalchemy import func, or_, select, update

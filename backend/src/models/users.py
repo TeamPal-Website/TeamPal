@@ -8,3 +8,4 @@ class UsersOrm(Base):
     email: Mapped[str] = mapped_column(String(200), unique=True)
     hashed_password: Mapped[str] = mapped_column(String(200))
     is_active: Mapped[bool]
+    is_verified: Mapped[bool] = mapped_column(default=False, server_default='false')
