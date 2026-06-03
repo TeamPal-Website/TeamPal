@@ -1,0 +1,124 @@
+/* Базовая адаптивность TeamPal. Подключается во всех страницах поверх локальных стилей. */
+
+@media (max-width: 768px) {
+  .header__inner { padding: 0 14px !important; gap: 8px !important; }
+  .logo { width: 40px !important; height: 40px !important; }
+  .role-toggle__btn { padding: 7px 13px !important; font-size: 12px !important; }
+  .notify-btn, .burger, .header-nav-btn {
+    width: 42px !important; height: 42px !important; border-radius: 12px !important;
+  }
+  .notify-btn svg, .burger svg, .header-nav-btn svg { width: 20px !important; height: 20px !important; }
+  .header-menu { width: 220px !important; right: 0 !important; }
+
+  .page {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+  .card { border-radius: 14px !important; padding: 14px !important; }
+
+  .field input, .field select, .field textarea {
+    font-size: 16px !important; /* предотвращает auto-zoom на iOS */
+  }
+
+  .action-btn { padding: 10px 14px !important; font-size: 14px !important; }
+  .modal__card { width: min(94vw, 460px) !important; padding: 16px !important; }
+  .modal__grid, .modal__grid-sub { grid-template-columns: 1fr !important; }
+
+  .footer {
+    flex-direction: column !important;
+    height: auto !important;
+    padding: 10px 16px !important;
+    gap: 4px !important;
+    text-align: center !important;
+    font-size: 12px !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .role-toggle { padding: 2px !important; }
+  .role-toggle__btn { padding: 6px 10px !important; font-size: 11px !important; }
+  .header__left { gap: 8px !important; }
+  .header__actions { gap: 8px !important; }
+
+  .top-title { font-size: 22px !important; }
+
+  .search-row {
+    display: grid !important;
+    grid-template-columns: 1fr auto !important;
+    gap: 8px !important;
+  }
+  .search-input { font-size: 16px !important; padding: 10px 14px !important; }
+  .search-row .action-btn--accent { grid-column: 1 / -1 !important; }
+
+  .rec-section-head { flex-direction: column !important; align-items: stretch !important; }
+  .for-you-title { font-size: 18px !important; }
+  .for-you-controls { width: 100% !important; }
+  .rec-select, .for-you-resume-select, .for-you-vacancy-select { max-width: 100% !important; }
+
+  .rec-actions, .vacancy-actions, .app-actions {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  .rec-actions .action-btn,
+  .vacancy-actions .action-btn,
+  .app-actions .action-btn {
+    width: 100% !important;
+    text-align: center !important;
+  }
+
+  .rec-list, .vacancies { grid-template-columns: 1fr !important; }
+
+  .modal__title-lg, .modal__title { font-size: 20px !important; }
+  .modal__body, .modal__footer-bar { padding-left: 16px !important; padding-right: 16px !important; }
+  .modal__footer-bar .action-btn { flex: 1 1 auto !important; min-width: 120px !important; }
+
+  .search-pager { gap: 8px !important; }
+  .search-pager__page { min-width: 34px !important; height: 34px !important; font-size: 13px !important; }
+}
+
+@media (max-width: 560px) {
+  .apps-tabs { gap: 6px !important; }
+  .apps-tab { padding: 6px 12px !important; font-size: 12px !important; flex: 1 1 auto !important; text-align: center !important; }
+  .app-card-head { flex-wrap: wrap !important; }
+  .app-applicant-thumb-wrap { width: 44px !important; height: 44px !important; }
+  .app-card-summary-wrap { gap: 10px !important; }
+  .app-role { font-size: 15px !important; }
+  .app-status-badge { font-size: 11px !important; padding: 3px 8px !important; }
+  .app-date { font-size: 11px !important; }
+  .apps-detail-body { max-height: 60vh !important; font-size: 13px !important; }
+
+  .notif-list .notif-item,
+  .notification-item { padding: 12px !important; font-size: 13px !important; }
+}
+
+/* Карточки «Мои проекты» / «Мои резюме»:
+   на узких экранах перекладываем заголовок/инфо и блок действий в столбик,
+   чтобы тоггл, лейбл и кнопки не наезжали друг на друга. */
+@media (max-width: 560px) {
+  .project-card {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  .project-card > div:last-child {
+    width: 100% !important;
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+  }
+  .project-card .action-btn {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    text-align: center !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .header__inner { padding: 0 10px !important; }
+  .role-toggle__btn { padding: 5px 8px !important; font-size: 11px !important; }
+  .logo { width: 36px !important; height: 36px !important; }
+  .notify-btn, .burger, .header-nav-btn {
+    width: 38px !important; height: 38px !important; border-radius: 10px !important;
+  }
+  .page { padding-left: 10px !important; padding-right: 10px !important; }
+  .card { padding: 12px !important; }
+  .top-title { font-size: 20px !important; }
+}
