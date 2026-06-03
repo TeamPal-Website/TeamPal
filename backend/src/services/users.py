@@ -8,7 +8,7 @@ from src.schemas.profiles import ProfileAdd
 from src.schemas.users import UserAdd, UserChangePasswordRequest, UserHashedPasswordUpdate, UserLoginRequest, UserRequestAdd, VerifyEmailRequest
 from src.services.auth import AuthService
 from src.services.email import send_verification_email
-from src.services.verification import generate_and_save_code, verify_code
+from src.services.verification import delete_code, generate_and_save_code, verify_code
 from src.utils.db_manager import DBManager
 
 
@@ -33,6 +33,18 @@ class UserService:
             is_active=True,
             is_verified=False,
         )
+
+        # Если на этот email уже есть запись, но почта не подтверждена —
+        # считаем регистрацию брошенной (юзер ушёл со страницы ввода кода)
+        # и пересоздаём её, чтобы можно было зарегистрироваться повторно.
+        existing = await db.users.get_orm_by_email(data.email)
+        if existing is not None:
+            if existing.is_verified:
+                raise EmailAlreadyRegistered()
+            await db.users.delete(id=existing.id)
+            await db.commit()
+            await delete_code(data.email)
+
         try:
             created_user = await db.users.add(new_user_data)
             await db.profiles.add(ProfileAdd(user_id=created_user.id))
@@ -112,7 +124,7 @@ class UserService:
         if not user.is_active:
             raise AccessDenied('Пользователь заблокирован')
         if not user.is_verified:
-            raise AccessDenied('Почта не подтверждена. Проверьте почту и введите код.')
+            raise Unauthorized('Пользователь не найден')
         if not AuthService().verify_password(data.password, user.hashed_password):
             raise WrongPassword()
         access_token = AuthService().create_access_token({'user_id': user.id})
